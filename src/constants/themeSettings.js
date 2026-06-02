@@ -1,13 +1,10 @@
 export const APPEARANCE_MODES = [
-  { id: 'glass', label: 'Glass', desc: 'Frosted depth, soft refraction, editorial display type', font: 'Space Grotesk' },
-  { id: 'pixelated', label: 'Pixelated', desc: 'Arcade grid, chunky type, crisp stepped edges', font: 'Pixelify Sans' },
-  { id: 'neon', label: 'Neon', desc: 'Electric signage, blacklight grids, outlined circuit panels', font: 'Audiowide' },
-  { id: 'minimal', label: 'Minimal', desc: 'Quiet contrast, roomy rhythm, readable UI typography', font: 'Manrope' },
-  { id: 'archive', label: 'Archive', desc: 'Cinematic dark archive and light museum card-catalog surfaces', font: 'Space Grotesk' },
+  { id: 'glass', label: 'Spectrum Glass', desc: 'Frosted living-glass depth, morpho refraction, cinematic glow', font: 'Cinzel / Rajdhani' },
+  { id: 'minimal', label: 'Spectrum Minimal', desc: 'Quiet premium surfaces, reduced glow, editorial spacing', font: 'Cinzel / DM Sans' },
 ];
 
 export const normalizeAppearanceMode = (appearanceMode = 'glass') => (
-  appearanceMode === 'neo' ? 'neon' : appearanceMode
+  appearanceMode === 'minimal' ? 'minimal' : 'glass'
 );
 
 export const CHARACTER_THEMES = [
@@ -29,7 +26,7 @@ export const CHARACTER_THEMES = [
 
 const MODE_TOKENS = {
   glass: {
-    fonts: { display: '"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', ui: '"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', body: '"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' },
+    fonts: { display: 'var(--font-display)', ui: 'var(--font-ui)', body: 'var(--font-body)' },
     effects: { blur: 12, glow: 0.16, shadow: '0 18px 46px color-mix(in srgb, var(--theme-shadow-rgb, #020617) 22%, transparent)' },
     shape: { radius: [16, 22, 30, 38], edge: 'glass', border: 1 },
     motion: { fast: '140ms', normal: '220ms', slow: '320ms', hoverScale: 1.008 },
@@ -53,7 +50,7 @@ const MODE_TOKENS = {
     panelOverlay: 'linear-gradient(145deg, color-mix(in srgb, var(--theme-bg) 82%, #000), color-mix(in srgb, var(--theme-surface) 88%, #000) 52%, color-mix(in srgb, var(--theme-accent-alt) 9%, var(--theme-bg)))',
   },
   minimal: {
-    fonts: { display: '"Manrope", "Outfit", system-ui, sans-serif', ui: '"Manrope", "Outfit", system-ui, sans-serif', body: '"Manrope", "Outfit", system-ui, sans-serif' },
+    fonts: { display: 'var(--font-display)', ui: 'var(--font-ui)', body: 'var(--font-body)' },
     effects: { blur: 0, glow: 0.04, shadow: '0 10px 28px rgba(15,23,42,.1)' },
     shape: { radius: [10, 14, 18, 24], edge: 'minimal', border: 1 },
     motion: { fast: '120ms', normal: '180ms', slow: '240ms', hoverScale: 1.004 },

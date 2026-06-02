@@ -24,7 +24,7 @@ export default function ThemeStudio({
       </div>
 
       <div className="theme-style-grid" aria-label="Appearance styles">
-        {APPEARANCE_MODES.filter(mode => ['glass', 'neon', 'minimal', 'pixelated'].includes(mode.id)).map(mode => {
+        {APPEARANCE_MODES.filter(mode => ['glass', 'minimal'].includes(mode.id)).map(mode => {
           const isActive = activeAppearance === mode.id;
           return (
             <button
