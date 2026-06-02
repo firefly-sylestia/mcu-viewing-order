@@ -193,7 +193,7 @@ const applyPreviewScale = (canvas, settings) => {
 
 export const renderCardToCanvas = async ({ type, data, settings = {} }) => {
   const canvas = document.createElement('canvas');
-  const fontFamily = settings?.fontFamily || 'Inter, sans-serif';
+  const fontFamily = settings?.fontFamily || 'DM Sans, sans-serif';
   const theme = getTheme(settings);
   const bgOpacity = Number.isFinite(settings?.bgOpacity) ? settings.bgOpacity : 46;
   const fontScale = settings?.fontKey === 'marvel' ? 1.18 : 1;

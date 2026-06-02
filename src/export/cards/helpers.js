@@ -22,7 +22,7 @@ export const drawWrappedText = (ctx, text, x, y, maxWidth, lineHeight, maxLines 
   renderLines.forEach((ln, idx) => ctx.fillText(ln, x, y + (idx * lineHeight)));
 };
 
-export const drawPremiumStars = (ctx, { x, y, size = 38, gap = 12, rating10 = 0, active = '#ffd35c', inactive = 'rgba(255,255,255,0.22)', fontFamily = 'Inter, sans-serif' }) => {
+export const drawPremiumStars = (ctx, { x, y, size = 38, gap = 12, rating10 = 0, active = '#ffd35c', inactive = 'rgba(255,255,255,0.22)', fontFamily = 'DM Sans, sans-serif' }) => {
   const ratio = clampTenPoint(rating10) / 10;
   const starValue = ratio * 5;
   ctx.font = `700 ${size}px ${fontFamily}`;

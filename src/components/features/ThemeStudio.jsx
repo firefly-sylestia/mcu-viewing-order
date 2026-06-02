@@ -17,14 +17,14 @@ export default function ThemeStudio({
     <div className={`theme-studio ${compact ? 'theme-studio--compact' : ''}`}>
       <div className="theme-studio__header">
         <div>
-          <p className="theme-studio__eyebrow">Visual system</p>
+          <p className="theme-studio__eyebrow">Spectrum system</p>
           <h3>{title}</h3>
         </div>
         <span className="theme-studio__mode-chip">{APPEARANCE_MODES.find(mode => mode.id === activeAppearance)?.font || 'Modern UI'}</span>
       </div>
 
       <div className="theme-style-grid" aria-label="Appearance styles">
-        {APPEARANCE_MODES.filter(mode => ['glass', 'neon', 'minimal', 'pixelated'].includes(mode.id)).map(mode => {
+        {APPEARANCE_MODES.filter(mode => ['glass', 'minimal'].includes(mode.id)).map(mode => {
           const isActive = activeAppearance === mode.id;
           return (
             <button

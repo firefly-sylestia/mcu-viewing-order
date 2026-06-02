@@ -43,6 +43,7 @@ export default function ArchiveCard({
       data-watched={watched}
       data-bookmarked={Boolean(isBookmarked)}
     >
+      <span className="archive-card__order" aria-label={`Timeline order ${item?.order || item?.id || 'unknown'}`}>{String(item?.order || item?.id || '—').padStart(3, '0')}</span>
       <button className="archive-card__poster-button" type="button" onClick={open} aria-label={`Open ${title} details`}>
         <span className="archive-card__poster-wrap">
           {poster ? <img className="archive-card__poster" src={poster} alt={`${title} poster`} loading={variant === 'hero' ? 'eager' : 'lazy'} /> : <span className="archive-card__poster archive-card__poster--empty">{title}</span>}
