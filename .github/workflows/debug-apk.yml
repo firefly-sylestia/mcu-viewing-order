@@ -1,67 +1,88 @@
 name: Android Debug APK Artifact
 
 on:
-  pull_request:
-    branches:
-      - '**'
   workflow_dispatch:
-
-permissions:
-  contents: read
+  push:
+    branches:
+      - main
+      - work
 
 env:
   JAVA_VERSION: '17'
+  NODE_VERSION: '22'
 
 jobs:
   build-debug:
-    name: Build debug APK for PR branch
+    name: Build Debug APK
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout PR head code
+      - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
 
       - name: Set up Java ${{ env.JAVA_VERSION }}
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
-          cache: gradle
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.14.3'
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Build web
+        run: npm run build
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+
+      - name: Patch Gradle for Java 17
+        run: |
+          find ./node_modules/@capacitor ./node_modules/@capacitor-community ./android \
+            -name "*.gradle" -type f 2>/dev/null | while read -r file; do
+            sed -i \
+              -e 's/JavaVersion.VERSION_21/JavaVersion.VERSION_17/g' \
+              -e 's/jvmTarget = "21"/jvmTarget = "17"/g' \
+              -e "s/jvmTarget = '21'/jvmTarget = '17'/g" \
+              -e 's/jvmToolchain(21)/jvmToolchain(17)/g' \
+              "$file" 2>/dev/null || true
+          done
+
+      - name: Make gradlew executable
+        run: chmod +x ./android/gradlew
 
       - name: Build debug APK
-        run: gradle :androidApp:assembleDebug --no-daemon --stacktrace -PVERSION_NAME=pr-${{ github.event.pull_request.number || github.run_number }} -PVERSION_CODE=${{ github.run_number }}
-
-      - name: Prepare debug APK artifact
-        id: apk
-        shell: bash
+        working-directory: ./android
         run: |
-          APK=$(find androidApp/build/outputs/apk/debug -name '*.apk' -type f | head -n 1)
-          if [[ -z "$APK" ]]; then
-            echo "Debug APK not found."
-            find androidApp/build/outputs/apk -name '*.apk' -type f -print || true
+          sed -i '/org.gradle.java.home/d' gradle.properties 2>/dev/null || true
+          ./gradlew clean assembleDebug --no-daemon --stacktrace
+
+      - name: Locate debug APK
+        id: find_apk
+        run: |
+          APK=$(find ./android -name "app-debug.apk" -type f | head -1)
+          if [ -z "$APK" ]; then
+            echo "ERROR: Debug APK not found"
+            find ./android -name "*.apk" -type f
             exit 1
           fi
-
-          SAFE_REF=$(echo "${{ github.head_ref || github.ref_name }}" | tr '/[:space:]' '-' | tr -cd 'A-Za-z0-9._-')
-          OUT="MCU-Viewing-Order-debug-${SAFE_REF}-${{ github.run_number }}.apk"
-          cp "$APK" "$OUT"
-          echo "apk_file=${OUT}" >> "$GITHUB_OUTPUT"
-          ls -lh "$OUT"
+          cp "$APK" "MCU-Viewing-Order-debug-${{ github.run_number }}.apk"
+          echo "apk_file=MCU-Viewing-Order-debug-${{ github.run_number }}.apk" >> $GITHUB_OUTPUT
+          ls -lh "MCU-Viewing-Order-debug-${{ github.run_number }}.apk"
 
       - name: Upload debug APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: mcu-viewing-order-debug-apk-${{ github.event.pull_request.number || github.run_number }}
-          path: ${{ steps.apk.outputs.apk_file }}
+          name: mcu-viewing-order-debug-apk
+          path: ${{ steps.find_apk.outputs.apk_file }}
           if-no-files-found: error
           retention-days: 14

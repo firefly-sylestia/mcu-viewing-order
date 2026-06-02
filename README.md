@@ -1,34 +1,101 @@
 # MCU Viewing Order
 
-MCU Viewing Order is now organized as a two-platform project: a preserved Vite/React web application and a native Android Kotlin application scaffolded with Jetpack Compose + Material 3.
+A clean, modern Marvel Cinematic Universe (MCU) viewing-order tracker.
+Browse films, series, shorts, and specials across MCU Phases 1–6 in
+chronological watch order, mark what you have seen, filter the list, and keep
+your progress saved locally.
 
-## Project layout
+The app ships as both a web app (Vite + React) and a native Android app
+(Capacitor).
 
-- `webApp/` contains the original Vite + React source. Poster and binary assets remain at their original root/legacy Android paths instead of being moved into `webApp/`.
-- `androidApp/` contains the native Android Kotlin package `com.mcuviewingorder.app`.
-- `shared/` contains Kotlin domain models, filtering, sorting, progress calculations, and generated catalog fixtures used by Android.
-- `shared-data/` contains platform-neutral JSON catalog data for MCU/DC titles, trailers, after-credits metadata, timeline modes, phases, and collections.
-- `tools/` contains data validation and code generation scripts.
+---
 
-## Root commands
+## Features
+
+- Complete chronological viewing order across MCU Phases 1–6
+- Core and expanded list modes for essential or completionist watch plans
+- Status tracking for each title: Watched, Watching, Plan to Watch, On Hold,
+  Dropped, and Unwatched
+- Quick eye-button toggle for watched/unwatched from each row
+- Status dropdown on each row for changing detailed watch state
+- Per-phase progress bars and overall completion percentage
+- Search by title or prerequisite
+- Filter by type, status, watched-only, essentials, phase, and timeline mode
+- Sort chronological, by year, alphabetical, runtime, recently watched, or status
+- Bookmark, like, rewatch count, progress export/import, and share-card tools
+- Poster and metadata caching with optional refresh/export actions
+- Premium Marvel-inspired dark UI using Inter/Rajdhani for readability and
+  Bangers/Bebas Neue for display headings
+- Scroll-stable list rendering tuned to avoid disappearing rows during fast
+  up/down scrolling
+- Native Android build via Capacitor
+
+---
+
+## Stability and data-safety guardrails
+
+The app now includes defensive metadata fallbacks to prevent startup/render
+crashes when a data entry has missing or unknown enum-like fields.
+
+### Covered safeguards
+
+- Safe title-type metadata resolver (fallback label/icon/color)
+- Safe watch-status metadata resolver (fallback to `unwatched` semantics)
+- Row list rendering uses safe resolvers instead of direct map dereferencing
+- Detail and summary surfaces also use the same safe resolvers for consistency
+
+### Why this matters
+
+If a title object is malformed (for example, `type` not in `film|series|short`
+or an unknown `status`), the app keeps rendering with graceful defaults instead
+of throwing runtime errors like:
+
+- `Cannot read properties of undefined (reading 'color')`
+- `Cannot read properties of undefined (reading 'Icon')`
+
+---
+
+## Watch status controls
+
+Each row has two status actions:
+
+1. **Status pill** — opens the status menu so you can choose any watch state.
+2. **Eye/status icon** — instantly toggles between `Watched` and `Unwatched`.
+
+Progress is stored in browser local storage under the app's progress cache key,
+so refreshing the page keeps your watch state on the same device/browser.
+
+---
+
+## Development
 
 ```bash
-npm run web:dev
-npm run web:build
-npm run web:preview
-npm run data:validate
-npm run data:generate
-gradle :androidApp:assembleDebug
-gradle :androidApp:assembleRelease
+npm install
+npm run dev
 ```
 
-## Native Android direction
+## Build the web bundle
 
-The native app is not a WebView wrapper. It uses Kotlin source files under `androidApp/src/main/java/com/mcuviewingorder/app`, Jetpack Compose-style screens, Material 3 theme tokens, Compose Navigation routes, DataStore-backed progress/settings repositories, and shared domain logic from `shared/`.
+```bash
+npm run build
+```
 
-See:
+## Build the Android APK
 
-- [BUILDING_ANDROID.md](BUILDING_ANDROID.md)
-- [ANDROID_MIGRATION.md](ANDROID_MIGRATION.md)
-- [WEB_APP.md](WEB_APP.md)
-- [DATA_SYNC.md](DATA_SYNC.md)
+```bash
+npm run build
+npx cap sync android
+cd android && ./gradlew assembleDebug
+```
+
+The signed release variant uses `build-release.sh`.
+
+---
+
+## App identity
+
+| Field           | Value                     |
+| --------------- | ------------------------- |
+| App name        | MCU Viewing Order         |
+| Package / appId | `com.mcuviewingorder.app` |
+| Web title       | MCU Viewing Order         |
