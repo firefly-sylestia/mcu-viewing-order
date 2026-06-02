@@ -37,7 +37,7 @@ export default function ArchiveCard({
 
   return (
     <article
-      className={`archive-card archive-card--${variant}`}
+      className={`spectrum-title-card spectrum-title-card--${variant} archive-card archive-card--${variant}`}
       data-status={statusValue}
       data-selected={selected}
       data-watched={watched}
@@ -73,7 +73,7 @@ export default function ArchiveCard({
           <Check size={13} /> {watched ? 'Undo' : 'Done'}
         </button>
         <button type="button" className="archive-card__action" data-active={Boolean(isBookmarked)} onClick={() => onToggleBookmark?.(item.id)}>
-          <Bookmark size={13} /> {isBookmarked ? 'Pinned' : 'Pin'}
+          <Bookmark size={13} /> {isBookmarked ? 'Bookmarked' : 'Bookmark'}
         </button>
       </div>
     </article>

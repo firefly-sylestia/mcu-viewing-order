@@ -3101,7 +3101,7 @@ export default function MCUViewer() {
       drawWrappedText(ctx, cast, 250, 1658, 980, Math.round(38 * scale), 3);
       ctx.fillStyle = 'rgba(255,255,255,0.48)';
       ctx.font = `800 24px ${exportFontFamily}`;
-      ctx.fillText('Made with MCU Viewing Order', 112, 1858);
+      ctx.fillText('Made with Marvel Spectrum', 112, 1858);
       const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 1));
       const outputFilename = share ? filename.replace('-details-card.png', '-shared-details-card.png') : filename;
       if (Capacitor.isNativePlatform()) {
@@ -3613,7 +3613,7 @@ export default function MCUViewer() {
 
   const sectionScaffold = (
     <>
-      <Header title="MCU Viewing Order" subtitle="Modernized modular UI shell" />
+      <Header title="Marvel Spectrum" subtitle="Your cinematic path through every phase, arc, and universe." />
       <TimelineControls />
       <ProgressSection />
       <TitleCard />
@@ -3652,11 +3652,11 @@ export default function MCUViewer() {
     </div>
   );
   return (
-    <div data-scaffold={Boolean(sectionScaffold)} data-theme={normalizeAppearanceMode(appearanceMode)} data-universe={universe === 'dc' ? 'dc' : 'marvel'} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: effectiveUiScale, display: 'flex', flexDirection: 'column', overflowX: 'hidden', overflowY: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch ${universe === 'dc' ? 'dc-universe' : 'mcu-universe'}${performanceMode || browseMode === 'phase' ? ' performance-mode' : ''}${themeTransitioning ? ' theme-is-transitioning' : ''}${uiBuildCacheEnabled ? ' ui-build-cache-on' : ''}${overlayActive ? ' overlay-open' : ''}${browseMode === 'phase' ? ' phase-list-mode' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
+    <div data-scaffold={Boolean(sectionScaffold)} data-theme={normalizeAppearanceMode(appearanceMode)} data-universe={universe === 'dc' ? 'dc' : 'marvel'} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: effectiveUiScale, display: 'flex', flexDirection: 'column', overflowX: 'hidden', overflowY: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`spectrum-app theme-switch ${universe === 'dc' ? 'dc-universe' : 'mcu-universe'}${performanceMode || browseMode === 'phase' ? ' performance-mode' : ''}${themeTransitioning ? ' theme-is-transitioning' : ''}${uiBuildCacheEnabled ? ' ui-build-cache-on' : ''}${overlayActive ? ' overlay-open' : ''}${browseMode === 'phase' ? ' phase-list-mode' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
       
 
 
-      <div className="app-backdrop-layout" style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100vh', minHeight: '100vh', maxHeight: '100vh', zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+      <div className="spectrum-bg app-backdrop-layout" style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100vh', minHeight: '100vh', maxHeight: '100vh', zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
         {browseMode !== 'phase' && previousHeroSrc && previousHeroSrc !== currentHeroSrc && (
           <div
             key={`backdrop-exit-${previousHeroSrc}`}
@@ -3717,9 +3717,9 @@ export default function MCUViewer() {
   <div className="settings-redesign">
     <section className="settings-hero-card">
       <div>
-        <p className="settings-eyebrow">More Command Panel</p>
-        <h2>{universe === 'dc' ? 'Watchtower systems and backup tools' : 'Command systems and backup tools'}</h2>
-        <p>Grouped preferences, display links, data backup, and advanced utilities. Fast style changes live in the Sidebar Hub.</p>
+        <p className="settings-eyebrow">Spectrum Studio</p>
+        <h2>{universe === 'dc' ? 'Spectrum Studio and backup tools' : 'Spectrum Studio and backup tools'}</h2>
+        <p>Grouped preferences, display links, data backup, and advanced utilities. Fast style changes live in the Spectrum Rail.</p>
       </div>
       <div className="settings-hero-actions">
         <button className="fpill" onClick={() => setDarkMode(true)} style={{ justifyContent: 'center', borderColor: darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Moon size={13} />Dark</button>
@@ -4137,7 +4137,7 @@ export default function MCUViewer() {
         </button>
 
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <main ref={mainRef} className={`app-scroll-shell${performanceMode ? ' scroll-performance' : ''}`} style={{ overflow: overlayActive ? 'hidden' : 'visible', touchAction: overlayActive ? 'none' : 'pan-y', pointerEvents: blockHomeInteractions ? 'none' : 'auto', flex: '1 1 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
+      <main ref={mainRef} className={`spectrum-main app-scroll-shell${performanceMode ? ' scroll-performance' : ''}`} style={{ overflow: overlayActive ? 'hidden' : 'visible', touchAction: overlayActive ? 'none' : 'pan-y', pointerEvents: blockHomeInteractions ? 'none' : 'auto', flex: '1 1 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
         <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '28px 18px 96px 18px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
           {browseMode === 'search' ? (
             <CommandCatalog
@@ -4208,7 +4208,7 @@ export default function MCUViewer() {
             </div>
           )}
           <div data-motion="section" className="motion-section motion-pop" style={{ textAlign: 'center', marginTop: 44, fontFamily: 'var(--font-marvel-ui)', fontSize: 11, color: 'var(--theme-text-muted)', letterSpacing: 2.2, fontWeight: 700 }}>
-            Made with ♥️ by {universe === 'dc' ? (marvelLangMode ? tUniverse('Marvel Fan') : 'DC Fan') : tUniverse('Marvel Fan')}
+            Marvel Spectrum crafted for {universe === 'dc' ? (marvelLangMode ? tUniverse('Marvel Fan') : 'DC Fan') : tUniverse('Marvel Fan')}
           </div>
         </div>
       </main>

@@ -1,3 +1,3 @@
 import React from 'react';
 import './TitleCard.css';
-export default function TitleCard({ children, className = '' }) { return <article className={`feature-title-card ${className}`.trim()}>{children}</article>; }
+export default function TitleCard({ children, className = '', variant = 'compact' }) { return <article className={`spectrum-title-card spectrum-title-card--${variant} ${className}`.trim()}>{children}</article>; }

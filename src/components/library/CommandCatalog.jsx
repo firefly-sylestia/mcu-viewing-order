@@ -82,13 +82,13 @@ export default function CommandCatalog({
   );
 
   return (
-    <section className="command-catalog archive-surface" aria-label="Command Catalog search">
+    <section className="spectrum-command-center command-catalog" aria-label="Spectrum Command Center search">
       <div className="command-catalog__hero">
-        <p>Command Catalog</p>
-        <h1>Search the archive with facets.</h1>
+        <p>Spectrum Command Center</p>
+        <h1>Find any title, path, phase, or stinger.</h1>
         <label className="command-catalog__search">
           <Search size={20} />
-          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Find titles, characters, phases, stingers…" autoComplete="off" />
+          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search titles, characters, phases, stingers…" autoComplete="off" />
           <button type="button" onClick={() => setMobileFiltersOpen(true)}><SlidersH size={16} /> Filters</button>
         </label>
         <div className="command-catalog__active-chips">
@@ -99,13 +99,13 @@ export default function CommandCatalog({
       <div className="command-catalog__desktop-facets"><Facets /></div>
       {mobileFiltersOpen && <div className="command-catalog__sheet" role="dialog" aria-label="Catalog filters"><div><button className="command-catalog__sheet-close" onClick={() => setMobileFiltersOpen(false)}><X size={14} /> Close</button><Facets /><button className="command-catalog__show-results" onClick={() => setMobileFiltersOpen(false)}>Show {resultItems.length} Results</button></div></div>}
 
-      <div className="command-catalog__result-head"><strong>{resultItems.length} Results</strong><span>Sorting stays scoped to the current catalog result set.</span></div>
+      <div className="command-catalog__result-head"><strong>{resultItems.length} Results</strong><span>Filters update instantly and stay keyboard friendly.</span></div>
       {resultItems.length ? (
         <div className="command-catalog__grid">
           {resultItems.map(item => <ArchiveCard key={item.id} item={item} poster={posterSrc?.(item)} rating={getRating?.(item)} status={item.status} isBookmarked={Boolean(bookmarks[item.id])} isWatched={item.status === 'watched'} releaseStatus={releaseStatusFor?.(item)} onOpenDetail={onOpenDetail} onSetStatus={onSetStatus} onToggleBookmark={onToggleBookmark} variant="grid" />)}
         </div>
       ) : (
-        <div className="command-catalog__empty"><strong>No catalog matches.</strong><span>Try clearing a chip, switching collections, or browsing Essentials and After-Credits rooms.</span><button onClick={() => { setSearch(''); setTypeFilter(null); setStatusFilter(null); setActivePhase(0); setEssOnly(false); setWatchedOnly(false); setActiveCollectionId(null); }}>Clear focused filters</button></div>
+        <div className="command-catalog__empty"><strong>No Spectrum matches.</strong><span>Try clearing a chip, switching collections, or browsing Essentials and After-Credits rooms.</span><button onClick={() => { setSearch(''); setTypeFilter(null); setStatusFilter(null); setActivePhase(0); setEssOnly(false); setWatchedOnly(false); setActiveCollectionId(null); }}>Clear focused filters</button></div>
       )}
     </section>
   );
