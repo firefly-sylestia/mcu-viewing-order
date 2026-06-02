@@ -1,8 +1,4 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, useReducer, useDeferredValue } from 'react';
-import { Capacitor } from '@capacitor/core';
-import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
-import { Share } from '@capacitor/share';
-import { Media } from '@capacitor-community/media';
 import CropModal from './components/CropModal';
 import SetupWizard from './components/SetupWizard';
 import { readStorageJSON, readStorageValue, removeStorageValue, safeLocalStorageSetItem, scheduleStorageWrite, pruneObject } from './utils/cacheStorage';
@@ -14,6 +10,7 @@ import { usePosterCache } from './hooks/usePosterCache';
 import { useOverlayNavigation } from './hooks/useOverlayNavigation';
 import { useResponsiveLayout } from './hooks/useResponsiveLayout';
 import { Header, TimelineControls, ProgressSection, TitleCard, DetailDrawer, Settings as SettingsSection, Analytics } from './components/features';
+import ButterflyCommandCenter from './components/features/ButterflyCommandCenter';
 import LibraryAtrium from './components/library/LibraryAtrium';
 import CommandCatalog from './components/library/CommandCatalog';
 import ThemeStudio from './components/features/ThemeStudio';
@@ -26,6 +23,7 @@ import './App.components.css';
 import './App.motion.css';
 import './styles/performance.css';
 import './styles/theme-surfaces.css';
+import './components/features/ButterflyCommandCenter.css';
 
 import {
   ESSENTIAL_LIST,
@@ -1515,17 +1513,6 @@ export default function MCUViewer() {
       });
       const content = JSON.stringify(payload, null, 2);
       const fileName = `mcu-progress-${Date.now()}.json`;
-      if (Capacitor.isNativePlatform()) {
-        const res = await Filesystem.writeFile({
-          path: fileName,
-          data: content,
-          directory: Directory.Documents,
-          encoding: Encoding.UTF8,
-          recursive: true,
-        });
-        await Share.share({ title: 'MCU Progress Export', text: 'MCU progress backup JSON', url: res.uri });
-        return;
-      }
       const blob = new Blob([content], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -1594,17 +1581,7 @@ export default function MCUViewer() {
         const blob = await response.blob();
         manifest.push({ id: item.id, title: item.title, file: filename, source: src });
 
-        if (Capacitor.isNativePlatform()) {
-          const base64 = await new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(String(reader.result).split(',')[1] || '');
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
-          });
-          await Filesystem.writeFile({ path: `mcu-posters/${filename}`, data: base64, directory: Directory.Documents, recursive: true });
-        } else {
-          triggerDownload(blob, filename);
-        }
+        triggerDownload(blob, filename);
         delete nextFailures[item.id];
       } catch {
         nextFailures[item.id] = { id: item.id, title: item.title, source: src, failedAt: new Date().toISOString() };
@@ -1617,18 +1594,7 @@ export default function MCUViewer() {
     }
 
     const manifestBlob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), mode, posters: manifest }, null, 2)], { type: 'application/json' });
-    if (Capacitor.isNativePlatform()) {
-      const data = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result).split(',')[1] || '');
-        reader.onerror = reject;
-        reader.readAsDataURL(manifestBlob);
-      });
-      const result = await Filesystem.writeFile({ path: mode === 'failed' ? 'mcu-posters/failed-manifest.json' : 'mcu-posters/manifest.json', data, directory: Directory.Documents, recursive: true });
-      await Share.share({ title: 'MCU Poster Images', text: 'Exported poster images and manifest', url: result.uri });
-    } else {
-      triggerDownload(manifestBlob, mode === 'failed' ? 'mcu-posters-failed-manifest.json' : 'mcu-posters-manifest.json');
-    }
+    triggerDownload(manifestBlob, mode === 'failed' ? 'mcu-posters-failed-manifest.json' : 'mcu-posters-manifest.json');
     const failedCount = Object.keys(nextFailures).length;
     setPosterExportState({ active: false, done: exportable.length, total: exportable.length, message: `${mode === 'failed' ? 'Retried' : 'Exported'} ${exportable.length} poster images.${failedCount ? ` ${failedCount} failed export${failedCount === 1 ? '' : 's'} saved for retry.` : ''}` });
   };
@@ -2011,27 +1977,6 @@ export default function MCUViewer() {
     'Thor': ['Chris Hemsworth', 'Tom Hiddleston', 'Natalie Portman'],
   };
   const saveImageToDevice = useCallback(async (blob, filename) => {
-    const base64 = await blobToBase64(blob);
-    const isNative = Capacitor.isNativePlatform();
-    if (isNative && Capacitor.getPlatform() === 'android') {
-      const dataUri = `data:image/png;base64,${base64}`;
-      try {
-        try { await Media.createAlbum({ name: 'MCUViewingOrder' }); } catch {}
-        const albums = await Media.getAlbums();
-        const album = (albums?.albums || []).find(a => a.name === 'MCUViewingOrder');
-        if (album?.identifier) {
-          await Media.savePhoto({ path: dataUri, albumIdentifier: album.identifier, fileName: filename.replace(/\.png$/i, '') });
-          return { method: 'mediastore' };
-        }
-      } catch {}
-      await Filesystem.writeFile({
-        path: `Pictures/MCUViewingOrder/${filename}`,
-        data: base64,
-        directory: Directory.ExternalStorage,
-        recursive: true,
-      });
-      return { method: 'filesystem' };
-    }
     triggerDownload(blob, filename);
     return { method: 'download' };
   }, []);
@@ -3104,12 +3049,7 @@ export default function MCUViewer() {
       ctx.fillText('Made with MCU Viewing Order', 112, 1858);
       const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 1));
       const outputFilename = share ? filename.replace('-details-card.png', '-shared-details-card.png') : filename;
-      if (Capacitor.isNativePlatform()) {
-        const base64 = await blobToBase64(blob);
-        await Filesystem.writeFile({ path: `mcu-posters/${outputFilename}`, data: base64, directory: Directory.Documents, recursive: true });
-      } else {
-        triggerDownload(blob, outputFilename);
-      }
+      triggerDownload(blob, outputFilename);
       setPosterExportState({ active: false, done: 1, total: 1, message: `${share ? 'Shared-ready' : 'Exported'} details card for ${item.title}.` });
     } catch {
       setPosterExportState({ active: false, done: 1, total: 1, message: `Could not export details card for ${item.title}.` });
@@ -3824,8 +3764,49 @@ export default function MCUViewer() {
         </div>
       </header>
 
-      {/* ━━ POSTER CAROUSEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      {browseMode === 'home' && <section className="hero-carousel-shell" aria-label={activeUniverse.heroLabel}>
+      {/* ━━ BUTTERFLY CINEMATIC COMMAND CENTER ━━━━━━━━━━━━━━━━━━━━━━━ */}
+      {browseMode === 'home' && (
+        <ButterflyCommandCenter
+          universe={universe}
+          activeUniverse={activeUniverse}
+          switchUniverse={switchUniverse}
+          items={activeItems}
+          filteredItems={filtered}
+          heroItems={visibleHeroPosters.map(({ item }) => item).filter(Boolean)}
+          posterSrc={posterSrc}
+          pct={pct}
+          totalWatched={totalWatched}
+          remainingCount={Math.max(0, activeItems.length - totalWatched)}
+          nextItem={nextUnwatched}
+          search={search}
+          setSearch={setSearch}
+          timelineMode={timelineMode}
+          setTimelineMode={setTimelineMode}
+          timelineModes={TIMELINE_MODES}
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
+          sortBy={sortBy}
+          setSortBy={setSortBy}
+          typeFilter={typeFilter}
+          setTypeFilter={setTypeFilter}
+          releaseFilter={releaseFilter}
+          setReleaseFilter={setReleaseFilter}
+          collections={libraryCollections}
+          bookmarks={bookmarks}
+          phases={currentPhases}
+          onStartWatching={() => nextUnwatched ? openDetail(nextUnwatched) : navigateLibrary()}
+          onExploreTimeline={navigateLibrary}
+          onOpenCatalog={() => setBrowseMode('search')}
+          onOpenAnalytics={openAnalyticsPanel}
+          onOpenSettings={() => setSettingsOpen(true)}
+          onOpenDetail={openDetail}
+          onSetStatus={setStatusDirect}
+          onToggleBookmark={toggleBookmark}
+        />
+      )}
+
+      {/* ━━ LEGACY POSTER CAROUSEL (retired by butterfly command center) ━━ */}
+      {false && browseMode === 'home' && <section className="hero-carousel-shell" aria-label={activeUniverse.heroLabel}>
         {heroPosters.length > 0 && (
           <>
             <button className="hero-carousel-nav prev" type="button" aria-label="Previous featured poster" onClick={goToPrevHero}>‹</button>
@@ -4139,7 +4120,7 @@ export default function MCUViewer() {
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <main ref={mainRef} className={`app-scroll-shell${performanceMode ? ' scroll-performance' : ''}`} style={{ overflow: overlayActive ? 'hidden' : 'visible', touchAction: overlayActive ? 'none' : 'pan-y', pointerEvents: blockHomeInteractions ? 'none' : 'auto', flex: '1 1 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
         <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '28px 18px 96px 18px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
-          {browseMode === 'search' ? (
+          {browseMode === 'home' ? null : browseMode === 'search' ? (
             <CommandCatalog
               items={filtered}
               search={search}
