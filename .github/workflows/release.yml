@@ -1,140 +1,183 @@
-name: Android APK Release
+name: Android Release APK Build
 
 on:
   push:
     tags:
       - 'v*'
   workflow_dispatch:
-    inputs:
-      version_name:
-        description: Version name to bake into the APKs, for example 6.0.0
-        required: false
-        type: string
 
 permissions:
   contents: write
 
 env:
   JAVA_VERSION: '17'
+  NODE_VERSION: '22'
 
 jobs:
-  build-apks:
-    name: Build debug and release APKs
+  build-release:
+    name: Build Release APK
     runs-on: ubuntu-latest
-
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Resolve version
+      - name: Extract version from tag
         id: version
-        shell: bash
         run: |
-          if [[ "${GITHUB_REF_TYPE}" == "tag" && "${GITHUB_REF_NAME}" == v* ]]; then
-            VERSION_NAME="${GITHUB_REF_NAME#v}"
-          elif [[ -n "${{ inputs.version_name }}" ]]; then
-            VERSION_NAME="${{ inputs.version_name }}"
-          else
-            VERSION_NAME=$(node -p "require('./package.json').version")
-          fi
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=$GITHUB_REF_NAME" >> $GITHUB_OUTPUT
+          echo "Building version: $VERSION"
 
-          VERSION_CODE="${GITHUB_RUN_NUMBER}"
-          echo "version_name=${VERSION_NAME}" >> "$GITHUB_OUTPUT"
-          echo "version_code=${VERSION_CODE}" >> "$GITHUB_OUTPUT"
-          echo "tag_name=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
-          echo "Building APKs for version ${VERSION_NAME} (${VERSION_CODE})"
+      - name: Apply version to build files
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          # Update Android version
+          sed -i "s/versionName \"[^\"]*\"/versionName \"$VERSION\"/" android/app/build.gradle
+          # Update capacitor version
+          sed -i "s/\"version\": \"[^\"]*\"/\"version\": \"$VERSION\"/" capacitor.config.json
+          echo "Applied version $VERSION to build files"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
 
       - name: Set up Java ${{ env.JAVA_VERSION }}
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
-          cache: gradle
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
+      - name: Cache Gradle
+        uses: actions/cache@v4
         with:
-          gradle-version: '8.14.3'
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*') }}
+          restore-keys: gradle-${{ runner.os }}-
 
-      - name: Create release keystore from secrets
-        shell: bash
-        env:
-          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Build web
+        run: npm run build
+
+      - name: Verify web build
         run: |
-          if [[ -n "$KEYSTORE_BASE64" && -n "$KEYSTORE_PASSWORD" && -n "$KEY_ALIAS" && -n "$KEY_PASSWORD" ]]; then
-            echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release.keystore"
-            echo "KEYSTORE_PATH=$RUNNER_TEMP/release.keystore" >> "$GITHUB_ENV"
-            echo "HAS_SIGNING=true" >> "$GITHUB_ENV"
-            echo "Release signing is configured."
-          else
-            echo "HAS_SIGNING=false" >> "$GITHUB_ENV"
-            echo "Release signing secrets are incomplete; release APK will be unsigned."
-          fi
-
-      - name: Build debug APK
-        run: gradle :androidApp:assembleDebug --no-daemon --stacktrace -PVERSION_NAME=${{ steps.version.outputs.version_name }} -PVERSION_CODE=${{ steps.version.outputs.version_code }}
-
-      - name: Build release APK
-        env:
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: gradle :androidApp:assembleRelease --no-daemon --stacktrace -PVERSION_NAME=${{ steps.version.outputs.version_name }} -PVERSION_CODE=${{ steps.version.outputs.version_code }}
-
-      - name: Prepare APK assets
-        id: assets
-        shell: bash
-        run: |
-          DEBUG_APK=$(find androidApp/build/outputs/apk/debug -name '*.apk' -type f | head -n 1)
-          RELEASE_APK=$(find androidApp/build/outputs/apk/release -name '*.apk' -type f | head -n 1)
-
-          if [[ -z "$DEBUG_APK" || -z "$RELEASE_APK" ]]; then
-            echo "Expected APKs were not found."
-            find androidApp/build/outputs/apk -name '*.apk' -type f -print || true
+          if [ ! -d "dist" ]; then
+            echo "ERROR: dist directory not created"
             exit 1
           fi
+          echo "✅ Web build successful"
 
-          SIGN_SUFFIX="unsigned"
-          if [[ "${HAS_SIGNING}" == "true" ]]; then
-            SIGN_SUFFIX="signed"
+      - name: Sync Capacitor
+        run: |
+          echo "Syncing Capacitor with Android..."
+          npx cap sync android
+
+      - name: Patch Gradle for Java 17
+        run: |
+          find ./node_modules/@capacitor ./node_modules/@capacitor-community ./android \
+            -name "*.gradle" -type f 2>/dev/null | while read -r file; do
+            sed -i \
+              -e 's/JavaVersion.VERSION_21/JavaVersion.VERSION_17/g' \
+              -e 's/jvmTarget = "21"/jvmTarget = "17"/g' \
+              -e "s/jvmTarget = '21'/jvmTarget = '17'/g" \
+              -e 's/jvmToolchain(21)/jvmToolchain(17)/g' \
+              "$file" 2>/dev/null || true
+          done
+
+      - name: Make gradlew executable
+        run: chmod +x ./android/gradlew
+
+      - name: Create keystore from secrets
+        run: |
+          if [ -z "${{ secrets.KEYSTORE_BASE64 }}" ]; then
+            echo "⚠️  KEYSTORE_BASE64 secret not configured. Skipping signing."
+            echo "SKIP_SIGNING=true" >> $GITHUB_ENV
+          else
+            echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > ./android/release.keystore
+            echo "SKIP_SIGNING=false" >> $GITHUB_ENV
+            ls -lh ./android/release.keystore
           fi
 
-          DEBUG_NAME="MCU-Viewing-Order-${{ steps.version.outputs.version_name }}-debug.apk"
-          RELEASE_NAME="MCU-Viewing-Order-${{ steps.version.outputs.version_name }}-${SIGN_SUFFIX}.apk"
-          cp "$DEBUG_APK" "$DEBUG_NAME"
-          cp "$RELEASE_APK" "$RELEASE_NAME"
+      - name: Build release APK
+        working-directory: ./android
+        env:
+          KEYSTORE_PATH: ${{ github.workspace }}/android/release.keystore
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          if [ "$SKIP_SIGNING" = "true" ]; then
+            echo "Building unsigned release APK (signing secrets not configured)..."
+            sed -i '/org.gradle.java.home/d' gradle.properties 2>/dev/null || true
+            ./gradlew clean assembleDebug --no-daemon --stacktrace
+          else
+            echo "Building signed release APK..."
+            sed -i '/org.gradle.java.home/d' gradle.properties 2>/dev/null || true
+            ./gradlew clean assembleRelease --no-daemon --stacktrace
+          fi
 
-          echo "debug_apk=${DEBUG_NAME}" >> "$GITHUB_OUTPUT"
-          echo "release_apk=${RELEASE_NAME}" >> "$GITHUB_OUTPUT"
-          ls -lh "$DEBUG_NAME" "$RELEASE_NAME"
+      - name: Find APK
+        id: find_apk
+        run: |
+          if [ "$SKIP_SIGNING" = "true" ]; then
+            APK=$(find ./android -name "app-debug.apk" -type f | head -1)
+            APK_TYPE="unsigned"
+          else
+            APK=$(find ./android -name "app-release.apk" -type f | head -1)
+            APK_TYPE="release"
+          fi
+          if [ -z "$APK" ]; then
+            echo "ERROR: APK not found!"
+            find ./android -name "*.apk" -type f
+            exit 1
+          fi
+          echo "apk=$APK" >> $GITHUB_OUTPUT
+          echo "apk_type=$APK_TYPE" >> $GITHUB_OUTPUT
+          echo "✅ Found APK: $APK"
+          ls -lh "$APK"
 
-      - name: Upload APK artifacts
+      - name: Prepare release asset
+        id: prepare_asset
+        run: |
+          APK_PATH="${{ steps.find_apk.outputs.apk }}"
+          APK_TYPE="${{ steps.find_apk.outputs.apk_type }}"
+          if [ "$APK_TYPE" = "release" ]; then
+            NEW_NAME="MCU-Viewing-Order-${{ steps.version.outputs.version }}-signed.apk"
+          else
+            NEW_NAME="MCU-Viewing-Order-${{ steps.version.outputs.version }}-unsigned.apk"
+          fi
+          cp "$APK_PATH" "$NEW_NAME"
+          echo "asset_name=$NEW_NAME" >> $GITHUB_OUTPUT
+          echo "✅ APK ready: $NEW_NAME"
+          ls -lh "$NEW_NAME"
+
+
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: mcu-viewing-order-${{ steps.version.outputs.version_name }}-apks
-          path: |
-            ${{ steps.assets.outputs.debug_apk }}
-            ${{ steps.assets.outputs.release_apk }}
+          name: mcu-viewing-order-${{ steps.find_apk.outputs.apk_type }}-apk
+          path: ${{ steps.prepare_asset.outputs.asset_name }}
           if-no-files-found: error
           retention-days: 30
 
       - name: Create GitHub Release
-        if: github.ref_type == 'tag'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          name: MCU Viewing Order v${{ steps.version.outputs.version_name }}
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: "MCU Viewing Order v${{ steps.version.outputs.version }}"
           draft: false
           prerelease: false
-          files: |
-            ${{ steps.assets.outputs.debug_apk }}
-            ${{ steps.assets.outputs.release_apk }}
+          files: ${{ steps.prepare_asset.outputs.asset_name }}
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
