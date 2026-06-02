@@ -5,6 +5,7 @@ import { Share } from '@capacitor/share';
 import { Media } from '@capacitor-community/media';
 import CropModal from './components/CropModal';
 import SetupWizard from './components/SetupWizard';
+import AmbientBackground from './components/AmbientBackground';
 import { readStorageJSON, readStorageValue, removeStorageValue, safeLocalStorageSetItem, scheduleStorageWrite, pruneObject } from './utils/cacheStorage';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { renderCardToCanvas } from './export/cards/renderCardToCanvas';
@@ -26,6 +27,7 @@ import './App.components.css';
 import './App.motion.css';
 import './styles/performance.css';
 import './styles/theme-surfaces.css';
+import './styles/spectrum-pages.css';
 
 import {
   ESSENTIAL_LIST,
@@ -3656,6 +3658,8 @@ export default function MCUViewer() {
     <div data-scaffold={Boolean(sectionScaffold)} data-ui-style={normalizeAppearanceMode(appearanceMode) === 'minimal' ? 'minimal' : 'glass'} data-theme={darkMode ? 'dark' : 'light'} data-universe={universe === 'dc' ? 'dc' : 'marvel'} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, minHeight: '100dvh', backgroundColor: 'var(--bg-void)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--text-primary)', fontFamily: 'var(--font-body)', fontSize: '16px', zoom: effectiveUiScale, display: 'flex', flexDirection: 'column', overflowX: 'hidden', overflowY: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch ${universe === 'dc' ? 'dc-universe' : 'mcu-universe'}${performanceMode || browseMode === 'phase' ? ' performance-mode' : ''}${themeTransitioning ? ' theme-is-transitioning' : ''}${uiBuildCacheEnabled ? ' ui-build-cache-on' : ''}${overlayActive ? ' overlay-open' : ''}${browseMode === 'phase' ? ' phase-list-mode' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
       
 
+
+      <AmbientBackground />
 
       <div className="app-backdrop-layout" style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100vh', minHeight: '100vh', maxHeight: '100vh', zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
         {browseMode !== 'phase' && previousHeroSrc && previousHeroSrc !== currentHeroSrc && (

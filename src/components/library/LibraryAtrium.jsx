@@ -46,6 +46,9 @@ export default function LibraryAtrium({
   const bookmarked = useMemo(() => source.filter((item) => bookmarks[item.id]).slice(0, 18), [source, bookmarks]);
   const recentlyAdded = useMemo(() => [...source].sort((a, b) => (b.year || 0) - (a.year || 0) || (b.order || 0) - (a.order || 0)).slice(0, 18), [source]);
   const recentlyWatched = useMemo(() => (historyItems.length ? historyItems : source.filter((item) => item.watchedDate)).slice(0, 18), [historyItems, source]);
+  const watchedCount = useMemo(() => source.filter((item) => item.status === 'watched').length, [source]);
+  const remainingCount = Math.max(0, source.length - watchedCount);
+  const currentPhase = useMemo(() => source.find((item) => item.status !== 'watched')?.phase || source[0]?.phase || '—', [source]);
   const postCreditImportant = useMemo(() => collections.find((collection) => collection.id === 'after-credits'), [collections]);
   const postCreditItems = useMemo(() => postCreditImportant ? source.filter((item) => collectionMatchesItem(postCreditImportant, item, { universe })).slice(0, 18) : [], [postCreditImportant, source, universe]);
   const characterArcShelves = useMemo(() => Object.entries(CHARACTER_POV_TITLE_SETS).map(([id, set]) => ({ id, title: `${id[0].toUpperCase()}${id.slice(1)} Arc`, items: source.filter((item) => set.has(item.title)).slice(0, 14) })).filter((shelf) => shelf.items.length), [source]);
@@ -65,17 +68,26 @@ export default function LibraryAtrium({
         <section className="home-collections__hero archive-surface">
           <div className="home-collections__copy">
             <p>{lexicon.home}</p>
-            <h1>Pick up the best path from here.</h1>
-            <span>Curated shortcuts for what to resume, what matters next, and which collection deserves attention.</span>
+            <h1>Marvel Spectrum</h1>
+            <span>A cinematic Marvel viewing dashboard for watch order, timelines, phases, collections, and progress intelligence.</span>
             <div className="home-collections__actions">
-              <button type="button" onClick={() => heroItem && onOpenDetail?.(heroItem)}><PlayCircle size={17} /> Continue</button>
-              <button type="button" onClick={onOpenCatalog}><Search size={17} /> Search archive</button>
+              <button type="button" onClick={() => heroItem && onOpenDetail?.(heroItem)}><PlayCircle size={17} /> Start Watch Order</button>
+              <button type="button" onClick={onOpenCatalog}><Search size={17} /> Explore Timeline</button>
             </div>
           </div>
           {heroItem && <button type="button" className="home-feature-card" onClick={() => onOpenDetail?.(heroItem)}>
             <img src={posterSrc?.(heroItem)} alt="" />
             <span><small>Continue watching</small><strong>{heroItem.title}</strong><em>{heroItem.year || 'Timeline'} · {heroItem.status || 'ready'}</em></span>
           </button>}
+        </section>
+
+
+
+        <section className="spectrum-stat-grid" aria-label="Marvel Spectrum dashboard stats">
+          <article className="spectrum-stat-card"><Layers size={17} /><strong>{source.length}</strong><span>Total Titles</span></article>
+          <article className="spectrum-stat-card"><Star size={17} /><strong>{watchedCount}</strong><span>Watched</span></article>
+          <article className="spectrum-stat-card"><Clock size={17} /><strong>{remainingCount}</strong><span>Remaining</span></article>
+          <article className="spectrum-stat-card"><Bookmark size={17} /><strong>{currentPhase}</strong><span>Current Phase / Next Up</span></article>
         </section>
 
         <section className="home-action-grid" aria-label="Curated home shortcuts">
@@ -88,7 +100,9 @@ export default function LibraryAtrium({
           ))}
         </section>
 
+        <div className="wing-divider" aria-hidden="true" />
         <CollectionRooms collections={collections.slice(0, 6)} items={items} universe={universe} posterSrc={posterSrc} activeCollectionId={activeCollectionId} onSelectCollection={(collection) => setActiveCollectionId?.(collection.id)} variant="home" />
+        <Shelf title="Continue Watching" kicker="In progress" items={continueWatching} empty="Your timeline is clear. Mark a title in progress and it will appear here." renderItem={renderCard('shelf')} />
         <Shelf title={lexicon.essentials} kicker="Curated" items={essentials.slice(0, 10)} empty="Your curated essentials will appear here as the archive grows." renderItem={renderCard('shelf')} />
         <Shelf title="Recently Added" kicker="Fresh picks" items={recentlyAdded.slice(0, 10)} empty="No recent titles available." renderItem={renderCard('compact')} />
       </div>
