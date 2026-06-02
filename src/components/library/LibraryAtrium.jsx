@@ -8,9 +8,9 @@ import './LibraryAtrium.css';
 
 function Shelf({ title, kicker, items, empty, renderItem, archival = false }) {
   return (
-    <section className={`library-shelf archive-shelf${archival ? ' library-shelf--archival' : ''}`} aria-label={title}>
-      <div className="library-shelf__head"><div><p>{kicker}</p><h2>{title}</h2></div><span>{items.length} titles</span></div>
-      {items.length ? <div className="library-shelf__rail">{items.map(renderItem)}</div> : <div className="library-shelf__empty">{empty}</div>}
+    <section className={`spectrum-rail library-shelf archive-shelf${archival ? ' library-shelf--archival' : ''}`} aria-label={title}>
+      <div className="spectrum-rail__head library-shelf__head"><div><p>{kicker}</p><h2>{title}</h2></div><span>{items.length} titles</span></div>
+      {items.length ? <div className="spectrum-rail__scroll library-shelf__rail">{items.map(renderItem)}</div> : <div className="library-shelf__empty">{empty}</div>}
     </section>
   );
 }
@@ -61,15 +61,15 @@ export default function LibraryAtrium({
 
   if (mode === 'home') {
     return (
-      <div className="home-collections" data-universe={universe}>
-        <section className="home-collections__hero archive-surface">
-          <div className="home-collections__copy">
+      <div className="spectrum-home home-collections" data-universe={universe}>
+        <section className="spectrum-home spectrum-hero home-collections__hero archive-surface spectrum-wing-glow">
+          <div className="spectrum-home spectrum-hero__copy home-collections__copy">
             <p>{lexicon.home}</p>
-            <h1>Pick up the best path from here.</h1>
-            <span>Curated shortcuts for what to resume, what matters next, and which collection deserves attention.</span>
-            <div className="home-collections__actions">
-              <button type="button" onClick={() => heroItem && onOpenDetail?.(heroItem)}><PlayCircle size={17} /> Continue</button>
-              <button type="button" onClick={onOpenCatalog}><Search size={17} /> Search archive</button>
+            <h1>Marvel Spectrum</h1>
+            <span>Your cinematic path through every phase, arc, and universe.</span>
+            <div className="spectrum-home home-collections__actions">
+              <button type="button" onClick={() => heroItem && onOpenDetail?.(heroItem)}><PlayCircle size={17} /> Continue Journey</button>
+              <button type="button" onClick={onOpenCatalog}><Search size={17} /> Explore Timeline</button>
             </div>
           </div>
           {heroItem && <button type="button" className="home-feature-card" onClick={() => onOpenDetail?.(heroItem)}>
@@ -78,10 +78,10 @@ export default function LibraryAtrium({
           </button>}
         </section>
 
-        <section className="home-action-grid" aria-label="Curated home shortcuts">
+        <section className="spectrum-bento home-action-grid" aria-label="Curated home shortcuts">
           {[recommended && { id: 'next', title: lexicon.next, item: recommended, icon: '▶' }, essentials[0] && { id: 'essentials', title: lexicon.essentials, item: essentials[0], icon: '★' }, featuredCollection && { id: 'featured', title: lexicon.featured, collection: featuredCollection, icon: featuredCollection.icon }, recentlyWatched[0] && { id: 'recent', title: lexicon.recent, item: recentlyWatched[0], icon: '↺' }].filter(Boolean).map((card) => (
-            <button key={card.id} type="button" className="home-action-card" style={{ '--card-accent': card.collection?.accent || 'var(--theme-accent)' }} onClick={() => card.collection ? setActiveCollectionId?.(card.collection.id) : onOpenDetail?.(card.item)}>
-              <span className="home-action-card__icon">{card.icon}</span>
+            <button key={card.id} type="button" className="spectrum-bento-card home-action-card" style={{ '--card-accent': card.collection?.accent || 'var(--theme-accent)' }} onClick={() => card.collection ? setActiveCollectionId?.(card.collection.id) : onOpenDetail?.(card.item)}>
+              <span className="spectrum-bento-card home-action-card__icon">{card.icon}</span>
               <span><small>{card.title}</small><strong>{card.collection?.title || card.item?.title}</strong><em>{card.collection ? `${featuredCollectionItems.length} titles ready` : `${card.item?.year || 'Timeline'} · ${card.item?.type || 'title'}`}</em></span>
               <ChevRight size={15} />
             </button>
@@ -96,18 +96,18 @@ export default function LibraryAtrium({
   }
 
   return (
-    <div className="library-atrium" data-universe={universe}>
-      <section className="library-atrium__hero archive-surface">
-        <div className="library-atrium__hero-copy">
+    <div className="spectrum-home library-atrium" data-universe={universe}>
+      <section className="spectrum-home spectrum-hero library-atrium__hero archive-surface spectrum-wing-glow">
+        <div className="spectrum-home library-atrium__hero-copy">
           <p>{lexicon.library}</p>
           <h1>{universe === 'dc' ? 'Structured dossiers for every DC path.' : 'Complete catalog for every watch path.'}</h1>
           <span>{lexicon.sub}</span>
-          <label className="library-atrium__search">
+          <label className="spectrum-home library-atrium__search">
             <Search size={19} />
             <input value={search} onChange={(event) => setSearch(event.target.value)} onFocus={onOpenCatalog} placeholder={lexicon.search} />
             <button type="button" onClick={onOpenCatalog}>Command Catalog</button>
           </label>
-          <div className="library-atrium__facet-strip" aria-label="Timeline sort facet">
+          <div className="spectrum-home library-atrium__facet-strip" aria-label="Timeline sort facet">
             <span><Layers size={13} /> Sort / POV</span>
             {timelineModes.map((mode) => <button key={mode.id} data-active={timelineMode === mode.id} onClick={() => setTimelineMode?.(mode.id)}>{mode.label}</button>)}
           </div>
@@ -115,7 +115,7 @@ export default function LibraryAtrium({
         {heroItem && <ArchiveCard item={heroItem} poster={posterSrc?.(heroItem)} rating={getRating?.(heroItem)} status={heroItem.status} isBookmarked={Boolean(bookmarks[heroItem.id])} isWatched={heroItem.status === 'watched'} releaseStatus={releaseStatusFor?.(heroItem)} onOpenDetail={onOpenDetail} onSetStatus={onSetStatus} onToggleBookmark={onToggleBookmark} variant="hero" />}
       </section>
 
-      <div className="library-atrium__stats">
+      <div className="spectrum-home spectrum-bento library-atrium__stats">
         <div><Clock size={16} /><strong>{continueWatching.length}</strong><span>In Progress</span></div>
         <div><Bookmark size={16} /><strong>{bookmarked.length}</strong><span>Pinned Records</span></div>
         <div><Star size={16} /><strong>{essentials.length}</strong><span>Essential Records</span></div>

@@ -82,13 +82,13 @@ export default function CommandCatalog({
   );
 
   return (
-    <section className="command-catalog archive-surface" aria-label="Command Catalog search">
+    <section className="command-catalog spectrum-command-center archive-surface" aria-label="Command Catalog search">
       <div className="command-catalog__hero">
-        <p>Command Catalog</p>
-        <h1>Search the archive with facets.</h1>
+        <p>Command Center</p>
+        <h1>Find any title, arc, or timeline signal.</h1>
         <label className="command-catalog__search">
           <Search size={20} />
-          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Find titles, characters, phases, stingers…" autoComplete="off" />
+          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search Marvel Spectrum…" autoComplete="off" />
           <button type="button" onClick={() => setMobileFiltersOpen(true)}><SlidersH size={16} /> Filters</button>
         </label>
         <div className="command-catalog__active-chips">
@@ -97,7 +97,7 @@ export default function CommandCatalog({
       </div>
 
       <div className="command-catalog__desktop-facets"><Facets /></div>
-      {mobileFiltersOpen && <div className="command-catalog__sheet" role="dialog" aria-label="Catalog filters"><div><button className="command-catalog__sheet-close" onClick={() => setMobileFiltersOpen(false)}><X size={14} /> Close</button><Facets /><button className="command-catalog__show-results" onClick={() => setMobileFiltersOpen(false)}>Show {resultItems.length} Results</button></div></div>}
+      {mobileFiltersOpen && <div className="command-catalog__sheet" role="dialog" aria-label="Catalog filters"><div><button className="command-catalog__sheet-close" onClick={() => setMobileFiltersOpen(false)}><X size={14} /> Close</button><Facets /><button className="command-catalog__show-results" onClick={() => setMobileFiltersOpen(false)}>Show {resultItems.length} results</button></div></div>}
 
       <div className="command-catalog__result-head"><strong>{resultItems.length} Results</strong><span>Sorting stays scoped to the current catalog result set.</span></div>
       {resultItems.length ? (

@@ -76,10 +76,10 @@ export default function CropModal({ src, onConfirm, onCancel, theme, cropTarget 
   };
 
   const top = crop.y; const left = crop.x; const right = imgDisplay.w - (crop.x + crop.w); const bottom = imgDisplay.h - (crop.y + crop.h);
-  return <div onClick={(e) => e.target === e.currentTarget && onCancel()} style={{ position: "fixed", inset: 0, zIndex: 20000, display: "grid", placeItems: "center", padding: 20, background: "color-mix(in srgb, var(--theme-bg) 18%, #000)", backdropFilter: "blur(6px)" }}>
-    <div style={{ width: "min(1040px,96vw)", borderRadius: 22, border: "1px solid var(--theme-border)", background: "var(--theme-surface)", boxShadow: "0 28px 60px rgba(0,0,0,.35)", padding: 16, display: "grid", gap: 12 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><h3 style={{ margin: 0, fontSize: 18 }}>Crop image</h3><button className="fpill" onClick={onCancel}>Close</button></div>
-      <div onPointerMove={onDrag} onPointerUp={stopDrag} onPointerLeave={stopDrag} style={{ position: "relative", borderRadius: 16, overflow: "hidden", border: "1px solid var(--theme-border)", display: "grid", placeItems: "center", background: "#080d18" }}>
+  return <div className="spectrum-crop-modal" onClick={(e) => e.target === e.currentTarget && onCancel()} style={{ position: "fixed", inset: 0, zIndex: 20000, display: "grid", placeItems: "center", padding: 20, background: "rgba(2,6,23,.54)", backdropFilter: "blur(8px)" }}>
+    <div className="spectrum-crop-modal__sheet" style={{ width: "min(1040px,96vw)", borderRadius: 34, border: "1px solid var(--s-border)", background: "var(--s-surface-raised)", boxShadow: "var(--shadow-lift)", padding: 16, display: "grid", gap: 12 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><h3 style={{ margin: 0, fontSize: 18 }}>Crop Spectrum image</h3><button className="fpill" onClick={onCancel}>Close</button></div>
+      <div onPointerMove={onDrag} onPointerUp={stopDrag} onPointerLeave={stopDrag} style={{ position: "relative", borderRadius: 16, overflow: "hidden", border: "1px solid var(--s-border)", display: "grid", placeItems: "center", background: "var(--s-bg)" }}>
         <div style={{ position: "relative", width: imgDisplay.w || "auto", height: imgDisplay.h || "auto" }}>
           <img src={src} onLoad={onImgLoad} draggable={false} style={{ display: "block", width: imgDisplay.w || "auto", height: imgDisplay.h || "auto", maxWidth: "100%", userSelect: "none" }} />
           {imgDisplay.w > 0 && <>
@@ -87,8 +87,8 @@ export default function CropModal({ src, onConfirm, onCancel, theme, cropTarget 
             <div style={{ position: "absolute", left: 0, top: top, width: left, height: crop.h, background: "rgba(1,6,14,.55)" }} />
             <div style={{ position: "absolute", right: 0, top: top, width: right, height: crop.h, background: "rgba(1,6,14,.55)" }} />
             <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: bottom, background: "rgba(1,6,14,.55)" }} />
-            <div onPointerDown={(e) => startDrag(e, "move")} style={{ position: "absolute", left: crop.x, top: crop.y, width: crop.w, height: crop.h, border: `2px solid ${theme?.accent || "var(--theme-accent)"}`, borderRadius: 12, cursor: "move" }}>
-              <button onPointerDown={(e) => startDrag(e, "resize")} style={{ position: "absolute", right: -8, bottom: -8, width: 20, height: 20, borderRadius: 999, border: "2px solid #fff", background: theme?.accent || "var(--theme-accent)", cursor: "nwse-resize" }} />
+            <div onPointerDown={(e) => startDrag(e, "move")} style={{ position: "absolute", left: crop.x, top: crop.y, width: crop.w, height: crop.h, border: `2px solid ${theme?.accent || "var(--s-accent)"}`, borderRadius: 12, cursor: "move" }}>
+              <button onPointerDown={(e) => startDrag(e, "resize")} style={{ position: "absolute", right: -8, bottom: -8, width: 20, height: 20, borderRadius: 999, border: "2px solid #fff", background: theme?.accent || "var(--s-accent)", cursor: "nwse-resize" }} />
             </div>
           </>}
         </div>
