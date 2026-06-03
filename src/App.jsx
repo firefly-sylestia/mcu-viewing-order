@@ -3611,6 +3611,144 @@ export default function MCUViewer() {
     );
   };
 
+
+  const renderMinimalToolbar = () => (
+    <section className="minimal-toolbar" aria-label="Viewing order controls">
+      <div className="minimal-search">
+        <Search size={16} aria-hidden="true" />
+        <input
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder={`Search ${activeUniverse.title} titles`}
+          aria-label="Search titles"
+        />
+      </div>
+      <div className="minimal-control-row" role="group" aria-label="Primary view options">
+        {[
+          { id: 'list', label: 'List' },
+          { id: 'calendar', label: 'Calendar' },
+        ].map((option) => (
+          <button key={option.id} type="button" className="minimal-chip" data-active={viewMode === option.id} aria-pressed={viewMode === option.id} onClick={() => setViewMode(option.id)}>
+            {option.label}
+          </button>
+        ))}
+        <button type="button" className="minimal-chip" data-active={listMode === 'extended'} aria-pressed={listMode === 'extended'} onClick={() => setListMode(listMode === 'core' ? 'extended' : 'core')}>
+          {listMode === 'core' ? 'Core list' : 'Extended list'}
+        </button>
+        <button type="button" className="minimal-chip" onClick={() => switchUniverse(universe === 'dc' ? 'mcu' : 'dc')}>
+          {universe === 'dc' ? 'DC' : 'MCU'}
+        </button>
+        <button type="button" className="minimal-chip" onClick={() => setDarkMode(mode => !mode)} aria-label="Toggle light and dark mode">
+          {darkMode ? <Sun size={14} /> : <Moon size={14} />}
+          {darkMode ? 'Light' : 'Dark'}
+        </button>
+      </div>
+      <div className="minimal-control-row minimal-secondary-controls" role="group" aria-label="Filters and sorting">
+        <select value={sortBy} onChange={(event) => setSortBy(event.target.value)} aria-label="Sort titles">
+          {Object.entries(SORT_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+        </select>
+        <select value={typeFilter || 'all'} onChange={(event) => setTypeFilter(event.target.value === 'all' ? null : event.target.value)} aria-label="Filter by type">
+          <option value="all">All types</option>
+          {Object.entries(TYPE_META).map(([value, meta]) => <option key={value} value={value}>{meta.label}</option>)}
+        </select>
+        <select value={statusFilter || (watchedOnly ? 'watched-only' : 'all')} onChange={(event) => {
+          const next = event.target.value;
+          setWatchedOnly(next === 'watched-only');
+          setStatusFilter(next === 'all' || next === 'watched-only' ? null : next);
+        }} aria-label="Filter by watch status">
+          <option value="all">All statuses</option>
+          <option value="watched-only">Watched only</option>
+          {Object.entries(STATUS_META).map(([value, meta]) => <option key={value} value={value}>{meta.label}</option>)}
+        </select>
+        <select value={activePhase} onChange={(event) => setActivePhase(Number(event.target.value))} aria-label="Filter by phase">
+          <option value={0}>All phases</option>
+          {currentPhases.map(phase => <option key={phase.id} value={phase.id}>Phase {phase.id}</option>)}
+        </select>
+        <button type="button" className="minimal-chip" data-active={releaseFilter !== 'all'} aria-pressed={releaseFilter !== 'all'} onClick={() => setReleaseFilter(releaseFilter === 'all' ? 'released' : releaseFilter === 'released' ? 'upcoming' : 'all')}>
+          {releaseFilter === 'all' ? 'All releases' : releaseFilter === 'released' ? 'Released' : 'Upcoming'}
+        </button>
+      </div>
+    </section>
+  );
+
+  const renderMinimalListView = () => (
+    <div className="minimal-list-view" aria-label="Viewing order list">
+      {phaseKeys.length === 0 ? (
+        <div className="minimal-empty-state">No titles match these filters.</div>
+      ) : phaseKeys.map(renderPhaseCalendarSection)}
+    </div>
+  );
+
+  const renderMinimalCalendarRow = (entry) => {
+    const item = entry.item;
+    const statusMeta = getSafeStatusMeta(item.status);
+    const typeMeta = getSafeTypeMeta(item.type);
+    const dateLabel = formatReleaseDate(entry.rawDate, item.year, entry.label, entry.releaseStatus);
+    return (
+      <article key={item.id} className={`minimal-calendar-row row-status-${item.status}`} data-watched={item.status === 'watched'}>
+        <div className="minimal-calendar-date">
+          <strong>{dateLabel}</strong>
+          <span>{getReleaseCertainty(entry)}</span>
+        </div>
+        <button type="button" className="minimal-calendar-title" onClick={() => openDetail(item)}>
+          <span>{item.title}</span>
+          <small>{typeMeta.label} · Phase {item.phase} · {releaseStatusLabel(entry.releaseStatus)}</small>
+        </button>
+        <div className="minimal-calendar-actions">
+          <button type="button" className="minimal-icon-button" onClick={(event) => openStatusDropdown(event, item.id)} aria-label={`Set ${item.title} status`}>
+            {React.createElement(statusMeta.Icon, { size: 14 })} {statusMeta.label}
+          </button>
+          {entry.releaseStatus !== 'upcoming' && (
+            <button type="button" className="minimal-icon-button" data-active={item.status === 'watched'} aria-pressed={item.status === 'watched'} onClick={() => setStatusDirect(item.id, item.status === 'watched' ? 'unwatched' : 'watched')}>
+              <Check size={14} /> {item.status === 'watched' ? 'Done' : 'Watch'}
+            </button>
+          )}
+        </div>
+      </article>
+    );
+  };
+
+  const renderMinimalCalendarView = () => {
+    const sortedEntries = filtered.map(item => {
+      const info = releaseInfoFor(item);
+      const parsed = parseRealReleaseDate(info.date);
+      const releaseStatus = releaseStatusFor(item);
+      const yearSort = Number(item.year) || 9999;
+      return {
+        item,
+        rawDate: info.date,
+        label: info.label,
+        parsed,
+        releaseStatus,
+        hasRealDate: Boolean(parsed),
+        sortTime: parsed ? parsed.getTime() : Date.UTC(yearSort, 11, 31),
+      };
+    }).sort((a, b) => a.sortTime - b.sortTime || a.item.order - b.item.order);
+    const groupedEntries = sortedEntries.reduce((acc, entry) => {
+      const y = Number(entry.item.year) || new Date().getFullYear();
+      const seasonal = /spring|summer|fall|autumn|winter/i.test(entry.label || entry.rawDate || '');
+      const label = entry.parsed
+        ? entry.parsed.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+        : seasonal
+          ? `Q${Math.max(1, Math.min(4, Math.ceil((new Date(`${entry.label || 'Dec'} 1, ${y}`).getMonth() + 1) / 3)))} ${y}`
+          : `${y}`;
+      if (!acc[label]) acc[label] = [];
+      acc[label].push(entry);
+      return acc;
+    }, {});
+    const groups = Object.entries(groupedEntries);
+    return (
+      <div className="minimal-calendar-view" aria-label="Release calendar">
+        {groups.length === 0 ? <div className="minimal-empty-state">No calendar entries match these filters.</div> : groups.map(([label, entries]) => (
+          <section key={label} className="minimal-calendar-group">
+            <header>{label}</header>
+            <div>{entries.map(renderMinimalCalendarRow)}</div>
+          </section>
+        ))}
+      </div>
+    );
+  };
+
   const sectionScaffold = (
     <>
       <Header title="MCU Viewing Order" subtitle="Modernized modular UI shell" />
@@ -3652,7 +3790,7 @@ export default function MCUViewer() {
     </div>
   );
   return (
-    <div data-scaffold={Boolean(sectionScaffold)} data-theme={normalizeAppearanceMode(appearanceMode)} data-universe={universe === 'dc' ? 'dc' : 'marvel'} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: effectiveUiScale, display: 'flex', flexDirection: 'column', overflowX: 'hidden', overflowY: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch ${universe === 'dc' ? 'dc-universe' : 'mcu-universe'}${performanceMode || browseMode === 'phase' ? ' performance-mode' : ''}${themeTransitioning ? ' theme-is-transitioning' : ''}${uiBuildCacheEnabled ? ' ui-build-cache-on' : ''}${overlayActive ? ' overlay-open' : ''}${browseMode === 'phase' ? ' phase-list-mode' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
+    <div data-scaffold={Boolean(sectionScaffold)} data-theme={normalizeAppearanceMode(appearanceMode)} data-universe={universe === 'dc' ? 'dc' : 'marvel'} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: effectiveUiScale, display: 'flex', flexDirection: 'column', overflowX: 'hidden', overflowY: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch minimal-ui ${universe === 'dc' ? 'dc-universe' : 'mcu-universe'}${performanceMode || browseMode === 'phase' ? ' performance-mode' : ''}${themeTransitioning ? ' theme-is-transitioning' : ''}${uiBuildCacheEnabled ? ' ui-build-cache-on' : ''}${overlayActive ? ' overlay-open' : ''}${browseMode === 'phase' ? ' phase-list-mode' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
       
 
 
@@ -4136,80 +4274,27 @@ export default function MCUViewer() {
           <ChevDown size={14} style={{ transform: 'rotate(180deg)' }} /> Top
         </button>
 
-      {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <main ref={mainRef} className={`app-scroll-shell${performanceMode ? ' scroll-performance' : ''}`} style={{ overflow: overlayActive ? 'hidden' : 'visible', touchAction: overlayActive ? 'none' : 'pan-y', pointerEvents: blockHomeInteractions ? 'none' : 'auto', flex: '1 1 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
-        <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '28px 18px 96px 18px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
-          {browseMode === 'search' ? (
-            <CommandCatalog
-              items={filtered}
-              search={search}
-              setSearch={setSearch}
-              searchScope={searchScope}
-              sortBy={sortBy}
-              setSortBy={setSortBy}
-              typeFilter={typeFilter}
-              setTypeFilter={setTypeFilter}
-              statusFilter={statusFilter}
-              setStatusFilter={setStatusFilter}
-              activePhase={activePhase}
-              setActivePhase={setActivePhase}
-              essentialOnly={essentialOnly}
-              setEssOnly={setEssOnly}
-              watchedOnly={watchedOnly}
-              setWatchedOnly={setWatchedOnly}
-              autoHideStatuses={autoHideStatuses}
-              setAutoHideStatuses={setAutoHideStatuses}
-              releaseFilter={releaseFilter}
-              setReleaseFilter={setReleaseFilter}
-              timelineMode={timelineMode}
-              setTimelineMode={setTimelineMode}
-              timelineModes={TIMELINE_MODES}
-              collections={libraryCollections}
-              activeCollectionId={activeCollectionId}
-              setActiveCollectionId={setActiveCollectionId}
-              phases={currentPhases}
-              posterSrc={posterSrc}
-              getRating={(item) => metaCache[item.id]?.rating || RELEASE_INFO[item.title]?.rating}
-              releaseStatusFor={(item) => releaseStatusLabel(releaseStatusFor(item))}
-              onOpenDetail={openDetail}
-              onSetStatus={setStatusDirect}
-              onToggleBookmark={toggleBookmark}
-              bookmarks={bookmarks}
-            />
-          ) : (
-            <LibraryAtrium
-              mode={browseMode}
-              items={activeItems}
-              filteredItems={filtered}
-              search={search}
-              setSearch={setSearch}
-              universe={universe}
-              phases={currentPhases}
-              activeCollectionId={activeCollectionId}
-              setActiveCollectionId={(id) => { setActiveCollectionId(id); setBrowseMode('library'); }}
-              collections={libraryCollections}
-              posterSrc={posterSrc}
-              getRating={(item) => metaCache[item.id]?.rating || RELEASE_INFO[item.title]?.rating}
-              releaseStatusFor={(item) => releaseStatusLabel(releaseStatusFor(item))}
-              bookmarks={bookmarks}
-              historyItems={historyItems}
-              timelineMode={timelineMode}
-              setTimelineMode={setTimelineMode}
-              timelineModes={TIMELINE_MODES}
-              onOpenDetail={openDetail}
-              onSetStatus={setStatusDirect}
-              onToggleBookmark={toggleBookmark}
-              onOpenCatalog={() => setBrowseMode('search')}
-            />
-          )}
-          {false && browseMode !== 'search' && phaseKeys.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: 'var(--font-marvel-ui)', fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
-              NO RESULTS — ADJUST YOUR FILTERS
+      {/* ━━ MINIMAL CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      <main ref={mainRef} className={`app-scroll-shell minimal-app-shell${performanceMode ? ' scroll-performance' : ''}`} style={{ overflow: overlayActive ? 'hidden' : 'visible', touchAction: overlayActive ? 'none' : 'pan-y', pointerEvents: blockHomeInteractions ? 'none' : 'auto', flex: '1 1 auto' }}>
+        <div className="minimal-page">
+          <section className="minimal-hero" aria-label="Progress summary">
+            <div>
+              <p>{activeUniverse.title} Viewing Order</p>
+              <h1>{viewMode === 'calendar' ? 'Calendar' : 'List'}</h1>
+              <span>{filtered.length} titles · {totalWatched}/{activeItems.length} watched · {pct}% complete</span>
             </div>
-          )}
-          <div data-motion="section" className="motion-section motion-pop" style={{ textAlign: 'center', marginTop: 44, fontFamily: 'var(--font-marvel-ui)', fontSize: 11, color: 'var(--theme-text-muted)', letterSpacing: 2.2, fontWeight: 700 }}>
+            <div className="minimal-progress" aria-label={`Progress ${pct}%`}>
+              <strong>{pct}%</strong>
+              <span><span style={{ width: `${pct}%` }} /></span>
+            </div>
+          </section>
+
+          {renderMinimalToolbar()}
+          {viewMode === 'calendar' ? renderMinimalCalendarView() : renderMinimalListView()}
+
+          <footer className="minimal-footer">
             Made with ♥️ by {universe === 'dc' ? (marvelLangMode ? tUniverse('Marvel Fan') : 'DC Fan') : tUniverse('Marvel Fan')}
-          </div>
+          </footer>
         </div>
       </main>
 
