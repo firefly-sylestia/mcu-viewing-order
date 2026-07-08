@@ -3612,17 +3612,6 @@ export default function MCUViewer() {
     );
   };
 
-  const sectionScaffold = (
-    <>
-      <Header title="MCU Viewing Order" subtitle="Modernized modular UI shell" />
-      <TimelineControls />
-      <ProgressSection />
-      <TitleCard />
-      <SettingsSection open={settingsOpen} />
-      <Analytics open={analyticsOpen} />
-      <DetailDrawer open={Boolean(detailItem)} />
-    </>
-  );
 
   const appThemeBg = routeMode === 'utility'
     ? `linear-gradient(180deg, color-mix(in srgb, var(--theme-surface) 36%, var(--app-bg-base)), var(--app-bg-base))`
