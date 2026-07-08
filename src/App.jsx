@@ -13,7 +13,7 @@ import { useHeroBackdrop } from './hooks/useHeroBackdrop';
 import { usePosterCache } from './hooks/usePosterCache';
 import { useOverlayNavigation } from './hooks/useOverlayNavigation';
 import { useResponsiveLayout } from './hooks/useResponsiveLayout';
-import { Header, TimelineControls, ProgressSection, TitleCard, DetailDrawer, Settings as SettingsSection, Analytics } from './components/features';
+import { TitleCard, DetailDrawer, Settings as SettingsSection, Analytics } from './components/features';
 import LibraryAtrium from './components/library/LibraryAtrium';
 import CommandCatalog from './components/library/CommandCatalog';
 import ThemeStudio from './components/features/ThemeStudio';
@@ -26,6 +26,7 @@ import './App.components.css';
 import './App.motion.css';
 import './styles/performance.css';
 import './styles/theme-surfaces.css';
+import './App.pixel-mcu.css';
 
 import {
   ESSENTIAL_LIST,
@@ -3860,281 +3861,16 @@ export default function MCUViewer() {
           </>
         )}
 
-        {!detailItem && !analyticsOpen && !settingsOpen && <WatermarkOverlay surface="hero" theme={darkMode ? 'cinematic' : 'light'} viewport={isDesktopViewport ? 'desktop' : 'mobile'} avoid={['cta', 'title']} />}
+        {!detailItem && !analyticsOpen && !settingsOpen && false && <WatermarkOverlay surface="hero" theme={darkMode ? 'cinematic' : 'light'} viewport={isDesktopViewport ? 'desktop' : 'mobile'} avoid={['cta', 'title']} />}
       </section>}
-      {browseMode === 'phase' && false && (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '6px 16px 12px' }}>
-          <button
-            className="fpill"
-            onClick={navigateHome}
-            style={{ minHeight: 42, padding: '0 18px', fontSize: 13 }}
-          >
-            <ChevDown size={14}/> Back to Home Carousel
-          </button>
-        </div>
-      )}
+      
 
-      {browseMode === 'search' && false && (
-        <section className="search-page-shell" style={{ maxWidth: 1480, margin: '8px auto 14px', padding: '0 16px' }}>
-          <div className="search-page-head" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
-            <div>
-              <div style={{ fontSize: 11, letterSpacing: 1.8, textTransform: 'uppercase', color: T.textMuted }}>{tUniverse('S.H.I.E.L.D. Intel Search')}</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: T.text }}>{tUniverse('Locate any Marvel story node')}</div>
-            </div>
-            <button className="fpill" onClick={navigateHome}><ChevDown size={14}/> {tUniverse('Back to Home')}</button>
-          </div>
-          <div className="search-page-panel" style={{ border: `1px solid ${T.filterBorder}`, borderRadius: 18, padding: 14, background: 'color-mix(in srgb, var(--theme-surface) 84%, transparent)', boxShadow: '0 10px 30px color-mix(in srgb, #000 16%, transparent)' }}>
-            <div style={{ position: 'relative' }}>
-              <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: T.textMuted }} />
-              <input autoFocus value={search} onChange={e => setSearch(e.target.value)} aria-label="Search library" style={{ width: '100%', background: 'color-mix(in srgb, var(--theme-surface) 78%, transparent)', border: `1px solid ${T.inputBorder}`, borderRadius: 14, padding: '12px 14px 12px 38px', color: T.inputColor, fontSize: 15, fontWeight: 650, transition: 'border-color 180ms ease, box-shadow 180ms ease' }} />
-            </div>
-            <div style={{ marginTop: 12, display: 'grid', gap: 8 }}>
-              <div style={{ color: T.textMuted, fontSize: 12, letterSpacing: 0.5, textTransform: 'uppercase' }}>Search in</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                {[
-                  ['title', 'Name'],
-                  ['description', 'Description'],
-                  ['director', 'Director'],
-                  ['actors', 'Actors'],
-                  ['prerequisites', 'Prerequisites'],
-                  ['metadata', 'Phase/Status/Type'],
-                ].map(([key, label]) => {
-                  const active = Boolean(searchScope[key]);
-                  return (
-                    <button
-                      key={key}
-                      className="fpill"
-                      onClick={() => setSearchScope(prev => ({ ...prev, [key]: key === 'title' ? true : !prev[key] }))}
-                      style={{
-                        minHeight: 34,
-                        padding: '0 12px',
-                        borderRadius: 999,
-                        border: `1px solid ${active ? 'color-mix(in srgb, var(--theme-accent) 62%, var(--theme-border))' : T.filterBorder}`,
-                        background: active ? 'color-mix(in srgb, var(--theme-accent) 22%, transparent)' : 'transparent',
-                        color: active ? 'var(--theme-text)' : T.textMuted,
-                        transform: active ? 'translateY(-1px)' : 'none',
-                        transition: 'all 180ms ease',
-                      }}
-                      aria-pressed={active}
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-            <div style={{ marginTop: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              <div style={{ color: T.textMuted, fontSize: 12, letterSpacing: 0.4 }}>{search ? `${filtered.length} matches` : tUniverse('Type to begin searching')}</div>
-              {search && <button className="fpill" onClick={() => setSearch('')}><Trash2 size={12}/> {tUniverse('Clear Search')}</button>}
-            </div>
-          </div>
-        </section>
-      )}
+      
 
       {/* ━━ FILTER BAR (collapsible) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      {false && browseMode !== 'search' && <div style={{ background: 'transparent', borderBottom: 'none', flexShrink: 0, position: 'relative', zIndex: 60, marginTop: 16 }}>
-        {/* Toggle row — always visible */}
-        <div style={{ maxWidth: 1480, margin: '0 auto', padding: '0 16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', flexWrap: 'wrap' }}>
-            <button className="filters-trigger"
-              onClick={() => setFiltersOpen(v => !v)}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 10, border: `1px solid ${filtersOpen ? 'color-mix(in srgb, var(--theme-accent) 50%, var(--theme-border))' : T.filterBorder}`, background: 'transparent', color: filtersOpen ? 'var(--theme-accent)' : T.textMuted, cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 2, transition: 'all 0.18s' }}
-            >
-              <SlidersH size={13} />
-              {filterTriggerLabel}
-              {activeFilterCount > 0 && (
-                <span className="filters-count-badge" aria-label={`${activeFilterCount} active filters`}>{activeFilterCount}</span>
-              )}
-              <ChevDown size={11} style={{ opacity: 0.7, transform: filtersOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
-            </button>
-            <div ref={sortMenuRef} style={{ position: 'relative' }}>
-              <button className="filters-trigger" onClick={() => setSortMenuOpen(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px', borderRadius: 10, border: `1px solid ${sortBy === 'order' ? 'color-mix(in srgb, var(--theme-accent) 50%, var(--theme-border))' : T.filterBorder}`, background: 'transparent', color: sortBy === 'order' ? 'var(--theme-accent)' : T.text, cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 1.3 }}><ArrowUpDown size={13} />Sort: {SORT_LABELS[sortBy]}<ChevDown size={11} style={{ transform: sortMenuOpen ? 'rotate(180deg)' : 'none' }}/></button>
-              {sortMenuOpen && <div className="dropdown-pop filter-dropdown redesigned-sort-menu" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, zIndex: 1450, minWidth: 240 }}>
-                {Object.entries(SORT_LABELS).map(([key, label]) => (
-                  <button key={key} className={`sopt ${sortBy === key ? 'picked' : ''}`} onClick={() => { setSortBy(key); setSortMenuOpen(false); }} style={{ width: '100%', textAlign: 'left' }}>
-                    {label}
-                  </button>
-                ))}
-              </div>}
-            </div>
-            <div ref={timelineRef} style={{ position: 'relative' }}>
-              <button className="filters-trigger" onClick={() => setTimelineOpen(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px', borderRadius: 10, border: `1px solid color-mix(in srgb, var(--theme-accent) 42%, var(--theme-border))`, background: 'linear-gradient(135deg, color-mix(in srgb, #ed1d24 22%, var(--theme-surface)) 0%, color-mix(in srgb, #0063e5 18%, var(--theme-surface)) 100%)', color: 'var(--theme-text)', cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 1.2, boxShadow: '0 10px 20px rgba(0,0,0,.18)' }}>
-                <Layers size={13} /> {TIMELINE_MODES.find(m => m.id === timelineMode)?.label || 'Timeline'} <ChevDown size={11} style={{ transform: timelineOpen ? 'rotate(180deg)' : 'none' }}/>
-              </button>
-              {timelineOpen && (
-                <div className="dropdown-pop filter-dropdown redesigned-sort-menu" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, zIndex: 1450, minWidth: 300 }}>
-                  {TIMELINE_MODES.map(mode => (
-                    <button key={mode.id} className={`sopt ${timelineMode === mode.id ? 'picked' : ''}`} style={{ width: '100%', textAlign: 'left', marginBottom: 4, borderRadius: 10, border: timelineMode === mode.id ? '1px solid color-mix(in srgb, var(--theme-accent) 60%, transparent)' : '1px solid transparent' }} onClick={() => { setTimelineMode(mode.id); setTimelineOpen(false); }}>
-                      <div style={{ fontWeight: 700 }}>{mode.label}</div><div style={{ fontSize: 11, opacity: 0.8 }}>{mode.description}</div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+      
+      
 
-            {renderPhaseSelector()}
-            {activeFilterCount > 0 && (
-              <button className="fpill" style={{ color: 'var(--theme-danger)', borderColor: 'var(--theme-danger-soft)', background: 'var(--theme-danger-soft)', padding: '7px 12px' }}
-                onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); setAutoHideStatuses(false); setSortBy('order'); setActivePhase(0); setReleaseFilter('all'); }}>
-                <Trash2 size={10} /> Clear
-              </button>
-            )}
-            <button className="glass-grad quick-continue-btn" onClick={() => nextUnwatched && openDetail(nextUnwatched)} style={{ border: `1px solid ${T.filterBorder}`, borderRadius: 999, padding: '7px 12px', display: 'flex', alignItems: 'center', gap: 8, maxWidth: 380, background: 'color-mix(in srgb, var(--theme-surface) 70%, transparent)', backdropFilter: 'blur(12px) saturate(130%)', WebkitBackdropFilter: 'blur(12px) saturate(130%)', cursor: nextUnwatched ? 'pointer' : 'default' }}>
-              <span style={{ fontSize: 10, letterSpacing: 1.6, color: T.textMuted, textTransform: 'uppercase' }}>Continue</span>
-              <span style={{ fontSize: 12, color: T.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nextUnwatched ? nextUnwatched.title : 'All caught up'}</span>
-            </button>
-            <button className="filters-trigger" onClick={openSearchMode} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px', borderRadius: 10, border: `1px solid ${T.filterBorder}`, background: 'transparent', color: T.text, cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 1.3 }}>
-              <Search size={13} />
-              Search Library
-            </button>
-            <div className='filter-row-actions' style={{ marginLeft: 0, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-start', minWidth: 0 }} />
-          </div>
-        </div>
-
-        {/* Collapsible filter controls */}
-        {filtersOpen && (
-          <div className="filters-open" style={{ padding: '0 48px 12px', maxWidth: 1400, margin: '0 auto' }}>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', overflow: 'visible' }}>
-              {/* Type pills */}
-              {['film', 'series', 'short'].map(t => {
-                const m = getSafeTypeMeta(t);
-                const on = typeFilter === t;
-                return (
-                  <button key={t} className="fpill filter-pill type-pill"
-                    aria-pressed={on}
-                    style={on ? { borderColor: m.color + '88', background: m.color + '14', color: m.color } : {}}
-                    onClick={() => setTypeFilter(on ? null : t)}>
-                    {on ? <Check size={10} /> : <m.Icon size={10} />}{m.label}
-                  </button>
-                );
-              })}
-              {(listMode === 'core' || listMode === 'extended') && (
-                <button className="fpill"
-                  aria-pressed={essentialOnly}
-                  style={essentialOnly ? { borderColor: 'color-mix(in srgb, var(--theme-warning) 50%, transparent)', background: 'var(--theme-warning-soft)', color: 'var(--theme-warning)' } : {}}
-                  onClick={() => setEssOnly(o => !o)}>
-                  {essentialOnly ? <Check size={10} /> : <Star size={10} />}Must-Watch
-                </button>
-              )}
-              <button className="fpill"
-                aria-pressed={showAllFiltersOverride}
-                style={showAllFiltersOverride ? { borderColor: 'var(--theme-accent)', background: 'color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface))', color: 'var(--theme-accent)' } : {}}
-                onClick={() => setShowAllFiltersOverride(v => !v)}>
-                {showAllFiltersOverride ? <Check size={10} /> : <Eye size={10} />}Show All
-              </button>
-              {/* Status filter */}
-              <div style={{ position: 'relative' }}>
-                <button className="fpill"
-                  aria-pressed={Boolean(watchedOnly || statusFilter)}
-                  style={watchedOnly || statusFilter ? { borderColor: 'color-mix(in srgb, var(--theme-success) 50%, transparent)', background: 'var(--theme-success-soft)', color: 'var(--theme-success)' } : {}}
-                  onClick={() => setFilterStatusOpen(v => !v)}
-                  >
-                  <Check size={10} />Status
-                </button>
-                {filterStatusOpen && (
-                  <div className="dropdown-pop filter-dropdown" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, zIndex: 1400, minWidth: 220 }}
-                    >
-                    <div className={`sopt ${!statusFilter && !watchedOnly ? 'picked' : ''}`} onClick={() => { setStatusFilter(null); setWatchedOnly(false); setFilterStatusOpen(false); }}>Show all status</div>
-                    <div className={`sopt ${watchedOnly ? 'picked' : ''}`} onClick={() => { setWatchedOnly(true); setStatusFilter(null); setFilterStatusOpen(false); }}>Watched only</div>
-                    <div className={`sopt ${statusFilter === 'watching' ? 'picked' : ''}`} onClick={() => { setStatusFilter('watching'); setWatchedOnly(false); setFilterStatusOpen(false); }}>Watching</div>
-                    <div className={`sopt ${statusFilter === 'plan-to-watch' ? 'picked' : ''}`} onClick={() => { setStatusFilter('plan-to-watch'); setWatchedOnly(false); setFilterStatusOpen(false); }}>Plan to Watch</div>
-                    <div className={`sopt ${statusFilter === 'dropped' ? 'picked' : ''}`} onClick={() => { setStatusFilter('dropped'); setWatchedOnly(false); setAutoHideStatuses(false); setFilterStatusOpen(false); }}>Dropped</div>
-                    
-                  </div>
-                )}
-              </div>
-              {/* Bulk actions */}
-              <button className="fpill"
-                aria-pressed={bulkSelectMode}
-                style={bulkSelectMode ? { borderColor: 'var(--theme-accent)', background: 'color-mix(in srgb, var(--theme-accent) 12%, var(--theme-surface))', color: 'var(--theme-accent)' } : {}}
-                onClick={() => { setBulkSelectMode(v => !v); clearBulkSelection(); }}>
-                <Check size={10} />{bulkSelectMode ? `Selecting ${selectedIds.size}` : 'Select'}
-              </button>
-              {bulkSelectMode && (
-                <>
-                  <button className="fpill" onClick={() => setSelectedIds(new Set(filtered.map(i => i.id)))} style={{ padding: '7px 12px' }}>Select visible</button>
-                  <button className="fpill" disabled={!selectedIds.size} onClick={() => applyBulkStatus('watched')} style={{ padding: '7px 12px', opacity: selectedIds.size ? 1 : 0.5 }}><Check size={10}/>Watched</button>
-                  <button className="fpill" disabled={!selectedIds.size} onClick={() => applyBulkStatus('plan-to-watch')} style={{ padding: '7px 12px', opacity: selectedIds.size ? 1 : 0.5 }}><Clock size={10}/>Plan</button>
-                  <button className="fpill" disabled={!selectedIds.size} onClick={() => applyBulkStatus('unwatched')} style={{ padding: '7px 12px', opacity: selectedIds.size ? 1 : 0.5 }}><EyeOff size={10}/>Unwatched</button>
-                </>
-              )}
-              {/* Reset */}
-            </div>
-          </div>
-        )}
-      </div>}
-      {false && <div className={`floating-controls${fabMinimized ? ' is-minimized' : ''}`} style={detailItem || trailerOpen || analyticsOpen || settingsOpen || sidebarOpen ? { opacity: 0, pointerEvents: 'none', visibility: 'hidden' } : undefined}>
-        <button
-          type="button"
-          className="fab-primary"
-          onClick={() => setFabMenuOpen(v => !v)}
-          style={{
-            borderColor: fabMenuOpen ? 'var(--theme-accent)' : 'color-mix(in srgb,var(--theme-accent) 28%, var(--theme-border))',
-            background: fabMenuOpen ? 'color-mix(in srgb,var(--theme-accent) 16%, var(--theme-surface))' : 'color-mix(in srgb,var(--theme-surface) 86%, transparent)',
-            boxShadow: '0 16px 34px rgba(0,0,0,.30)',
-          }}
-        >
-          <Zap size={14} /> <span className="fab-primary-label">Quick Actions</span> <ChevDown size={12} style={{ transform: fabMenuOpen ? 'rotate(180deg)' : 'none' }} />
-        </button>
-
-        {/* ━━ JUMP NEXT BUTTON ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-        <div className="bottom-action-dock" style={{ display: fabMenuOpen ? 'flex' : 'none' }}>
-        <button type="button" onClick={handleMetadataBuildClick} className="dock-btn"
-          style={{ borderColor: metadataBuild.status === 'running' ? 'var(--theme-warning)' : T.surfaceBorder }}>
-          {metadataBuild.status === 'running' ? `Fetch ${metadataBuild.done}/${metadataBuild.total}` : 'Fetch'}
-        </button>
-        <button type="button" className="dock-btn"
-          onClick={() => setViewMode(viewMode === 'list' ? 'calendar' : 'list')}
-          style={{ background: 'color-mix(in srgb, var(--theme-accent) 16%, var(--control-solid-bg))' }}>
-          View: {viewMode === 'list' ? 'List' : 'Calendar'}
-        </button>
-        <button type="button" className="dock-btn"
-          onClick={() => { const next = listMode === 'core' ? 'extended' : 'core'; setListMode(next); setExpandedItem(null); setExpandedPhase(null); }}
-          style={{ background: 'color-mix(in srgb, var(--theme-accent-alt) 16%, var(--control-solid-bg))' }}>
-          Mode: {listMode === 'core' ? (universe === 'dc' ? 'DC Core' : 'MCU Core') : 'Extended'}
-        </button>
-        <div className="dock-status-menu" style={{ position: 'relative' }}>
-          <button
-            type="button"
-            onClick={() => setDockStatusOpen(v => !v)}
-            aria-label="Open quick status filters"
-            className="bottom-action-bar"
-            style={{ border: `1px solid ${T.surfaceBorder}`, background: 'var(--control-solid-bg)', color: 'var(--theme-text)', boxShadow: 'none', fontFamily: 'var(--font-marvel-ui)', letterSpacing: 1.2, fontSize: 12, fontWeight: 700 }}
-          >
-            Status Menu <ChevDown size={12} style={{ transform: dockStatusOpen ? 'rotate(180deg)' : 'none' }} />
-          </button>
-          {dockStatusOpen && (
-            <div className="dropdown-pop-up dock-status-dropdown" style={{ position: 'absolute', bottom: 'calc(100% + 8px)', right: 0, minWidth: 220, zIndex: 1400, color: 'var(--theme-text)' }}>
-              <div className="dock-status-head">Quick status filter</div>
-              <div className="dock-status-grid">
-                {[
-                  { key: 'all', label: 'All Statuses', Icon: Layers, active: !statusFilter && !watchedOnly, onClick: () => { setStatusFilter(null); setWatchedOnly(false); setAutoHideStatuses(false); setDockStatusOpen(false); } },
-                  { key: 'watched', label: 'Watched', Icon: Check, active: watchedOnly, onClick: () => { setWatchedOnly(true); setStatusFilter(null); setAutoHideStatuses(false); setDockStatusOpen(false); } },
-                  { key: 'watching', label: 'Watching', Icon: PlayCircle, active: statusFilter === 'watching', onClick: () => { setStatusFilter('watching'); setWatchedOnly(false); setDockStatusOpen(false); } },
-                  { key: 'on-hold', label: 'On Hold', Icon: PauseCircle, active: statusFilter === 'on-hold', onClick: () => { setStatusFilter('on-hold'); setWatchedOnly(false); setDockStatusOpen(false); } },
-                  { key: 'dropped', label: 'Dropped', Icon: XCircle, active: statusFilter === 'dropped', onClick: () => { setStatusFilter('dropped'); setWatchedOnly(false); setDockStatusOpen(false); } },
-                  { key: 'plan-to-watch', label: 'Plan to Watch', Icon: Clock, active: statusFilter === 'plan-to-watch', onClick: () => { setStatusFilter('plan-to-watch'); setWatchedOnly(false); setDockStatusOpen(false); } },
-                ].map(opt => (
-                  <button key={opt.key} type="button" className={`dock-status-item ${opt.active ? 'active' : ''}`} onClick={opt.onClick} aria-pressed={opt.active}>
-                    <opt.Icon size={14} />
-                    <span>{opt.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-        </div>
-      </div>}
-        <button
-          type="button"
-          className="go-top-fab"
-          onClick={scrollToListTop}
-          aria-label="Go to top"
-          style={(detailItem || trailerOpen || analyticsOpen || settingsOpen || sidebarOpen || scrollCheckpoint <= 420) ? { opacity: 0, pointerEvents: 'none', transform: 'translateY(8px)' } : undefined}
-        >
-          <ChevDown size={14} style={{ transform: 'rotate(180deg)' }} /> Top
-        </button>
 
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <main ref={mainRef} className={`app-scroll-shell${performanceMode ? ' scroll-performance' : ''}`} style={{ overflow: overlayActive ? 'hidden' : 'visible', touchAction: overlayActive ? 'none' : 'pan-y', pointerEvents: blockHomeInteractions ? 'none' : 'auto', flex: '1 1 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
@@ -4202,11 +3938,7 @@ export default function MCUViewer() {
               onOpenCatalog={() => setBrowseMode('search')}
             />
           )}
-          {false && browseMode !== 'search' && phaseKeys.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: 'var(--font-marvel-ui)', fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
-              NO RESULTS — ADJUST YOUR FILTERS
-            </div>
-          )}
+          
           <div data-motion="section" className="motion-section motion-pop" style={{ textAlign: 'center', marginTop: 44, fontFamily: 'var(--font-marvel-ui)', fontSize: 11, color: 'var(--theme-text-muted)', letterSpacing: 2.2, fontWeight: 700 }}>
             Made with ♥️ by {universe === 'dc' ? (marvelLangMode ? tUniverse('Marvel Fan') : 'DC Fan') : tUniverse('Marvel Fan')}
           </div>
@@ -4241,161 +3973,7 @@ export default function MCUViewer() {
       />
 
       {/* ━━ DETAIL MODAL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      {false && detailItem && (
-        <div className="detail-backdrop" onClick={() => setDetailItem(null)} role="dialog" aria-label="Movie details">
-          <div className="detail-card glass-panel detail-export-shell" onClick={(e) => e.stopPropagation()} style={{ border: '1px solid color-mix(in srgb, var(--theme-accent) 24%, var(--theme-border))' }}>
-            <div className="detail-export-grid">
-              <div className="detail-poster-frame">
-                {detailPosterFailed ? (
-                  <div className="detail-fallback-poster" style={{ width: '100%', height: '100%' }}>
-                    <span>{detailItem.title}</span>
-                  </div>
-                ) : (
-                  <img src={detailData?.Poster && detailData.Poster !== 'N/A' ? detailData.Poster : posterSrc(detailItem)} onError={() => setDetailPosterFailed(true)} alt={`${detailItem.title} poster`} onClick={() => { if (selectedTrailer?.youtubeId) openTrailerPlayer(); }} style={{ cursor: selectedTrailer?.youtubeId ? 'pointer' : 'default' }} />
-                )}
-              
-                {!!selectedTrailer?.youtubeId && (
-                  <button className="fpill" style={{ position: 'absolute', left: 12, bottom: 12, zIndex: 3, background: 'color-mix(in srgb, #ed1d24 22%, var(--theme-surface))', borderColor: 'color-mix(in srgb, #ed1d24 52%, var(--theme-border))' }} onClick={openTrailerPlayer}><PlayCircle size={13}/>Play Media</button>
-                )}
-</div>
-
-              <div className="detail-export-content">
-                <div className="detail-sticky-actions">
-                  <button className="fpill glass-panel detail-btn detail-close-sticky" onClick={() => setDetailItem(null)}><X size={14}/>Close</button>
-                </div>
-                <div className="detail-export-kicker">MCU DETAILS CARD</div>
-                <h2 className="detail-export-title">{detailItem.title}</h2>
-                <div className="detail-export-meta">
-                  <span>Phase {detailItem.phase}</span>
-                  <span>{getSafeTypeMeta(detailItem.type).label}</span>
-                  {(detailData?.imdbRating && detailData.imdbRating !== 'N/A') && <span>★ {detailData.imdbRating}/10</span>}
-                </div>
-                <div className="detail-export-actions-inline">
-                  {hasTrailerOption && (
-                    <button className="fpill glass-panel detail-btn" onClick={() => { setTrailerVariantIndex(trailerOptionIndex); openTrailerPlayer(); }}><PlayCircle size={12}/>Trailer</button>
-                  )}
-                  {hasTeaserOption && (
-                    <button className="fpill glass-panel detail-btn" onClick={() => { setTrailerVariantIndex(teaserOptionIndex); openTrailerPlayer(); }}><PlayCircle size={12}/>Teaser</button>
-                  )}
-                  {!hasTrailerOption && !hasTeaserOption && !!selectedTrailer?.youtubeId && (
-                    <button className="fpill glass-panel detail-btn" onClick={openTrailerPlayer}><PlayCircle size={12}/>Watch Media</button>
-                  )}
-                  <button className="fpill glass-panel detail-btn" onClick={() => openImdbForItem(detailItem, detailData)}><Info size={12}/>Open IMDb</button>
-                  <button className="fpill glass-panel detail-btn" onClick={() => exportPosterForItem(detailItem, { share: true })}><Upload size={12}/>Share Exact Card</button>
-                </div>
-                {detailLoading && <div className="detail-export-loading">Loading metadata…</div>}
-                {!detailLoading && !detailData && <div className="detail-export-loading">Showing local data.</div>}
-
-                <section className="detail-export-panel story">
-                  <div className="detail-export-panel-head">
-                    <span>STORY BRIEF</span>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                      <button
-                        className="fpill glass-panel detail-btn"
-                        style={{ padding: '4px 10px', fontSize: 10, borderRadius: 999 }}
-                        onClick={async () => {
-                          if (detailPlotState.active === 'primary') {
-                            if (!detailPlotState.secondary) await fetchSecondaryPlotForDetail();
-                            setDetailPlotState(prev => ({ ...prev, active: 'secondary' }));
-                          } else {
-                            setDetailPlotState(prev => ({ ...prev, active: 'primary' }));
-                          }
-                        }}
-                      >
-                        <SwitchIcon size={11} /> {detailPlotState.active === 'primary' ? 'TMDB' : (detailPlotState.loadingSecondary ? 'Loading…' : 'OMDb')}
-                      </button>
-                      <button
-                        className="fpill glass-panel detail-btn"
-                        aria-label={spoilerSafe ? 'Disable spoiler safe mode' : 'Enable spoiler safe mode'}
-                        title={spoilerSafe ? 'Spoiler Safe: On' : 'Spoiler Safe: Off'}
-                        onClick={() => setSpoilerSafeMode(v => !v)}
-                        style={{
-                          width: 32,
-                          height: 32,
-                          minWidth: 32,
-                          padding: 0,
-                          borderRadius: 999,
-                          justifyContent: 'center',
-                          background: spoilerSafe ? 'var(--theme-warning-soft)' : 'var(--control-solid-bg)',
-                          borderColor: spoilerSafe ? 'var(--theme-warning)' : 'var(--theme-border)',
-                          color: spoilerSafe ? 'var(--theme-warning)' : 'var(--theme-text-muted)',
-                          transition: 'all 180ms var(--ease-out)',
-                        }}
-                      >
-                        <EyeOff size={12} />
-                      </button>
-                    </div>
-                  </div>
-                  <p style={{ filter: spoilerSafe ? 'blur(5px)' : 'none', transition: 'filter 0.18s ease' }}>
-                    {detailPlotState.active === 'secondary'
-                      ? (detailPlotState.secondary || detailItem.desc)
-                      : (detailPlotState.primary || detailData?.Plot || detailItem.desc)}
-                  </p>
-                </section>
-
-                <section className="detail-export-panel intel">
-                  <div className="detail-export-panel-head"><span>WATCH INTEL + AFTER-CREDITS NAVIGATOR</span></div>
-                  <div className="detail-intel-list">
-                    <div><strong>Release</strong><span>{formatReleaseDate(releaseInfoFor(detailItem).date, detailItem.year, releaseInfoFor(detailItem).label, releaseStatusFor(detailItem))}</span></div>
-                    <div><strong>Prerequisite</strong><span>{detailItem.prereq}</span></div>
-                    <div><strong>Status</strong><span>{getSafeStatusMeta(detailItem.status).label}</span></div>
-                    <div><strong>Post-credit scenes</strong><span>{getAfterCreditsMeta(detailItem).count ?? 'Unknown'}</span></div>
-                    <div><strong>Watch now?</strong><span>{getAfterCreditsMeta(detailItem).advice === 'must' ? 'Must watch now' : (getAfterCreditsMeta(detailItem).advice === 'can-skip' ? 'Can skip now' : 'Check later')}</span></div>
-                    <div><strong>Connects to</strong><span>{getAfterCreditsMeta(detailItem).connectsTo.length ? getAfterCreditsMeta(detailItem).connectsTo.join(', ') : 'No explicit setup tracked'}</span></div>
-                    <div><strong>Director</strong><span>{detailData?.Director && detailData.Director !== 'N/A' ? detailData.Director : (DIRECTOR_DATA[detailItem.title] || 'Director data coming soon')}</span></div>
-                    <div><strong>Cast</strong><span>{detailData?.Actors && detailData.Actors !== 'N/A' ? detailData.Actors : (CAST_MAP[detailItem.title] || ['Cast data coming soon']).join(', ')}</span></div>
-                  </div>
-                </section>
-                <section className="detail-export-panel intel post-credit-graph-panel">
-                  <div className="detail-export-panel-head"><span>POST-CREDIT DEPENDENCY GRAPH</span></div>
-                  <div className="post-credit-graph" role="list" aria-label="Post-credit dependency graph">
-                    <article className="post-credit-lane outgoing" role="listitem" aria-label="Outgoing post-credit dependencies">
-                      <header>
-                        <strong>Outgoing stingers</strong>
-                        <small>What this title sets up next</small>
-                      </header>
-                      <div className="post-credit-flow">
-                        <span className="post-credit-node is-current">{detailItem.title}</span>
-                        {postCreditForward.length ? postCreditForward.map(node => (
-                          <React.Fragment key={`forward-${node}`}>
-                            <span className="post-credit-arrow" aria-hidden>→</span>
-                            <span className="post-credit-node is-outgoing">{node}</span>
-                          </React.Fragment>
-                        )) : <span className="post-credit-empty">No outgoing setup tracked.</span>}
-                      </div>
-                    </article>
-                    <article className="post-credit-lane incoming" role="listitem" aria-label="Incoming post-credit dependencies">
-                      <header>
-                        <strong>Incoming stingers</strong>
-                        <small>What sets up this title</small>
-                      </header>
-                      <div className="post-credit-flow">
-                        {postCreditInbound.length ? postCreditInbound.map(node => (
-                          <React.Fragment key={`incoming-${node}`}>
-                            <span className="post-credit-node is-incoming">{node}</span>
-                            <span className="post-credit-arrow" aria-hidden>→</span>
-                          </React.Fragment>
-                        )) : <span className="post-credit-empty">No incoming setup tracked.</span>}
-                        <span className="post-credit-node is-current">{detailItem.title}</span>
-                      </div>
-                    </article>
-                  </div>
-                </section>
-
-                <div className="detail-export-actions">
-                  <button
-                    className={`fpill glass-panel detail-btn ${myLikes[detailItem.id] ? 'is-active' : ''}`}
-                    onClick={() => setMyLikes(prev => ({ ...prev, [detailItem.id]: !prev[detailItem.id] }))}
-                  >
-                    <Heart size={12}/> {myLikes[detailItem.id] ? 'Liked' : 'Like'}
-                  </button>
-                  <button className="fpill glass-panel detail-btn" onClick={() => exportPosterForItem(detailItem)}><Download size={14}/> Export Details Card</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      
 
       {trailerOpen && detailItem && selectedTrailer?.youtubeId && (
         <div className="detail-backdrop trailer-backdrop" onClick={closeTrailer} role="dialog" aria-label="Trailer player">

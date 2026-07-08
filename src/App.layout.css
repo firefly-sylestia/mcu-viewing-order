@@ -71,7 +71,7 @@
 
 
         .glass-panel{background:var(--surface-overlay);border:1px solid var(--border-soft);border-radius:16px;box-shadow:var(--shadow-soft)}
-        .glass-grad{background:linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02))}
+        /* .glass-grad: removed (unused decorative pixel-MCU declutter) */
         .meta-muted{color:var(--theme-text-muted) !important}
 
         /* Mobile */
