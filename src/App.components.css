@@ -3107,3 +3107,277 @@ body { background: var(--app-shell-gradient); }
 @media (prefers-reduced-motion: reduce) {
   .post-credit-node { transition: none; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FIX: Larger posters, clean spacing, no overlaps
+   Overrides the compact redesign that made things too small
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── List Rows: cinematic proportions, clean layout ────────────────────── */
+.rrow {
+  display: grid !important;
+  grid-template-columns: 36px 110px minmax(0,1fr) minmax(140px,auto) !important;
+  min-height: 146px !important;
+  gap: 18px !important;
+  padding: 16px 20px 16px 16px !important;
+  align-items: center !important;
+  border-radius: 16px !important;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 52%, transparent) !important;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--theme-surface) 93%, transparent), color-mix(in srgb, var(--theme-bg) 38%, transparent)) !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,.14), inset 0 1px 0 rgba(255,255,255,.04) !important;
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease, background .18s ease !important;
+  overflow: visible !important;
+}
+.rrow:hover {
+  transform: translateY(-2px) !important;
+  border-color: color-mix(in srgb, var(--theme-accent) 42%, var(--theme-border)) !important;
+  box-shadow: 0 6px 18px rgba(0,0,0,.22), 0 0 0 1px color-mix(in srgb, var(--theme-accent) 16%, transparent), inset 0 1px 0 rgba(255,255,255,.06) !important;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--theme-surface-hover) 86%, transparent), color-mix(in srgb, var(--theme-bg) 44%, transparent)) !important;
+}
+.rrow.curvy-selected {
+  border-color: color-mix(in srgb, var(--theme-accent) 60%, var(--theme-border)) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--theme-accent) 22%, transparent), 0 4px 12px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.05) !important;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--theme-accent) 7%, var(--theme-surface)), color-mix(in srgb, var(--theme-accent-alt) 4%, var(--theme-surface))) !important;
+}
+.rrow::before, .rrow::after { display: none !important; }
+
+/* Poster: large, cinematic, no overlap */
+.poster-shell, .poster {
+  width: 110px !important;
+  height: 158px !important;
+  border-radius: 14px !important;
+  flex-shrink: 0 !important;
+}
+.poster {
+  object-fit: cover !important;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 48%, transparent) !important;
+  box-shadow: 0 6px 18px rgba(0,0,0,.3) !important;
+}
+
+/* Title area: clear hierarchy */
+.title-btn { padding: 6px 0 !important; min-height: 80px !important; display: grid !important; gap: 8px !important; align-content: center !important; color: var(--theme-text-primary) !important; text-shadow: none !important; }
+.title-btn .title-main { font-size: clamp(18px, 1.5vw, 22px) !important; font-weight: 740 !important; line-height: 1.22 !important; letter-spacing: .01em !important; color: var(--theme-text-primary) !important; -webkit-line-clamp: 2 !important; }
+.title-subline { font-size: 11px !important; letter-spacing: .06em !important; opacity: .85 !important; color: var(--theme-text-secondary) !important; -webkit-line-clamp: 1 !important; }
+
+/* Meta chips: clean, readable */
+.meta-chip { padding: 3px 9px !important; font-size: 10px !important; font-weight: 680 !important; border-radius: 6px !important; background: color-mix(in srgb, var(--theme-bg) 76%, transparent) !important; border: 1px solid color-mix(in srgb, var(--theme-border) 62%, transparent) !important; color: var(--theme-text-secondary) !important; line-height: 1.3 !important; }
+
+/* Row actions: right-aligned, clean */
+.row-actions { display: flex !important; align-items: center !important; justify-content: flex-end !important; gap: 8px !important; min-width: 140px !important; }
+
+/* Status pill: elegant, theme-aware */
+.status-marvel-pill {
+  min-width: 100px !important;
+  height: 32px !important;
+  padding: 0 14px !important;
+  border-radius: 10px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  letter-spacing: .02em !important;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--theme-accent) 32%, #7f1d1d), color-mix(in srgb, var(--theme-accent-alt) 16%, #450a0a)) !important;
+  border: 1px solid color-mix(in srgb, var(--theme-accent) 38%, transparent) !important;
+  color: color-mix(in srgb, var(--theme-accent) 58%, #fecdd3) !important;
+  box-shadow: 0 3px 8px rgba(127,29,29,.25) !important;
+}
+.status-marvel-pill:hover { filter: brightness(1.07) !important; transform: translateY(-1px) !important; }
+
+/* Icon buttons: clean */
+.notwatched-marvel-btn, .bookmark-marvel-btn {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 10px !important;
+  background: color-mix(in srgb, var(--theme-surface) 84%, transparent) !important;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 68%, transparent) !important;
+  color: var(--theme-text-secondary) !important;
+}
+.notwatched-marvel-btn:hover, .bookmark-marvel-btn:hover {
+  border-color: color-mix(in srgb, var(--theme-accent) 38%, var(--theme-border)) !important;
+  color: var(--theme-accent) !important;
+  transform: translateY(-1px) !important;
+}
+.bookmark-marvel-btn[data-bookmarked="true"] {
+  background: linear-gradient(135deg, #ef4444, #be123c) !important;
+  border-color: #fb7185 !important;
+  color: #fff1f2 !important;
+  box-shadow: 0 0 0 2px rgba(251,113,133,.35) !important;
+}
+
+/* Row index */
+.row-index { font-size: 13px !important; font-weight: 700 !important; color: var(--theme-text-muted) !important; text-align: center !important; }
+.row-index.is-watched { color: color-mix(in srgb, var(--theme-accent) 48%, var(--theme-text-muted)) !important; }
+
+/* ── Phase Headers ─────────────────────────────────────────────────────── */
+.phase-header-card {
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  padding: 14px 20px !important;
+  margin-bottom: 10px !important;
+  border-radius: 16px !important;
+  border: 1px solid color-mix(in srgb, var(--theme-accent) 24%, var(--theme-border)) !important;
+  background: color-mix(in srgb, var(--theme-accent) 8%, var(--theme-surface)) !important;
+  box-shadow: 0 3px 10px rgba(0,0,0,.14), inset 0 1px 0 rgba(255,255,255,.05) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+.phase-title { font-size: clamp(20px, 2.2vw, 26px) !important; font-weight: 780 !important; letter-spacing: .04em !important; color: var(--theme-text-primary) !important; }
+.phase-tagline { font-size: 11px !important; letter-spacing: .1em !important; opacity: .85 !important; color: var(--theme-text-secondary) !important; }
+.phase-progress-chip { padding: 5px 12px !important; border-radius: 10px !important; font-size: 11px !important; font-weight: 700 !important; border: 1px solid color-mix(in srgb, var(--theme-accent) 38%, transparent) !important; background: color-mix(in srgb, var(--theme-accent) 12%, var(--theme-surface)) !important; color: var(--theme-accent) !important; }
+
+/* Phase rows container */
+.phase-rows-full {
+  padding: 8px !important;
+  gap: 8px !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* ── Controls: clean, elegant ──────────────────────────────────────────── */
+.fpill {
+  padding: 0 12px !important;
+  min-height: 34px !important;
+  border-radius: 10px !important;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 64%, transparent) !important;
+  background: color-mix(in srgb, var(--theme-surface) 82%, transparent) !important;
+  color: var(--theme-text-secondary) !important;
+  font-size: 12px !important;
+  font-weight: 680 !important;
+  letter-spacing: .02em !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,.1) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+.fpill:hover { border-color: color-mix(in srgb, var(--theme-accent) 35%, var(--theme-border)) !important; color: var(--theme-text-primary) !important; transform: translateY(-1px) !important; }
+.fpill[aria-pressed="true"], .fpill.active, .fpill.picked { border-color: color-mix(in srgb, var(--theme-accent) 58%, var(--theme-border)) !important; background: color-mix(in srgb, var(--theme-accent) 16%, var(--theme-surface)) !important; color: var(--theme-accent) !important; }
+
+.phase-chip {
+  padding: 8px 12px !important;
+  min-height: 34px !important;
+  border-radius: 10px !important;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 64%, transparent) !important;
+  background: color-mix(in srgb, var(--theme-surface) 84%, transparent) !important;
+  color: var(--theme-text-secondary) !important;
+  font-weight: 700 !important;
+  font-size: 12px !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,.1) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+.phase-chip:hover { border-color: color-mix(in srgb, var(--theme-accent) 35%, var(--theme-border)) !important; color: var(--theme-text-primary) !important; transform: translateY(-1px) !important; }
+.phase-chip[style*="var(--theme-accent)"] { border-color: color-mix(in srgb, var(--theme-accent) 58%, var(--theme-border)) !important; background: color-mix(in srgb, var(--theme-accent) 16%, var(--theme-surface)) !important; color: var(--theme-accent) !important; }
+
+/* Dock */
+.bottom-action-dock {
+  padding: 7px 10px !important;
+  gap: 8px !important;
+  border-radius: 14px !important;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 58%, transparent) !important;
+  background: color-mix(in srgb, var(--theme-surface) 88%, transparent) !important;
+  backdrop-filter: blur(10px) saturate(130%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(130%) !important;
+  box-shadow: 0 6px 16px rgba(0,0,0,.22) !important;
+}
+.fab-primary { padding: 10px 14px !important; border-radius: 12px !important; font-size: 13px !important; }
+.dock-btn { padding: 7px 12px !important; border-radius: 10px !important; font-size: 12px !important; font-weight: 680 !important; min-height: 32px !important; }
+
+/* Filter bar */
+.filters-open {
+  border-radius: 12px !important;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 52%, transparent) !important;
+  background: color-mix(in srgb, var(--theme-surface) 80%, transparent) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,.14) !important;
+  padding: 12px !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* ── Hero carousel: restore proper height ──────────────────────────────── */
+.hero-carousel-shell { height: clamp(380px, 54vw, 520px) !important; }
+
+/* ── Rating text ─────────────────────────────────────────────────────────── */
+.row-meta-line { font-size: 12px !important; font-weight: 680 !important; color: var(--theme-text-muted) !important; }
+
+/* ── Title row mid gap ──────────────────────────────────────────────────── */
+.title-row-mid { gap: 5px !important; }
+
+/* ── Focus-visible ───────────────────────────────────────────────────────── */
+.fpill:focus-visible, .phase-chip:focus-visible, .dock-btn:focus-visible, .fab-primary:focus-visible, .status-marvel-pill:focus-visible, .notwatched-marvel-btn:focus-visible, .bookmark-marvel-btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--theme-accent) 75%, #fff) !important;
+  outline-offset: 2px !important;
+}
+
+/* ── Mobile: larger posters even on phones ──────────────────────────────── */
+@media (max-width: 767px) {
+  .rrow { grid-template-columns: 28px 80px minmax(0,1fr) !important; min-height: 120px !important; gap: 12px !important; padding: 12px 14px !important; }
+  .poster-shell, .poster { width: 80px !important; height: 114px !important; border-radius: 12px !important; }
+  .row-actions { grid-column: 2 / -1 !important; min-width: 0 !important; justify-content: flex-start !important; gap: 6px !important; }
+  .title-btn { min-height: 64px !important; }
+  .title-btn .title-main { font-size: clamp(16px, 4vw, 19px) !important; }
+  .status-marvel-pill { min-width: 80px !important; height: 28px !important; font-size: 11px !important; padding: 0 10px !important; }
+  .notwatched-marvel-btn, .bookmark-marvel-btn { width: 28px !important; height: 28px !important; }
+  .hero-carousel-shell { height: clamp(280px, 48vw, 360px) !important; }
+  .phase-header-card { padding: 10px 14px !important; gap: 10px !important; }
+}
+@media (max-width: 420px) {
+  .row-actions { flex-wrap: wrap !important; }
+  .rrow { min-height: 108px !important; gap: 8px !important; padding: 8px 10px !important; }
+  .poster-shell, .poster { width: 68px !important; height: 96px !important; }
+  .status-marvel-pill { min-width: 70px !important; font-size: 10px !important; height: 26px !important; padding: 0 8px !important; }
+  .notwatched-marvel-btn, .bookmark-marvel-btn { width: 26px !important; height: 26px !important; border-radius: 8px !important; }
+}
+
+/* ── Light mode ─────────────────────────────────────────────────────────── */
+[data-color-mode="light"] .rrow { background: #ffffff !important; border-color: rgba(0,0,0,.05) !important; box-shadow: 0 1px 4px rgba(0,0,0,.04) !important; }
+[data-color-mode="light"] .rrow:hover { background: #faf8f3 !important; border-color: color-mix(in srgb, var(--theme-accent) 28%, rgba(0,0,0,.06)) !important; }
+[data-color-mode="light"] .title-btn, [data-color-mode="light"] .title-btn .title-main { color: #1a1c23 !important; }
+[data-color-mode="light"] .meta-chip { color: #4b5563 !important; background: rgba(0,0,0,.028) !important; }
+[data-color-mode="light"] .phase-header-card { background: #faf8f4 !important; border-color: rgba(0,0,0,.05) !important; box-shadow: 0 2px 6px rgba(0,0,0,.05) !important; }
+[data-color-mode="light"] .fpill, [data-color-mode="light"] .phase-chip, [data-color-mode="light"] .dock-btn { background: #f8f6f1 !important; border-color: rgba(0,0,0,.05) !important; color: #2d3748 !important; }
+[data-color-mode="light"] .fpill:hover, [data-color-mode="light"] .phase-chip:hover { background: #efe9dc !important; }
+[data-color-mode="light"] .filters-open { background: rgba(255,255,255,.9) !important; }
+
+/* ── Dark mode ──────────────────────────────────────────────────────────── */
+[data-color-mode="dark"] .rrow { background: rgba(26,32,42,.9) !important; }
+[data-color-mode="dark"] .phase-header-card { background: rgba(30,36,48,.85) !important; }
+
+/* ── Fixup: restore glass backdrop-filter ───────────────────────────────── */
+.phase-header-card { backdrop-filter: blur(8px) !important; -webkit-backdrop-filter: blur(8px) !important; }
+.fpill { backdrop-filter: blur(6px) !important; -webkit-backdrop-filter: blur(6px) !important; }
+.phase-chip { backdrop-filter: blur(6px) !important; -webkit-backdrop-filter: blur(6px) !important; }
+
+/* ── Fixup: light-mode status pill ─────────────────────────────────────── */
+[data-color-mode="light"] .status-marvel-pill {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--theme-accent) 28%, #fecdd3), color-mix(in srgb, var(--theme-accent-alt) 14%, #fee2e2)) !important;
+  border-color: color-mix(in srgb, var(--theme-accent) 35%, #fda4af) !important;
+  color: color-mix(in srgb, var(--theme-accent) 48%, #881337) !important;
+}
+
+/* ── Fixup: disabled states ─────────────────────────────────────────────── */
+.rrow[aria-disabled="true"],
+.rrow:has(.status-marvel-pill[disabled]) { opacity: .45 !important; pointer-events: none !important; }
+.fpill:disabled, .phase-chip:disabled, .dock-btn:disabled, .fab-primary:disabled { opacity: .4 !important; pointer-events: none !important; cursor: not-allowed !important; }
+.status-marvel-pill:disabled { opacity: .5 !important; cursor: not-allowed !important; filter: none !important; }
+.notwatched-marvel-btn:disabled, .bookmark-marvel-btn:disabled { opacity: .35 !important; pointer-events: none !important; }
+
+/* ── Fixup: reduced-motion respect ──────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .rrow, .rrow:hover, .status-marvel-pill:hover { transform: none !important; transition: none !important; }
+}
+
+/* ── Fixup: mobile disable backdrop-filter (GPU savings) ────────────────── */
+@media (max-width: 767px) {
+  .phase-header-card, .fpill, .phase-chip { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+  .bottom-action-dock { backdrop-filter: blur(6px) !important; -webkit-backdrop-filter: blur(6px) !important; }
+}
+
+/* ── Fixup: full reduced-motion coverage ────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .fpill:hover, .phase-chip:hover, .dock-btn:hover, .fab-primary:hover,
+  .bookmark-marvel-btn:hover, .notwatched-marvel-btn:hover,
+  .status-marvel-pill:hover, .title-btn:hover {
+    transform: none !important; transition: none !important;
+  }
+}
