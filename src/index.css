@@ -701,39 +701,8 @@ a:hover {
   animation: none !important;
 }
 
-/* ── Aurora Background Effect ───────────────────────────────────────────────── */
-.aurora-bg {
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.aurora-bg::before,
-.aurora-bg::after {
-  content: "";
-  position: absolute;
-  width: 60vmax;
-  height: 60vmax;
-  border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.4;
-  animation: liquidBlob 20s var(--ease-smooth) infinite;
-}
-
-.aurora-bg::before {
-  left: -20vmax;
-  top: -20vmax;
-  background: radial-gradient(circle, var(--accent-glow), transparent 60%);
-}
-
-.aurora-bg::after {
-  right: -20vmax;
-  bottom: -20vmax;
-  background: radial-gradient(circle, var(--accent-glow-2), transparent 60%);
-  animation-delay: -10s;
-}
+/* ── Aurora Background Effect — disabled for performance & clean look ──────── */
+.aurora-bg { display: none !important; }
 /* Export/analytics reusable utilities */
 .ui-panel { border: 1px solid var(--ui-border-soft); background: var(--ui-panel-1); border-radius: var(--ui-radius-md); box-shadow: var(--ui-shadow-1); }
 .ui-panel-strong { border: 1px solid var(--ui-border-strong); background: var(--ui-panel-2); border-radius: var(--ui-radius-lg); box-shadow: var(--ui-shadow-2); }

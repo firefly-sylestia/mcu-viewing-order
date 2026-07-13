@@ -3401,3 +3401,304 @@ body { background: var(--app-shell-gradient); }
   .rrow { gap: 8px !important; padding: 10px 8px !important; min-height: 96px !important; }
   .poster-shell, .poster { width: 52px !important; height: 74px !important; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   COMPACT REDESIGN — Stripped, dense, clean
+   Overrides the decorative redesign with a tighter, no-fluff layout
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Strip decorative bloat ─────────────────────────────────────────────── */
+.rrow::before, .rrow::after, .curvy-panel::before, .filters-open::before { display: none !important; content: none !important; }
+.hero-backdrop-blend { display: none !important; }
+.liquid-glass::before { display: none !important; }
+
+/* ── Compact List Rows: dense, scannable, no fluff ──────────────────────── */
+.rrow {
+  display: grid !important;
+  grid-template-columns: 30px 72px minmax(0,1fr) minmax(120px,auto) !important;
+  min-height: 92px !important;
+  gap: 10px !important;
+  padding: 10px 14px 10px 12px !important;
+  align-items: center !important;
+  border-radius: 12px !important;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 50%, transparent) !important;
+  background: color-mix(in srgb, var(--theme-surface) 90%, var(--theme-bg)) !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,.12) !important;
+  transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease !important;
+  overflow: hidden !important;
+}
+.rrow:hover {
+  transform: translateY(-1px) !important;
+  border-color: color-mix(in srgb, var(--theme-accent) 38%, var(--theme-border)) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,.18), 0 0 0 1px color-mix(in srgb, var(--theme-accent) 14%, transparent) !important;
+  background: color-mix(in srgb, var(--theme-surface-hover) 85%, var(--theme-bg)) !important;
+}
+.rrow.curvy-selected {
+  border-color: color-mix(in srgb, var(--theme-accent) 55%, var(--theme-border)) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--theme-accent) 20%, transparent), 0 3px 10px rgba(0,0,0,.16) !important;
+}
+
+/* Compact poster */
+.poster-shell, .poster {
+  width: 72px !important;
+  height: 104px !important;
+  border-radius: 10px !important;
+}
+.poster {
+  object-fit: cover !important;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 45%, transparent) !important;
+  box-shadow: 0 3px 10px rgba(0,0,0,.25) !important;
+}
+
+/* Compact title area */
+.title-btn { padding: 4px 0 !important; min-height: 60px !important; display: grid !important; gap: 5px !important; align-content: center !important; color: var(--theme-text-primary) !important; text-shadow: none !important; }
+.title-btn .title-main { font-size: clamp(15px, 1.3vw, 18px) !important; font-weight: 720 !important; line-height: 1.2 !important; letter-spacing: .01em !important; color: var(--theme-text-primary) !important; -webkit-line-clamp: 2 !important; }
+.title-subline { font-size: 10px !important; letter-spacing: .05em !important; opacity: .8 !important; color: var(--theme-text-muted) !important; -webkit-line-clamp: 1 !important; }
+
+/* Compact meta chips */
+.meta-chip { padding: 2px 7px !important; font-size: 9px !important; font-weight: 650 !important; border-radius: 5px !important; background: color-mix(in srgb, var(--theme-bg) 75%, transparent) !important; border: 1px solid color-mix(in srgb, var(--theme-border) 60%, transparent) !important; color: var(--theme-text-muted) !important; line-height: 1.3 !important; }
+
+/* Compact row actions */
+.row-actions { display: flex !important; align-items: center !important; justify-content: flex-end !important; gap: 6px !important; min-width: 120px !important; }
+
+/* Compact status pill */
+.status-marvel-pill {
+  min-width: 90px !important;
+  height: 28px !important;
+  padding: 0 10px !important;
+  border-radius: 8px !important;
+  font-size: 11px !important;
+  font-weight: 680 !important;
+  letter-spacing: .015em !important;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--theme-accent) 30%, #7f1d1d), color-mix(in srgb, var(--theme-accent-alt) 15%, #450a0a)) !important;
+  border: 1px solid color-mix(in srgb, var(--theme-accent) 35%, transparent) !important;
+  color: color-mix(in srgb, var(--theme-accent) 55%, #fecdd3) !important;
+  box-shadow: 0 2px 6px rgba(127,29,29,.2) !important;
+}
+.status-marvel-pill:hover { filter: brightness(1.06) !important; transform: translateY(-1px) !important; }
+
+/* Compact icon buttons */
+.notwatched-marvel-btn, .bookmark-marvel-btn {
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 8px !important;
+  background: color-mix(in srgb, var(--theme-surface) 82%, transparent) !important;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 65%, transparent) !important;
+  color: var(--theme-text-muted) !important;
+}
+.notwatched-marvel-btn:hover, .bookmark-marvel-btn:hover {
+  border-color: color-mix(in srgb, var(--theme-accent) 35%, var(--theme-border)) !important;
+  color: var(--theme-accent) !important;
+}
+.bookmark-marvel-btn[data-bookmarked="true"] {
+  background: linear-gradient(135deg, #ef4444, #be123c) !important;
+  border-color: #fb7185 !important;
+  color: #fff1f2 !important;
+  box-shadow: 0 0 0 1px rgba(251,113,133,.3) !important;
+}
+
+/* Row index */
+.row-index { font-size: 12px !important; font-weight: 650 !important; color: var(--theme-text-muted) !important; text-align: center !important; }
+.row-index.is-watched { color: color-mix(in srgb, var(--theme-accent) 45%, var(--theme-text-muted)) !important; }
+
+/* ── Compact Phase Headers ──────────────────────────────────────────────── */
+.phase-header-card {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 10px 16px !important;
+  margin-bottom: 8px !important;
+  border-radius: 12px !important;
+  border: 1px solid color-mix(in srgb, var(--theme-accent) 20%, var(--theme-border)) !important;
+  background: color-mix(in srgb, var(--theme-accent) 6%, var(--theme-surface)) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,.12) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+.phase-title { font-size: clamp(18px, 2vw, 22px) !important; font-weight: 750 !important; letter-spacing: .03em !important; }
+.phase-tagline { font-size: 10px !important; letter-spacing: .08em !important; opacity: .8 !important; }
+.phase-progress-chip { padding: 4px 10px !important; border-radius: 8px !important; font-size: 10px !important; font-weight: 680 !important; border: 1px solid color-mix(in srgb, var(--theme-accent) 35%, transparent) !important; background: color-mix(in srgb, var(--theme-accent) 10%, var(--theme-surface)) !important; color: var(--theme-accent) !important; }
+
+/* Phase rows container: minimal */
+.phase-rows-full {
+  padding: 6px !important;
+  gap: 6px !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* ── Compact Controls: smaller pills, hidden extras ─────────────────────── */
+.fpill {
+  padding: 0 10px !important;
+  min-height: 30px !important;
+  border-radius: 8px !important;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 60%, transparent) !important;
+  background: color-mix(in srgb, var(--theme-surface) 80%, transparent) !important;
+  color: var(--theme-text-secondary) !important;
+  font-size: 11px !important;
+  font-weight: 650 !important;
+  letter-spacing: .015em !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,.08) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+.fpill:hover { border-color: color-mix(in srgb, var(--theme-accent) 32%, var(--theme-border)) !important; color: var(--theme-text-primary) !important; transform: translateY(-1px) !important; }
+.fpill[aria-pressed="true"], .fpill.active, .fpill.picked { border-color: color-mix(in srgb, var(--theme-accent) 55%, var(--theme-border)) !important; background: color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface)) !important; color: var(--theme-accent) !important; }
+
+.phase-chip {
+  padding: 6px 10px !important;
+  min-height: 30px !important;
+  border-radius: 8px !important;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 60%, transparent) !important;
+  background: color-mix(in srgb, var(--theme-surface) 82%, transparent) !important;
+  color: var(--theme-text-secondary) !important;
+  font-weight: 680 !important;
+  font-size: 11px !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,.08) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+.phase-chip:hover { border-color: color-mix(in srgb, var(--theme-accent) 32%, var(--theme-border)) !important; color: var(--theme-text-primary) !important; transform: translateY(-1px) !important; }
+.phase-chip[style*="var(--theme-accent)"] { border-color: color-mix(in srgb, var(--theme-accent) 55%, var(--theme-border)) !important; background: color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface)) !important; color: var(--theme-accent) !important; }
+
+/* Compact dock */
+.bottom-action-dock {
+  padding: 6px 8px !important;
+  gap: 6px !important;
+  border-radius: 12px !important;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 55%, transparent) !important;
+  background: color-mix(in srgb, var(--theme-surface) 85%, transparent) !important;
+  backdrop-filter: blur(8px) saturate(120%) !important;
+  -webkit-backdrop-filter: blur(8px) saturate(120%) !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,.2) !important;
+}
+.fab-primary {
+  padding: 8px 12px !important;
+  border-radius: 10px !important;
+  font-size: 12px !important;
+  border: 1px solid color-mix(in srgb, var(--theme-accent) 25%, var(--theme-border)) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,.14) !important;
+}
+.dock-btn {
+  padding: 6px 10px !important;
+  border-radius: 8px !important;
+  font-size: 11px !important;
+  font-weight: 650 !important;
+  min-height: 28px !important;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 60%, transparent) !important;
+  background: color-mix(in srgb, var(--theme-surface) 76%, transparent) !important;
+  color: var(--theme-text-secondary) !important;
+}
+.dock-btn:hover { border-color: color-mix(in srgb, var(--theme-accent) 30%, var(--theme-border)) !important; color: var(--theme-text-primary) !important; }
+
+/* Compact filter bar */
+.filters-open {
+  border-radius: 10px !important;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 50%, transparent) !important;
+  background: color-mix(in srgb, var(--theme-surface) 78%, transparent) !important;
+  box-shadow: 0 3px 10px rgba(0,0,0,.12) !important;
+  padding: 10px !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* ── Compact Overlays ───────────────────────────────────────────────────── */
+.sidebar-menu {
+  border-radius: 14px !important;
+  border: 1px solid color-mix(in srgb, var(--theme-accent) 18%, var(--theme-border)) !important;
+  background: color-mix(in srgb, var(--theme-surface) 90%, var(--theme-bg)) !important;
+  box-shadow: 0 12px 36px rgba(0,0,0,.35) !important;
+}
+.settings-menu-redesign {
+  width: min(96vw, 440px) !important;
+  max-height: min(92vh, 700px) !important;
+  border-radius: 16px !important;
+  padding: 14px !important;
+  border: 1px solid color-mix(in srgb, var(--theme-accent) 25%, var(--theme-border)) !important;
+  background: color-mix(in srgb, var(--theme-surface) 92%, var(--theme-bg)) !important;
+  box-shadow: 0 18px 48px rgba(0,0,0,.38) !important;
+}
+.analytics-shell-redesign {
+  width: min(98vw, 1180px) !important;
+  border-radius: 16px !important;
+  padding: 14px !important;
+}
+.detail-card {
+  border-radius: 16px !important;
+  padding: 14px !important;
+  border: 1px solid color-mix(in srgb, var(--theme-accent) 22%, var(--theme-border)) !important;
+  box-shadow: 0 14px 42px rgba(0,0,0,.35) !important;
+}
+.detail-export-grid { gap: 14px !important; }
+.detail-poster-frame img { border-radius: 12px !important; max-height: 340px !important; min-height: auto !important; }
+.detail-export-title { font-size: clamp(22px, 3vw, 32px) !important; }
+
+/* ── Hero carousel: slightly shorter ───────────────────────────────────── */
+.hero-carousel-shell { height: clamp(320px, 45vw, 440px) !important; }
+
+/* ── Responsive: extra compact on small screens ─────────────────────────── */
+@media (max-width: 767px) {
+  .rrow { grid-template-columns: 24px 56px minmax(0,1fr) !important; min-height: 82px !important; gap: 8px !important; padding: 8px 10px !important; }
+  .poster-shell, .poster { width: 56px !important; height: 80px !important; border-radius: 8px !important; }
+  .row-actions { grid-column: 2 / -1 !important; min-width: 0 !important; justify-content: flex-start !important; gap: 5px !important; }
+  .title-btn { min-height: 48px !important; }
+  .title-btn .title-main { font-size: clamp(14px, 3.5vw, 16px) !important; }
+  .status-marvel-pill { min-width: 72px !important; height: 26px !important; font-size: 10px !important; padding: 0 8px !important; }
+  .notwatched-marvel-btn, .bookmark-marvel-btn { width: 26px !important; height: 26px !important; }
+  .hero-carousel-shell { height: clamp(240px, 50vw, 320px) !important; }
+  .phase-header-card { padding: 8px 12px !important; gap: 8px !important; }
+}
+@media (max-width: 420px) {
+  .row-actions { flex-wrap: wrap !important; }
+  .rrow { min-height: 76px !important; gap: 6px !important; padding: 6px 8px !important; }
+  .poster-shell, .poster { width: 48px !important; height: 68px !important; }
+  .status-marvel-pill { min-width: 64px !important; font-size: 9px !important; height: 24px !important; }
+}
+
+/* ── Light mode: clean and minimal ──────────────────────────────────────── */
+[data-color-mode="light"] .rrow { background: #ffffff !important; border-color: rgba(0,0,0,.04) !important; box-shadow: 0 1px 3px rgba(0,0,0,.03) !important; }
+[data-color-mode="light"] .rrow:hover { background: #faf8f4 !important; border-color: color-mix(in srgb, var(--theme-accent) 25%, rgba(0,0,0,.06)) !important; }
+[data-color-mode="light"] .title-btn, [data-color-mode="light"] .title-btn .title-main { color: #1a1c23 !important; }
+[data-color-mode="light"] .meta-chip { color: #4b5563 !important; background: rgba(0,0,0,.025) !important; }
+[data-color-mode="light"] .phase-header-card { background: #faf9f5 !important; border-color: rgba(0,0,0,.05) !important; box-shadow: 0 1px 4px rgba(0,0,0,.04) !important; }
+[data-color-mode="light"] .fpill, [data-color-mode="light"] .phase-chip, [data-color-mode="light"] .dock-btn { background: #f8f6f1 !important; border-color: rgba(0,0,0,.05) !important; color: #2d3748 !important; }
+[data-color-mode="light"] .fpill:hover, [data-color-mode="light"] .phase-chip:hover { background: #efe9db !important; }
+[data-color-mode="light"] .filters-open { background: rgba(255,255,255,.9) !important; }
+[data-color-mode="light"] .sidebar-menu, [data-color-mode="light"] .settings-menu-redesign { background: rgba(255,255,255,.95) !important; }
+[data-color-mode="light"] .calendar-row { background: #ffffff !important; border-color: rgba(0,0,0,.04) !important; box-shadow: 0 1px 3px rgba(0,0,0,.03) !important; }
+
+/* ── Dark mode: deeper, cleaner ─────────────────────────────────────────── */
+[data-color-mode="dark"] .rrow { background: rgba(24,30,40,.9) !important; }
+[data-color-mode="dark"] .phase-header-card { background: rgba(28,34,46,.85) !important; }
+
+/* ── Compact fixups ─────────────────────────────────────────────────────── */
+
+/* Calendar row hover */
+.calendar-row:hover { transform: translateY(-1px) !important; border-color: color-mix(in srgb, var(--theme-accent) 38%, var(--theme-border)) !important; box-shadow: 0 4px 12px rgba(0,0,0,.18) !important; }
+
+/* Rating text inline with compact pills */
+.row-meta-line { font-size: 11px !important; font-weight: 680 !important; color: var(--theme-text-muted) !important; }
+
+/* Title row mid gap tighten */
+.title-row-mid { gap: 4px !important; }
+
+/* Extra-narrow viewports */
+@media (max-width: 360px) {
+  .rrow { grid-template-columns: 20px 42px minmax(0,1fr) !important; min-height: 70px !important; gap: 5px !important; padding: 5px 6px !important; }
+  .poster-shell, .poster { width: 42px !important; height: 60px !important; border-radius: 6px !important; }
+  .status-marvel-pill { min-width: 56px !important; height: 22px !important; font-size: 8px !important; padding: 0 6px !important; }
+  .notwatched-marvel-btn, .bookmark-marvel-btn { width: 22px !important; height: 22px !important; border-radius: 6px !important; }
+  .title-btn .title-main { font-size: clamp(12px, 4vw, 14px) !important; }
+  .title-subline { font-size: 8px !important; }
+  .meta-chip { font-size: 7.5px !important; padding: 1px 5px !important; }
+  .row-index { font-size: 10px !important; }
+}
+
+/* Focus-visible: ensure keyboard accessibility survives compact overrides */
+.fpill:focus-visible, .phase-chip:focus-visible, .dock-btn:focus-visible, .fab-primary:focus-visible, .status-marvel-pill:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--theme-accent) 75%, #fff) !important;
+  outline-offset: 2px !important;
+}
