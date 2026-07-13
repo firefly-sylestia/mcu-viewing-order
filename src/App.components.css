@@ -3107,3 +3107,297 @@ body { background: var(--app-shell-gradient); }
 @media (prefers-reduced-motion: reduce) {
   .post-credit-node { transition: none; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   2026 UI REDESIGN — Clean cinematic card system
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── List Row Cards: clean, spacious, modern ────────────────────────────── */
+.rrow {
+  display: grid !important;
+  grid-template-columns: 40px 100px minmax(0,1fr) minmax(140px,auto) !important;
+  min-height: 130px !important;
+  gap: 18px !important;
+  padding: 16px 20px 16px 18px !important;
+  align-items: center !important;
+  border-radius: 18px !important;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 55%, transparent) !important;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--theme-surface) 92%, transparent), color-mix(in srgb, var(--theme-bg) 35%, transparent)) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,.15), inset 0 1px 0 rgba(255,255,255,.03) !important;
+  transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease, background .2s ease !important;
+}
+.rrow:hover {
+  transform: translateY(-2px) !important;
+  border-color: color-mix(in srgb, var(--theme-accent) 45%, var(--theme-border)) !important;
+  box-shadow: 0 8px 20px rgba(0,0,0,.22), 0 0 0 1px color-mix(in srgb, var(--theme-accent) 18%, transparent), inset 0 1px 0 rgba(255,255,255,.06) !important;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--theme-surface-hover) 88%, transparent), color-mix(in srgb, var(--theme-bg) 42%, transparent)) !important;
+}
+.rrow.curvy-selected {
+  border-color: color-mix(in srgb, var(--theme-accent) 65%, var(--theme-border)) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--theme-accent) 25%, transparent), 0 6px 16px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.05) !important;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--theme-accent) 8%, var(--theme-surface)), color-mix(in srgb, var(--theme-accent-alt) 5%, var(--theme-surface))) !important;
+}
+.rrow::before, .rrow::after { display: none !important; }
+
+/* Poster: bigger, cinematic proportions */
+.poster-shell, .poster {
+  width: 100px !important;
+  height: 142px !important;
+  border-radius: 12px !important;
+}
+.poster {
+  object-fit: cover !important;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 50%, transparent) !important;
+  box-shadow: 0 6px 16px rgba(0,0,0,.32) !important;
+}
+
+/* Title area: clearer hierarchy */
+.title-btn { padding: 8px 0 !important; min-height: 90px !important; display: grid !important; gap: 8px !important; align-content: center !important; color: var(--theme-text-primary) !important; text-shadow: none !important; }
+.title-btn .title-main { font-size: clamp(18px, 1.5vw, 23px) !important; font-weight: 750 !important; line-height: 1.22 !important; letter-spacing: .01em !important; color: var(--theme-text-primary) !important; }
+.title-subline { font-size: 11px !important; letter-spacing: .06em !important; opacity: .85 !important; color: var(--theme-text-secondary) !important; }
+
+/* Meta chips: cleaner, smaller */
+.meta-chip { padding: 3px 8px !important; font-size: 9.5px !important; font-weight: 680 !important; border-radius: 6px !important; background: color-mix(in srgb, var(--theme-bg) 78%, transparent) !important; border: 1px solid color-mix(in srgb, var(--theme-border) 65%, transparent) !important; color: var(--theme-text-secondary) !important; }
+
+/* Row actions: right-aligned, cleaner */
+.row-actions { display: flex !important; align-items: center !important; justify-content: flex-end !important; gap: 8px !important; min-width: 140px !important; }
+
+/* Status pill: elegant dark red */
+.status-marvel-pill {
+  min-width: 110px !important;
+  height: 34px !important;
+  padding: 0 14px !important;
+  border-radius: 10px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  letter-spacing: .02em !important;
+  background: linear-gradient(135deg, #991b1b, #7f1d1d) !important;
+  border: 1px solid color-mix(in srgb, #ef4444 35%, transparent) !important;
+  color: #fecdd3 !important;
+  box-shadow: 0 4px 10px rgba(127,29,29,.3) !important;
+}
+.status-marvel-pill:hover { filter: brightness(1.08) !important; transform: translateY(-1px) !important; }
+
+/* Watch toggle & bookmark: compact icon buttons */
+.notwatched-marvel-btn, .bookmark-marvel-btn {
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 10px !important;
+  background: color-mix(in srgb, var(--theme-surface) 85%, transparent) !important;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 70%, transparent) !important;
+  color: var(--theme-text-secondary) !important;
+}
+.notwatched-marvel-btn:hover, .bookmark-marvel-btn:hover {
+  border-color: color-mix(in srgb, var(--theme-accent) 40%, var(--theme-border)) !important;
+  color: var(--theme-accent) !important;
+  transform: translateY(-1px) !important;
+}
+.bookmark-marvel-btn[data-bookmarked="true"] {
+  background: linear-gradient(135deg, #ef4444, #be123c) !important;
+  border-color: #fb7185 !important;
+  color: #fff1f2 !important;
+  box-shadow: 0 0 0 2px rgba(251,113,133,.35) !important;
+}
+
+/* Row index: subtle counter */
+.row-index { font-size: 13px !important; font-weight: 700 !important; color: var(--theme-text-muted) !important; text-align: center !important; }
+.row-index.is-watched { color: color-mix(in srgb, var(--theme-accent) 50%, var(--theme-text-muted)) !important; }
+
+/* ── Phase Header Cards ─────────────────────────────────────────────────── */
+.phase-header-card {
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  padding: 18px 22px !important;
+  margin-bottom: 12px !important;
+  border-radius: 18px !important;
+  border: 1px solid color-mix(in srgb, var(--theme-accent) 25%, var(--theme-border)) !important;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--theme-accent) 10%, var(--theme-surface)), color-mix(in srgb, var(--theme-bg) 45%, transparent)) !important;
+  box-shadow: 0 6px 16px rgba(0,0,0,.16), inset 0 1px 0 rgba(255,255,255,.06) !important;
+}
+.phase-title { font-size: clamp(22px, 2.5vw, 28px) !important; font-weight: 800 !important; letter-spacing: .04em !important; color: var(--theme-text-primary) !important; }
+.phase-tagline { font-size: 12px !important; letter-spacing: .1em !important; color: var(--theme-text-secondary) !important; opacity: .85 !important; }
+.phase-progress-chip { padding: 6px 14px !important; border-radius: 10px !important; font-size: 12px !important; font-weight: 700 !important; border: 1px solid color-mix(in srgb, var(--theme-accent) 40%, transparent) !important; background: color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface)) !important; color: var(--theme-accent) !important; }
+
+/* ── Floating Controls Dock: polished FAB area ──────────────────────────── */
+.floating-controls { gap: 10px !important; }
+.bottom-action-dock {
+  display: flex !important;
+  gap: 8px !important;
+  padding: 8px 10px !important;
+  border-radius: 16px !important;
+  border: 1px solid color-mix(in srgb, var(--theme-accent) 22%, var(--theme-border)) !important;
+  background: color-mix(in srgb, var(--theme-surface) 90%, transparent) !important;
+  backdrop-filter: blur(12px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(140%) !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.06) !important;
+}
+.fab-primary {
+  padding: 10px 16px !important;
+  border-radius: 14px !important;
+  border: 1px solid color-mix(in srgb, var(--theme-accent) 30%, var(--theme-border)) !important;
+  background: color-mix(in srgb, var(--theme-surface) 88%, transparent) !important;
+  color: var(--theme-text-primary) !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  letter-spacing: .03em !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,.18) !important;
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease, background .18s ease !important;
+}
+.fab-primary:hover { transform: translateY(-1px) !important; border-color: color-mix(in srgb, var(--theme-accent) 55%, var(--theme-border)) !important; box-shadow: 0 8px 18px rgba(0,0,0,.28) !important; }
+
+/* Dock buttons */
+.dock-btn {
+  padding: 8px 14px !important;
+  border-radius: 12px !important;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 65%, transparent) !important;
+  background: color-mix(in srgb, var(--theme-surface) 80%, transparent) !important;
+  color: var(--theme-text-secondary) !important;
+  font-size: 12px !important;
+  font-weight: 680 !important;
+  transition: all .16s ease !important;
+}
+.dock-btn:hover { border-color: color-mix(in srgb, var(--theme-accent) 35%, var(--theme-border)) !important; color: var(--theme-text-primary) !important; transform: translateY(-1px) !important; }
+
+/* Filter chips: clean pill design */
+.fpill {
+  padding: 0 14px !important;
+  min-height: 36px !important;
+  border-radius: 10px !important;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 68%, transparent) !important;
+  background: color-mix(in srgb, var(--theme-surface) 82%, transparent) !important;
+  color: var(--theme-text-secondary) !important;
+  font-size: 12px !important;
+  font-weight: 680 !important;
+  letter-spacing: .02em !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,.12) !important;
+  transition: all .16s ease !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+.fpill:hover { border-color: color-mix(in srgb, var(--theme-accent) 38%, var(--theme-border)) !important; color: var(--theme-text-primary) !important; transform: translateY(-1px) !important; box-shadow: 0 4px 12px rgba(0,0,0,.18) !important; }
+.fpill[aria-pressed="true"], .fpill.active, .fpill.picked { border-color: color-mix(in srgb, var(--theme-accent) 60%, var(--theme-border)) !important; background: color-mix(in srgb, var(--theme-accent) 16%, var(--theme-surface)) !important; color: var(--theme-accent) !important; box-shadow: 0 0 0 1px color-mix(in srgb, var(--theme-accent) 25%, transparent) !important; }
+
+/* Phase chips */
+.phase-chip {
+  padding: 8px 14px !important;
+  min-height: 38px !important;
+  border-radius: 10px !important;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 68%, transparent) !important;
+  background: color-mix(in srgb, var(--theme-surface) 84%, transparent) !important;
+  color: var(--theme-text-secondary) !important;
+  font-weight: 700 !important;
+  font-size: 12px !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,.12) !important;
+  transition: all .16s ease !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+.phase-chip:hover { border-color: color-mix(in srgb, var(--theme-accent) 38%, var(--theme-border)) !important; color: var(--theme-text-primary) !important; transform: translateY(-1px) !important; }
+.phase-chip[style*="var(--theme-accent)"] { border-color: color-mix(in srgb, var(--theme-accent) 60%, var(--theme-border)) !important; background: color-mix(in srgb, var(--theme-accent) 16%, var(--theme-surface)) !important; color: var(--theme-accent) !important; box-shadow: 0 0 0 1px color-mix(in srgb, var(--theme-accent) 25%, transparent) !important; }
+
+/* Filter bar */
+.filters-open {
+  border-radius: 14px !important;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 55%, transparent) !important;
+  background: color-mix(in srgb, var(--theme-surface) 80%, transparent) !important;
+  box-shadow: 0 6px 16px rgba(0,0,0,.16) !important;
+  padding: 14px !important;
+}
+
+/* ── Overlays & Panels ──────────────────────────────────────────────────── */
+/* Sidebar */
+.sidebar-menu {
+  border-radius: 20px !important;
+  border: 1px solid color-mix(in srgb, var(--theme-accent) 22%, var(--theme-border)) !important;
+  background: linear-gradient(165deg, color-mix(in srgb, var(--theme-surface) 92%, transparent), color-mix(in srgb, var(--theme-bg) 82%, transparent)) !important;
+  box-shadow: 0 18px 48px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.04) !important;
+}
+
+/* Settings & Analytics panels */
+.settings-menu-redesign {
+  width: min(94vw, 480px) !important;
+  max-height: min(90vh, 780px) !important;
+  border-radius: 22px !important;
+  padding: 20px !important;
+  border: 1px solid color-mix(in srgb, var(--theme-accent) 30%, var(--theme-border)) !important;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--theme-surface) 94%, transparent), color-mix(in srgb, var(--theme-bg) 70%, transparent)) !important;
+  box-shadow: 0 24px 64px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.06) !important;
+}
+.analytics-shell-redesign {
+  width: min(96vw, 1240px) !important;
+  border-radius: 22px !important;
+  padding: 20px !important;
+  border: 1px solid color-mix(in srgb, var(--theme-accent) 28%, var(--theme-border)) !important;
+}
+
+/* Detail drawer */
+.detail-card {
+  border-radius: 20px !important;
+  padding: 20px !important;
+  border: 1px solid color-mix(in srgb, var(--theme-accent) 28%, var(--theme-border)) !important;
+  box-shadow: 0 20px 52px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.06) !important;
+}
+.detail-export-grid { gap: 20px !important; }
+.detail-poster-frame img { border-radius: 16px !important; }
+.detail-export-title { font-size: clamp(26px, 3.5vw, 40px) !important; }
+
+/* ── Responsive refinements ────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  .rrow { grid-template-columns: 28px 64px minmax(0,1fr) !important; min-height: 108px !important; gap: 10px !important; padding: 12px 12px 12px 10px !important; }
+  .poster-shell, .poster { width: 64px !important; height: 92px !important; }
+  .row-actions { grid-column: 2 / -1 !important; min-width: 0 !important; justify-content: flex-start !important; }
+  .title-btn { min-height: 64px !important; }
+  .title-btn .title-main { font-size: clamp(15px, 4vw, 18px) !important; }
+  .status-marvel-pill { min-width: 90px !important; height: 30px !important; font-size: 11px !important; padding: 0 10px !important; }
+}
+
+/* ── Dark mode depth enhancement ────────────────────────────────────────── */
+[data-color-mode="dark"] .rrow { background: linear-gradient(135deg, rgba(30,36,48,.88), rgba(20,25,35,.92)) !important; }
+[data-color-mode="dark"] .phase-header-card { background: linear-gradient(135deg, rgba(35,42,55,.85), rgba(18,23,32,.9)) !important; }
+
+/* ── Light mode warmth ──────────────────────────────────────────────────── */
+[data-color-mode="light"] .rrow { background: linear-gradient(150deg, #ffffff, #f5f0e8) !important; border-color: rgba(0,0,0,.05) !important; box-shadow: 0 2px 8px rgba(0,0,0,.04), inset 0 1px 0 rgba(255,255,255,.7) !important; }
+[data-color-mode="light"] .rrow:hover { background: linear-gradient(150deg, #fffefa, #f0e9d8) !important; border-color: color-mix(in srgb, var(--theme-accent) 30%, rgba(0,0,0,.08)) !important; }
+[data-color-mode="light"] .title-btn, [data-color-mode="light"] .title-btn .title-main { color: #1a1c23 !important; }
+[data-color-mode="light"] .meta-chip { color: #4b5563 !important; background: rgba(0,0,0,.03) !important; }
+[data-color-mode="light"] .phase-header-card { background: linear-gradient(155deg, #ffffff, #f7f3eb) !important; border-color: rgba(0,0,0,.06) !important; }
+[data-color-mode="light"] .fpill, [data-color-mode="light"] .phase-chip, [data-color-mode="light"] .dock-btn { background: #f8f5ef !important; border-color: rgba(0,0,0,.06) !important; color: #2d3748 !important; }
+[data-color-mode="light"] .fpill:hover, [data-color-mode="light"] .phase-chip:hover { background: #efe8d8 !important; color: #1a202c !important; }
+[data-color-mode="light"] .filters-open { background: rgba(255,255,255,.92) !important; }
+
+/* ── Reviewer fixes ─────────────────────────────────────────────────────── */
+
+/* Theme-aware status pill (not hardcoded red) */
+.status-marvel-pill {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--theme-accent) 35%, #7f1d1d), color-mix(in srgb, var(--theme-accent-alt) 18%, #450a0a)) !important;
+  border-color: color-mix(in srgb, var(--theme-accent) 42%, transparent) !important;
+  color: color-mix(in srgb, var(--theme-accent) 60%, #fecdd3) !important;
+}
+
+/* Focus-visible restoration for interactive elements */
+.fpill:focus-visible, .phase-chip:focus-visible, .dock-btn:focus-visible, .fab-primary:focus-visible, .status-marvel-pill:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--theme-accent) 75%, #fff) !important;
+  outline-offset: 2px !important;
+}
+
+/* Calendar row consistency */
+.calendar-row {
+  border-radius: 16px !important;
+  padding: 14px 18px !important;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 55%, transparent) !important;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--theme-surface) 92%, transparent), color-mix(in srgb, var(--theme-bg) 35%, transparent)) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,.15) !important;
+  transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease !important;
+}
+.calendar-row:hover { transform: translateY(-2px) !important; border-color: color-mix(in srgb, var(--theme-accent) 45%, var(--theme-border)) !important; box-shadow: 0 8px 20px rgba(0,0,0,.22) !important; }
+[data-color-mode="light"] .calendar-row { background: linear-gradient(150deg, #ffffff, #f5f0e8) !important; border-color: rgba(0,0,0,.05) !important; box-shadow: 0 2px 8px rgba(0,0,0,.04) !important; }
+
+/* Mobile row-actions safety: wrap instead of overflow */
+@media (max-width: 420px) {
+  .row-actions { flex-wrap: wrap !important; justify-content: flex-start !important; }
+  .status-marvel-pill { min-width: 80px !important; font-size: 10px !important; padding: 0 8px !important; height: 28px !important; }
+  .notwatched-marvel-btn, .bookmark-marvel-btn { width: 28px !important; height: 28px !important; }
+  .rrow { gap: 8px !important; padding: 10px 8px !important; min-height: 96px !important; }
+  .poster-shell, .poster { width: 52px !important; height: 74px !important; }
+}
