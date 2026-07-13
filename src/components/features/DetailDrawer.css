@@ -1,36 +1,12 @@
-.detail-drawer { display: none; }
-.librarian-detail { position: fixed; inset: 0; z-index: 900; display: grid; justify-items: end; background: linear-gradient(90deg, transparent, rgba(0,0,0,.42)); }
-.librarian-detail__drawer { width: min(520px, 100%); height: 100dvh; overflow: auto; padding: 18px; border-left: 1px solid var(--theme-border); background: var(--archive-drawer-bg, var(--theme-bg)); color: var(--theme-text-primary); box-shadow: -24px 0 70px rgba(0,0,0,.34); animation: librarianDrawerIn 180ms var(--ease-out); }
-.librarian-detail__topbar { position: sticky; top: 0; z-index: 3; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: -18px -18px 14px; padding: 14px 18px; border-bottom: 1px solid var(--theme-border); background: color-mix(in srgb, var(--theme-bg) 90%, transparent); backdrop-filter: blur(12px); }
-.librarian-detail__topbar span,
-.librarian-detail__eyebrow { color: var(--theme-accent); font-size: 11px; font-weight: 900; letter-spacing: .16em; text-transform: uppercase; }
-.librarian-detail button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 36px; border: 1px solid var(--theme-border); border-radius: 999px; background: color-mix(in srgb, var(--theme-surface) 78%, transparent); color: var(--theme-text-primary); padding: 8px 12px; font-weight: 800; cursor: pointer; transition: transform 140ms var(--ease-out), border-color 140ms var(--ease-out), background 140ms var(--ease-out); }
-.librarian-detail button:hover,
-.librarian-detail button[data-active="true"] { border-color: color-mix(in srgb, var(--theme-accent) 50%, var(--theme-border)); background: color-mix(in srgb, var(--theme-accent) 15%, var(--theme-surface)); }
-.librarian-detail button:active { transform: scale(.97); }
-.librarian-detail button:focus-visible { outline: none; box-shadow: var(--interactive-ring); }
-.librarian-detail__poster { position: relative; overflow: hidden; border-radius: 26px; min-height: 420px; background: color-mix(in srgb, var(--theme-surface-strong) 78%, var(--theme-bg)); }
-.librarian-detail__poster img { width: 100%; height: 100%; max-height: 62dvh; object-fit: cover; display: block; }
-.librarian-detail__poster > span { position: absolute; top: 12px; right: 12px; border: 1px solid color-mix(in srgb, var(--theme-accent) 50%, transparent); border-radius: 999px; background: color-mix(in srgb, var(--theme-bg) 78%, transparent); padding: 6px 10px; font-size: 11px; font-weight: 900; text-transform: uppercase; }
-.librarian-detail__skeleton { position: absolute; inset: 0; background: linear-gradient(90deg, color-mix(in srgb, var(--theme-surface) 80%, transparent), color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface)), color-mix(in srgb, var(--theme-surface) 80%, transparent)); background-size: 220% 100%; animation: librarianSkeleton 1100ms linear infinite; }
-.librarian-detail__fallback { display: grid; place-items: center; min-height: 420px; padding: 24px; text-align: center; font-size: 1.5rem; font-weight: 900; }
-.librarian-detail__content { display: grid; gap: 16px; padding: 18px 2px 40px; }
-.librarian-detail h2 { margin: 0; font-family: var(--font-marvel-display); font-size: clamp(2rem, 4vw, 3.6rem); line-height: .95; }
-.librarian-detail__meta,
-.librarian-detail__actions,
-.librarian-detail__footer-actions,
-.librarian-detail__chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.librarian-detail__meta span,
-.librarian-detail__chips span { border: 1px solid var(--theme-border); border-radius: 999px; background: color-mix(in srgb, var(--theme-surface) 65%, transparent); padding: 7px 10px; color: var(--theme-text-secondary); font-size: 12px; font-weight: 800; }
-.librarian-detail section { padding: 16px; border: 1px solid var(--theme-border); border-radius: 22px; background: color-mix(in srgb, var(--theme-surface) 68%, transparent); }
-.librarian-detail h3 { margin: 0 0 10px; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--theme-accent); }
-.librarian-detail p { margin: 0; color: var(--theme-text-secondary); line-height: 1.65; }
-.librarian-detail dl { display: grid; gap: 10px; margin: 0; }
-.librarian-detail dl div { display: grid; gap: 3px; }
-.librarian-detail dt { color: var(--theme-text-muted); font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: .1em; }
-.librarian-detail dd { margin: 0; color: var(--theme-text-secondary); line-height: 1.45; }
-@keyframes librarianDrawerIn { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: translateX(0); } }
-@keyframes librarianSkeleton { to { background-position: -220% 0; } }
-@media (max-width: 760px) { .librarian-detail { align-items: end; justify-items: stretch; background: rgba(0,0,0,.48); } .librarian-detail__drawer { width: 100%; height: min(88dvh, 760px); border-left: 0; border-top: 1px solid var(--theme-border); border-radius: 28px 28px 0 0; animation-name: librarianSheetIn; } .librarian-detail__poster { min-height: 280px; } }
-@keyframes librarianSheetIn { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: translateY(0); } }
-@media (prefers-reduced-motion: reduce) { .librarian-detail__drawer, .librarian-detail__skeleton, .librarian-detail button { animation-duration: 1ms !important; transition-duration: 1ms !important; } }
+@import './_shared.css';
+.feature-header,.timeline-controls,.progress-section,.feature-title-card,.detail-drawer,.feature-settings,.feature-analytics { margin: var(--feature-gap) 0; }
+.feature-header{padding:1rem;display:flex;justify-content:space-between;gap:1rem;align-items:flex-start}
+.feature-header__title{margin:0;font-size:clamp(1.1rem,2vw,1.35rem)}
+.feature-header__subtitle{margin:.35rem 0 0;color:var(--text-muted)}
+.timeline-controls,.progress-section,.feature-settings,.feature-analytics{padding:.85rem 1rem}
+.feature-title-card{padding:0;border-radius:14px;transition:transform 180ms ease, box-shadow 180ms ease}
+.feature-title-card:hover{transform:translateY(-1px)}
+.detail-drawer{position:relative;opacity:.96}
+.detail-drawer.is-open{opacity:1}
+.feature-settings,.feature-analytics{display:none}
+.feature-settings.is-open,.feature-analytics.is-open{display:block}

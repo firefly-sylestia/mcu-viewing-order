@@ -2,49 +2,23 @@
 <html lang="en" class="dark" style="color-scheme: dark; background: #050812;">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/jpeg" href="./mcu-icon.jpg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
-    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#050812" />
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fff4e6" />
-    <meta name="color-scheme" content="dark light" />
-    <meta name="description" content="A fast, responsive MCU and DC viewing order tracker with progress, filters, ratings, trailers, calendar mode, and polished dark/light theme support." />
-    <meta name="application-name" content="MCU Viewing Order" />
-    <meta name="apple-mobile-web-app-title" content="MCU Viewing Order" />
+    <meta name="theme-color" content="#050812" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="format-detection" content="telephone=no" />
-    <meta name="robots" content="index, follow" />
-
-    <link rel="icon" type="image/jpeg" href="/mcu-icon.jpg" />
-    <link rel="apple-touch-icon" href="/mcu-icon.jpg" />
-    <link rel="preload" as="image" href="/mcu-icon.jpg" />
+    <meta name="color-scheme" content="dark" />
+    
+    <!-- MCU-inspired typography: Premium sans-serif with cinematic weight -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
-
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content="MCU Viewing Order — Timeline Tracker" />
-    <meta property="og:description" content="Track Marvel and DC viewing orders with progress, filters, trailers, ratings, and unified dark/light themes." />
-    <meta property="og:image" content="/mcu-icon.jpg" />
-    <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="MCU Viewing Order — Timeline Tracker" />
-    <meta name="twitter:description" content="A modern watch-order tracker for superhero timelines." />
-    <meta name="twitter:image" content="/mcu-icon.jpg" />
-
-    <script>
-      (function () {
-        try {
-          var dark = localStorage.getItem('mcu-dark-mode-v1');
-          var appearance = localStorage.getItem('mcu-appearance-mode-v1') || 'glass';
-          if (appearance === 'neo') appearance = 'neon';
-          var isLight = dark === '0';
-          document.documentElement.classList.toggle('dark', !isLight);
-          document.documentElement.dataset.colorMode = isLight ? 'light' : 'dark';
-          document.documentElement.dataset.theme = appearance;
-          document.documentElement.style.colorScheme = isLight ? 'light' : 'dark';
-          document.documentElement.style.background = isLight ? '#fff4e6' : '#050812';
-        } catch (e) {}
-      })();
-    </script>
+    
+    <!-- Performance optimizations -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    <!-- Prevent white flash on load -->
     <style>
       html, body, #root {
         background: #050812 !important;
@@ -52,41 +26,22 @@
         margin: 0;
         padding: 0;
       }
-      html[data-color-mode="light"],
-      html[data-color-mode="light"] body,
-      html[data-color-mode="light"] #root {
-        background: #fff4e6 !important;
-        color: #241313;
-      }
+      /* Critical loading styles to prevent white flash */
       html::before {
         content: "";
         position: fixed;
         inset: 0;
         z-index: -10;
-        background:
+        background: 
           radial-gradient(circle at 18% 8%, rgba(124,255,218,0.25), transparent 35%),
           radial-gradient(circle at 82% 22%, rgba(154,134,255,0.20), transparent 40%),
           linear-gradient(155deg, #050812 0%, #0b1936 38%, #25114e 70%, #083d3b 100%);
       }
-      html[data-color-mode="light"]::before {
-        background:
-          radial-gradient(circle at 18% 8%, rgba(244,63,63,0.12), transparent 35%),
-          radial-gradient(circle at 82% 22%, rgba(245,158,11,0.10), transparent 40%),
-          linear-gradient(155deg, #fff4e6 0%, #fffaf5 46%, #ffe7df 100%);
-      }
     </style>
-
-    <title>MCU Viewing Order — Timeline Tracker</title>
+    
+    <title>MCU Viewing Order</title>
   </head>
   <body>
-    <noscript>
-      <main style="min-height:100vh;display:grid;place-items:center;padding:24px;font-family:system-ui,sans-serif;text-align:center;">
-        <section>
-          <h1>MCU Viewing Order</h1>
-          <p>This timeline tracker requires JavaScript to manage progress, filters, ratings, and theme preferences.</p>
-        </section>
-      </main>
-    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

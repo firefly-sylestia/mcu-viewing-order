@@ -77,12 +77,12 @@
         /* Mobile */
         @media (max-width: 767px) {
           .calendar-row{grid-template-columns:minmax(74px,84px) 44px minmax(0,1fr) !important}
-          .floating-controls{display:flex !important;left:10px;right:10px;bottom:calc(max(10px, env(safe-area-inset-bottom)) + 84px);align-items:stretch;gap:10px}.fab-primary{justify-content:center}
-          .bottom-action-dock{width:100%;justify-content:center;max-height:min(42dvh, 260px);overflow:auto}
+          .floating-controls{display:flex !important;left:10px;right:10px;bottom:max(10px,env(safe-area-inset-bottom));align-items:stretch;gap:10px}.fab-primary{justify-content:center}
+          .bottom-action-dock{width:100%;justify-content:center}
                     .dock-btn{font-size:11px !important;padding:9px 10px !important;min-height:40px;flex:1 1 auto}
           .bottom-action-bar{min-height:40px;padding:9px 10px !important;width:100%;justify-content:center}
           .dock-status-menu{flex:1 1 auto}
-          main > div{padding-bottom:210px !important}
+          main > div{padding-bottom:154px !important}
           .filter-row-actions{margin-left:0 !important;flex-wrap:wrap;justify-content:flex-end;gap:6px !important}
           .filters-open{padding:0 12px 12px !important}
         }
@@ -103,21 +103,6 @@
         .fab-primary{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:10px 14px;border:1px solid color-mix(in srgb,var(--theme-accent) 35%, var(--theme-border));background:color-mix(in srgb,var(--theme-surface) 84%, transparent);color:var(--theme-text);font-family:var(--font-marvel-ui);letter-spacing:1px;font-size:12px}
         .fab-primary:hover{border-color:var(--theme-accent);color:var(--theme-accent)}
         .bottom-action-bar{border-radius:999px;padding:10px 14px;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
-        @media (max-width: 767px) {
-          .floating-controls{
-            left:10px !important;
-            right:10px !important;
-            bottom:calc(max(10px, env(safe-area-inset-bottom)) + 104px) !important;
-            align-items:stretch !important;
-            gap:10px !important;
-          }
-          .bottom-action-dock{
-            width:100% !important;
-            max-height:min(38dvh, 240px) !important;
-            overflow:auto !important;
-            justify-content:center !important;
-          }
-        }
         main::-webkit-scrollbar{width:4px}
         main::-webkit-scrollbar-track{background:transparent}
         main::-webkit-scrollbar-thumb{background:var(--theme-scroll-thumb, rgba(255,255,255,0.25));border-radius:4px}
