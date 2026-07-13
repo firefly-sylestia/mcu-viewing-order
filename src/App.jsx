@@ -703,28 +703,24 @@ const PhaseRows = React.memo(function PhaseRows({ rows, renderRow }) {
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
-    let rafId = 0;
-    const schedule = () => {
-      if (rafId) return;
-      rafId = window.requestAnimationFrame(() => {
-        rafId = 0;
-        setScrollY(window.scrollY || 0);
-        setViewportHeight(window.innerHeight || 900);
-      });
+    const onScroll = () => {
+      setScrollY(window.scrollY || 0);
+      setViewportHeight(window.innerHeight || 900);
     };
-    schedule();
-    window.addEventListener('scroll', schedule, { passive: true });
-    window.addEventListener('resize', schedule);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
     return () => {
-      window.removeEventListener('scroll', schedule);
-      window.removeEventListener('resize', schedule);
-      if (rafId) window.cancelAnimationFrame(rafId);
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
     };
   }, []);
 
   const estimatedRowHeight = 132;
   const estimatedTotalHeight = rows.length * estimatedRowHeight;
-  const computedOverscan = Math.min(12, Math.max(6, Math.round(viewportHeight / 220)));
+  // Aggressive overscan: render 3× viewport height worth of rows ahead/behind
+  // so fast native scrolling never outruns React rendering.
+  const computedOverscan = Math.min(60, Math.max(18, Math.round(viewportHeight / estimatedRowHeight) * 3));
 
   const windowRange = useMemo(() => {
     if (!rows.length) return { start: 0, end: -1 };
@@ -779,12 +775,16 @@ const PhaseRows = React.memo(function PhaseRows({ rows, renderRow }) {
 
   const setRowRef = useCallback((rowId) => (node) => {
     if (!node || !rowId) return;
-    const nextHeight = Math.ceil(node.getBoundingClientRect().height);
-    const prevHeight = rowHeightsRef.current.get(rowId);
-    if (nextHeight > 0 && prevHeight !== nextHeight) {
-      rowHeightsRef.current.set(rowId, nextHeight);
-      setMeasuredVersion(v => v + 1);
-    }
+    // Defer measurement to avoid layout thrashing during scroll
+    requestAnimationFrame(() => {
+      if (!node.isConnected) return;
+      const nextHeight = Math.ceil(node.getBoundingClientRect().height);
+      const prevHeight = rowHeightsRef.current.get(rowId);
+      if (nextHeight > 0 && prevHeight !== nextHeight) {
+        rowHeightsRef.current.set(rowId, nextHeight);
+        setMeasuredVersion(v => v + 1);
+      }
+    });
   }, []);
 
   return (
@@ -1159,73 +1159,8 @@ export default function MCUViewer() {
 
 
 
-  useEffect(() => {
-    if (typeof window === 'undefined' || !isDesktopViewport || overlayActive || performanceMode) return;
-    const container = mainRef.current;
-    const canAnimate = window.matchMedia?.('(prefers-reduced-motion: no-preference)').matches ?? true;
-    if (!container || !canAnimate) return;
-
-    const state = desktopSmoothScrollStateRef.current;
-    const maxDesktopStep = 180;
-    const friction = 0.86;
-
-    const getScrollHost = () => (container.scrollHeight > container.clientHeight + 1 ? container : window);
-    const getWindowTop = () => window.scrollY || document.documentElement.scrollTop || 0;
-
-    const tick = (ts) => {
-      if (!state.lastTs) state.lastTs = ts;
-      const deltaMs = Math.min(32, Math.max(8, ts - state.lastTs));
-      state.lastTs = ts;
-
-      const host = getScrollHost();
-      const frameStep = state.velocity * (deltaMs / 16.7);
-      if (Math.abs(frameStep) < 0.1) {
-        state.velocity = 0;
-        state.lastTs = 0;
-        state.raf = null;
-        return;
-      }
-
-      if (host === window) {
-        const prevTop = getWindowTop();
-        window.scrollTo({ top: prevTop + frameStep, behavior: 'auto' });
-        const nextTop = getWindowTop();
-        if (Math.abs(nextTop - prevTop) < 0.1) state.velocity = 0;
-      } else {
-        const prevTop = host.scrollTop;
-        host.scrollTop = prevTop + frameStep;
-        if (Math.abs(host.scrollTop - prevTop) < 0.1) state.velocity = 0;
-      }
-
-      state.velocity *= friction;
-      state.raf = requestAnimationFrame(tick);
-    };
-
-    const onWheel = (event) => {
-      if (!event.cancelable || event.ctrlKey || event.defaultPrevented) return;
-      if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
-      const target = event.target;
-      if (target instanceof HTMLElement) {
-        const interactive = target.closest('input, textarea, select, [contenteditable="true"], .hero-carousel-track');
-        if (interactive) return;
-      }
-      event.preventDefault();
-      const directionAdjusted = event.deltaMode === 1 ? event.deltaY * 16 : event.deltaY;
-      const delta = Math.max(-maxDesktopStep, Math.min(maxDesktopStep, directionAdjusted));
-      state.velocity += delta;
-      state.velocity = Math.max(-maxDesktopStep, Math.min(maxDesktopStep, state.velocity));
-      if (!state.raf) state.raf = requestAnimationFrame(tick);
-    };
-
-    container.addEventListener('wheel', onWheel, { passive: false });
-    return () => {
-      container.removeEventListener('wheel', onWheel);
-      if (state.raf) cancelAnimationFrame(state.raf);
-      state.raf = null;
-      state.velocity = 0;
-      state.lastTs = 0;
-    };
-  }, [isDesktopViewport, overlayActive, performanceMode]);
+  // Native scrolling — removed custom desktop smooth-scroll hijack.
+  // The browser's built-in momentum scrolling is faster and more reliable.
 
   useEffect(() => {
     const el = mainRef.current;
