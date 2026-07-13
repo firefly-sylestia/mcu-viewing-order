@@ -203,9 +203,7 @@
 html {
   scroll-behavior: auto;
   -webkit-text-size-adjust: 100%;
-  overflow-x: hidden;
-  overscroll-behavior-y: none;
-  scrollbar-gutter: stable both-edges;
+  /* overflow-x & overscroll-behavior moved to #root — avoids Chrome OS trackpad scroll bugs */
 }
 
 body {
@@ -214,10 +212,9 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-body);
-  overflow-x: hidden;
   overscroll-behavior-y: none;
   -webkit-overflow-scrolling: touch;
-  touch-action: pan-y;
+  /* touch-action: pan-y removed — kills Chrome OS trackpad scroll */
 }
 
 #root {
@@ -225,6 +222,7 @@ body {
   max-width: 100vw;
   min-height: 100dvh;
   overflow-x: hidden;
+  /* overflow-x consolidated here from html/body for Chrome OS compat */
 }
 
 /* ── Typography Roles ─────────────────────────────────────────────────────────────── */
