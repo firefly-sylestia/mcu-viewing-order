@@ -703,9 +703,22 @@ const PhaseRows = React.memo(function PhaseRows({ rows, renderRow }) {
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
-    const onScroll = () => {
+    let lastUpdate = 0;
+    let trailingTimer;
+    const THROTTLE_MS = 80;
+    const updatePosition = () => {
+      lastUpdate = performance.now();
       setScrollY(window.scrollY || 0);
       setViewportHeight(window.innerHeight || 900);
+    };
+    const onScroll = () => {
+      const now = performance.now();
+      if (now - lastUpdate >= THROTTLE_MS) {
+        updatePosition();
+      }
+      // Always schedule a trailing update so rows render at final scroll position
+      clearTimeout(trailingTimer);
+      trailingTimer = setTimeout(updatePosition, THROTTLE_MS + 30);
     };
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
@@ -713,6 +726,7 @@ const PhaseRows = React.memo(function PhaseRows({ rows, renderRow }) {
     return () => {
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onScroll);
+      clearTimeout(trailingTimer);
     };
   }, []);
 
@@ -1171,17 +1185,26 @@ export default function MCUViewer() {
       return canScrollMain ? el.scrollTop : window.scrollY;
     };
     previousTop = getCurrentScrollTop();
+    let lastFabUpdate = 0;
+    const FAB_THROTTLE_MS = 150; // Only update FAB visibility every 150ms
     const onScroll = () => {
       const currentTop = getCurrentScrollTop();
       const delta = currentTop - previousTop;
-      if (currentTop < 120) {
-        setFabMinimized(false);
-      } else if (delta > 7) {
-        setFabMinimized(true);
-        if (fabMenuOpen) setFabMenuOpen(false);
-      } else if (delta < -10) {
-        setFabMinimized(false);
+      const now = performance.now();
+      
+      // Throttle React state updates to avoid jank on fast scroll
+      if (now - lastFabUpdate >= FAB_THROTTLE_MS) {
+        lastFabUpdate = now;
+        if (currentTop < 120) {
+          setFabMinimized(false);
+        } else if (delta > 7) {
+          setFabMinimized(true);
+          if (fabMenuOpen) setFabMenuOpen(false);
+        } else if (delta < -10) {
+          setFabMinimized(false);
+        }
       }
+      
       previousTop = currentTop;
       isScrolling.current = true;
       clearTimeout(isScrolling._t);
