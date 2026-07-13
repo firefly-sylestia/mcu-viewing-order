@@ -4,11 +4,9 @@ import './index.css'
 import App from './App.jsx'
 import { useLenis } from './hooks/useLenis'
 import { motionCssVars } from './constants/motion'
-import { useAndroidNativeMode } from './hooks/useAndroidNativeMode'
 
 const AppRuntime = () => {
   useLenis()
-  useAndroidNativeMode()
 
   return <App />
 }

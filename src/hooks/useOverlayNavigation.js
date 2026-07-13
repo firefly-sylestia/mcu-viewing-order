@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 
 export function useOverlayNavigation({
   sidebarOpen,
@@ -9,29 +9,22 @@ export function useOverlayNavigation({
   onCloseAnalytics,
   onCloseSettings,
   onCloseSidebar,
+  hasInAppBackStep = false,
+  onInAppBack = null,
 }) {
-  const hasHistoryEntryRef = useRef(false);
-
   useEffect(() => {
     const hasOverlay = Boolean(sidebarOpen || settingsOpen || detailItem || analyticsOpen);
-    if (!hasOverlay) {
-      hasHistoryEntryRef.current = false;
-      return;
-    }
+    const hasBackStep = hasOverlay || hasInAppBackStep;
+    if (!hasBackStep) return;
 
-    if (!hasHistoryEntryRef.current) {
-      window.history.pushState({ mcuOverlay: true, hasOverlay }, '');
-      hasHistoryEntryRef.current = true;
-    }
+    window.history.pushState({ mcuOverlay: true, hasOverlay, hasInAppBackStep: Boolean(hasInAppBackStep) }, '');
 
     const onBack = () => {
-      const currentScroll = window.scrollY;
       if (detailItem) onCloseDetail();
       else if (analyticsOpen) onCloseAnalytics();
       else if (settingsOpen) onCloseSettings();
       else if (sidebarOpen) onCloseSidebar();
-      window.requestAnimationFrame(() => window.scrollTo({ top: currentScroll, behavior: 'instant' }));
-      hasHistoryEntryRef.current = false;
+      else if (hasInAppBackStep && typeof onInAppBack === 'function') onInAppBack();
     };
 
     window.addEventListener('popstate', onBack);
@@ -45,5 +38,7 @@ export function useOverlayNavigation({
     onCloseAnalytics,
     onCloseSettings,
     onCloseSidebar,
+    hasInAppBackStep,
+    onInAppBack,
   ]);
 }

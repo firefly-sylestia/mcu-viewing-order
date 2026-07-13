@@ -10,9 +10,6 @@
         .section-up{animation:sectionUp 360ms var(--ease-out) both}
         @keyframes fadeIn{from{opacity:0;transform:scale(0.97) translateY(-4px)}to{opacity:1;transform:scale(1) translateY(0)}}
         .fade-in{animation:fadeIn 240ms var(--ease-out) both}
-        @keyframes cardOpenIn{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
-        .theme-switch:not(.performance-mode) .phase-row-virtualized .rrow{animation:cardOpenIn 320ms var(--ease-out) both}
-        .theme-switch:not(.performance-mode) .phase-row-virtualized:nth-child(2n) .rrow{animation-duration:360ms}
         @starting-style{.dropdown-pop{opacity:0;transform:translate3d(0,-8px,0) scale(0.96);filter:blur(3px)}.dropdown-pop-up{opacity:0;transform:translate3d(0,8px,0) scale(0.96);filter:blur(3px)}}
         @keyframes expandDown{from{opacity:0;max-height:0;padding-top:0;padding-bottom:0}to{opacity:1;max-height:600px;padding-top:10px;padding-bottom:10px}}
         .expand-row{animation:expandDown 0.28s cubic-bezier(0.34,1.56,0.64,1) both;overflow:hidden}
