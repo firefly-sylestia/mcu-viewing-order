@@ -3208,6 +3208,7 @@ export default function MCUViewer() {
 
       {/* ━━ POSTER CAROUSEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       {browseMode === 'home' && heroItems.length > 0 && (
+        <div className="hero-section">
         <HeroCarousel
           items={heroItems}
           activeIndex={heroIndex}
@@ -3226,6 +3227,7 @@ export default function MCUViewer() {
           performanceMode={performanceMode}
           darkMode={darkMode}
         />
+        </div>
       )}
       {browseMode === 'phase' && (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '6px 16px 12px' }}>
@@ -3262,10 +3264,9 @@ export default function MCUViewer() {
       )}
 
       {/* ━━ FILTER BAR (collapsible) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      {browseMode !== 'search' && <div style={{ background: 'transparent', borderBottom: 'none', flexShrink: 0, position: 'relative', zIndex: 60, marginTop: 8 }}>
+      {browseMode !== 'search' && <div className="filter-bar-shell" style={{ flexShrink: 0, position: 'relative', zIndex: 60 }}>
         {/* Toggle row — always visible */}
-        <div style={{ maxWidth: 1480, margin: '0 auto', padding: '0 16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', flexWrap: 'wrap' }}>
+        <div className="filter-bar-row">
             <button className="filters-trigger"
               onClick={() => setFiltersOpen(v => !v)}
               style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 10, border: `1px solid ${filtersOpen ? 'color-mix(in srgb, var(--theme-accent) 50%, var(--theme-border))' : T.filterBorder}`, background: 'transparent', color: filtersOpen ? 'var(--theme-accent)' : T.textMuted, cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 2, transition: 'all 0.18s' }}
@@ -3313,11 +3314,10 @@ export default function MCUViewer() {
             </button>
             <div className='filter-row-actions' style={{ marginLeft: 0, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-start', minWidth: 0 }} />
           </div>
-        </div>
 
         {/* Collapsible filter controls */}
         {filtersOpen && (
-          <div className="filters-open" style={{ padding: '0 48px 12px', maxWidth: 1400, margin: '0 auto' }}>
+          <div className="filters-open filters-dropdown-panel">
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', overflow: 'visible' }}>
               {/* Type pills */}
               {['film', 'series', 'short'].map(t => {
@@ -3488,7 +3488,7 @@ export default function MCUViewer() {
 
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <ContentArea ref={mainRef} sidebarOpen={sidebarOpen} overlayActive={overlayActive} blockHomeInteractions={blockHomeInteractions} performanceMode={performanceMode} headerCompact={headerCompact}>
-        <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '28px 18px 96px 18px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
+        <div className="content-wrapper list-mode-switch">
           {phaseKeys.length === 0 && (
             <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: 'var(--font-marvel-ui)', fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
               NO RESULTS — ADJUST YOUR FILTERS
@@ -3542,7 +3542,7 @@ export default function MCUViewer() {
                 )}
 
                 {/* Phase divider */}
-                <div className="curvy-panel phase-header-card motion-pop" style={{ '--phase-color': ph.color, border: `1px solid ${T.surfaceBorder}` }}>
+                <div className="curvy-panel phase-header-card motion-pop" style={{ '--phase-color': ph.color }}>
                   <WatermarkOverlay surface="card" theme={darkMode ? 'dark' : 'light'} viewport={isDesktopViewport ? 'desktop' : 'mobile'} avoid={['title', 'progress']} />
                   <div className="phase-title-wrap">
                     <div className="phase-title" style={{ color: ph.color }}>
@@ -3552,7 +3552,7 @@ export default function MCUViewer() {
                       {ph.tagline === 'Assembling the Avengers' ? <>ASSEMBLING<br />THE AVENGERS</> : ph.tagline}
                     </div>
                   </div>
-                  <span className="phase-progress-chip" style={{ color: phasePct === 100 ? ph.color : T.textMuted, border: `1px solid ${T.surfaceBorder}` }}>
+                  <span className={`phase-progress-chip ${phasePct === 100 ? 'is-complete' : ''}`}>
                     {done}/{rows.length}
                   </span>
                   <button onClick={() => setExpandedPhase(summaryOpen ? null : pid)}

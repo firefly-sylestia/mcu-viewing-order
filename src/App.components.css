@@ -5,6 +5,166 @@
    All selectors preserve JS-required class names.
    ═══════════════════════════════════════════════════════════════════════════ */
 
+/* ═══ LAYOUT: Hero carousel section ─══════════════════════════════ */
+.hero-section {
+  position: relative;
+  padding: 24px 0 32px;
+  background: linear-gradient(180deg, 
+    color-mix(in srgb, var(--color-accent-red, #EC1D24) 4%, var(--color-page-bg, #06050A)) 0%,
+    var(--color-page-bg, #06050A) 100%
+  );
+  border-bottom: 1px solid var(--color-border-default, rgba(255,255,255,0.08));
+}
+
+@media (max-width: 767px) {
+  .hero-section {
+    padding: 12px 0 20px;
+  }
+}
+
+/* ═══ LAYOUT: Header / nav bar ─═══════════════════════════════════ */
+.header-inner {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 24px 12px;
+}
+
+.header-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* ═══ LAYOUT: Filter bar container ─═══════════════════════════════ */
+.filter-bar-shell {
+  max-width: 1200px;
+  margin: 0 auto 16px;
+  padding: 0 20px;
+}
+
+.filter-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+  flex-wrap: wrap;
+}
+
+.filter-bar-divider {
+  height: 1px;
+  background: var(--color-border-default, rgba(255,255,255,0.08));
+  margin: 0 20px;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.filters-dropdown-panel {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px 16px;
+}
+
+/* ═══ LAYOUT: Phase section header ─═══════════════════════════════ */
+.phase-header-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  margin: 32px 0 12px;
+  border-radius: var(--radius-xl, 20px);
+  border: 1px solid var(--color-border-default, rgba(255,255,255,0.08));
+  border-left: 4px solid var(--phase-color, var(--color-accent-red, #EC1D24));
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--phase-color, var(--color-accent-red, #EC1D24)) 6%, transparent),
+    var(--color-surface-glass, rgba(26,26,30,0.88))
+  );
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.30);
+}
+
+@media (max-width: 767px) {
+  .phase-header-card {
+    padding: 14px 16px;
+    margin: 20px 0 8px;
+    flex-wrap: wrap;
+  }
+}
+
+.phase-header-card .phase-title-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.phase-header-card .phase-number {
+  font-family: var(--font-display, 'Outfit', sans-serif);
+  font-size: var(--fs-h3, clamp(1.1rem, 1.6vw, 1.3rem));
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--color-text-primary, #FFFFFF);
+}
+
+.phase-header-card .phase-name {
+  font-family: var(--font-ui, 'Inter', sans-serif);
+  font-size: var(--fs-caption, 0.78rem);
+  font-weight: 600;
+  color: var(--color-text-secondary, #B8BAC2);
+}
+
+.phase-progress-chip {
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 2px solid var(--color-border-default, rgba(255,255,255,0.08));
+  background: var(--color-surface-elevated, #1C1C24);
+  font-family: var(--font-ui, 'Inter', sans-serif);
+  font-size: var(--fs-caption, 0.78rem);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  flex-shrink: 0;
+  color: var(--color-text-secondary, #B8BAC2);
+  transition: all 200ms var(--ease-out);
+}
+
+.phase-progress-chip.is-complete {
+  border-color: var(--phase-color, var(--color-success, #22C55E));
+  color: var(--phase-color, var(--color-success, #22C55E));
+  box-shadow: 0 0 12px color-mix(in srgb, var(--phase-color, var(--color-success, #22C55E)) 25%, transparent);
+}
+
+/* ═══ LAYOUT: Content area ─═══════════════════════════════════════ */
+.content-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 20px 120px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100% - 400px);
+}
+
+@media (max-width: 767px) {
+  .content-wrapper {
+    padding: 16px 12px 96px;
+  }
+}
+
+/* ═══ LAYOUT: Section gaps ─═══════════════════════════════════════ */
+.phase-section {
+  margin-bottom: 40px;
+}
+
+.phase-section:last-child {
+  margin-bottom: 0;
+}
+
 /* ── 1. Filter / pill triggers (.ntab, .fpill) ───────────────────── */
 .ntab {
   position: relative;
