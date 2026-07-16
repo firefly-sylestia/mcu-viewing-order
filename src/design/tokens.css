@@ -1,0 +1,244 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   DESIGN TOKENS — Single source of truth for all CSS custom properties.
+   Cinema-dark primary theme (default). Daylight overrides in [data-theme="light"].
+   Imported by index.css at the :root level.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ═══ COLORS — Cinema (dark) ═══════════════════════════════════════════════ */
+  --color-page-bg:            #0D0D0F;
+  --color-surface-primary:    #1A1A1E;
+  --color-surface-elevated:   #242429;
+  --color-surface-glass:      rgba(26, 26, 30, 0.88);
+
+  --color-text-primary:       #FFFFFF;
+  --color-text-secondary:     #B0B3BA;
+  --color-text-tertiary:      #6B6F78;
+
+  --color-accent-red:         #EC1D24;
+  --color-accent-red-glow:    rgba(236, 29, 36, 0.40);
+  --color-accent-gold:        #F5C518;
+  --color-accent-gold-glow:   rgba(245, 197, 24, 0.35);
+
+  --color-success:            #22C55E;
+  --color-warning:            #F59E0B;
+  --color-danger:             #EF4444;
+  --color-info:               #3B82F6;
+  --color-purple:             #8B5CF6;
+
+  --color-border-default:     rgba(255, 255, 255, 0.08);
+  --color-border-hover:       rgba(255, 255, 255, 0.18);
+  --color-border-active:      rgba(236, 29, 36, 0.50);
+  --color-divider:            #2A2A30;
+
+  /* Status semantic colors */
+  --color-status-watched:       #22C55E;
+  --color-status-plan-to-watch: #3B82F6;
+  --color-status-watching:      #8B5CF6;
+  --color-status-on-hold:       #F59E0B;
+  --color-status-dropped:       #EF4444;
+  --color-status-unwatched:     var(--color-text-secondary);
+
+  /* Type semantic colors */
+  --color-type-film:    #EC1D24;
+  --color-type-series:  #3B82F6;
+  --color-type-short:   #8B5CF6;
+
+  /* ═══ TYPOGRAPHY ═══════════════════════════════════════════════════════════ */
+  --font-display:             'Outfit', 'Inter', system-ui, sans-serif;
+  --font-ui:                  'Inter', system-ui, sans-serif;
+  --font-body:                'Inter', system-ui, sans-serif;
+  --font-mono:                'JetBrains Mono', 'SF Mono', 'Monaco', monospace;
+
+  --fs-display:               clamp(2.4rem, 6vw, 4.8rem);
+  --fs-h1:                    clamp(1.8rem, 4vw, 2.6rem);
+  --fs-h2:                    clamp(1.3rem, 2.6vw, 1.8rem);
+  --fs-h3:                    clamp(1.1rem, 1.6vw, 1.3rem);
+  --fs-body:                  0.95rem;
+  --fs-body-sm:               0.85rem;
+  --fs-caption:               0.78rem;
+  --fs-metadata:              0.70rem;
+  --fs-micro:                 0.65rem;
+  --fs-overline:              0.62rem;
+
+  --fw-regular:               400;
+  --fw-medium:                500;
+  --fw-semibold:              600;
+  --fw-bold:                  700;
+  --fw-extrabold:             800;
+  --fw-black:                 900;
+
+  --lh-tight:                 1.10;
+  --lh-heading:               1.20;
+  --lh-body:                  1.55;
+  --lh-relaxed:               1.65;
+
+  --ls-heading:               -0.015em;
+  --ls-body:                  0.005em;
+  --ls-caption:               0.02em;
+  --ls-overline:              0.08em;
+  --ls-nav:                   0.03em;
+
+  /* ═══ SPACING ══════════════════════════════════════════════════════════════ */
+  --sp-0:                     0;
+  --sp-1:                     4px;
+  --sp-2:                     8px;
+  --sp-3:                     12px;
+  --sp-4:                     16px;
+  --sp-5:                     20px;
+  --sp-6:                     24px;
+  --sp-7:                     32px;
+  --sp-8:                     40px;
+  --sp-9:                     48px;
+  --sp-10:                    64px;
+
+  /* ═══ RADIUS ═══════════════════════════════════════════════════════════════ */
+  --radius-xs:                6px;
+  --radius-sm:                8px;
+  --radius-md:                12px;
+  --radius-lg:                16px;
+  --radius-xl:                20px;
+  --radius-2xl:               24px;
+  --radius-full:              999px;
+
+  /* ═══ SHADOWS ══════════════════════════════════════════════════════════════ */
+  --shadow-sm:                0 2px 8px rgba(0, 0, 0, 0.25);
+  --shadow-md:                0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow-lg:                0 16px 48px rgba(0, 0, 0, 0.45);
+  --shadow-xl:                0 24px 64px rgba(0, 0, 0, 0.55);
+  --shadow-accent:            0 4px 16px rgba(236, 29, 36, 0.35);
+  --shadow-gold:              0 4px 16px rgba(245, 197, 24, 0.30);
+
+  /* ═══ MOTION ═══════════════════════════════════════════════════════════════ */
+  --duration-instant:         80ms;
+  --duration-micro:           150ms;
+  --duration-standard:        220ms;
+  --duration-emphasis:        320ms;
+  --duration-cinematic:       500ms;
+  --duration-page:            400ms;
+
+  --ease-out:                 cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring:              cubic-bezier(0.34, 1.45, 0.64, 1);
+  --ease-bounce:              cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --ease-sheet:               cubic-bezier(0.32, 1, 0.32, 1);
+  --ease-smooth:              cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ═══ Z-INDEX ══════════════════════════════════════════════════════════════ */
+  --z-base:                   0;
+  --z-content:                10;
+  --z-header:                 50;
+  --z-fab:                    100;
+  --z-sidebar:                200;
+  --z-overlay:                250;
+  --z-modal:                  300;
+  --z-toast:                  350;
+
+  /* ═══ LAYOUT ═══════════════════════════════════════════════════════════════ */
+  --content-max:              1100px;
+  --content-narrow:           780px;
+  --sidebar-width:            300px;
+  --sidebar-collapsed:        64px;
+  --topbar-height:            56px;
+  --bottombar-height:         64px;
+  --detail-drawer-width:      480px;
+  --poster-ratio:             2 / 3;
+  --poster-sm:                120px;
+  --poster-md:                160px;
+  --poster-lg:                200px;
+  --poster-gap:               16px;
+  --hero-height-desktop:      420px;
+  --hero-height-mobile:       240px;
+  --touch-target-min:         44px;
+
+  /* ═══ GRADIENTS ════════════════════════════════════════════════════════════ */
+  --gradient-hero-overlay: linear-gradient(
+    to top,
+    rgba(13, 13, 15, 0.95) 0%,
+    rgba(13, 13, 15, 0.60) 40%,
+    rgba(13, 13, 15, 0.15) 75%,
+    transparent 100%
+  );
+  --gradient-card-overlay: linear-gradient(
+    to top,
+    rgba(13, 13, 15, 0.85) 0%,
+    rgba(13, 13, 15, 0.30) 50%,
+    transparent 80%
+  );
+  --gradient-progress: linear-gradient(
+    90deg,
+    var(--color-accent-red) 0%,
+    var(--color-accent-gold) 100%
+  );
+  --gradient-phase: linear-gradient(
+    135deg,
+    rgba(236, 29, 36, 0.12) 0%,
+    transparent 60%
+  );
+  --gradient-surface: linear-gradient(
+    135deg,
+    var(--color-surface-elevated),
+    color-mix(in srgb, var(--color-surface-primary) 70%, transparent)
+  );
+}
+
+/* ═════════════════════════════════════════════════ DAYLIGHT THEME OVERRIDES */
+[data-theme="light"] {
+  --color-page-bg:            #F4F5F8;
+  --color-surface-primary:    #FFFFFF;
+  --color-surface-elevated:   #F8F9FB;
+  --color-surface-glass:      rgba(255, 255, 255, 0.90);
+
+  --color-text-primary:       #0F172A;
+  --color-text-secondary:     #52606D;
+  --color-text-tertiary:      #94A3B8;
+
+  --color-accent-red:         #2563EB;
+  --color-accent-red-glow:    rgba(37, 99, 235, 0.30);
+  --color-accent-gold:        #F5C518;
+  --color-accent-gold-glow:   rgba(245, 197, 24, 0.30);
+
+  --color-border-default:     rgba(15, 23, 42, 0.08);
+  --color-border-hover:       rgba(15, 23, 42, 0.16);
+  --color-border-active:      rgba(37, 99, 235, 0.40);
+  --color-divider:            rgba(15, 23, 42, 0.10);
+
+  --color-type-film:    #2563EB;
+  --color-type-series:  #7C3AED;
+  --color-type-short:   #059669;
+
+  --shadow-sm:                0 2px 8px rgba(15, 23, 42, 0.08);
+  --shadow-md:                0 8px 24px rgba(15, 23, 42, 0.12);
+  --shadow-lg:                0 16px 48px rgba(15, 23, 42, 0.16);
+  --shadow-xl:                0 24px 64px rgba(15, 23, 42, 0.20);
+  --shadow-accent:            0 4px 16px rgba(37, 99, 235, 0.25);
+  --shadow-gold:              0 4px 16px rgba(245, 197, 24, 0.25);
+
+  --gradient-hero-overlay: linear-gradient(
+    to top,
+    rgba(244, 245, 248, 0.95) 0%,
+    rgba(244, 245, 248, 0.60) 40%,
+    rgba(244, 245, 248, 0.15) 75%,
+    transparent 100%
+  );
+  --gradient-card-overlay: linear-gradient(
+    to top,
+    rgba(244, 245, 248, 0.85) 0%,
+    rgba(244, 245, 248, 0.30) 50%,
+    transparent 80%
+  );
+  --gradient-progress: linear-gradient(
+    90deg,
+    #2563EB 0%,
+    var(--color-accent-gold) 100%
+  );
+  --gradient-phase: linear-gradient(
+    135deg,
+    rgba(37, 99, 235, 0.10) 0%,
+    transparent 60%
+  );
+  --gradient-surface: linear-gradient(
+    135deg,
+    var(--color-surface-elevated),
+    color-mix(in srgb, var(--color-surface-primary) 70%, transparent)
+  );
+}

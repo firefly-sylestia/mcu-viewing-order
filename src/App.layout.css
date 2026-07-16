@@ -332,6 +332,181 @@ main::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
   background: var(--icon-button-bg);
 }
 
+/* ── Layout shell: TopBar (mobile) ──────────────────────────────── */
+.topbar {
+  display: none;
+}
+@media (max-width: 767px) {
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: var(--topbar-height, 56px);
+    padding: 0 var(--sp-4);
+    background: var(--bg-glass);
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    border-bottom: 1px solid var(--border);
+    z-index: var(--z-header);
+  }
+  .topbar-left, .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .topbar-title {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 16px;
+    letter-spacing: -0.01em;
+    color: var(--text);
+  }
+  .topbar-icon-btn {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--surface-translucent);
+    color: var(--text);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: border-color 150ms var(--ease-out), background 150ms var(--ease-out);
+  }
+  .topbar-icon-btn:hover {
+    border-color: var(--border-hover);
+    background: var(--pill-surface);
+  }
+}
+
+/* ── Layout shell: BottomBar (mobile tab bar) ────────────────────── */
+.bottombar {
+  display: none;
+}
+@media (max-width: 767px) {
+  .bottombar {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: var(--bottombar-height, 64px);
+    padding: 0 var(--sp-2);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: var(--bg-glass);
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    border-top: 1px solid var(--border);
+    z-index: var(--z-header);
+    gap: 2px;
+  }
+  .bottombar-tab {
+    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 6px 4px;
+    border: none;
+    border-radius: 12px;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-family: var(--font-ui);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    transition: color 150ms var(--ease-out), background 150ms var(--ease-out);
+    min-height: 48px;
+  }
+  .bottombar-tab:hover {
+    color: var(--text);
+  }
+  .bottombar-tab.is-active {
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+  }
+  .bottombar-tab-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .bottombar-tab-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+  .bottombar-tab-label {
+    line-height: 1;
+  }
+}
+
+/* ── Sidebar close button (inside panel, mobile) ─────────────────── */
+.sidebar-close-btn {
+  display: none;
+}
+@media (max-width: 767px) {
+  .sidebar-close-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--surface-translucent);
+    color: var(--text);
+    cursor: pointer;
+    z-index: 2;
+  }
+}
+
+/* ── Sidebar scroll area ─────────────────────────────────────────── */
+.sidebar-scroll {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: var(--sp-6) var(--sp-4);
+  overscroll-behavior: contain;
+}
+
+/* ── Main content area ───────────────────────────────────────────── */
+.app-content {
+  flex: 1 1 auto;
+  min-height: 100dvh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  margin-left: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  transition: margin-left var(--motion-base) var(--ease-out);
+}
+
+/* Desktop: offset for sidebar */
+@media (min-width: 768px) {
+  .app-content {
+    margin-left: 64px;
+  }
+}
+@media (min-width: 1024px) {
+  .app-content {
+    margin-left: var(--sidebar-width, 300px);
+  }
+}
+
+/* Mobile: offset for topbar + bottombar */
+@media (max-width: 767px) {
+  .app-content {
+    margin-left: 0;
+    padding-top: var(--topbar-height, 56px);
+    padding-bottom: var(--bottombar-height, 64px);
+  }
+}
+
 /* ── Interactive tokens (used by .fpill, .wbtn, etc.) ─────────────── */
 :root {
   --space-1:  4px;

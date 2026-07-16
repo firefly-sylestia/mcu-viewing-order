@@ -1,11 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&family=Manrope:wght@400;500;600;700;800&display=swap');
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   CINEMA DESIGN TOKENS
-   Dark cinema-app vocabulary: deep gray-black surfaces, red CTA, gold ratings.
-   Bottom-tab pill, frosted icon buttons, hero carousel with peek-next poster.
+   CINEMA DESIGN TOKENS — v2.0
+   Dark cinema-app vocabulary: deep black surfaces (#0D0D0F), Marvel red
+   (#EC1D24) accent, gold (#F5C518) ratings. Import token catalog first.
    Two themes: cinema (primary, dark) + daylight (secondary, light).
    ═══════════════════════════════════════════════════════════════════════════ */
+
+@import './design/tokens.css';
 
 :root {
   /* ── Geometry ─────────────────────────────────────────────────── */
@@ -27,35 +29,35 @@
   --radius-pill: 999px;
 
   /* ── Elevation ────────────────────────────────────────────────── */
-  --elevation-1: 0 4px 14px rgba(0, 0, 0, 0.22);
-  --elevation-2: 0 12px 32px rgba(0, 0, 0, 0.32);
-  --elevation-3: 0 24px 60px rgba(0, 0, 0, 0.40);
-  --elevation-floating: 0 28px 72px rgba(0, 0, 0, 0.40);
+  --elevation-1: 0 2px 8px rgba(0, 0, 0, 0.25);
+  --elevation-2: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --elevation-3: 0 16px 48px rgba(0, 0, 0, 0.45);
+  --elevation-floating: 0 24px 64px rgba(0, 0, 0, 0.55);
 
-  /* ── Typography ───────────────────────────────────────────────── */
-  --type-display:   clamp(2.4rem, 6vw, 4.75rem);   /* hero title */
-  --type-h1:        clamp(1.85rem, 4.2vw, 2.6rem);
-  --type-h2:        clamp(1.35rem, 2.6vw, 1.75rem);
-  --type-h3:        clamp(1.1rem, 1.6vw, 1.25rem);
+  /* ── Typography (inherits base tokens, overrides for app scale) ── */
+  --type-display:   clamp(2.4rem, 6vw, 4.8rem);
+  --type-h1:        clamp(1.8rem, 4vw, 2.6rem);
+  --type-h2:        clamp(1.3rem, 2.6vw, 1.8rem);
+  --type-h3:        clamp(1.1rem, 1.6vw, 1.3rem);
   --type-body:      0.95rem;
   --type-caption:   0.78rem;
-  --type-metadata:  0.72rem;
-  --type-micro:     0.66rem;
+  --type-metadata:  0.70rem;
+  --type-micro:     0.65rem;
 
-  --lh-tight:    1.15;
-  --lh-heading:  1.25;
-  --lh-body:     1.5;
-  --lh-reading:  1.62;
+  --lh-tight:    1.10;
+  --lh-heading:  1.20;
+  --lh-body:     1.55;
+  --lh-reading:  1.65;
 
   --content-measure:         68ch;
   --content-measure-compact: 54ch;
 
   /* ── Motion ───────────────────────────────────────────────────── */
-  --motion-fast:    150ms;
-  --motion-base:    220ms;
-  --motion-slow:    300ms;
-  --motion-spring:  420ms;
-  --motion-cinematic: 600ms;
+  --motion-fast:     150ms;
+  --motion-base:     220ms;
+  --motion-slow:     300ms;
+  --motion-spring:   420ms;
+  --motion-cinematic: 500ms;
 
   --ease-out:       cubic-bezier(0.22, 1, 0.36, 1);
   --ease-spring:    cubic-bezier(0.34, 1.45, 0.64, 1);
@@ -75,47 +77,47 @@
 
   /* ═════════════════════════════════════════════ CINEMA THEME (default) */
   color-scheme: dark;
-  --bg:                  #17181A;            /* page base */
-  --bg-alt:              #030303;            /* phone-card black */
-  --bg-elevated:         #1C1D1F;
-  --bg-card:             #030303;
-  --bg-glass:            rgba(20, 20, 22, 0.92);
+  --bg:                  #0D0D0F;            /* page base — deepest */
+  --bg-alt:              #1A1A1E;            /* surface / card */
+  --bg-elevated:         #242429;            /* hover / elevated */
+  --bg-card:             #1A1A1E;
+  --bg-glass:            rgba(26, 26, 30, 0.88);
 
   --text:                #FFFFFF;
   --text-h:              #FFFFFF;
-  --text-dim:            #C7CCD4;
-  --text-muted:          #9AA0A6;
-  --text-disabled:       #6E7682;
+  --text-dim:            #B0B3BA;
+  --text-muted:          #6B6F78;
+  --text-disabled:       #4A4D54;
 
   /* Accents */
-  --accent:              #D23026;            /* primary CTA / info card */
-  --accent-soft:         #EF4444;
-  --accent-glow:         rgba(210, 48, 38, 0.45);
+  --accent:              #EC1D24;            /* primary CTA / Marvel red */
+  --accent-soft:         #F87171;
+  --accent-glow:         rgba(236, 29, 36, 0.40);
 
-  --gold:                #F2C545;            /* star fill */
+  --gold:                #F5C518;            /* star fill / ratings */
   --gold-soft:           #F9D142;            /* IMDB badge bg */
-  --gold-glow:           rgba(242, 197, 69, 0.40);
+  --gold-glow:           rgba(245, 197, 24, 0.35);
 
   /* Surfaces / translucency */
   --surface-translucent:   rgba(255, 255, 255, 0.06);
   --pill-surface:          rgba(255, 255, 255, 0.08);
   --pill-surface-strong:   rgba(255, 255, 255, 0.12);
   --icon-button-bg:        rgba(0, 0, 0, 0.35);
-  --glass-bg:              rgba(20, 20, 22, 0.90);
-  --info-card-bg:          #D23026;
-  --tab-bar-bg:            rgba(20, 20, 22, 0.90);
-  --divider:               #3A3B3D;
+  --glass-bg:              rgba(26, 26, 30, 0.88);
+  --info-card-bg:          #EC1D24;
+  --tab-bar-bg:            rgba(26, 26, 30, 0.88);
+  --divider:               #2A2A30;
 
   /* Borders */
-  --border:               rgba(255, 255, 255, 0.10);
+  --border:               rgba(255, 255, 255, 0.08);
   --border-soft:          rgba(255, 255, 255, 0.06);
-  --border-hover:         rgba(255, 255, 255, 0.20);
-  --border-active:        rgba(255, 255, 255, 0.32);
+  --border-hover:         rgba(255, 255, 255, 0.18);
+  --border-active:        rgba(236, 29, 36, 0.50);
 
   /* Shadows */
-  --shadow-sm:            0 4px 14px rgba(0, 0, 0, 0.32);
-  --shadow-md:            0 14px 36px rgba(0, 0, 0, 0.40);
-  --shadow-lg:            0 26px 64px rgba(0, 0, 0, 0.50);
+  --shadow-sm:            0 2px 8px rgba(0, 0, 0, 0.25);
+  --shadow-md:            0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow-lg:            0 16px 48px rgba(0, 0, 0, 0.45);
 
   /* ── Theme-aware aliases — JS sets var(--theme-*) above this layer ─── */
   --theme-accent:         var(--accent);
@@ -127,12 +129,11 @@
   --theme-text-secondary: var(--text-muted);
   --theme-border:         var(--border);
 
-  /* ── Row gradients (preserved semantics) ──────────────────────── */
-  --row-top-tint:     color-mix(in srgb, var(--theme-accent) 32%, transparent);
-  --row-top-tint-soft:color-mix(in srgb, var(--theme-accent-alt) 16%, transparent);
-  /* Page is initially cinema-dark; JS swaps via getActiveThemeVars at runtime. */
+  /* ── Row gradients ────────────────────────────────────────────── */
+  --row-top-tint:     color-mix(in srgb, var(--theme-accent) 28%, transparent);
+  --row-top-tint-soft:color-mix(in srgb, var(--theme-accent-alt) 14%, transparent);
 
-  /* ── UI panel tokens (used in index.css utilities) ─────────────── */
+  /* ── UI panel tokens ──────────────────────────────────────────── */
   --ui-panel-1:        color-mix(in srgb, var(--bg-elevated) 92%, transparent);
   --ui-panel-2:        color-mix(in srgb, var(--bg-alt)     92%, transparent);
   --ui-border-soft:    color-mix(in srgb, var(--border) 80%, transparent);
@@ -143,7 +144,7 @@
   --ui-radius-sm: 8px; --ui-radius-md: 12px; --ui-radius-lg: 16px;
 
   /* ── Fonts ────────────────────────────────────────────────────── */
-  --font-display:      'Inter', system-ui, sans-serif;
+  --font-display:      'Outfit', 'Inter', system-ui, sans-serif;
   --font-ui:           'Inter', system-ui, sans-serif;
   --font-body:         'Inter', system-ui, sans-serif;
   --font-marvel-display: var(--font-display);
@@ -151,7 +152,7 @@
   --font-marvel-body:    var(--font-body);
   --mono: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
 
-  font: 16px/1.5 var(--font-body);
+  font: 16px/1.55 var(--font-body);
   color: var(--text);
   background: var(--bg);
   font-synthesis: none;
@@ -165,9 +166,9 @@
   color-scheme: light;
   --bg:                  #F4F5F8;
   --bg-alt:              #FFFFFF;
-  --bg-elevated:         #FFFFFF;
+  --bg-elevated:         #F8F9FB;
   --bg-card:             #FFFFFF;
-  --bg-glass:            rgba(255, 255, 255, 0.92);
+  --bg-glass:            rgba(255, 255, 255, 0.90);
 
   --text:                #0F172A;
   --text-h:              #020617;
@@ -179,30 +180,30 @@
   --accent-soft:         #3B82F6;
   --accent-glow:         rgba(37, 99, 235, 0.22);
 
-  --gold:                #F2C545;
+  --gold:                #F5C518;
   --gold-soft:           #F9D142;
-  --gold-glow:           rgba(242, 197, 69, 0.32);
+  --gold-glow:           rgba(245, 197, 24, 0.30);
 
   --surface-translucent: rgba(15, 23, 42, 0.04);
   --pill-surface:        rgba(15, 23, 42, 0.06);
   --pill-surface-strong: rgba(15, 23, 42, 0.10);
   --icon-button-bg:      rgba(255, 255, 255, 0.92);
-  --glass-bg:            rgba(255, 255, 255, 0.92);
-  --info-card-bg:        #D23026;
-  --tab-bar-bg:          rgba(255, 255, 255, 0.92);
+  --glass-bg:            rgba(255, 255, 255, 0.90);
+  --info-card-bg:        #2563EB;
+  --tab-bar-bg:          rgba(255, 255, 255, 0.90);
   --divider:             rgba(15, 23, 42, 0.10);
 
-  --border:              rgba(15, 23, 42, 0.10);
+  --border:              rgba(15, 23, 42, 0.08);
   --border-soft:         rgba(15, 23, 42, 0.06);
-  --border-hover:        rgba(15, 23, 42, 0.18);
+  --border-hover:        rgba(15, 23, 42, 0.16);
   --border-active:       rgba(37, 99, 235, 0.40);
 
-  --shadow-sm:           0 4px 14px rgba(15, 23, 42, 0.08);
-  --shadow-md:           0 14px 34px rgba(15, 23, 42, 0.12);
-  --shadow-lg:           0 24px 56px rgba(15, 23, 42, 0.16);
+  --shadow-sm:           0 2px 8px rgba(15, 23, 42, 0.08);
+  --shadow-md:           0 8px 24px rgba(15, 23, 42, 0.12);
+  --shadow-lg:           0 16px 48px rgba(15, 23, 42, 0.16);
 
-  --row-top-tint:      color-mix(in srgb, var(--accent) 22%, transparent);
-  --row-top-tint-soft: color-mix(in srgb, var(--accent-alt) 10%, transparent);
+  --row-top-tint:      color-mix(in srgb, var(--accent) 18%, transparent);
+  --row-top-tint-soft: color-mix(in srgb, var(--gold) 8%, transparent);
 }
 
 /* ── Text safety utilities ───────────────────────────────────────── */

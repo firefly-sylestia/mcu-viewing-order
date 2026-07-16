@@ -13,6 +13,7 @@ import { usePosterCache } from './hooks/usePosterCache';
 import { useOverlayNavigation } from './hooks/useOverlayNavigation';
 import { useResponsiveLayout } from './hooks/useResponsiveLayout';
 import { Header, TimelineControls, ProgressSection, TitleCard, DetailDrawer, Settings as SettingsSection, Analytics } from './components/features';
+import { Sidebar, ContentArea } from './components/layout';
 import { THEME_CHOICES, getActiveThemeVars } from './constants/themeSettings';
 import { buildSemanticThemeVars, UI_PARITY_TOKENS } from './constants/ui';
 import './App.layout.css';
@@ -38,19 +39,19 @@ import { MARVEL_UI_LEXICON, LIST_MODES } from './constants/appText';
 import { matchesSearch } from './utils/searchUtils';
 
 const TYPE_META = {
-  film:   { label: 'Film',   Icon: Film, color: '#d4372f' },
-  series: { label: 'Series', Icon: Tv,   color: '#4a9ede' },
-  short:  { label: 'Short',  Icon: Zap,  color: '#a06cd5' },
+  film:   { label: 'Film',   Icon: Film, color: '#EC1D24' },
+  series: { label: 'Series', Icon: Tv,   color: '#3B82F6' },
+  short:  { label: 'Short',  Icon: Zap,  color: '#8B5CF6' },
 };
 
 const FALLBACK_TYPE_META = { label: 'Title', Icon: Layers, color: 'var(--theme-text-secondary)' };
 
 const STATUS_META = {
-  watched:        { label: 'Completed',      color: '#e11d48', Icon: Check,      bg: 'rgba(225,29,72,0.12)'  },
-  'plan-to-watch':{ label: 'Watchlist',      color: '#3b82f6', Icon: Bookmark,   bg: 'rgba(59,130,246,0.12)' },
-  watching:       { label: 'In Progress',    color: '#8b5cf6', Icon: PlayCircle, bg: 'rgba(139,92,246,0.12)' },
-  'on-hold':      { label: 'Paused',         color: '#f59e0b', Icon: PauseCircle,bg: 'rgba(245,158,11,0.12)' },
-  dropped:        { label: 'Dropped',        color: '#ef4444', Icon: XCircle,    bg: 'rgba(239,68,68,0.12)'  },
+  watched:        { label: 'Completed',      color: '#22C55E', Icon: Check,      bg: 'rgba(34,197,94,0.12)'  },
+  'plan-to-watch':{ label: 'Watchlist',      color: '#3B82F6', Icon: Bookmark,   bg: 'rgba(59,130,246,0.12)' },
+  watching:       { label: 'In Progress',    color: '#8B5CF6', Icon: PlayCircle, bg: 'rgba(139,92,246,0.12)' },
+  'on-hold':      { label: 'Paused',         color: '#F59E0B', Icon: PauseCircle,bg: 'rgba(245,158,11,0.12)' },
+  dropped:        { label: 'Dropped',        color: '#EF4444', Icon: XCircle,    bg: 'rgba(239,68,68,0.12)'  },
   unwatched:      { label: 'Unwatched',      color: 'var(--theme-text-secondary)', Icon: EyeOff, bg: 'transparent' },
 };
 
@@ -645,32 +646,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
 
 
 
-const SidebarMenu = React.memo(React.forwardRef(function SidebarMenu({
-  open,
-  darkMode,
-  performanceMode,
-  pillBorder,
-  surfaceBorder,
-  onToggle,
-  onClose,
-  onOpenSettings,
-  controlsHidden = false,
-  settingsOpen = false,
-  children,
-}, ref) {
-  return (
-    <>
-      <div className="sidebar-control-cluster" style={controlsHidden ? { opacity: 0, pointerEvents: 'none', visibility: 'hidden' } : undefined}>
-      <button className="theme-btn sidebar-toggle-btn" onClick={onToggle} aria-label="Toggle sidebar menu" style={{ background: darkMode ? 'rgba(8,12,28,0.96)' : '#ffffff', color: darkMode ? '#f5fffd' : '#0f172a', borderColor: darkMode ? 'rgba(255,255,255,0.42)' : pillBorder, boxShadow: 'none' }}><Menu size={18} /></button>
-      <button className="theme-btn sidebar-toggle-btn settings-toggle-btn" onClick={onOpenSettings} aria-label="Open settings and profile" style={{ background: darkMode ? 'rgba(8,12,28,0.96)' : '#ffffff', color: darkMode ? '#f5fffd' : '#0f172a', borderColor: darkMode ? 'rgba(255,255,255,0.42)' : pillBorder, boxShadow: 'none' }}><Settings size={18} /></button>
-      </div>
-      <div className="sidebar-backdrop" data-state={open ? 'open' : 'closed'} onPointerDown={(e) => { e.preventDefault(); onClose?.(); }} />
-      <aside ref={ref} data-state={open ? 'open' : 'closed'} aria-hidden={!open} className="sidebar-menu" style={{ '--sidebar-bg': darkMode ? 'rgba(8,12,28,0.88)' : 'rgba(248,251,255,0.9)', '--sidebar-border': surfaceBorder, '--sidebar-transform': open ? 'translateX(0)' : 'translateX(-105%)', '--sidebar-shadow': darkMode ? 'var(--elevation-surface-3)' : 'var(--elevation-surface-2)', '--sidebar-blur': performanceMode ? 'none' : 'blur(8px)' }}>
-        {children}
-      </aside>
-    </>
-  );
-}));
+
 
 const SettingsMenu = React.memo(React.forwardRef(function SettingsMenu({
   open,
@@ -3026,7 +3002,7 @@ export default function MCUViewer() {
       </div>
 
       {/* ━━ SETTINGS PANEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <SidebarMenu controlsHidden={analyticsOpen || detailItem || sidebarOpen || settingsOpen} settingsOpen={settingsOpen} ref={sidebarRef} open={sidebarOpen} darkMode={darkMode} performanceMode={performanceMode} pillBorder={T.pillBorder} surfaceBorder={T.surfaceBorder} onToggle={toggleSidebarPanel} onClose={closeSidebar} onOpenSettings={toggleSettingsPanel}>
+      <Sidebar controlsHidden={analyticsOpen || detailItem || sidebarOpen || settingsOpen} ref={sidebarRef} open={sidebarOpen} onToggle={toggleSidebarPanel} onClose={closeSidebar} onOpenSettings={toggleSettingsPanel}>
         <div style={{ marginBottom: 8, fontSize: 11, letterSpacing: 1.8, color: T.textMuted, fontFamily: 'var(--font-marvel-ui)', textTransform: 'uppercase' }}>{tMarvel('Navigation Panel')}</div>
         <div style={{ marginBottom: 10, display: 'grid', gap: 6 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -3092,7 +3068,7 @@ export default function MCUViewer() {
         <div style={{ textAlign: 'center', marginTop: 16, fontFamily: 'var(--font-marvel-ui)', fontSize: 9, color: T.footerText, letterSpacing: 2.5 }}>
           Made with ♥ by {tMarvel('Marvel Fan')}
         </div>
-      </SidebarMenu>
+      </Sidebar>
 
       <SettingsMenu ref={settingsRef} open={settingsOpen} darkMode={darkMode} performanceMode={performanceMode} onClose={closeSettings}>
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Profile</div>
@@ -3503,7 +3479,7 @@ export default function MCUViewer() {
         </button>
 
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <main ref={mainRef} className={`app-scroll-shell${performanceMode ? ' scroll-performance' : ''}`} style={{ overflow: overlayActive ? 'hidden' : 'visible', touchAction: overlayActive ? 'none' : 'pan-y', pointerEvents: blockHomeInteractions ? 'none' : 'auto', flex: '1 1 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
+      <ContentArea ref={mainRef} sidebarOpen={sidebarOpen} overlayActive={overlayActive} blockHomeInteractions={blockHomeInteractions} performanceMode={performanceMode} headerCompact={headerCompact}>
         <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '28px 18px 96px 18px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
           {phaseKeys.length === 0 && (
             <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: 'var(--font-marvel-ui)', fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
@@ -3639,7 +3615,7 @@ export default function MCUViewer() {
             Made with ♥️ by {tMarvel('Marvel Fan')}
           </div>
         </div>
-      </main>
+      </ContentArea>
 
       {/* ━━ DETAIL MODAL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       {detailItem && (
