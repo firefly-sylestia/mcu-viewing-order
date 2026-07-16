@@ -33,36 +33,37 @@
 .fpill {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 0 14px;
-  min-height: 36px;
-  border-radius: 999px;
-  border: 1px solid var(--chip-border);
-  background: var(--chip-bg);
+  gap: 8px;
+  padding: 0 18px;
+  min-height: 38px;
+  border-radius: 99px;
+  border: 2px solid var(--color-border-default, rgba(255,255,255,0.08));
+  background: rgba(0,0,0,0.30);
   cursor: pointer;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
   line-height: 1;
-  color: var(--chip-text);
+  color: var(--color-text-secondary, #B8BAC2);
   transition:
     background-color var(--motion-fast) var(--ease-out),
     color var(--motion-fast) var(--ease-out),
     border-color var(--motion-fast) var(--ease-out),
     box-shadow var(--motion-fast) var(--ease-out);
   white-space: nowrap;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.30);
 }
 .fpill:hover {
-  border-color: var(--border-hover);
-  background: var(--chip-bg-hover);
-  color: var(--text);
+  border-color: var(--color-accent-red, #EC1D24);
+  background: color-mix(in srgb, var(--color-accent-red, #EC1D24) 16%, rgba(0,0,0,0.30));
+  color: var(--color-text-primary, #FFFFFF);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--color-accent-red, #EC1D24) 35%, transparent);
 }
 .fpill[aria-pressed="true"], .fpill.is-active, .fpill.active {
+  background: var(--color-accent-red, #EC1D24) !important;
   border-color: var(--color-accent-red, #EC1D24) !important;
-  color: var(--color-accent-red, #EC1D24) !important;
-  box-shadow: 0 0 14px color-mix(in srgb, var(--color-accent-red, #EC1D24) 30%, transparent);
-  background: color-mix(in srgb, var(--color-accent-red, #EC1D24) 10%, var(--chip-bg)) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 0 24px color-mix(in srgb, var(--color-accent-red, #EC1D24) 50%, transparent) !important;
 }
 .fpill:focus-visible { outline: 2px solid var(--theme-accent); outline-offset: 2px; box-shadow: var(--chip-shadow-active); }
 
@@ -94,17 +95,24 @@
 /* ── 2. Theme selection buttons (.theme-btn) ─────────────────────── */
 .theme-btn {
   cursor: pointer;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--surface-translucent);
-  color: var(--text);
+  border-radius: 12px;
+  border: 2px solid var(--color-border-default, rgba(255,255,255,0.08));
+  background: rgba(0,0,0,0.40);
+  color: var(--color-text-secondary, #B8BAC2);
   font-family: var(--font-ui);
-  letter-spacing: 0.02em;
-  transition: background var(--motion-fast) var(--ease-out), border-color var(--motion-fast) var(--ease-out), transform 160ms var(--ease-spring);
+  letter-spacing: 0.03em;
+  font-weight: 700;
+  transition: background 180ms var(--ease-out), border-color 180ms var(--ease-out), color 180ms var(--ease-out), transform 160ms var(--ease-spring);
 }
-.theme-btn:hover { border-color: var(--border-hover); transform: translateY(-1px); }
+.theme-btn:hover { 
+  border-color: var(--color-accent-red, #EC1D24); 
+  color: #FFFFFF;
+  background: color-mix(in srgb, var(--color-accent-red, #EC1D24) 16%, rgba(0,0,0,0.40));
+  transform: translateY(-1px);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--color-accent-red, #EC1D24) 25%, transparent);
+}
 .theme-btn:active { transform: scale(0.97); }
-.theme-btn:focus-visible { outline: 2px solid var(--theme-accent); outline-offset: 2px; }
+.theme-btn:focus-visible { outline: 2px solid var(--color-accent-red, #EC1D24); outline-offset: 2px; }
 
 /* ── 3. HERO CAROUSEL — cinematic rail ── */
 .hero-carousel-shell {
@@ -315,12 +323,15 @@
 .phase-rows-full {
   display: block;
   position: relative;
-  padding: 14px;
-  border-radius: var(--radius-2xl);
-  border: 1px solid var(--border-soft);
-  background: color-mix(in srgb, var(--bg-alt) 60%, transparent);
-  backdrop-filter: blur(10px) saturate(140%);
-  -webkit-backdrop-filter: blur(10px) saturate(140%);
+  padding: 24px;
+  margin-bottom: 32px;
+  border-radius: 24px;
+  border: 1px solid var(--color-border-default, rgba(255,255,255,0.08));
+  border-left: 4px solid var(--color-accent-red, #EC1D24);
+  background: var(--color-surface-glass, rgba(26,26,30,0.88));
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.40), 0 0 40px color-mix(in srgb, var(--color-accent-red, #EC1D24) 6%, transparent);
 }
 
 .rrow {
@@ -329,14 +340,14 @@
   align-items: center;
   grid-template-columns: 28px 52px minmax(0, 1fr) minmax(120px, auto);
   gap: var(--row-gap, 16px);
-  padding: var(--row-pad, 14px 16px 14px 14px);
+  padding: 20px 18px;
   border: 1px solid var(--border-soft);
-  border-left: 3px solid transparent;
+  border-left: 4px solid transparent;
   border-radius: var(--radius-lg);
   min-height: var(--row-min-h, 104px);
   overflow: hidden;
-  background: linear-gradient(135deg, var(--bg-elevated), color-mix(in srgb, var(--bg-alt) 70%, transparent));
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-accent-red, #EC1D24) 3%, transparent), var(--color-surface-elevated, #242429));
+  box-shadow: 0 2px 12px rgba(0,0,0,0.30);
   transition:
     background var(--motion-fast) var(--ease-out),
     border-color var(--motion-fast) var(--ease-out),
@@ -346,10 +357,10 @@
 .rrow > * { position: relative; z-index: 1; }
 .rrow:last-child { border-bottom: none; }
 .rrow:hover {
-  border-left-color: color-mix(in srgb, var(--theme-accent) 78%, var(--phase-color, #d4372f));
-  transform: translateY(-1px);
-  box-shadow: 0 0 0 1px rgba(255,255,255,0.10), var(--shadow-soft);
-  background: linear-gradient(135deg, color-mix(in srgb, var(--bg-elevated) 90%, var(--theme-accent) 4%), var(--bg-alt));
+  border-left-color: var(--color-accent-red, #EC1D24);
+  transform: translateX(2px) translateY(-1px);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--color-accent-red, #EC1D24) 20%, transparent), var(--shadow-soft);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-accent-red, #EC1D24) 10%, transparent), var(--color-surface-elevated, #242429));
 }
 .rrow.curvy-selected {
   border-left-color: var(--theme-accent);
@@ -393,9 +404,10 @@
 }
 .title-row-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .title-main {
-  font-weight: 700;
-  font-size: 1rem;
-  letter-spacing: -0.005em;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(1.05rem, 2.5vw, 1.35rem);
+  letter-spacing: -0.015em;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -509,19 +521,19 @@
 
 /* ── 7. STATUS PILL ──────────────────────────────────────────────── */
 .status-pill {
-  text-transform: none;
-  font-weight: 700;
+  text-transform: uppercase;
+  font-weight: 800;
   line-height: 1;
   border-radius: 999px;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   background: var(--pill-surface);
-  border: 1px solid var(--border-soft);
+  border: 2px solid var(--color-border-default, rgba(255,255,255,0.08));
   color: var(--text);
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 0 10px;
-  min-height: 30px;
+  gap: 8px;
+  padding: 0 16px;
+  min-height: 36px;
   font-size: 11px;
   cursor: pointer;
 }
@@ -666,7 +678,8 @@
   border-radius: var(--radius-2xl, 24px);
   overflow: hidden;
   border: 1px solid var(--color-border-default, rgba(255,255,255,0.08));
-  box-shadow: var(--shadow-xl, 0 24px 64px rgba(0,0,0,0.55));
+  border-top: 3px solid var(--color-accent-red, #EC1D24);
+  box-shadow: 0 32px 80px rgba(0,0,0,0.65), 0 0 60px color-mix(in srgb, var(--color-accent-red, #EC1D24) 8%, transparent);
   animation: floatUp var(--motion-spring) var(--ease-out) both;
 }
 
