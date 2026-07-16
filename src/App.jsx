@@ -1526,7 +1526,8 @@ export default function MCUViewer() {
   const phaseStats = useMemo(() => currentPhases.map(ph => {
     const phaseItems = activeItems.filter(i => i.phase === ph.id);
     const watched = phaseItems.filter(i => i.status === 'watched').length;
-    return { phase: ph.id, watched, total: phaseItems.length };
+    const total = phaseItems.length;
+    return { phase: ph.id, label: ph.label, color: ph.color, watched, total, pct: total ? Math.round((watched / total) * 100) : 0 };
   }).filter(p => p.total > 0), [activeItems]);
 
 
@@ -3489,6 +3490,15 @@ export default function MCUViewer() {
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <ContentArea ref={mainRef} sidebarOpen={sidebarOpen} overlayActive={overlayActive} blockHomeInteractions={blockHomeInteractions} performanceMode={performanceMode} headerCompact={headerCompact}>
         <div className="content-wrapper list-mode-switch">
+          <ProgressSection
+            pct={pct}
+            totalWatched={totalWatched}
+            totalEntries={activeItems.length}
+            watchStreak={watchStreak}
+            totalHours={totalWatchedHours}
+            phaseStats={phaseStats}
+            darkMode={darkMode}
+          />
           {phaseKeys.length === 0 && (
             <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: 'var(--font-marvel-ui)', fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
               NO RESULTS — ADJUST YOUR FILTERS
