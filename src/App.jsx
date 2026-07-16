@@ -2852,8 +2852,8 @@ export default function MCUViewer() {
   const semanticThemeVars = buildSemanticThemeVars(darkMode);
 
   const cssThemeVars = {
-    ...activeThemeVars,
     ...semanticThemeVars,
+    ...activeThemeVars,
     '--theme-border': darkMode ? '#1b1b33' : '#c8beaf',
     '--theme-text-disabled': darkMode ? 'rgba(186, 200, 222, 0.56)' : 'rgba(77, 91, 111, 0.56)',
     '--font-marvel-display': 'var(--font-display)',

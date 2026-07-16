@@ -16,24 +16,24 @@ export const UI_PARITY_TOKENS = {
 
 export const SEMANTIC_COLOR_MATRIX = {
   dark: {
-    background:           '#0D0D0F',   // page bg
-    surface:              '#1A1A1E',   // card bg
-    emphasis:             '#FFFFFF',
-    emphasisMuted:        '#B0B3BA',   // text.secondary
+    background:           '#06050A',   // page bg — deepest void
+    surface:              '#111116',   // card bg
+    emphasis:             '#F2F2F7',
+    emphasisMuted:        '#B8BAC2',   // text.secondary
     success:              '#22C55E',
     warning:              '#F59E0B',
     error:                '#EF4444',
-    textPrimary:          '#FFFFFF',
-    textSecondary:        '#B0B3BA',
+    textPrimary:          '#F2F2F7',
+    textSecondary:        '#B8BAC2',
     accent:               '#EC1D24',   // Marvel red
     accentAlt:            '#F5C518',   // gold
     infoCard:             '#EC1D24',
     imdbBadgeBg:          '#F5C518',
     imdbBadgeText:        '#0D0D0F',
-    divider:              '#2A2A30',
-    pillSurface:          'rgba(255,255,255,0.08)',
-    iconButton:           'rgba(0,0,0,0.35)',
-    glassSurface:         'rgba(26,26,30,0.88)',
+    divider:              '#1E1E28',
+    pillSurface:          'rgba(255,255,255,0.07)',
+    iconButton:           'rgba(0,0,0,0.50)',
+    glassSurface:         'rgba(17,17,22,0.94)',
   },
   light: {
     background:           '#F4F5F8',
@@ -65,12 +65,12 @@ export const buildSemanticThemeVars = (darkMode) => {
     '--theme-bg':                  c.background,
     '--theme-bg-alt':              c.surface,
     '--theme-surface':             c.surface,
-    '--theme-surface-hover':       mode === 'dark' ? '#242429' : '#F8F9FB',
-    '--theme-surface-dark':        '#0D0D0F',
+    '--theme-surface-hover':       mode === 'dark' ? '#1C1C24' : '#F8F9FB',
+    '--theme-surface-dark':        '#06050A',
     '--theme-surface-light':       '#FFFFFF',
-    '--theme-surface-hover-dark':  '#242429',
+    '--theme-surface-hover-dark':  '#1C1C24',
     '--theme-surface-hover-light': '#F8F9FB',
-    '--theme-comp-card-dark':      '#1A1A1E',
+    '--theme-comp-card-dark':      '#111116',
     '--theme-comp-card-light':     '#FFFFFF',
     '--theme-text':                c.textPrimary,
     '--theme-text-primary':        c.textPrimary,
