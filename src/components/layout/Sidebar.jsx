@@ -1,5 +1,6 @@
 import React, { forwardRef, memo } from 'react';
 import { Menu, Settings, X } from '../../constants/icons';
+import './Sidebar.css';
 
 /**
  * Sidebar — main navigation panel.

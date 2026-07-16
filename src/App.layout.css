@@ -208,32 +208,7 @@ main::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 }
 #next-steps > div { padding: var(--space-5) var(--space-4); }
 
-/* ── Sidebar menu shell ──────────────────────────────────────────── */
-.sidebar-menu {
-  position: fixed;
-  top: 0; left: 0; bottom: 0;
-  width: clamp(280px, 80vw, 340px);
-  background: var(--bg-alt);
-  border-right: 1px solid var(--border);
-  z-index: var(--z-sidebar);
-  display: flex;
-  flex-direction: column;
-  box-shadow: var(--shadow-elevated);
-  transition: transform var(--motion-base) var(--ease-out);
-}
-.sidebar-menu[data-state="closed"] { transform: translateX(-105%); }
-.sidebar-menu[data-state="open"]  { transform: translateX(0); }
 
-.sidebar-backdrop {
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,0.55);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  z-index: calc(var(--z-sidebar) - 1);
-  opacity: 0; pointer-events: none;
-  transition: opacity var(--motion-base) var(--ease-out);
-}
-.sidebar-backdrop[data-state="open"] { opacity: 1; pointer-events: auto; }
 
 /* ── Settings menu (slide-up sheet) ──────────────────────────────── */
 .settings-shell {
@@ -298,39 +273,7 @@ main::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
   letter-spacing: 1px;
 }
 
-/* ── Sidebar toggle cluster ──────────────────────────────────────── */
-.sidebar-control-cluster {
-  position: fixed;
-  top: var(--control-offset-top);
-  left: var(--control-offset-inline);
-  z-index: var(--overlay-z-floating);
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  pointer-events: auto;
-}
 
-.sidebar-toggle-btn,
-.settings-toggle-btn {
-  width: 44px; height: 44px;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--border);
-  background: var(--icon-button-bg);
-  color: var(--text);
-  backdrop-filter: blur(12px) saturate(140%);
-  -webkit-backdrop-filter: blur(12px) saturate(140%);
-  box-shadow: var(--shadow-soft);
-  transition: transform 180ms var(--ease-spring), background 180ms var(--ease-out), color 180ms var(--ease-out);
-}
-.sidebar-toggle-btn:hover,
-.settings-toggle-btn:hover {
-  transform: scale(1.05);
-  color: var(--theme-accent);
-  background: var(--icon-button-bg);
-}
 
 /* ── Layout shell: TopBar (mobile) ──────────────────────────────── */
 .topbar {
@@ -443,36 +386,7 @@ main::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
   }
 }
 
-/* ── Sidebar close button (inside panel, mobile) ─────────────────── */
-.sidebar-close-btn {
-  display: none;
-}
-@media (max-width: 767px) {
-  .sidebar-close-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    border: 1px solid var(--border);
-    background: var(--surface-translucent);
-    color: var(--text);
-    cursor: pointer;
-    z-index: 2;
-  }
-}
 
-/* ── Sidebar scroll area ─────────────────────────────────────────── */
-.sidebar-scroll {
-  flex: 1 1 auto;
-  overflow-y: auto;
-  padding: var(--sp-6) var(--sp-4);
-  overscroll-behavior: contain;
-}
 
 /* ── Main content area ───────────────────────────────────────────── */
 .app-content {

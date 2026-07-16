@@ -1,0 +1,99 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   FILTER CHIPS — Pill toggle bar per DESIGN_SPEC Section 5.6
+   Horizontal scrollable row with phase/type/status filter groups
+   Active: accent bg + white text; Inactive: surface bg + secondary text
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.filter-chips {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-wrap: wrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: var(--sp-2) 0;
+}
+
+.filter-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.filter-chips__group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.filter-chips__separator {
+  width: 1px;
+  height: 24px;
+  background: var(--color-divider);
+  margin: 0 var(--sp-2);
+  flex-shrink: 0;
+}
+
+/* ═══ Individual chip ══════════════════════════════════════════════════════ */
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border-default);
+  background: var(--color-surface-elevated);
+  color: var(--color-text-secondary);
+  font-family: var(--font-ui);
+  font-size: var(--fs-metadata);
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background 150ms var(--ease-out),
+    border-color 150ms var(--ease-out),
+    color 150ms var(--ease-out),
+    box-shadow 150ms var(--ease-out);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.filter-chip:hover {
+  border-color: var(--color-border-hover);
+  color: var(--color-text-primary);
+}
+
+.filter-chip.is-active {
+  background: var(--chip-accent, var(--color-accent-red));
+  border-color: var(--chip-accent, var(--color-accent-red));
+  color: #FFFFFF;
+  font-weight: var(--fw-bold);
+  box-shadow: 0 4px 12px rgba(236, 29, 36, 0.25);
+}
+
+.filter-chip:active:not(.is-active) {
+  transform: scale(0.97);
+}
+
+/* ═══ Responsive ══════════════════════════════════════════════════════════ */
+
+@media (max-width: 767px) {
+  .filter-chip {
+    height: 28px;
+    padding: 0 10px;
+    font-size: 0.62rem;
+  }
+
+  .filter-chips__separator {
+    margin: 0 6px;
+  }
+}
+
+/* ═══ Daylight ═══════════════════════════════════════════════════════════ */
+
+[data-theme="light"] .filter-chip.is-active {
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.20);
+}

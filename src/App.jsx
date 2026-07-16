@@ -82,7 +82,7 @@ const CACHE_KEYS = {
   userActionsRewatch: 'mcu-user-actions-rewatch-v1',
   userActionsBookmarks: 'mcu-user-actions-bookmarks-v1',
   userActionsReviews: 'mcu-user-actions-reviews-v1',
-  uiState: 'mcu-ui-state-v1',
+  uiState: 'mcu-ui-state-v2',
   heroCarousel: 'mcu-hero-carousel-cache-v1',
 };
 
@@ -97,7 +97,7 @@ const UI_STATE_DEFAULTS = {
   typeFilter: null,
   activePhase: 1,
   filtersOpen: false,
-  viewMode: 'list',
+  viewMode: 'grid',
   densityMode: 'comfortable',
   timelineMode: 'release',
   autoHideStatuses: false,
@@ -2852,6 +2852,7 @@ export default function MCUViewer() {
   const semanticThemeVars = buildSemanticThemeVars(darkMode);
 
   const cssThemeVars = {
+    ...activeThemeVars,
     ...semanticThemeVars,
     '--theme-border': darkMode ? '#1b1b33' : '#c8beaf',
     '--theme-text-disabled': darkMode ? 'rgba(186, 200, 222, 0.56)' : 'rgba(77, 91, 111, 0.56)',
@@ -3261,7 +3262,7 @@ export default function MCUViewer() {
       )}
 
       {/* ━━ FILTER BAR (collapsible) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      {browseMode !== 'search' && <div style={{ background: 'transparent', borderBottom: 'none', flexShrink: 0, position: 'relative', zIndex: 60, marginTop: 16 }}>
+      {browseMode !== 'search' && <div style={{ background: 'transparent', borderBottom: 'none', flexShrink: 0, position: 'relative', zIndex: 60, marginTop: 8 }}>
         {/* Toggle row — always visible */}
         <div style={{ maxWidth: 1480, margin: '0 auto', padding: '0 16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', flexWrap: 'wrap' }}>

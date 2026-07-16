@@ -1,0 +1,92 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   SEARCH BAR — Pill-shaped input per DESIGN_SPEC Section 5.6
+   Cinema design: translucent surface, accent border on focus, clear button
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 16px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border-default);
+  transition:
+    border-color 180ms var(--ease-out),
+    background 180ms var(--ease-out),
+    box-shadow 180ms var(--ease-out);
+}
+
+.search-bar:focus-within {
+  border-color: var(--color-accent-red);
+  background: color-mix(in srgb, var(--color-surface-elevated) 80%, var(--color-accent-red) 4%);
+  box-shadow: 0 0 0 3px var(--color-accent-red-glow);
+}
+
+.search-bar__icon {
+  color: var(--color-text-tertiary);
+  flex-shrink: 0;
+  transition: color 180ms var(--ease-out);
+}
+
+.search-bar:focus-within .search-bar__icon {
+  color: var(--color-accent-red);
+}
+
+.search-bar__input {
+  flex: 1 1 auto;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--color-text-primary);
+  font-family: var(--font-ui);
+  font-size: var(--fs-body);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0.005em;
+  min-width: 0;
+}
+
+.search-bar__input::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+.search-bar__clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  background: var(--color-border-default);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    background 150ms var(--ease-out),
+    color 150ms var(--ease-out),
+    transform 150ms var(--ease-spring);
+}
+
+.search-bar__clear:hover {
+  background: var(--color-border-hover);
+  color: var(--color-text-primary);
+  transform: scale(1.1);
+}
+
+.search-bar__clear:active {
+  transform: scale(0.94);
+}
+
+/* ── Daylight ──────────────────────────────────────────────────────────── */
+
+[data-theme="light"] .search-bar {
+  background: var(--color-surface-primary);
+  border-color: rgba(15, 23, 42, 0.10);
+}
+
+[data-theme="light"] .search-bar:focus-within {
+  border-color: var(--color-accent-red);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
