@@ -1,23 +1,21 @@
 :root {
   --feature-gap: clamp(0.75rem, 1.3vw, 1rem);
-  --feature-radius: clamp(14px, 2vw, 18px);
+  --feature-radius: 20px;
   --feature-pad: clamp(0.7rem, 1.5vw, 1rem);
 }
 
 .glass-surface {
-  border: 1px solid var(--theme-overlay-border, var(--border));
-  background: linear-gradient(180deg, color-mix(in srgb, var(--theme-overlay-surface, var(--surface-2)) 94%, transparent), var(--surface-1));
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg-elevated) 96%, transparent), var(--bg-alt));
   border-radius: var(--feature-radius);
-  backdrop-filter: blur(12px) saturate(1.08);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
   padding: var(--feature-pad);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-soft);
   transition: border-color 180ms var(--ease-out), background-color 180ms var(--ease-out), transform 180ms var(--ease-out), box-shadow 180ms var(--ease-out);
 }
 
-.glass-surface:hover {
-  border-color: var(--border-hover);
-  box-shadow: var(--shadow-md);
-}
+.glass-surface:hover { border-color: var(--border-hover); box-shadow: var(--shadow-md); }
 
 .glass-surface:focus-within {
   border-color: var(--border-active);

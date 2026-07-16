@@ -1,37 +1,107 @@
-/* Motion styles */
-        @keyframes sweep{0%{transform:translateX(-120%)}100%{transform:translateX(220%)}}
-        @keyframes scrollRail{0%{transform:translateX(0)}100%{transform:translateX(-22%)}}
-        .sweep::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.18),transparent);animation:sweep 3.2s ease-in-out infinite}
-        @keyframes phaseFlash{0%{opacity:0}20%{opacity:0.22}80%{opacity:0.18}100%{opacity:0}}
-        .phase-flash{animation:phaseFlash 2.4s ease both}
-        @keyframes rowIn{from{opacity:1;transform:none}to{opacity:1;transform:none}}
-        .row-in{animation:rowIn 320ms var(--ease-out) both}
-        @keyframes sectionUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-        .section-up{animation:sectionUp 360ms var(--ease-out) both}
-        @keyframes fadeIn{from{opacity:0;transform:scale(0.97) translateY(-4px)}to{opacity:1;transform:scale(1) translateY(0)}}
-        .fade-in{animation:fadeIn 240ms var(--ease-out) both}
-        @starting-style{.dropdown-pop{opacity:0;transform:translate3d(0,-8px,0) scale(0.96);filter:blur(3px)}.dropdown-pop-up{opacity:0;transform:translate3d(0,8px,0) scale(0.96);filter:blur(3px)}}
-        @keyframes expandDown{from{opacity:0;max-height:0;padding-top:0;padding-bottom:0}to{opacity:1;max-height:600px;padding-top:10px;padding-bottom:10px}}
-        .expand-row{animation:expandDown 0.28s cubic-bezier(0.34,1.56,0.64,1) both;overflow:hidden}
-        @keyframes filtersSlide{from{opacity:0;max-height:0}to{opacity:1;max-height:220px}}
-        .filters-open{animation:filtersSlide 220ms var(--ease-out) both;overflow:visible}
-        @keyframes themeFadeSwitch{from{opacity:0.7}to{opacity:1}}
-        .theme-switch{animation:themeFadeSwitch 260ms var(--ease-out) both}
-        @keyframes listModeSlide{from{opacity:0.8;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
-        .list-mode-switch{animation:listModeSlide 220ms var(--ease-out) both}
-        @keyframes buttonPulse{0%{box-shadow:0 0 0 0 color-mix(in srgb, var(--theme-accent) 45%, transparent)}70%{box-shadow:0 0 0 6px transparent}100%{box-shadow:0 0 0 0 transparent}}
-        @keyframes spiderPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}
-        @keyframes snapFade{0%{filter:grayscale(0)}40%{filter:grayscale(1) brightness(1.2)}100%{filter:grayscale(0)}}
-        @keyframes fadeInOut{0%{opacity:0}30%{opacity:1}100%{opacity:0}}
-        @keyframes spiderDrop{0%{transform:translate(-50%,-120px)}35%{transform:translate(-50%,18vh)}70%{transform:translate(-50%,35vh)}100%{transform:translate(-50%,45vh);opacity:0}}
-        .snap-blip{animation:snapFade 1.6s ease}
-        .button-click{animation:buttonPulse 420ms ease-out}
-        @starting-style{.hero-backdrop-image:not(.is-exiting){opacity:0;transform:scale(1.004);filter:blur(2.6px) saturate(1) contrast(1) brightness(0.82)}}
-        .progress-gradient{background:var(--phase-gradient, linear-gradient(90deg,var(--theme-accent), var(--theme-accent-alt)));background-size:200% 100%;animation:gradientPulse 3s ease-in-out infinite alternate}
-        @keyframes gradientPulse{0%{filter:brightness(0.92)}100%{filter:brightness(1.08)}}
-        .performance-mode .sweep::after,.performance-mode .progress-gradient,.performance-mode .snap-blip{animation:none !important}
-.performance-mode .motion-section,.performance-mode .phase-rows-full .phase-row-virtualized{transition-duration:220ms !important}
-/* Modernized scroll trigger + section progress motion system */
+/* ═══════════════════════════════════════════════════════════════════════════
+   APP MOTION — sweep, sheet slide-up, hero peek, button pulse, gradient pulse.
+   All keyframes use --motion-* and --ease-* tokens from index.css.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes sweep {
+  0%   { transform: translateX(-120%); }
+  100% { transform: translateX(220%); }
+}
+.sweep {
+  position: relative;
+  overflow: hidden;
+}
+.sweep::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+  animation: sweep 3.2s var(--ease-out) infinite;
+  pointer-events: none;
+}
+
+@keyframes phaseFlash { 0% { opacity: 0; } 20% { opacity: 0.22; } 80% { opacity: 0.18; } 100% { opacity: 0; } }
+.phase-flash { animation: phaseFlash 2.4s ease both; }
+
+@keyframes rowIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.row-in { animation: rowIn 320ms var(--ease-out) both; }
+
+@keyframes sectionUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.section-up { animation: sectionUp 360ms var(--ease-out) both; }
+
+@keyframes fadeIn { from { opacity: 0; transform: scale(0.97) translateY(-4px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+.fade-in { animation: fadeIn 240ms var(--ease-out) both; }
+
+@starting-style {
+  .dropdown-pop   { opacity: 0; transform: translate3d(0,-8px,0) scale(0.96); filter: blur(3px); }
+  .dropdown-pop-up{ opacity: 0; transform: translate3d(0, 8px,0) scale(0.96); filter: blur(3px); }
+}
+
+@keyframes expandDown {
+  from { opacity: 0; max-height: 0; padding-top: 0; padding-bottom: 0; }
+  to   { opacity: 1; max-height: 600px; padding-top: 10px; padding-bottom: 10px; }
+}
+.expand-row { animation: expandDown 0.28s var(--ease-spring) both; overflow: hidden; }
+
+@keyframes filtersSlide { from { opacity: 0; max-height: 0; } to { opacity: 1; max-height: 260px; } }
+.filters-open { animation: filtersSlide 220ms var(--ease-out) both; overflow: visible; }
+
+@keyframes themeFadeSwitch { from { opacity: 0.7; } to { opacity: 1; } }
+.theme-switch { animation: themeFadeSwitch 260ms var(--ease-out) both; }
+
+@keyframes listModeSlide { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: translateX(0); } }
+.list-mode-switch { animation: listModeSlide 220ms var(--ease-out) both; }
+
+@keyframes buttonPulse {
+  0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--theme-accent) 45%, transparent); }
+  70%  { box-shadow: 0 0 0 8px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+.button-click { animation: buttonPulse 420ms var(--ease-out); }
+
+@keyframes weightPulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.04); }
+}
+
+@keyframes snapFade {
+  0%   { filter: grayscale(0); }
+  40%  { filter: grayscale(1) brightness(1.2); }
+  100% { filter: grayscale(0); }
+}
+.snap-blip { animation: snapFade 1.6s ease; }
+
+@keyframes fadeInOut {
+  0%   { opacity: 0; }
+  30%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes spiderDrop {
+  0%   { transform: translate(-50%, -120px); }
+  35%  { transform: translate(-50%,  18vh); }
+  70%  { transform: translate(-50%,  35vh); }
+  100% { transform: translate(-50%,  45vh); opacity: 0; }
+}
+
+@keyframes gradientPulse { 0% { filter: brightness(0.92); } 100% { filter: brightness(1.08); } }
+
+.performance-mode .sweep::after,
+.performance-mode .progress-gradient,
+.performance-mode .snap-blip,
+.performance-mode .button-click,
+.performance-mode .weightPulse { animation: none !important; }
+.performance-mode .motion-section,
+.performance-mode .phase-rows-full .phase-row-virtualized {
+  transition-duration: 220ms !important;
+}
+
+.progress-gradient {
+  background: var(--phase-gradient, linear-gradient(90deg, var(--theme-accent), var(--theme-accent-alt)));
+  background-size: 200% 100%;
+  animation: gradientPulse 3s var(--ease-smooth) infinite alternate;
+}
+
+/* ── Modernized scroll trigger + section progress motion ─────────── */
 .motion-section {
   --section-progress: 0;
   opacity: 0;
@@ -44,7 +114,8 @@
   transform: translate3d(0, 0, 0);
 }
 .motion-pop {
-  transform: translate3d(0, calc(16px - (var(--section-progress) * 6px)), 0) scale(calc(0.99 + (var(--section-progress) * 0.01)));
+  transform: translate3d(0, calc(16px - (var(--section-progress) * 6px)), 0)
+             scale(calc(0.99 + (var(--section-progress) * 0.01)));
 }
 .motion-section.in-view .phase-header-card {
   transform: translate3d(0, calc(var(--section-progress) * -8px), 0);
@@ -55,10 +126,7 @@
   transform: translate3d(0, 12px, 0);
   transition: opacity 380ms var(--ease-out), transform 420ms var(--ease-out);
 }
-.motion-section.is-visible .phase-rows-full .phase-row-virtualized {
-  opacity: 1;
-  transform: translate3d(0, 0, 0);
-}
+.motion-section.is-visible .phase-rows-full .phase-row-virtualized { opacity: 1; transform: translate3d(0, 0, 0); }
 .motion-section.is-visible .phase-rows-full .phase-row-virtualized:nth-child(1) { transition-delay: 40ms; }
 .motion-section.is-visible .phase-rows-full .phase-row-virtualized:nth-child(2) { transition-delay: 80ms; }
 .motion-section.is-visible .phase-rows-full .phase-row-virtualized:nth-child(3) { transition-delay: 120ms; }
@@ -68,19 +136,29 @@
   .motion-section { transform: translate3d(0, 16px, 0); transition-duration: 380ms; }
   .motion-pop { transform: translate3d(0, calc(10px - (var(--section-progress) * 4px)), 0); }
 }
-
 @media (max-width: 640px) {
   .motion-section { transform: translate3d(0, 10px, 0); transition-duration: 320ms; }
   .motion-section.in-view .phase-header-card { transform: translate3d(0, calc(var(--section-progress) * -4px), 0); }
 }
-
 @media (prefers-reduced-motion: reduce) {
-  .motion-section,
-  .phase-rows-full .phase-row-virtualized,
-  .motion-section.in-view .phase-header-card {
+  .motion-section, .phase-rows-full .phase-row-virtualized, .motion-section.in-view .phase-header-card {
     opacity: 1 !important;
     transform: none !important;
     transition: none !important;
     animation: none !important;
   }
 }
+
+/* Hero carousel cross-fade transitions for media swaps */
+.hero-peek-enter { animation: carouselSlideIn 360ms var(--ease-out) both; }
+.hero-peek-exit  { animation: carouselSlideOut 320ms var(--ease-out) both; }
+
+/* Bottom sheet slide up/down (filter sheet) */
+@keyframes sheetUpFast   { 0% { transform: translateY(100%); } 100% { transform: translateY(0); } }
+@keyframes sheetDownFast { 0% { transform: translateY(0); } 100% { transform: translateY(100%); } }
+.sheet-enter { animation: sheetUpFast 280ms var(--ease-sheet) both; }
+.sheet-exit  { animation: sheetDownFast 220ms var(--ease-out) both; }
+
+/* Backdrop fade for filter sheet & modal sheets */
+@keyframes backdropIn  { 0% { opacity: 0; backdrop-filter: blur(0); } 100% { opacity: 1; backdrop-filter: blur(10px); } }
+.backdrop-enter { animation: backdropIn 260ms var(--ease-out) both; }

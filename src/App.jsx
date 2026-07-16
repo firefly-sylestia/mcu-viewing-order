@@ -877,8 +877,16 @@ export default function MCUViewer() {
   const [profile,        setProfile]        = useState({ name: '', pfp: '' });
   const [uploadedAvatars,setUploadedAvatars]= useState([]);
   const [avatarCropSrc, setAvatarCropSrc] = useState('');
-  const [themeMode,      setThemeMode]      = useState('classic');
-  const [marvelLangMode, setMarvelLangMode] = useState(false);
+  const [themeMode,      setThemeMode]      = useState(() => {
+    // Keep backwards-compat with the legacy 14-preset storage shape — map any prior value to one of the two new themes.
+    if (typeof window === 'undefined') return 'cinema';
+    try {
+      const saved = window.localStorage.getItem('mcu-theme-mode');
+      if (saved === 'daylight' || saved === 'cinema') return saved;
+    } catch {}
+    return 'cinema';
+  });
+  const [marvelLangMode, setMarvelLangMode] = useState(false); // legacy prop — UI no longer labels modes as Marvel/DC; kept for any future reintroduction
   const [spoilerSafeMode, setSpoilerSafeMode] = useState(true);
   const [autoHideStatuses, setAutoHideStatuses] = useState(initialUiState.autoHideStatuses);
   const [viewMode, setViewMode] = useState(initialUiState.viewMode);
