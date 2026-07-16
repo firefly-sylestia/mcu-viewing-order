@@ -1072,7 +1072,41 @@
 .poster-grid-stars { display: inline-flex; gap: 2px; }
 .poster-grid-stars svg { width: 8px; height: 8px; fill: var(--gold); }
 
-/* ── 20. LEGACY/PRESERVED SHELL CLASSES ──────────────────────────── */
+/* ── 20. POSTER GRID VIEW ──────────────────────────────────────── */
+.poster-grid-section {
+  padding: var(--sp-4) 0;
+}
+
+.poster-grid-view {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: var(--poster-gap, 16px);
+  padding: 0 var(--sp-2);
+}
+
+@media (min-width: 768px) {
+  .poster-grid-view {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 20px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .poster-grid-view {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 24px;
+    padding: 0 var(--sp-4);
+  }
+}
+
+@media (max-width: 480px) {
+  .poster-grid-view {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+}
+
+/* ── 21. LEGACY/PRESERVED SHELL CLASSES ──────────────────────────── */
 .slider-rail, .search-input, .menu-trigger { font-family: var(--font-ui); }
 
 /* ── 21. POST-CREDIT arrows (legacy detail arrows) ─────────────── */

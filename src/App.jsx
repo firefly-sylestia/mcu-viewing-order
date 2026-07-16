@@ -14,7 +14,10 @@ import { useOverlayNavigation } from './hooks/useOverlayNavigation';
 import { useResponsiveLayout } from './hooks/useResponsiveLayout';
 import { Header, TimelineControls, ProgressSection, TitleCard, DetailDrawer, Settings as SettingsSection, Analytics } from './components/features';
 import { Sidebar, ContentArea } from './components/layout';
+import { TopBar, BottomBar } from './components/layout';
 import { HeroCarousel } from './components/hero';
+import { MemoizedListRow } from './components/cards';
+import { PosterCard } from './components/cards';
 import { THEME_CHOICES, getActiveThemeVars } from './constants/themeSettings';
 import { buildSemanticThemeVars, UI_PARITY_TOKENS } from './constants/ui';
 import './App.layout.css';
@@ -106,7 +109,7 @@ const UI_STATE_DEFAULTS = {
 };
 
 const VALID_LIST_MODES = new Set(LIST_MODES.map(mode => mode.id));
-const VALID_VIEW_MODES = new Set(['list', 'calendar']);
+const VALID_VIEW_MODES = new Set(['list', 'calendar', 'grid']);
 const VALID_PHASES = new Set([0, ...PHASES.map(phase => phase.id), ...DC_PHASES.map(phase => phase.id)]);
 const VALID_TYPES = new Set([null, ...Object.keys(TYPE_META)]);
 const VALID_STATUSES = new Set([null, ...Object.keys(STATUS_META)]);
@@ -2979,7 +2982,7 @@ export default function MCUViewer() {
       <TitleCard />
       <SettingsSection open={settingsOpen} />
       <Analytics open={analyticsOpen} />
-      <DetailDrawer open={Boolean(detailItem)} />
+      <DetailDrawer open={false} />
     </>
   );
 
@@ -3010,7 +3013,7 @@ export default function MCUViewer() {
             <button className="fpill" onClick={() => setDarkMode(false)} style={{ justifyContent: 'center', borderColor: !darkMode ? 'var(--theme-accent)' : 'var(--theme-border)', color: !darkMode ? 'var(--theme-accent)' : 'var(--theme-text)' }}><Sun size={12} />{tMarvel('Light')}</button>
           </div>
                   </div>
-                <button className="fpill" onClick={() => { setSidebarOpen(false); setViewMode(viewMode === 'list' ? 'calendar' : 'list'); }} style={{ width: '100%', justifyContent: 'center', marginTop: 8 }}>{viewMode === 'list' ? tMarvel('Calendar View') : tMarvel('List View')}</button>
+                <button className="fpill" onClick={() => { setSidebarOpen(false); setViewMode(viewMode === 'list' ? 'grid' : viewMode === 'grid' ? 'calendar' : 'list'); }} style={{ width: '100%', justifyContent: 'center', marginTop: 8 }}>{viewMode === 'list' ? tMarvel('Poster Grid') : viewMode === 'grid' ? tMarvel('Calendar View') : tMarvel('List View')}</button>
         <div style={{ marginTop: 14, fontSize: 12, color: T.textMuted, letterSpacing: 1.5, fontFamily: 'var(--font-marvel-ui)' }}>{tMarvel('Quick Phases')}</div>
         <button className="fpill marvel-btn" onClick={openAnalyticsPanel} style={{ width: '100%', justifyContent: 'center', marginTop: 10 }}>{tMarvel('Analytics')}</button>
         <div style={{ marginTop: 14, fontSize: 12, color: T.textMuted, letterSpacing: 1.5, fontFamily: 'var(--font-marvel-ui)' }}>{tMarvel('Viewing List')}</div>
@@ -3405,9 +3408,9 @@ export default function MCUViewer() {
           {metadataBuild.status === 'running' ? `Fetch ${metadataBuild.done}/${metadataBuild.total}` : 'Fetch'}
         </button>
         <button type="button" className="dock-btn"
-          onClick={() => setViewMode(viewMode === 'list' ? 'calendar' : 'list')}
+          onClick={() => setViewMode(viewMode === 'list' ? 'grid' : viewMode === 'grid' ? 'calendar' : 'list')}
           style={{ background: 'color-mix(in srgb, var(--theme-accent) 16%, var(--control-solid-bg))' }}>
-          View: {viewMode === 'list' ? 'List' : 'Calendar'}
+          View: {viewMode === 'list' ? 'Poster Grid' : viewMode === 'grid' ? 'Calendar' : 'List'}
         </button>
         <button type="button" className="dock-btn"
           onClick={() => { const next = listMode === 'core' ? 'extended' : 'core'; setListMode(next); setExpandedItem(null); setExpandedPhase(null); }}
@@ -3457,6 +3460,31 @@ export default function MCUViewer() {
           <ChevDown size={14} style={{ transform: 'rotate(180deg)' }} /> Top
         </button>
 
+      {/* ━━ MOBILE TOP BAR ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      <TopBar
+        title={activeUniverse.title || 'MCU Tracker'}
+        onMenuToggle={toggleSidebarPanel}
+        onSearchToggle={() => setBrowseMode('search')}
+        onSettingsToggle={toggleSettingsPanel}
+      />
+
+      {/* ━━ MOBILE BOTTOM BAR ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      <BottomBar
+        tabs={[
+          { id: 'home', label: 'Home', icon: <Film size={20} /> },
+          { id: 'grid', label: 'Grid', icon: <Layers size={20} /> },
+          { id: 'search', label: 'Search', icon: <Search size={20} /> },
+          { id: 'settings', label: 'Settings', icon: <Settings size={20} /> },
+        ]}
+        activeTab={settingsOpen ? 'settings' : browseMode === 'search' ? 'search' : viewMode === 'grid' ? 'grid' : 'home'}
+        onTabChange={(tab) => {
+          if (tab === 'home') { setBrowseMode('home'); setViewMode('list'); }
+          else if (tab === 'grid') { setBrowseMode('home'); setViewMode('grid'); }
+          else if (tab === 'search') setBrowseMode('search');
+          else if (tab === 'settings') toggleSettingsPanel();
+        }}
+      />
+
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <ContentArea ref={mainRef} sidebarOpen={sidebarOpen} overlayActive={overlayActive} blockHomeInteractions={blockHomeInteractions} performanceMode={performanceMode} headerCompact={headerCompact}>
         <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '28px 18px 96px 18px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
@@ -3466,7 +3494,28 @@ export default function MCUViewer() {
             </div>
           )}
 
-          {viewMode === 'calendar' ? (
+          {viewMode === 'grid' ? (
+            <section className="poster-grid-section">
+              <div className="poster-grid-view">
+                {rows.map(item => {
+                  const typeMeta = TYPE_META[item.type] || FALLBACK_TYPE_META;
+                  return (
+                    <PosterCard
+                      key={item.id}
+                      src={posterSrc(item)}
+                      title={item.title}
+                      rating={metaCache[item.id]?.rating || RELEASE_INFO[item.title]?.rating}
+                      status={item.status}
+                      year={item.year}
+                      typeLabel={typeMeta.label}
+                      typeColor={typeMeta.color}
+                      onClick={() => openDetail(item)}
+                    />
+                  );
+                })}
+              </div>
+            </section>
+          ) : viewMode === 'calendar' ? (
             <section data-motion="section" className='curvy-panel calendar-section motion-section motion-pop' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 16 }}>
               <h3 style={{ margin: '4px 0 14px', letterSpacing: 2, fontFamily: 'var(--font-marvel-ui)', color: 'var(--theme-text-primary)', textShadow: '0 1px 4px color-mix(in srgb, var(--theme-bg) 45%, transparent)' }}>Release Calendar</h3>
               <div style={{ marginBottom: 12, color: T.textMuted, fontSize: 12, textTransform: 'uppercase', letterSpacing: 1.2 }}>Grouped by month / quarter / year</div>
@@ -3554,7 +3603,7 @@ export default function MCUViewer() {
                     const itemReleaseStatus = releaseStatusFor(item);
                     const itemReleaseInfo = releaseInfoFor(item);
                     return (
-                      <MemoizedTitleRow
+                      <MemoizedListRow
                         key={item.id}
                         item={item}
                         idx={idx}
