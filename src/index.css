@@ -77,47 +77,47 @@
 
   /* ═════════════════════════════════════════════ CINEMA THEME (default) */
   color-scheme: dark;
-  --bg:                  #0D0D0F;            /* page base — deepest */
-  --bg-alt:              #1A1A1E;            /* surface / card */
-  --bg-elevated:         #242429;            /* hover / elevated */
-  --bg-card:             #1A1A1E;
-  --bg-glass:            rgba(26, 26, 30, 0.88);
+  --bg:                  #06050A;            /* page base — deepest void */
+  --bg-alt:              #111116;            /* surface / card */
+  --bg-elevated:         #1A1A21;            /* hover / elevated */
+  --bg-card:             #111116;
+  --bg-glass:            rgba(17, 17, 22, 0.92);
 
-  --text:                #FFFFFF;
+  --text:                #F0F0F5;
   --text-h:              #FFFFFF;
-  --text-dim:            #B0B3BA;
-  --text-muted:          #6B6F78;
-  --text-disabled:       #4A4D54;
+  --text-dim:            #BBBCC2;
+  --text-muted:          #7C7E88;
+  --text-disabled:       #52545C;
 
   /* Accents */
-  --accent:              #EC1D24;            /* primary CTA / Marvel red */
-  --accent-soft:         #F87171;
-  --accent-glow:         rgba(236, 29, 36, 0.40);
+  --accent:              #E82127;            /* primary CTA / deep Marvel red */
+  --accent-soft:         #F44A4F;
+  --accent-glow:         rgba(232, 33, 39, 0.50);
 
   --gold:                #F5C518;            /* star fill / ratings */
-  --gold-soft:           #F9D142;            /* IMDB badge bg */
-  --gold-glow:           rgba(245, 197, 24, 0.35);
+  --gold-soft:           #FAD42A;            /* IMDB badge bg */
+  --gold-glow:           rgba(245, 197, 24, 0.40);
 
   /* Surfaces / translucency */
-  --surface-translucent:   rgba(255, 255, 255, 0.06);
-  --pill-surface:          rgba(255, 255, 255, 0.08);
-  --pill-surface-strong:   rgba(255, 255, 255, 0.12);
-  --icon-button-bg:        rgba(0, 0, 0, 0.35);
-  --glass-bg:              rgba(26, 26, 30, 0.88);
-  --info-card-bg:          #EC1D24;
-  --tab-bar-bg:            rgba(26, 26, 30, 0.88);
-  --divider:               #2A2A30;
+  --surface-translucent:   rgba(255, 255, 255, 0.05);
+  --pill-surface:          rgba(255, 255, 255, 0.07);
+  --pill-surface-strong:   rgba(255, 255, 255, 0.11);
+  --icon-button-bg:        rgba(0, 0, 0, 0.45);
+  --glass-bg:              rgba(17, 17, 22, 0.92);
+  --info-card-bg:          #E82127;
+  --tab-bar-bg:            rgba(17, 17, 22, 0.92);
+  --divider:               #22222B;
 
   /* Borders */
-  --border:               rgba(255, 255, 255, 0.08);
-  --border-soft:          rgba(255, 255, 255, 0.06);
-  --border-hover:         rgba(255, 255, 255, 0.18);
-  --border-active:        rgba(236, 29, 36, 0.50);
+  --border:               rgba(255, 255, 255, 0.07);
+  --border-soft:          rgba(255, 255, 255, 0.05);
+  --border-hover:         rgba(255, 255, 255, 0.16);
+  --border-active:        rgba(232, 33, 39, 0.55);
 
   /* Shadows */
-  --shadow-sm:            0 2px 8px rgba(0, 0, 0, 0.25);
-  --shadow-md:            0 8px 24px rgba(0, 0, 0, 0.35);
-  --shadow-lg:            0 16px 48px rgba(0, 0, 0, 0.45);
+  --shadow-sm:            0 2px 10px rgba(0, 0, 0, 0.35);
+  --shadow-md:            0 8px 30px rgba(0, 0, 0, 0.45);
+  --shadow-lg:            0 16px 54px rgba(0, 0, 0, 0.55);
 
   /* ── Theme-aware aliases — JS sets var(--theme-*) above this layer ─── */
   --theme-accent:         var(--accent);

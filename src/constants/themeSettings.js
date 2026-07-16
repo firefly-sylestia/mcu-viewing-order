@@ -15,22 +15,22 @@ export const THEME_PALETTES = {
   cinema: {
     accent:              '#EC1D24',       // primary CTA + info card
     accentAlt:           '#F5C518',       // gold / IMDB / ratings
-    surface:             '#1A1A1E',       // card / panel bg
-    surfaceAlt:          '#0D0D0F',       // page bg (deepest layer)
-    surfaceHover:        '#242429',       // hover states
-    surfaceTranslucent:  'rgba(255,255,255,0.06)',
-    iconButtonBg:        'rgba(0,0,0,0.35)',
-    pillBg:              'rgba(255,255,255,0.08)',
-    glassBg:             'rgba(26,26,30,0.88)',
+    surface:             '#111116',       // card / panel bg
+    surfaceAlt:          '#06050A',       // page bg (deepest layer)
+    surfaceHover:        '#1C1C24',       // hover states
+    surfaceTranslucent:  'rgba(255,255,255,0.05)',
+    iconButtonBg:        'rgba(0,0,0,0.50)',
+    pillBg:              'rgba(255,255,255,0.07)',
+    glassBg:             'rgba(17,17,22,0.94)',
     infoCardBg:          '#EC1D24',
     imdbBg:              '#F5C518',
     imdbText:            '#0D0D0F',
-    divider:             '#2A2A30',
-    onDark:              '#FFFFFF',
-    onDarkMuted:         '#B0B3BA',
-    border:              'rgba(255,255,255,0.08)',
-    borderSoft:          'rgba(255,255,255,0.06)',
-    shadow:              'rgba(0,0,0,0.40)',
+    divider:             '#1E1E28',
+    onDark:              '#F2F2F7',
+    onDarkMuted:         '#B8BAC2',
+    border:              'rgba(255,255,255,0.07)',
+    borderSoft:          'rgba(255,255,255,0.05)',
+    shadow:              'rgba(0,0,0,0.55)',
   },
   daylight: {
     accent:              '#2563EB',
@@ -63,10 +63,10 @@ export const getActiveThemeVars = (themeMode, darkMode) => {
     '--theme-accent':              p.accent,
     '--theme-accent-alt':          p.accentAlt,
     '--theme-accent-glow':         id === 'cinema'
-      ? 'rgba(236,29,36,0.40)'
+      ? 'rgba(236,29,36,0.55)'
       : 'rgba(37,99,235,0.30)',
     '--theme-alt-glow':            id === 'cinema'
-      ? 'rgba(245,197,24,0.35)'
+      ? 'rgba(245,197,24,0.45)'
       : 'rgba(245,197,24,0.30)',
     '--theme-surface':             p.surface,
     '--theme-surface-alt':         p.surfaceAlt,
@@ -88,7 +88,7 @@ export const getActiveThemeVars = (themeMode, darkMode) => {
 
     // Status background tint
     '--theme-watched-bg':          id === 'cinema'
-      ? 'rgba(34,197,94,0.12)'
+      ? 'rgba(34,197,94,0.14)'
       : 'rgba(22,163,74,0.10)',
 
     // Page-base aliases
@@ -104,7 +104,7 @@ export const getActiveThemeVars = (themeMode, darkMode) => {
     '--border':                    p.border,
     '--border-soft':               p.borderSoft,
     '--border-hover':              id === 'cinema'
-      ? 'rgba(255,255,255,0.18)'
+      ? 'rgba(255,255,255,0.20)'
       : 'rgba(15,23,42,0.16)',
     '--accent':                    p.accent,
     '--gold':                      p.accentAlt,
