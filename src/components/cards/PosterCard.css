@@ -1,0 +1,288 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   POSTER CARD — 2:3 cinematic poster with gradient overlay & status badges
+   Per DESIGN_SPEC Section 5.1
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.poster-card {
+  position: relative;
+  aspect-ratio: var(--poster-ratio, 2 / 3);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--color-border-default);
+  background: var(--color-surface-elevated);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition:
+    transform 280ms var(--ease-spring),
+    border-color 200ms var(--ease-out),
+    box-shadow 280ms var(--ease-out);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── Hover: lift + glow ──────────────────────────────────────────────── */
+.poster-card:hover {
+  transform: scale(1.04) translateY(-4px);
+  border-color: var(--color-border-hover);
+  box-shadow: var(--shadow-md);
+}
+
+/* ── Active: quick snap-back ──────────────────────────────────────────── */
+.poster-card:active {
+  transform: scale(1.01) translateY(-1px);
+  transition-duration: 120ms;
+}
+
+/* ── Focus visible ────────────────────────────────────────────────────── */
+.poster-card:focus-visible {
+  outline: 2px solid var(--color-accent-red);
+  outline-offset: 3px;
+}
+
+/* ═══ Image layer ═════════════════════════════════════════════════════════ */
+
+.poster-card__image-wrap {
+  position: absolute;
+  inset: 0;
+  background: var(--color-surface-elevated);
+}
+
+.poster-card__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  opacity: 0;
+  transition: opacity 300ms var(--ease-out);
+}
+
+.poster-card__image-wrap.is-loaded .poster-card__image {
+  opacity: 1;
+}
+
+/* ── Skeleton shimmer while loading ───────────────────────────────────── */
+.poster-card__skeleton {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    var(--color-surface-primary) 30%,
+    var(--color-surface-elevated) 50%,
+    var(--color-surface-primary) 70%
+  );
+  background-size: 200% 100%;
+  animation: posterSkeletonShimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes posterSkeletonShimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── Fallback when image fails ────────────────────────────────────────── */
+.poster-card__fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface-elevated);
+}
+
+.poster-card__fallback-text {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 8vw, 4rem);
+  font-weight: var(--fw-extrabold);
+  color: var(--color-text-tertiary);
+  opacity: 0.4;
+  text-transform: uppercase;
+}
+
+/* ═══ Gradient overlay (bottom) ═══════════════════════════════════════════ */
+
+.poster-card__overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 40px var(--sp-3) var(--sp-3);
+  background: var(--gradient-card-overlay);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+/* ═══ Title ═══════════════════════════════════════════════════════════════ */
+
+.poster-card__title {
+  font-family: var(--font-display);
+  font-size: var(--fs-body-sm);
+  font-weight: var(--fw-bold);
+  color: #FFFFFF;
+  line-height: var(--lh-heading);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0;
+}
+
+/* ═══ Rating pill (bottom-left) ═══════════════════════════════════════════ */
+
+.poster-card__rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: rgba(0, 0, 0, 0.50);
+  border-radius: var(--radius-full);
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-bold);
+  color: var(--color-accent-gold);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  align-self: flex-start;
+  line-height: 1.3;
+}
+
+.poster-card__rating svg {
+  flex-shrink: 0;
+}
+
+/* ═══ Meta line (year + type) ═════════════════════════════════════════════ */
+
+.poster-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-metadata);
+  font-weight: var(--fw-semibold);
+  color: rgba(255, 255, 255, 0.70);
+  letter-spacing: var(--ls-caption);
+}
+
+.poster-card__type {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ═══ Status badge (top-right) ════════════════════════════════════════════ */
+
+.poster-card__status-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.60);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(255, 255, 255, 0.20);
+  z-index: 2;
+  transition:
+    border-color 200ms var(--ease-out),
+    transform 180ms var(--ease-spring);
+}
+
+.poster-card:hover .poster-card__status-badge {
+  transform: scale(1.08);
+}
+
+.poster-card__status-icon {
+  font-size: 12px;
+  font-weight: var(--fw-bold);
+  color: #FFFFFF;
+  line-height: 1;
+  user-select: none;
+}
+
+/* ── Status variants ──────────────────────────────────────────────────── */
+
+.poster-card.is-watched .poster-card__status-badge {
+  border-color: var(--color-status-watched);
+  background: rgba(34, 197, 94, 0.25);
+}
+.poster-card.is-watched .poster-card__status-icon {
+  color: var(--color-status-watched);
+}
+
+.poster-card.is-watchlist .poster-card__status-badge {
+  border-color: var(--color-status-plan-to-watch);
+  background: rgba(59, 130, 246, 0.25);
+}
+.poster-card.is-watchlist .poster-card__status-icon {
+  color: var(--color-status-plan-to-watch);
+}
+
+.poster-card.is-watching .poster-card__status-badge {
+  border-color: var(--color-status-watching);
+  background: rgba(139, 92, 246, 0.25);
+}
+.poster-card.is-watching .poster-card__status-icon {
+  color: var(--color-status-watching);
+}
+
+.poster-card.is-on-hold .poster-card__status-badge {
+  border-color: var(--color-status-on-hold);
+  background: rgba(245, 158, 11, 0.25);
+}
+.poster-card.is-on-hold .poster-card__status-icon {
+  color: var(--color-status-on-hold);
+}
+
+.poster-card.is-dropped .poster-card__status-badge {
+  border-color: var(--color-status-dropped);
+  background: rgba(239, 68, 68, 0.25);
+}
+.poster-card.is-dropped .poster-card__status-icon {
+  color: var(--color-status-dropped);
+}
+
+/* ═══ Responsive: smaller badges on narrow cards ══════════════════════════ */
+
+@media (max-width: 480px) {
+  .poster-card__status-badge {
+    width: 24px;
+    height: 24px;
+    top: 6px;
+    right: 6px;
+  }
+  .poster-card__status-icon {
+    font-size: 10px;
+  }
+  .poster-card__overlay {
+    padding: 28px 8px 8px;
+  }
+  .poster-card__title {
+    font-size: var(--fs-metadata);
+  }
+  .poster-card__rating {
+    padding: 2px 6px;
+    font-size: 0.60rem;
+  }
+}
+
+/* ═══ Daylight theme ══════════════════════════════════════════════════════ */
+
+[data-theme="light"] .poster-card__overlay {
+  background: var(--gradient-card-overlay);
+}
+
+[data-theme="light"] .poster-card__title {
+  color: var(--color-text-primary);
+}
+
+[data-theme="light"] .poster-card__rating {
+  background: rgba(255, 255, 255, 0.75);
+  color: var(--color-accent-gold);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+[data-theme="light"] .poster-card__meta {
+  color: var(--color-text-secondary);
+}

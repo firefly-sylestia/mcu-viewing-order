@@ -14,6 +14,7 @@ import { useOverlayNavigation } from './hooks/useOverlayNavigation';
 import { useResponsiveLayout } from './hooks/useResponsiveLayout';
 import { Header, TimelineControls, ProgressSection, TitleCard, DetailDrawer, Settings as SettingsSection, Analytics } from './components/features';
 import { Sidebar, ContentArea } from './components/layout';
+import { HeroCarousel } from './components/hero';
 import { THEME_CHOICES, getActiveThemeVars } from './constants/themeSettings';
 import { buildSemanticThemeVars, UI_PARITY_TOKENS } from './constants/ui';
 import './App.layout.css';
@@ -1675,6 +1676,18 @@ export default function MCUViewer() {
       })
       .sort((a, b) => hashStringToUnit(`${a.src}|${heroRandomSeedRef.current}`) - hashStringToUnit(`${b.src}|${heroRandomSeedRef.current}`));
   }, [activeItems, posterSrc]);
+  const heroItems = useMemo(() => heroPosterItems.map(({ item, src }) => ({
+    src,
+    title: item.title || '',
+    rating: (metaCache[item.id]?.imdbRating != null && metaCache[item.id]?.imdbRating !== 'N/A') ? Number(metaCache[item.id]?.imdbRating) : null,
+    year: item.year || null,
+    type: TYPE_META[item.type]?.label || null,
+    typeColor: TYPE_META[item.type]?.color || null,
+    phase: currentPhases.find(p => p.id === item.phase)?.label || null,
+    genres: item.genres || [],
+    releaseStatus: item.releaseStatus || null,
+    item,
+  })), [heroPosterItems, currentPhases, metaCache]);
   const heroPosters = useMemo(() => heroPosterItems.map(({ src }) => src), [heroPosterItems]);
   const visibleHeroPosters = useMemo(() => {
     if (!heroPosterItems.length) return [];
@@ -1744,10 +1757,10 @@ export default function MCUViewer() {
     const startHeroCycle = () => {
       if (overlayBlockingCycle) return;
       if (heroIntervalRef.current) return;
-      heroIntervalRef.current = window.setInterval(() => {
+      if (false) { heroIntervalRef.current = window.setInterval(() => {
         if (Date.now() < heroUserInteractingUntilRef.current) return;
         setHeroIndex(i => (i + 1) % heroPosters.length);
-      }, HERO_ROTATION_MS);
+      }, HERO_ROTATION_MS); }
       telemetry('resumed', 'home-active');
     };
     const stopHeroCycle = () => {
@@ -2982,24 +2995,7 @@ export default function MCUViewer() {
       
 
 
-      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100vh', minHeight: '100vh', maxHeight: '100vh', zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-        {browseMode !== 'phase' && previousHeroSrc && previousHeroSrc !== currentHeroSrc && (
-          <div
-            key={`backdrop-exit-${previousHeroSrc}`}
-            className="hero-backdrop-image is-exiting"
-            style={{ '--backdrop-opacity': heroBackdropOpacity, position: 'absolute', top: 8, left: 8, right: 8, bottom: 8, borderRadius: 24, overflow: 'hidden', backgroundImage: `url(${previousHeroSrc})`, backgroundSize: heroBackdropBackgroundSize, backgroundRepeat: 'no-repeat', backgroundPosition: 'center 7%', transition: browseMode === 'phase' ? 'none' : undefined }}
-          />
-        )}
-        {currentHeroSrc && (
-          <div
-            key={`backdrop-${currentHeroSrc}`}
-            className="hero-backdrop-image"
-            style={{ '--backdrop-opacity': heroBackdropOpacity, position: 'absolute', top: 8, left: 8, right: 8, bottom: 8, borderRadius: 24, overflow: 'hidden', backgroundImage: `url(${currentHeroSrc})`, backgroundSize: heroBackdropBackgroundSize, backgroundRepeat: 'no-repeat', backgroundPosition: 'center 7%', transition: browseMode === 'phase' ? 'none' : undefined }}
-          />
-        )}
-        <div className="hero-backdrop-blend" />
-        <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 20%, transparent), transparent 42%), radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt) 18%, transparent), transparent 40%), linear-gradient(165deg, color-mix(in srgb, var(--theme-accent) ${darkMode ? '6%' : '3%'}, #04050f), color-mix(in srgb, var(--theme-accent-alt) ${darkMode ? '5%' : '2.5%'}, #0a1734) 42%, ${darkMode ? '#090d1e' : '#edf2fa'} 100%)`, opacity: darkMode ? 0.12 : 0.06, transition: 'opacity 0.95s ease-in-out', animation: 'cinematicIn 0.8s ease both' }} />
-      </div>
+      {/* Hero backdrop disabled - now handled by HeroCarousel component */}
 
       {/* ━━ SETTINGS PANEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <Sidebar controlsHidden={analyticsOpen || detailItem || sidebarOpen || settingsOpen} ref={sidebarRef} open={sidebarOpen} onToggle={toggleSidebarPanel} onClose={closeSidebar} onOpenSettings={toggleSettingsPanel}>
@@ -3207,43 +3203,26 @@ export default function MCUViewer() {
       </header>
 
       {/* ━━ POSTER CAROUSEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      {browseMode === 'home' && <section className="hero-carousel-shell" aria-label={activeUniverse.heroLabel}>
-        {heroPosters.length > 0 && (
-          <>
-            <button className="hero-carousel-nav prev" type="button" aria-label="Previous featured poster" onClick={goToPrevHero}>‹</button>
-            <div className="hero-carousel-track"
-              ref={heroRailRef}
-              onWheel={handleHeroWheel}
-              onScroll={() => { if (!heroProgrammaticScrollRef.current) pauseHeroAutoSlide(1800); }}
-              onPointerDown={() => pauseHeroAutoSlide(3200)}
-              onTouchStart={() => pauseHeroAutoSlide(3200)}>
-              {visibleHeroPosters.map(({ src, item: heroItem }, idx) => {
-              const isActive = src === activeHeroSrc;
-              return (
-                <article key={`hero-rail-${src}`} ref={isActive ? heroActiveCardRef : null} className={`hero-carousel-card ${isActive ? 'is-active' : ''}${heroItem?.releaseStatus === 'upcoming' ? ' is-upcoming' : ''}`}>
-                  <img
-                    className="hero-carousel-poster"
-                    src={src}
-                    alt={heroItem?.title || `Featured ${activeUniverse.title} poster`}
-                    draggable={false}
-                    loading={idx < 8 ? 'eager' : 'lazy'}
-                    decoding="async"
-                    onDragStart={(e) => e.preventDefault()}
-                    onClick={() => { if (heroItem) openDetail(heroItem); }}
-                    />
-                  <div className="hero-carousel-meta">
-                    <p className="hero-carousel-title">{heroItem?.title || `Featured ${activeUniverse.title} poster`}</p>
-                  </div>
-                </article>
-              );
-              })}
-            </div>
-            <button className="hero-carousel-nav next" type="button" aria-label="Next featured poster" onClick={goToNextHero}>›</button>
-          </>
-        )}
-
-        {!detailItem && !analyticsOpen && !settingsOpen && <WatermarkOverlay surface="hero" theme={darkMode ? 'cinematic' : 'light'} viewport={isDesktopViewport ? 'desktop' : 'mobile'} avoid={['cta', 'title']} />}
-      </section>}
+      {browseMode === 'home' && heroItems.length > 0 && (
+        <HeroCarousel
+          items={heroItems}
+          activeIndex={heroIndex}
+          onChange={setHeroIndex}
+          onSelectItem={(heroItem) => { if (heroItem) openDetail(heroItem); }}
+          onWatchTrailer={(heroItem) => {
+            if (heroItem) {
+              openDetail(heroItem);
+              window.setTimeout(() => openTrailerPlayer(), 400);
+            }
+          }}
+          onMarkWatched={(heroItem) => {
+            if (heroItem?.id) setStatusDirect(heroItem.id, 'watched');
+          }}
+          isDesktopViewport={isDesktopViewport}
+          performanceMode={performanceMode}
+          darkMode={darkMode}
+        />
+      )}
       {browseMode === 'phase' && (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '6px 16px 12px' }}>
           <button
