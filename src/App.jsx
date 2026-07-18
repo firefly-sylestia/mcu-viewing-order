@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Search, SlidersHorizontal, Home, Bookmark, Play, UserRound, X, ArrowLeft, Star, BarChart3, Check, Clock, ListFilter, RotateCcw, ChevronLeft, ChevronRight, Calendar, Timer, Sparkles } from 'lucide-react';
 import { RAW } from './data/mcuData';
 import { DC_RAW } from './data/dcData';
@@ -131,7 +131,8 @@ export default function App() {
   const nextUp = activeItems.find(item => item.userStatus !== 'watched' && item.userStatus !== 'dropped') || activeItems[0];
   const playTrailer = (item) => {
     const match = getTrailerByTitle(item.title);
-    const url = match ? trailerEmbedUrl(match) : `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(`${item.title} trailer`)}`;
+    const youtubeId = match?.primary?.youtubeId || match?.youtubeId;
+    const url = youtubeId ? trailerEmbedUrl(youtubeId) : `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(`${item.title} trailer`)}`;
     setTrailer({ title: item.title, url });
   };
   const resetFilters = () => { setQuery(''); setGenre('All'); setRating(0); setSortBy('order'); };
@@ -145,38 +146,40 @@ export default function App() {
           <button className={universe === 'marvel' ? 'active' : ''} onClick={() => { setUniverse('marvel'); setHeroIndex(0); }}>Marvel</button>
           <button className={universe === 'dc' ? 'active' : ''} onClick={() => { setUniverse('dc'); setHeroIndex(0); }}>DC</button>
         </div>
+        <div className="header-search">
+          <Search size={18} />
+          <input value={query} onChange={e => setQuery(e.target.value)} placeholder={`Search ${universe === 'marvel' ? 'Marvel' : 'DC'} titles…`} />
+          {query && <button className="search-clear" onClick={() => setQuery('')}><X size={16} /></button>}
+        </div>
+        <button className="header-filter-btn" onClick={() => setFiltersOpen(true)}><SlidersHorizontal size={18} /></button>
       </header>
-
-      <section className="control-strip">
-        <label className="search-box web-search"><Search size={22} /><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search movie" /></label>
-        <button className="pill-button" onClick={() => setFiltersOpen(true)}><SlidersHorizontal size={20} /> Filters</button>
-        <button className="pill-button muted" onClick={resetFilters}><RotateCcw size={18} /> Reset</button>
-      </section>
 
       {section === 'home' && <>
         <section className="hero-layout">
           <div className="hero-copy">
-            <p className="eyebrow">{universe === 'marvel' ? 'Marvel timeline' : 'DC timeline'} · {activeItems.length} titles</p>
-            <h1>Track every film and series in a cinematic viewing dashboard.</h1>
-            <p>Search, filter, save, mark progress, open details, and switch between Marvel and DC without losing the polished dark movie-app style.</p>
-            <div className="hero-actions"><button onClick={() => playTrailer(featured)}><Play size={18} fill="currentColor" /> Watch trailer</button><button onClick={() => setSelected(featured)}>Open details</button></div>
+            <p className="eyebrow">{universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} · {activeItems.length} titles · {stats.percent}% watched</p>
+            <h1>The complete {universe === 'marvel' ? 'MCU' : 'DC'} viewing order</h1>
+            <div className="hero-actions"><button onClick={() => playTrailer(featured)}><Play size={16} fill="currentColor" /> Watch trailer</button><button onClick={() => setSelected(featured)}>Open details</button></div>
           </div>
           <TopCarousel items={heroItems} featured={featured} heroIndex={heroIndex} setHeroIndex={setHeroIndex} setSelected={setSelected} playTrailer={playTrailer} />
         </section>
         <SuggestionStrip nextUp={nextUp} stats={stats} setSelected={setSelected} playTrailer={playTrailer} />
         <AnalyticsPanel stats={stats} />
-        <MovieRail title="Recommended" items={activeItems.slice(6, 18)} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />
+        <MovieRail title="Continue watching" items={activeItems.filter(i => i.userStatus === 'watching').slice(0, 6)} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} empty="No titles in progress. Start watching!" />
+        <MovieRail title="Up next" items={activeItems.filter(i => i.userStatus === 'unwatched').slice(0, 12)} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />
+        <MovieRail title="Essential picks" items={activeItems.filter(i => i.essential).slice(0, 12)} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />
+        <MovieRail title="Recently watched" items={activeItems.filter(i => i.userStatus === 'watched').slice(-12).reverse()} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} empty="Mark titles as watched to see them here." />
       </>}
 
       {section === 'list' && <ListSection items={activeItems} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />}
       {section === 'analytics' && <><AnalyticsPanel stats={stats} large /><MovieRail title="In progress" items={activeItems.filter(i => i.userStatus === 'watching')} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} /></>}
       {section === 'saved' && <MovieRail title="Saved titles" items={activeItems.filter(i => i.bookmarked)} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} empty="No saved titles yet. Tap bookmarks on any card." />}
 
-      <nav className="bottom-nav web-bottom" aria-label="Primary">
-        <button className={section === 'home' ? 'active' : ''} onClick={() => setSection('home')}><Home /></button>
-        <button className={section === 'list' ? 'active' : ''} onClick={() => setSection('list')}><ListFilter /></button>
-        <button className={section === 'analytics' ? 'active' : ''} onClick={() => setSection('analytics')}><BarChart3 /></button>
-        <button className={section === 'saved' ? 'active' : ''} onClick={() => setSection('saved')}><UserRound /></button>
+      <nav className="bottom-nav" aria-label="Primary">
+        <button className={section === 'home' ? 'active' : ''} onClick={() => setSection('home')}><Home size={22} /><span>Home</span></button>
+        <button className={section === 'list' ? 'active' : ''} onClick={() => setSection('list')}><ListFilter size={22} /><span>List</span></button>
+        <button className={section === 'analytics' ? 'active' : ''} onClick={() => setSection('analytics')}><BarChart3 size={22} /><span>Stats</span></button>
+        <button className={section === 'saved' ? 'active' : ''} onClick={() => setSection('saved')}><UserRound size={22} /><span>Saved</span></button>
       </nav>
 
       {selectedItem && <DetailView item={selectedItem} onClose={() => setSelected(null)} toggleWatched={toggleWatched} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />}
@@ -215,7 +218,7 @@ function MovieCard({ item, setSelected, cycleStatus, setStatus, toggleBookmark, 
   return <article className="movie-card" style={{ '--accent': item.accent }}>
     <button className="poster-button" onClick={() => setSelected(item)}><PosterArt item={item} /></button>
     <div className="card-body"><button className="title-button" onClick={() => setSelected(item)}>{item.title}</button><span>{item.year} · {runtimeLabel(item.runtime, item.type)}</span></div>
-    <div className="card-actions"><button onClick={() => playTrailer(item)} className="trailer-chip"><Play size={14} fill="currentColor" />Trailer</button><StatusSelect item={item} setStatus={setStatus} compact /><button onClick={() => toggleBookmark(item)} className={item.bookmarked ? 'saved' : ''}><Bookmark fill={item.bookmarked ? 'currentColor' : 'none'} /></button></div>
+    <div className="card-actions"><button onClick={() => playTrailer(item)} className="trailer-chip"><Play size={14} fill="currentColor" /></button><StatusSelect item={item} setStatus={setStatus} compact /><button onClick={() => toggleBookmark(item)} className={item.bookmarked ? 'saved' : ''}><Bookmark fill={item.bookmarked ? 'currentColor' : 'none'} /></button></div>
   </article>;
 }
 
@@ -225,12 +228,27 @@ function ListSection({ items, setSelected, cycleStatus, setStatus, toggleBookmar
 
 
 function StatusSelect({ item, setStatus, compact = false }) {
-  return <label className={`status-select ${item.userStatus} ${compact ? 'compact' : ''}`}>
-    <span>{compact ? '' : 'Status'}</span>
-    <select value={item.userStatus} onChange={event => setStatus(item, event.target.value)} aria-label={`Set status for ${item.title}`}>
-      {STATUS.map(status => <option key={status} value={status}>{STATUS_LABELS[status]}</option>)}
-    </select>
-  </label>;
+  const [open, setOpen] = React.useState(false);
+  const ref = useRef(null);
+  React.useEffect(() => {
+    const handleClick = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+  return <div className={`status-select ${item.userStatus} ${compact ? 'compact' : ''}`} ref={ref}>
+    <button className="status-trigger" onClick={() => setOpen(!open)} aria-haspopup="listbox" aria-expanded={open}>
+      <span className="status-dot" />
+      <span className="status-label">{STATUS_LABELS[item.userStatus]}</span>
+      <svg className="status-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+    </button>
+    {open && <div className="status-dropdown" role="listbox">
+      {STATUS.map(status => <button key={status} className={`status-option ${status} ${item.userStatus === status ? 'active' : ''}`} role="option" aria-selected={item.userStatus === status} onClick={() => { setStatus(item, status); setOpen(false); }}>
+        <span className="status-dot" />
+        <span>{STATUS_LABELS[status]}</span>
+        {item.userStatus === status && <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 7L5.5 10L11.5 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+      </button>)}
+    </div>}
+  </div>;
 }
 
 function SuggestionStrip({ nextUp, stats, setSelected, playTrailer }) {
@@ -259,11 +277,36 @@ function TrailerModal({ trailer, onClose }) {
   return <aside className="trailer-modal"><div><button className="trailer-close" onClick={onClose}><X /></button><h2>{trailer.title} trailer</h2><iframe src={trailer.url} title={`${trailer.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /></div></aside>;
 }
 
+function FilterSelect({ label, value, options, onChange }) {
+  const [open, setOpen] = React.useState(false);
+  const ref = useRef(null);
+  React.useEffect(() => {
+    const handleClick = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+  const activeLabel = options.find(o => o.value === value)?.label || options[0]?.label || '';
+  return <div className="filter-select" ref={ref}>
+    <button className="filter-select-trigger" onClick={() => setOpen(!open)} aria-haspopup="listbox" aria-expanded={open}>
+      <span className="filter-select-label">{activeLabel}</span>
+      <svg className="filter-select-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+    </button>
+    {open && <div className="filter-select-dropdown" role="listbox">
+      {options.map(opt => <button key={opt.value} className={`filter-select-option ${value === opt.value ? 'active' : ''}`} role="option" aria-selected={value === opt.value} onClick={() => { onChange(opt.value); setOpen(false); }}>
+        <span>{opt.label}</span>
+        {value === opt.value && <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 7L5.5 10L11.5 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+      </button>)}
+    </div>}
+  </div>;
+}
+
 function Filters({ genre, setGenre, rating, setRating, sortBy, setSortBy, genres, count, onClose }) {
   return <aside className="filter-screen web-filter">
     <div className="filter-head"><button onClick={() => { setGenre('All'); setRating(0); setSortBy('order'); }}>Clear All</button><b>Filters</b><button onClick={onClose}><X /></button></div>
-    <label>Sort by</label><select className="select-row native-select" value={sortBy} onChange={e => setSortBy(e.target.value)}><option value="order">Recommended</option><option value="year">Year</option><option value="title">Title</option></select>
-    <label>Minimum rating</label><select className="select-row native-select" value={rating} onChange={e => setRating(Number(e.target.value))}><option value={0}>Any rating</option><option value={8}>8 &</option><option value={7}>7 &</option><option value={6}>6 &</option></select>
+    <label>Sort by</label>
+    <FilterSelect value={sortBy} onChange={setSortBy} options={[{ value: 'order', label: 'Recommended' }, { value: 'year', label: 'Year' }, { value: 'title', label: 'Title' }]} />
+    <label>Minimum rating</label>
+    <FilterSelect value={rating} onChange={v => setRating(Number(v))} options={[{ value: 0, label: 'Any rating' }, { value: 8, label: '8 & above' }, { value: 7, label: '7 & above' }, { value: 6, label: '6 & above' }]} />
     <div className="genre-title">Genres <span>{genre === 'All' ? 0 : 1}</span></div><div className="filter-chips">{genres.map(g => <button key={g} className={genre === g ? 'selected' : ''} onClick={() => setGenre(g)}>{g}</button>)}</div>
     <button className="show-results" onClick={onClose}>Show {count} results</button>
   </aside>;
