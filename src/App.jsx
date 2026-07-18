@@ -153,8 +153,8 @@ export default function App() {
           <Search size={18} />
           <input value={query} onChange={e => setQuery(e.target.value)} onFocus={() => setSection('list')} placeholder={`Search ${universe === 'marvel' ? 'Marvel' : 'DC'} titles…`} />
           {query && <button className="search-clear" onClick={() => setQuery('')}><X size={16} /></button>}
+          <button className="header-filter-btn" onClick={() => setFiltersOpen(true)} aria-label="Open filters"><SlidersHorizontal size={18} /></button>
         </div>
-        <button className="header-filter-btn" onClick={() => setFiltersOpen(true)}><SlidersHorizontal size={18} /></button>
       </header>
 
       {section === 'home' && <>
