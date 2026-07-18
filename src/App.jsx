@@ -349,21 +349,27 @@ function AnalyticsPanel({ stats, large = false }) {
 
 function DetailView({ item, onClose, toggleWatched, setStatus, toggleBookmark }) {
   const [inlineTrailer, setInlineTrailer] = useState(null);
+  const [isTrailerExpanded, setIsTrailerExpanded] = useState(false);
   const showTrailer = () => {
     const match = getTrailerByTitle(item.title);
     const youtubeId = match?.primary?.youtubeId || match?.youtubeId;
     const baseUrl = youtubeId ? trailerEmbedUrl(youtubeId) : `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(`${item.title} trailer`)}`;
     setInlineTrailer(`${baseUrl}${baseUrl.includes('?') ? '&' : '?'}autoplay=1`);
+    setIsTrailerExpanded(true);
   };
-  return <div className="detail-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-    <article className="detail-modal" role="dialog" aria-modal="true" aria-labelledby="detail-title" style={{ '--accent': item.accent }}>
+  const closeTrailer = () => {
+    setIsTrailerExpanded(false);
+    setTimeout(() => setInlineTrailer(null), 200);
+  };
+  return <div className="detail-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !isTrailerExpanded) onClose(); }}>
+    <article className="detail-modal" role="dialog" aria-modal="true" aria-labelledby="detail-title" style={{ '--accent': item.accent, '--detail-poster-bg': `url('${item.poster}')` }}>
       {item.poster && <img className="detail-backdrop" src={item.poster} alt="" aria-hidden="true" />}
       <div className="detail-backdrop-shade" aria-hidden="true" />
       <button className="detail-close" onClick={onClose} aria-label="Close details"><X size={21} /></button>
       <div className="detail-layout">
         <div className="detail-media">
-          <div className="detail-poster">{inlineTrailer ? <div className="detail-inline-trailer"><iframe src={inlineTrailer} title={`${item.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={() => setInlineTrailer(null)} aria-label="Close trailer"><X size={20} /></button></div> : <PosterArt item={item} />}</div>
-          <button className="detail-trailer" onClick={showTrailer}><Play size={18} fill="currentColor" /> Watch trailer</button>
+          <div className={`detail-poster ${isTrailerExpanded ? 'is-expanded' : ''}`}>{inlineTrailer ? <div className="detail-inline-trailer"><iframe src={inlineTrailer} title={`${item.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={closeTrailer} aria-label="Close trailer"><X size={20} /></button></div> : <PosterArt item={item} />}</div>
+          {!isTrailerExpanded && <button className="detail-trailer" onClick={showTrailer}><Play size={18} fill="currentColor" /> Watch trailer</button>}
         </div>
         <div className="detail-content">
           <div className="detail-kicker"><span>{item.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'}</span><span>#{String(item.order || item.id).padStart(2, '0')}</span></div>
