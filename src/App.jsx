@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Search, SlidersHorizontal, Home, Bookmark, Play, UserRound, X, ArrowLeft, Star, BarChart3, Check, Clock, ListFilter, RotateCcw, ChevronLeft, ChevronRight, Calendar, Timer, Sparkles } from 'lucide-react';
 import { RAW } from './data/mcuData';
 import { DC_RAW } from './data/dcData';
@@ -131,7 +131,8 @@ export default function App() {
   const nextUp = activeItems.find(item => item.userStatus !== 'watched' && item.userStatus !== 'dropped') || activeItems[0];
   const playTrailer = (item) => {
     const match = getTrailerByTitle(item.title);
-    const url = match ? trailerEmbedUrl(match) : `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(`${item.title} trailer`)}`;
+    const youtubeId = match?.primary?.youtubeId || match?.youtubeId;
+    const url = youtubeId ? trailerEmbedUrl(youtubeId) : `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(`${item.title} trailer`)}`;
     setTrailer({ title: item.title, url });
   };
   const resetFilters = () => { setQuery(''); setGenre('All'); setRating(0); setSortBy('order'); };
@@ -225,12 +226,27 @@ function ListSection({ items, setSelected, cycleStatus, setStatus, toggleBookmar
 
 
 function StatusSelect({ item, setStatus, compact = false }) {
-  return <label className={`status-select ${item.userStatus} ${compact ? 'compact' : ''}`}>
-    <span>{compact ? '' : 'Status'}</span>
-    <select value={item.userStatus} onChange={event => setStatus(item, event.target.value)} aria-label={`Set status for ${item.title}`}>
-      {STATUS.map(status => <option key={status} value={status}>{STATUS_LABELS[status]}</option>)}
-    </select>
-  </label>;
+  const [open, setOpen] = React.useState(false);
+  const ref = useRef(null);
+  React.useEffect(() => {
+    const handleClick = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+  return <div className={`status-select ${item.userStatus} ${compact ? 'compact' : ''}`} ref={ref}>
+    <button className="status-trigger" onClick={() => setOpen(!open)} aria-haspopup="listbox" aria-expanded={open}>
+      <span className="status-dot" />
+      <span className="status-label">{STATUS_LABELS[item.userStatus]}</span>
+      <svg className="status-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+    </button>
+    {open && <div className="status-dropdown" role="listbox">
+      {STATUS.map(status => <button key={status} className={`status-option ${status} ${item.userStatus === status ? 'active' : ''}`} role="option" aria-selected={item.userStatus === status} onClick={() => { setStatus(item, status); setOpen(false); }}>
+        <span className="status-dot" />
+        <span>{STATUS_LABELS[status]}</span>
+        {item.userStatus === status && <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 7L5.5 10L11.5 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+      </button>)}
+    </div>}
+  </div>;
 }
 
 function SuggestionStrip({ nextUp, stats, setSelected, playTrailer }) {
