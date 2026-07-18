@@ -156,12 +156,7 @@ export default function App() {
 
       {section === 'home' && <>
         <section className="hero-layout">
-          <div className="hero-copy">
-            <p className="eyebrow">{universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} · {activeItems.length} titles · {stats.percent}% watched</p>
-            <h1>The complete {universe === 'marvel' ? 'MCU' : 'DC'} viewing order</h1>
-            <div className="hero-actions"><button onClick={() => playTrailer(featured)}><Play size={16} fill="currentColor" /> Watch trailer</button><button onClick={() => setSelected(featured)}>Open details</button></div>
-          </div>
-          <TopCarousel items={heroItems} featured={featured} heroIndex={heroIndex} setHeroIndex={setHeroIndex} setSelected={setSelected} playTrailer={playTrailer} />
+          <TopCarousel items={heroItems} featured={featured} heroIndex={heroIndex} setHeroIndex={setHeroIndex} setSelected={setSelected} />
         </section>
         <SuggestionStrip nextUp={nextUp} stats={stats} setSelected={setSelected} playTrailer={playTrailer} />
         <AnalyticsPanel stats={stats} />
@@ -189,16 +184,44 @@ export default function App() {
   );
 }
 
-function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected, playTrailer }) {
+function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) {
+  const [paused, setPaused] = useState(false);
+  const [inlineTrailer, setInlineTrailer] = useState(null);
+  const hoverTimer = useRef(null);
   const move = (dir) => setHeroIndex((heroIndex + dir + items.length) % Math.max(items.length, 1));
-  return <section className="top-carousel" style={{ '--accent': featured?.accent || '#d6202d' }}>
-    <div className="section-title"><h2>TOP MOVIES</h2><button onClick={() => setSelected(featured)}>Details</button></div>
-    <div className="carousel-controls"><button onClick={() => move(-1)}><ChevronLeft /></button><button onClick={() => playTrailer(featured)}><Play fill="currentColor" /></button><button onClick={() => move(1)}><ChevronRight /></button></div>
-    <div className="poster-stack smooth-stack">
-      {items.map((item, rawIndex) => { const offset = (rawIndex - heroIndex + items.length) % items.length; if (offset > 2) return null; return <button key={item.id} className={`stack-poster poster-${offset}`} onClick={() => setSelected(item)} style={{ '--accent': item.accent }}><PosterArt item={item} /><Bookmark className="save" size={18} /></button>; })}
+  const queuePoster = (index, offset) => {
+    window.clearTimeout(hoverTimer.current);
+    if (offset) hoverTimer.current = window.setTimeout(() => setHeroIndex(index), offset === 2 ? 820 : 560);
+  };
+  const cancelPoster = () => window.clearTimeout(hoverTimer.current);
+
+  useEffect(() => {
+    if (paused || inlineTrailer || items.length < 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
+    const timer = window.setTimeout(() => setHeroIndex((heroIndex + 1) % items.length), 4800);
+    return () => window.clearTimeout(timer);
+  }, [heroIndex, inlineTrailer, items.length, paused, setHeroIndex]);
+
+  const showTrailer = () => {
+    const match = getTrailerByTitle(featured.title);
+    const youtubeId = match?.primary?.youtubeId || match?.youtubeId;
+    const baseUrl = youtubeId ? trailerEmbedUrl(youtubeId) : `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(`${featured.title} trailer`)}`;
+    setInlineTrailer(`${baseUrl}${baseUrl.includes('?') ? '&' : '?'}autoplay=1`);
+  };
+
+  return <section className="top-carousel" style={{ '--accent': featured?.accent || '#d6202d', '--hero-poster': featured?.poster ? `url(${featured.poster})` : 'none' }} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocusCapture={() => setPaused(true)} onBlurCapture={() => setPaused(false)}>
+    <div className="feature-heading"><div><p className="eyebrow">{featured?.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} · Featured</p><h2>Top movies</h2></div><button className="feature-detail" onClick={() => setSelected(featured)}>View details</button></div>
+    <div className="feature-stage">
+      <div className="poster-stack smooth-stack">
+        {inlineTrailer ? <div className="inline-trailer"><iframe src={inlineTrailer} title={`${featured.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={() => setInlineTrailer(null)} aria-label="Close trailer"><X size={20} /></button></div> : items.map((item, rawIndex) => { const offset = (rawIndex - heroIndex + items.length) % items.length; if (offset > 2) return null; return <button key={item.id} aria-label={`Feature ${item.title}`} className={`stack-poster poster-${offset}`} onMouseEnter={() => queuePoster(rawIndex, offset)} onMouseLeave={cancelPoster} onFocus={() => queuePoster(rawIndex, offset)} onBlur={cancelPoster} onClick={() => offset ? setHeroIndex(rawIndex) : setSelected(item)} style={{ '--accent': item.accent }}><PosterArt item={item} /></button>; })}
+      </div>
+      <div className="feature-copy">
+        <div className="feature-kicker"><span>{featured?.year}</span><span>{runtimeLabel(featured?.runtime, featured?.type)}</span><span>{featured?.rating} rating</span></div>
+        <h1>{featured?.title}</h1>
+        <p>{featured?.desc || `Follow ${featured?.title} in the complete ${featured?.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} viewing order.`}</p>
+        <div className="feature-footer"><button className="feature-play" onClick={showTrailer}><Play size={18} fill="currentColor" /> Watch trailer</button><div className="chips">{featured?.genres.slice(0, 3).map(g => <span key={g}>{g}</span>)}</div></div>
+      </div>
     </div>
-    <div className="hero-meta"><h3>{featured?.title}</h3><div className="dots">{items.slice(0, 4).map((item, index) => <button key={item.id} className={item.id === featured?.id ? 'active' : ''} onClick={() => setHeroIndex(index)} />)}</div></div>
-    <div className="chips">{featured?.genres.slice(0, 4).map(g => <span key={g}>{g}</span>)}</div>
+    <div className="carousel-nav"><button onClick={() => move(-1)} aria-label="Previous title"><ChevronLeft /></button><div className="dots">{items.map((item, index) => <button key={item.id} aria-label={`Show ${item.title}`} className={item.id === featured?.id ? 'active' : ''} onClick={() => { setHeroIndex(index); setInlineTrailer(null); }} />)}</div><button onClick={() => move(1)} aria-label="Next title"><ChevronRight /></button></div>
   </section>;
 }
 
@@ -218,12 +241,12 @@ function MovieCard({ item, setSelected, cycleStatus, setStatus, toggleBookmark, 
   return <article className="movie-card" style={{ '--accent': item.accent }}>
     <button className="poster-button" onClick={() => setSelected(item)}><PosterArt item={item} /></button>
     <div className="card-body"><button className="title-button" onClick={() => setSelected(item)}>{item.title}</button><span>{item.year} · {runtimeLabel(item.runtime, item.type)}</span></div>
-    <div className="card-actions"><button onClick={() => playTrailer(item)} className="trailer-chip"><Play size={14} fill="currentColor" /></button><StatusSelect item={item} setStatus={setStatus} compact /><button onClick={() => toggleBookmark(item)} className={item.bookmarked ? 'saved' : ''}><Bookmark fill={item.bookmarked ? 'currentColor' : 'none'} /></button></div>
+    <div className="card-actions"><button onClick={() => playTrailer(item)} className="trailer-chip" aria-label={`Play ${item.title} trailer`}><Play size={16} fill="currentColor" /><span>Trailer</span></button><StatusSelect item={item} setStatus={setStatus} compact /><button onClick={() => toggleBookmark(item)} className={`bookmark-chip ${item.bookmarked ? 'saved' : ''}`} aria-label={item.bookmarked ? 'Remove bookmark' : 'Bookmark title'}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button></div>
   </article>;
 }
 
 function ListSection({ items, setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer }) {
-  return <section className="list-section"><div className="section-title"><h2>Complete list</h2><button>{items.length} results</button></div>{items.map((item, index) => <article className="list-row" key={item.id} style={{ '--accent': item.accent }}><b>{String(index + 1).padStart(2, '0')}</b><button className="list-poster" onClick={() => setSelected(item)}><PosterArt item={item} /></button><button onClick={() => setSelected(item)}>{item.title}<span>{item.year} · {item.type} · {runtimeLabel(item.runtime, item.type)}</span></button><div className="chips">{item.genres.slice(0,2).map(g => <span key={g}>{g}</span>)}</div><button onClick={() => playTrailer(item)}><Play size={16} fill="currentColor" /></button><StatusSelect item={item} setStatus={setStatus} /><button onClick={() => toggleBookmark(item)}><Bookmark fill={item.bookmarked ? 'currentColor' : 'none'} /></button></article>)}</section>;
+  return <section className="list-section"><div className="list-heading"><div><p className="eyebrow">Every story, in order</p><h2>Complete viewing list</h2></div><span>{items.length} titles</span></div><div className="list-grid">{items.map((item, index) => <article className="list-row" key={item.id} style={{ '--accent': item.accent }}><span className="list-index">{String(index + 1).padStart(2, '0')}</span><button className="list-poster" onClick={() => setSelected(item)}><PosterArt item={item} /></button><div className="list-copy"><button onClick={() => setSelected(item)}>{item.title}</button><span>{item.year} · {item.type} · {runtimeLabel(item.runtime, item.type)}</span><p>{item.desc || `${item.title} in the complete ${item.universe === 'marvel' ? 'MCU' : 'DC'} story timeline.`}</p></div><div className="list-tags">{item.genres.slice(0,2).map(g => <span key={g}>{g}</span>)}</div><div className="list-actions"><button className="list-trailer" onClick={() => playTrailer(item)} aria-label={`Play ${item.title} trailer`}><Play size={16} fill="currentColor" /><span>Trailer</span></button><StatusSelect item={item} setStatus={setStatus} /><button className={item.bookmarked ? 'saved' : ''} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Bookmark title'}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button></div></article>)}</div></section>;
 }
 
 
@@ -263,10 +286,17 @@ function AnalyticsPanel({ stats, large = false }) {
   return <section className={`analytics-panel ${large ? 'large' : ''}`}><div><p className="eyebrow">Analytics</p><h2>{stats.percent}% complete</h2><div className="progress"><span style={{ width: `${stats.percent}%` }} /></div></div><div className="stat-grid"><div><b>{stats.total}</b><span>Total</span></div><div><b>{stats.watched}</b><span>Watched</span></div><div><b>{stats.watching}</b><span>Watching</span></div><div><b>{stats.dropped}</b><span>Dropped</span></div><div><b>{stats.bookmarked}</b><span>Saved</span></div></div></section>;
 }
 
-function DetailView({ item, onClose, toggleWatched, setStatus, toggleBookmark, playTrailer }) {
-  return <aside className="detail-screen web-detail" style={{ '--accent': item.accent }}>
+function DetailView({ item, onClose, toggleWatched, setStatus, toggleBookmark }) {
+  const [inlineTrailer, setInlineTrailer] = useState(null);
+  const showTrailer = () => {
+    const match = getTrailerByTitle(item.title);
+    const youtubeId = match?.primary?.youtubeId || match?.youtubeId;
+    const baseUrl = youtubeId ? trailerEmbedUrl(youtubeId) : `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(`${item.title} trailer`)}`;
+    setInlineTrailer(`${baseUrl}${baseUrl.includes('?') ? '&' : '?'}autoplay=1`);
+  };
+  return <aside className="detail-screen web-detail" style={{ '--accent': item.accent, '--detail-poster': item.poster ? `url(${item.poster})` : 'none' }}>
     <div className="detail-actions"><button onClick={onClose}><ArrowLeft /></button><button onClick={() => toggleBookmark(item)}><Bookmark fill={item.bookmarked ? 'currentColor' : 'none'} /></button></div>
-    <div className="wide-poster"><PosterArt item={item} /><button className="play" onClick={() => playTrailer(item)}><Play fill="currentColor" /></button></div>
+    <div className="wide-poster">{inlineTrailer ? <div className="detail-inline-trailer"><iframe src={inlineTrailer} title={`${item.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={() => setInlineTrailer(null)} aria-label="Close trailer"><X size={20} /></button></div> : <><PosterArt item={item} /><button className="play" onClick={showTrailer} aria-label={`Play ${item.title} trailer`}><Play fill="currentColor" /></button></>}</div>
     <section className="red-panel"><h1>{item.title}</h1><div className="chips"><span className="imdb">IMDB {item.rating.toFixed ? item.rating.toFixed(1) : item.rating}</span>{item.genres.slice(0,3).map(g => <span key={g}>{g}</span>)}</div></section>
     <section className="facts"><b>{item.year}</b><b>{item.universe.toUpperCase()}</b><b>{runtimeLabel(item.runtime, item.type)}</b><span><Calendar size={14}/> Year</span><span><Sparkles size={14}/> Universe</span><span><Timer size={14}/> Time</span></section>
     <section className="description"><p>{item.desc || `Follow ${item.title} in the ${item.universe === 'marvel' ? 'Marvel' : 'DC'} viewing order.`}</p><div>{[0,1,2,3,4].map(i => <Star key={i} className={i < 4 ? 'gold' : ''} size={18} fill="currentColor" />)}</div><div className="detail-cta-row"><button className="show-results" onClick={() => toggleWatched(item)}>{item.userStatus === 'watched' ? 'Mark unwatched' : 'Mark watched'}</button><StatusSelect item={item} setStatus={setStatus} /></div></section>
