@@ -151,7 +151,7 @@ export default function App() {
         </div>
         <div className="header-search">
           <Search size={18} />
-          <input value={query} onChange={e => setQuery(e.target.value)} placeholder={`Search ${universe === 'marvel' ? 'Marvel' : 'DC'} titles…`} />
+          <input value={query} onChange={e => setQuery(e.target.value)} onFocus={() => setSection('list')} placeholder={`Search ${universe === 'marvel' ? 'Marvel' : 'DC'} titles…`} />
           {query && <button className="search-clear" onClick={() => setQuery('')}><X size={16} /></button>}
         </div>
         <button className="header-filter-btn" onClick={() => setFiltersOpen(true)}><SlidersHorizontal size={18} /></button>
@@ -163,7 +163,6 @@ export default function App() {
         </section>
         <SuggestionStrip nextUp={nextUp} stats={stats} setSelected={setSelected} playTrailer={playTrailer} />
         <AnalyticsPanel stats={stats} />
-        <MovieRail title="Continue watching" items={activeItems.filter(i => i.userStatus === 'watching').slice(0, 6)} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} empty="No titles in progress. Start watching!" />
         <MovieRail title="Up next" items={activeItems.filter(i => i.userStatus === 'unwatched').slice(0, 12)} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />
         <MovieRail title="Essential picks" items={activeItems.filter(i => i.essential).slice(0, 12)} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />
         <MovieRail title="Recently watched" items={activeItems.filter(i => i.userStatus === 'watched').slice(-12).reverse()} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} empty="Mark titles as watched to see them here." />
@@ -292,7 +291,7 @@ function ListSection({ items, setSelected, setStatus, toggleBookmark, playTraile
     <div className="list-results-bar"><span>Showing {items.length ? firstItem + 1 : 0}–{Math.min(firstItem + pageSize, items.length)} of {items.length}</span><span>Page {currentPage} of {pageCount}</span></div>
     <div className="list-grid">{visibleItems.map((item, index) => <article className="list-row" key={item.id} style={{ '--accent': item.accent }}>
       <span className="list-index">{String(firstItem + index + 1).padStart(2, '0')}</span>
-      <button className="list-poster" onClick={() => setSelected(item)} aria-label={`View ${item.title} details`}><PosterArt item={item} /></button>
+      <button className="list-poster" onClick={() => setSelected(item)} aria-label={`View ${item.title} details`}><img src={item.poster} alt={`${item.title} poster`} /></button>
       <div className="list-copy"><div className="list-title-line"><button onClick={() => setSelected(item)}>{item.title}</button>{item.essential && <span>Essential</span>}</div><span>{item.year} · {item.type} · {runtimeLabel(item.runtime, item.type)}</span><p>{item.desc || `${item.title} in the complete ${item.universe === 'marvel' ? 'MCU' : 'DC'} story timeline.`}</p><div className="list-tags">{item.genres.slice(0,3).map(g => <span key={g}>{g}</span>)}</div></div>
       <div className="list-actions"><button className="list-trailer" onClick={() => playTrailer(item)} aria-label={`Play ${item.title} trailer`}><Play size={16} fill="currentColor" /><span>Trailer</span></button><StatusSelect item={item} setStatus={setStatus} /><button className={`list-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Bookmark title'}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button></div>
     </article>)}</div>
