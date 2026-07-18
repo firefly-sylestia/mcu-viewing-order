@@ -787,3 +787,49 @@ textarea:focus-visible {
 button:active {
   transform: translateY(1px) scale(0.99);
 }
+
+/* Movie app redesign */
+* { box-sizing: border-box; }
+html, body, #root { min-height: 100%; background: #090808 !important; }
+body { margin: 0; font-family: Inter, Manrope, system-ui, sans-serif; color: #fff; overflow-x: hidden; }
+button, input { font: inherit; }
+button { border: 0; color: inherit; cursor: pointer; }
+.cinema-app { min-height: 100svh; display: grid; place-items: center; padding: clamp(14px, 4vw, 44px); background: radial-gradient(circle at 43% 12%, rgba(95, 10, 20, .42), transparent 34%), linear-gradient(115deg, #060606, #16090d 48%, #060606); position: relative; isolation: isolate; }
+.ambient { position: fixed; inset: 0; background: radial-gradient(circle at 58% 50%, rgba(214, 32, 45, .17), transparent 33%); filter: blur(18px); z-index: -1; }
+.phone-shell, .detail-screen, .filter-screen { width: min(100%, 430px); height: min(900px, calc(100svh - 24px)); border-radius: 42px; background: #050505; box-shadow: 0 0 0 8px #111, 0 0 0 10px rgba(255,255,255,.55), 0 34px 90px rgba(0,0,0,.75); overflow: hidden; position: relative; padding: 28px 20px 112px; }
+.status-bar { height: 24px; display: flex; align-items: center; justify-content: space-between; padding: 0 28px 16px; font-weight: 800; letter-spacing: .02em; }
+.topbar { display: grid; grid-template-columns: 1fr 58px; gap: 12px; align-items: center; margin-top: 8px; }
+.search-box { height: 58px; border-radius: 24px; background: #191919; color: rgba(255,255,255,.72); display: flex; gap: 14px; align-items: center; padding: 0 18px; }
+.search-box input { min-width: 0; width: 100%; border: 0; outline: 0; background: transparent; color: #fff; font-size: 18px; }
+.round-button { width: 58px; height: 58px; border-radius: 50%; display: grid; place-items: center; background: #fff; color: #050505; }
+.round-button.filter { background: #fff; }
+.universe-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 14px 0; padding: 6px; background: #111; border-radius: 999px; }
+.universe-toggle button { background: transparent; padding: 10px; border-radius: 999px; color: #aaa; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
+.universe-toggle .active { background: #d6202d; color: white; }
+.hero-card, .rail-card { background: #171717; border-radius: 30px; padding: 18px; margin-top: 12px; overflow: hidden; }
+.hero-card { min-height: 480px; background: radial-gradient(circle at 50% 28%, color-mix(in srgb, var(--accent, #d6202d) 55%, transparent), transparent 54%), #161616; }
+.section-title { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+.section-title h2 { margin: 0; font-size: 24px; line-height: 1; font-weight: 900; }
+.section-title button { background: #050505; border-radius: 999px; padding: 12px 20px; font-weight: 800; }
+.poster-stack { height: 318px; position: relative; }
+.stack-poster { position: absolute; inset: 0 auto auto 14px; width: 73%; height: 318px; border-radius: 24px; overflow: hidden; background: var(--accent); box-shadow: 0 18px 40px rgba(0,0,0,.45); padding: 0; transition: transform .25s ease; }
+.stack-poster:hover { transform: translateY(-4px) scale(1.01); }
+.poster-1 { left: 31%; transform: scale(.9); opacity: .9; }
+.poster-2 { left: 50%; transform: scale(.8); opacity: .75; }
+.stack-poster img, .small-card img, .wide-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.save { position: absolute; top: 16px; right: 16px; filter: drop-shadow(0 2px 5px #000); }
+.fallback-poster { height: 100%; padding: 22px; display: grid; align-content: end; gap: 8px; background: linear-gradient(145deg, var(--accent), #111 70%); text-align: left; }
+.fallback-poster strong { font-size: 28px; line-height: 1.05; }
+.hero-meta { display: flex; justify-content: space-between; align-items: center; gap: 14px; margin-top: 14px; }
+.hero-meta h3 { margin: 0; font-size: 22px; }
+.dots { display: flex; gap: 5px; }.dots span { width: 8px; height: 8px; border-radius: 99px; background: rgba(255,255,255,.35); }.dots span:first-child { width: 24px; background: #fff; }
+.chips, .filter-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }.chips span, .filter-chips button { border: 1px solid rgba(255,255,255,.16); background: rgba(255,255,255,.04); border-radius: 999px; padding: 9px 13px; color: rgba(255,255,255,.86); }
+.rail-card { padding-bottom: 120px; }.movie-grid { display: grid; grid-template-columns: repeat(3, minmax(112px,1fr)); gap: 12px; overflow-x: auto; }.small-card { background: transparent; text-align: left; padding: 0; min-width: 112px; }.small-card > img, .small-card .fallback-poster { height: 158px; border-radius: 18px; overflow: hidden; }.small-card b { display: block; margin-top: 9px; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }.small-card span { color: #999; font-size: 12px; }
+.bottom-nav { position: absolute; left: 32px; right: 32px; bottom: 26px; height: 78px; border-radius: 28px; background: linear-gradient(120deg, rgba(41,42,48,.95), rgba(64,54,50,.92)); display: flex; align-items: center; justify-content: space-around; box-shadow: 0 20px 50px rgba(0,0,0,.5); }.bottom-nav svg { color: white; opacity: .95; }.bottom-nav .active { color: #e11d2e; fill: currentColor; }
+.detail-screen, .filter-screen { position: fixed; z-index: 20; inset: 50%; transform: translate(-50%, -50%); padding-bottom: 30px; overflow-y: auto; }.detail-actions { display: flex; justify-content: space-between; margin: 18px 0 12px; }.detail-actions button { width: 58px; height: 58px; border-radius: 50%; background: #1d1d1d; display: grid; place-items: center; }
+.wide-poster { height: 250px; position: relative; border-radius: 30px; overflow: hidden; background: #191919; }.wide-poster::after { content: ''; position: absolute; inset: 0; background: linear-gradient(transparent, rgba(0,0,0,.28)); }.play { position: absolute; right: 20px; bottom: 20px; z-index: 1; width: 64px; height: 64px; border-radius: 21px; background: white; color: #d6202d; display: grid; place-items: center; }
+.red-panel { background: #d6202d; border-radius: 30px; padding: 24px 22px; margin-top: 14px; }.red-panel h1 { margin: 0; font-size: clamp(31px, 8vw, 44px); line-height: 1.02; }.imdb { background: #ffdf4d !important; color: #111 !important; font-weight: 900; border-color: transparent !important; }
+.facts { margin-top: 14px; border-radius: 30px; background: #181818; padding: 28px 16px; display: grid; grid-template-columns: repeat(3,1fr); text-align: center; gap: 10px; }.facts b { font-size: 28px; }.facts span { color: #898989; }.description { margin-top: 14px; background: #181818; border-radius: 30px; padding: 26px; font-size: 20px; line-height: 1.55; }.gold { color: #ffcf3a; }
+.filter-screen { color: white; background: #030303; padding: 28px 22px; }.filter-head { display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: center; border-bottom: 1px solid rgba(255,255,255,.08); padding-bottom: 24px; margin-bottom: 28px; }.filter-head b { text-align: center; }.filter-head button { background: transparent; color: #d6202d; }.filter-head button:last-child { color: white; justify-self: end; }.filter-screen label, .genre-title, .filter-screen h3 { display: block; margin: 24px 0 14px; font-size: 24px; font-weight: 800; }.genre-title span { color: #d6202d; margin-left: 8px; }.select-row { height: 62px; border-radius: 20px; background: #191919; display: flex; align-items: center; justify-content: space-between; padding: 0 22px; font-weight: 800; }.filter-chips button.selected { background: white; color: #111; }.rating-row { width: 100%; height: 50px; background: transparent; display: flex; justify-content: space-between; align-items: center; font-size: 20px; }.rating-row i { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #555; }.rating-row i.checked { background: #d6202d; border-color: #d6202d; }.show-results { position: sticky; bottom: 0; width: 100%; height: 70px; border-radius: 22px; background: #d6202d; font-size: 20px; font-weight: 900; margin-top: 26px; }
+@media (min-width: 900px) { .cinema-app { grid-template-columns: minmax(380px,430px) minmax(360px,430px); gap: 48px; align-items: center; } .detail-screen { position: relative; inset: auto; transform: none; z-index: 1; display: block; } .phone-shell { display: block; } }
+@media (max-width: 520px) { .cinema-app { padding: 0; } .phone-shell, .detail-screen, .filter-screen { width: 100%; height: 100svh; border-radius: 0; box-shadow: none; } .hero-card { min-height: 450px; } .poster-stack { height: 292px; } .stack-poster { height: 292px; } .movie-grid { grid-template-columns: repeat(2, minmax(120px, 1fr)); } }
