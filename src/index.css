@@ -553,7 +553,7 @@ a:hover {
   }
 }
 
-/* ─����������� Stagger Animation Delays ───────────────────────────────────────────────── */
+/* ─������������� Stagger Animation Delays ───────────────────────────────────────────────── */
 .stagger-1 { animation-delay: 50ms; }
 .stagger-2 { animation-delay: 100ms; }
 .stagger-3 { animation-delay: 150ms; }
@@ -1050,7 +1050,7 @@ button { border: 0; color: inherit; cursor: pointer; }
 @media (max-width: 560px) {
   .top-carousel { touch-action: pan-y; }
   .carousel-backdrop { filter: blur(26px) saturate(.8) brightness(.66); opacity: .4; }
-  .smooth-stack .stack-poster { transition-duration: .38s; transition-timing-function: cubic-bezier(.2,.75,.2,1); will-change: transform, left, opacity; }
+  .smooth-stack .stack-poster { transition-duration: .28s; transition-timing-function: cubic-bezier(.2,.75,.2,1); will-change: transform, left, opacity; transform: translateZ(0); backface-visibility: hidden; }
   .smooth-stack .stack-poster:hover { box-shadow: 0 24px 60px rgba(0,0,0,.7); }
   .smooth-stack .poster-0:hover { transform: translate3d(0,0,50px) scale(1); }
   .movie-card .card-actions { grid-template-columns: minmax(0,1fr) 40px; gap: 6px; }
@@ -1203,6 +1203,8 @@ button { border: 0; color: inherit; cursor: pointer; }
   .detail-facts > div { padding: 10px; }
   .detail-progress-actions { grid-template-columns: 1fr 1fr; }
   .detail-progress-actions .status-select { grid-column: 1 / -1; }
+  .detail-watched { height: 42px; padding: 0 12px; font-size: 13px; }
+  .detail-watched svg { width: 16px; height: 16px; }
 }
 @media (hover: none) {
   .smooth-stack .stack-poster:hover { box-shadow: 0 24px 60px rgba(0,0,0,.7); }
