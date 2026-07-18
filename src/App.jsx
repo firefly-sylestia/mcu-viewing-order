@@ -6,7 +6,8 @@ import { getTrailerByTitle, trailerEmbedUrl } from './data/trailerData';
 import './index.css';
 
 const STORAGE_KEY = 'cinematic-viewing-ui-state-v2';
-const STATUS = ['unwatched', 'watching', 'watched'];
+const STATUS = ['unwatched', 'watching', 'watched', 'dropped'];
+const STATUS_LABELS = { unwatched: 'Unwatched', watching: 'Watching', watched: 'Watched', dropped: 'Dropped' };
 const palette = ['#d6202d', '#8a1238', '#315f42', '#1f4977', '#6b3bc8', '#b36a17'];
 
 const runtimeLabel = (minutes = 0, type = 'film') => {
@@ -113,8 +114,9 @@ export default function App() {
     const total = activeItems.length || 1;
     const watched = activeItems.filter(item => item.userStatus === 'watched').length;
     const watching = activeItems.filter(item => item.userStatus === 'watching').length;
+    const dropped = activeItems.filter(item => item.userStatus === 'dropped').length;
     const bookmarked = activeItems.filter(item => item.bookmarked).length;
-    return { total, watched, watching, bookmarked, percent: Math.round((watched / total) * 100) };
+    return { total, watched, watching, dropped, bookmarked, percent: Math.round((watched / total) * 100) };
   }, [activeItems]);
 
   const updateAction = (item, patch) => setActions(prev => ({ ...prev, [item.id]: { ...(prev[item.id] || {}), ...patch } }));
@@ -122,7 +124,11 @@ export default function App() {
     const current = actions[item.id]?.status || 'unwatched';
     updateAction(item, { status: STATUS[(STATUS.indexOf(current) + 1) % STATUS.length] });
   };
+  const setStatus = (item, status) => updateAction(item, { status });
+  const toggleWatched = (item) => setStatus(item, item.userStatus === 'watched' ? 'unwatched' : 'watched');
   const toggleBookmark = (item) => updateAction(item, { bookmarked: !actions[item.id]?.bookmarked });
+  const selectedItem = selected ? activeItems.find(item => item.id === selected.id) || selected : null;
+  const nextUp = activeItems.find(item => item.userStatus !== 'watched' && item.userStatus !== 'dropped') || activeItems[0];
   const playTrailer = (item) => {
     const match = getTrailerByTitle(item.title);
     const url = match ? trailerEmbedUrl(match) : `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(`${item.title} trailer`)}`;
@@ -134,7 +140,7 @@ export default function App() {
     <main className="movie-site">
       <div className="site-glow" />
       <header className="site-header">
-        <button className="brand" onClick={() => { setSection('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}><span>VO</span><b>Viewing Order</b></button>
+        <button className="brand" onClick={() => { setSection('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}><span>MCU</span><b>MCU Viewing Order</b></button>
         <div className="universe-tabs" role="tablist" aria-label="Universe">
           <button className={universe === 'marvel' ? 'active' : ''} onClick={() => { setUniverse('marvel'); setHeroIndex(0); }}>Marvel</button>
           <button className={universe === 'dc' ? 'active' : ''} onClick={() => { setUniverse('dc'); setHeroIndex(0); }}>DC</button>
@@ -157,13 +163,14 @@ export default function App() {
           </div>
           <TopCarousel items={heroItems} featured={featured} heroIndex={heroIndex} setHeroIndex={setHeroIndex} setSelected={setSelected} playTrailer={playTrailer} />
         </section>
+        <SuggestionStrip nextUp={nextUp} stats={stats} setSelected={setSelected} playTrailer={playTrailer} />
         <AnalyticsPanel stats={stats} />
-        <MovieRail title="Recommended" items={activeItems.slice(6, 18)} setSelected={setSelected} cycleStatus={cycleStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />
+        <MovieRail title="Recommended" items={activeItems.slice(6, 18)} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />
       </>}
 
-      {section === 'list' && <ListSection items={activeItems} setSelected={setSelected} cycleStatus={cycleStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />}
-      {section === 'analytics' && <><AnalyticsPanel stats={stats} large /><MovieRail title="In progress" items={activeItems.filter(i => i.userStatus === 'watching')} setSelected={setSelected} cycleStatus={cycleStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} /></>}
-      {section === 'saved' && <MovieRail title="Saved titles" items={activeItems.filter(i => i.bookmarked)} setSelected={setSelected} cycleStatus={cycleStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} empty="No saved titles yet. Tap bookmarks on any card." />}
+      {section === 'list' && <ListSection items={activeItems} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />}
+      {section === 'analytics' && <><AnalyticsPanel stats={stats} large /><MovieRail title="In progress" items={activeItems.filter(i => i.userStatus === 'watching')} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} /></>}
+      {section === 'saved' && <MovieRail title="Saved titles" items={activeItems.filter(i => i.bookmarked)} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} empty="No saved titles yet. Tap bookmarks on any card." />}
 
       <nav className="bottom-nav web-bottom" aria-label="Primary">
         <button className={section === 'home' ? 'active' : ''} onClick={() => setSection('home')}><Home /></button>
@@ -172,7 +179,7 @@ export default function App() {
         <button className={section === 'saved' ? 'active' : ''} onClick={() => setSection('saved')}><UserRound /></button>
       </nav>
 
-      {selected && <DetailView item={selected} onClose={() => setSelected(null)} cycleStatus={cycleStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />}
+      {selectedItem && <DetailView item={selectedItem} onClose={() => setSelected(null)} toggleWatched={toggleWatched} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />}
       {trailer && <TrailerModal trailer={trailer} onClose={() => setTrailer(null)} />}
       {filtersOpen && <Filters genre={genre} setGenre={setGenre} rating={rating} setRating={setRating} sortBy={sortBy} setSortBy={setSortBy} genres={genres} count={activeItems.length} onClose={() => setFiltersOpen(false)} />}
     </main>
@@ -200,33 +207,51 @@ function PosterArt({ item }) {
 }
 function FallbackPoster({ item, hidden = false }) { return <div className="fallback-poster" hidden={hidden}><strong>{item.title}</strong><span>{item.year}</span></div>; }
 
-function MovieRail({ title, items, setSelected, cycleStatus, toggleBookmark, playTrailer, empty }) {
-  return <section className="rail-card web-rail"><div className="section-title"><h2>{title}</h2><button>{items.length} titles</button></div>{items.length ? <div className="movie-grid web-grid">{items.map(item => <MovieCard key={item.id} item={item} setSelected={setSelected} cycleStatus={cycleStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />)}</div> : <p className="empty-state">{empty || 'No titles match these filters.'}</p>}</section>;
+function MovieRail({ title, items, setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, empty }) {
+  return <section className="rail-card web-rail"><div className="section-title"><h2>{title}</h2><button>{items.length} titles</button></div>{items.length ? <div className="movie-grid web-grid">{items.map(item => <MovieCard key={item.id} item={item} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />)}</div> : <p className="empty-state">{empty || 'No titles match these filters.'}</p>}</section>;
 }
 
-function MovieCard({ item, setSelected, cycleStatus, toggleBookmark, playTrailer }) {
+function MovieCard({ item, setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer }) {
   return <article className="movie-card" style={{ '--accent': item.accent }}>
     <button className="poster-button" onClick={() => setSelected(item)}><PosterArt item={item} /></button>
     <div className="card-body"><button className="title-button" onClick={() => setSelected(item)}>{item.title}</button><span>{item.year} · {runtimeLabel(item.runtime, item.type)}</span></div>
-    <div className="card-actions"><button onClick={() => playTrailer(item)} className="trailer-chip"><Play size={14} fill="currentColor" />Trailer</button><button onClick={() => cycleStatus(item)} className={item.userStatus}>{item.userStatus === 'watched' ? <Check /> : item.userStatus === 'watching' ? <Clock /> : <Play />}{item.userStatus}</button><button onClick={() => toggleBookmark(item)} className={item.bookmarked ? 'saved' : ''}><Bookmark fill={item.bookmarked ? 'currentColor' : 'none'} /></button></div>
+    <div className="card-actions"><button onClick={() => playTrailer(item)} className="trailer-chip"><Play size={14} fill="currentColor" />Trailer</button><StatusSelect item={item} setStatus={setStatus} compact /><button onClick={() => toggleBookmark(item)} className={item.bookmarked ? 'saved' : ''}><Bookmark fill={item.bookmarked ? 'currentColor' : 'none'} /></button></div>
   </article>;
 }
 
-function ListSection({ items, setSelected, cycleStatus, toggleBookmark, playTrailer }) {
-  return <section className="list-section"><div className="section-title"><h2>Complete list</h2><button>{items.length} results</button></div>{items.map((item, index) => <article className="list-row" key={item.id} style={{ '--accent': item.accent }}><b>{String(index + 1).padStart(2, '0')}</b><button onClick={() => setSelected(item)}>{item.title}<span>{item.year} · {item.type} · {runtimeLabel(item.runtime, item.type)}</span></button><div className="chips">{item.genres.slice(0,2).map(g => <span key={g}>{g}</span>)}</div><button onClick={() => playTrailer(item)}><Play size={16} fill="currentColor" /></button><button onClick={() => cycleStatus(item)}>{item.userStatus}</button><button onClick={() => toggleBookmark(item)}><Bookmark fill={item.bookmarked ? 'currentColor' : 'none'} /></button></article>)}</section>;
+function ListSection({ items, setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer }) {
+  return <section className="list-section"><div className="section-title"><h2>Complete list</h2><button>{items.length} results</button></div>{items.map((item, index) => <article className="list-row" key={item.id} style={{ '--accent': item.accent }}><b>{String(index + 1).padStart(2, '0')}</b><button className="list-poster" onClick={() => setSelected(item)}><PosterArt item={item} /></button><button onClick={() => setSelected(item)}>{item.title}<span>{item.year} · {item.type} · {runtimeLabel(item.runtime, item.type)}</span></button><div className="chips">{item.genres.slice(0,2).map(g => <span key={g}>{g}</span>)}</div><button onClick={() => playTrailer(item)}><Play size={16} fill="currentColor" /></button><StatusSelect item={item} setStatus={setStatus} /><button onClick={() => toggleBookmark(item)}><Bookmark fill={item.bookmarked ? 'currentColor' : 'none'} /></button></article>)}</section>;
+}
+
+
+function StatusSelect({ item, setStatus, compact = false }) {
+  return <label className={`status-select ${item.userStatus} ${compact ? 'compact' : ''}`}>
+    <span>{compact ? '' : 'Status'}</span>
+    <select value={item.userStatus} onChange={event => setStatus(item, event.target.value)} aria-label={`Set status for ${item.title}`}>
+      {STATUS.map(status => <option key={status} value={status}>{STATUS_LABELS[status]}</option>)}
+    </select>
+  </label>;
+}
+
+function SuggestionStrip({ nextUp, stats, setSelected, playTrailer }) {
+  if (!nextUp) return null;
+  return <section className="suggestion-strip" style={{ '--accent': nextUp.accent }}>
+    <div><p className="eyebrow">Smart suggestion</p><h2>Next up: {nextUp.title}</h2><span>{stats.percent}% complete · {stats.watched} watched · {stats.bookmarked} saved</span></div>
+    <div className="suggestion-actions"><button onClick={() => playTrailer(nextUp)}><Play size={16} fill="currentColor" /> Trailer</button><button onClick={() => setSelected(nextUp)}>Details</button></div>
+  </section>;
 }
 
 function AnalyticsPanel({ stats, large = false }) {
-  return <section className={`analytics-panel ${large ? 'large' : ''}`}><div><p className="eyebrow">Analytics</p><h2>{stats.percent}% complete</h2><div className="progress"><span style={{ width: `${stats.percent}%` }} /></div></div><div className="stat-grid"><div><b>{stats.total}</b><span>Total</span></div><div><b>{stats.watched}</b><span>Watched</span></div><div><b>{stats.watching}</b><span>Watching</span></div><div><b>{stats.bookmarked}</b><span>Saved</span></div></div></section>;
+  return <section className={`analytics-panel ${large ? 'large' : ''}`}><div><p className="eyebrow">Analytics</p><h2>{stats.percent}% complete</h2><div className="progress"><span style={{ width: `${stats.percent}%` }} /></div></div><div className="stat-grid"><div><b>{stats.total}</b><span>Total</span></div><div><b>{stats.watched}</b><span>Watched</span></div><div><b>{stats.watching}</b><span>Watching</span></div><div><b>{stats.dropped}</b><span>Dropped</span></div><div><b>{stats.bookmarked}</b><span>Saved</span></div></div></section>;
 }
 
-function DetailView({ item, onClose, cycleStatus, toggleBookmark, playTrailer }) {
+function DetailView({ item, onClose, toggleWatched, setStatus, toggleBookmark, playTrailer }) {
   return <aside className="detail-screen web-detail" style={{ '--accent': item.accent }}>
     <div className="detail-actions"><button onClick={onClose}><ArrowLeft /></button><button onClick={() => toggleBookmark(item)}><Bookmark fill={item.bookmarked ? 'currentColor' : 'none'} /></button></div>
     <div className="wide-poster"><PosterArt item={item} /><button className="play" onClick={() => playTrailer(item)}><Play fill="currentColor" /></button></div>
     <section className="red-panel"><h1>{item.title}</h1><div className="chips"><span className="imdb">IMDB {item.rating.toFixed ? item.rating.toFixed(1) : item.rating}</span>{item.genres.slice(0,3).map(g => <span key={g}>{g}</span>)}</div></section>
     <section className="facts"><b>{item.year}</b><b>{item.universe.toUpperCase()}</b><b>{runtimeLabel(item.runtime, item.type)}</b><span><Calendar size={14}/> Year</span><span><Sparkles size={14}/> Universe</span><span><Timer size={14}/> Time</span></section>
-    <section className="description"><p>{item.desc || `Follow ${item.title} in the ${item.universe === 'marvel' ? 'Marvel' : 'DC'} viewing order.`}</p><div>{[0,1,2,3,4].map(i => <Star key={i} className={i < 4 ? 'gold' : ''} size={18} fill="currentColor" />)}</div><button className="show-results" onClick={() => cycleStatus(item)}>Mark status: {item.userStatus}</button></section>
+    <section className="description"><p>{item.desc || `Follow ${item.title} in the ${item.universe === 'marvel' ? 'Marvel' : 'DC'} viewing order.`}</p><div>{[0,1,2,3,4].map(i => <Star key={i} className={i < 4 ? 'gold' : ''} size={18} fill="currentColor" />)}</div><div className="detail-cta-row"><button className="show-results" onClick={() => toggleWatched(item)}>{item.userStatus === 'watched' ? 'Mark unwatched' : 'Mark watched'}</button><StatusSelect item={item} setStatus={setStatus} /></div></section>
   </aside>;
 }
 
