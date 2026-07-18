@@ -137,11 +137,14 @@ export default function App() {
   };
   const resetFilters = () => { setQuery(''); setGenre('All'); setRating(0); setSortBy('order'); };
 
+  const universeName = universe === 'marvel' ? 'MCU' : 'DC';
+  const universeAccent = universe === 'marvel' ? '#d6202d' : '#1677d2';
+
   return (
-    <main className="movie-site">
+    <main className={`movie-site universe-${universe}`} style={{ '--brand-accent': universeAccent }}>
       <div className="site-glow" />
       <header className="site-header">
-        <button className="brand" onClick={() => { setSection('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}><span>MCU</span><b>MCU Viewing Order</b></button>
+        <button className="brand" onClick={() => { setSection('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} aria-label={`Go to ${universeName} Viewing Order home`}><span>{universeName}</span><b>{universeName} Viewing Order</b></button>
         <div className="universe-tabs" role="tablist" aria-label="Universe">
           <button className={universe === 'marvel' ? 'active' : ''} onClick={() => { setUniverse('marvel'); setHeroIndex(0); }}>Marvel</button>
           <button className={universe === 'dc' ? 'active' : ''} onClick={() => { setUniverse('dc'); setHeroIndex(0); }}>DC</button>
@@ -187,13 +190,25 @@ export default function App() {
 function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) {
   const [paused, setPaused] = useState(false);
   const [inlineTrailer, setInlineTrailer] = useState(null);
-  const hoverTimer = useRef(null);
-  const move = (dir) => setHeroIndex((heroIndex + dir + items.length) % Math.max(items.length, 1));
-  const queuePoster = (index, offset) => {
-    window.clearTimeout(hoverTimer.current);
-    if (offset) hoverTimer.current = window.setTimeout(() => setHeroIndex(index), offset === 2 ? 820 : 560);
+  const touchStartX = useRef(null);
+  const didSwipe = useRef(false);
+  const move = (dir) => {
+    setInlineTrailer(null);
+    setHeroIndex((heroIndex + dir + items.length) % Math.max(items.length, 1));
   };
-  const cancelPoster = () => window.clearTimeout(hoverTimer.current);
+  const handleTouchStart = (event) => { touchStartX.current = event.touches[0]?.clientX ?? null; didSwipe.current = false; };
+  const handleTouchEnd = (event) => {
+    if (touchStartX.current === null) return;
+    const distance = (event.changedTouches[0]?.clientX ?? touchStartX.current) - touchStartX.current;
+    touchStartX.current = null;
+    didSwipe.current = Math.abs(distance) > 42;
+    if (didSwipe.current) move(distance < 0 ? 1 : -1);
+  };
+  const selectPoster = (item, rawIndex, offset) => {
+    if (didSwipe.current) { didSwipe.current = false; return; }
+    setInlineTrailer(null);
+    offset ? setHeroIndex(rawIndex) : setSelected(item);
+  };
 
   useEffect(() => {
     if (paused || inlineTrailer || items.length < 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
@@ -208,11 +223,13 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
     setInlineTrailer(`${baseUrl}${baseUrl.includes('?') ? '&' : '?'}autoplay=1`);
   };
 
-  return <section className="top-carousel" style={{ '--accent': featured?.accent || '#d6202d', '--hero-poster': featured?.poster ? `url(${featured.poster})` : 'none' }} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocusCapture={() => setPaused(true)} onBlurCapture={() => setPaused(false)}>
+  return <section className="top-carousel" style={{ '--accent': featured?.accent || '#d6202d' }} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocusCapture={() => setPaused(true)} onBlurCapture={() => setPaused(false)} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+    {featured?.poster && <img key={featured.id} className="carousel-backdrop" src={featured.poster} alt="" aria-hidden="true" />}
+    <div className="carousel-backdrop-shade" aria-hidden="true" />
     <div className="feature-heading"><div><p className="eyebrow">{featured?.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} · Featured</p><h2>Top movies</h2></div><button className="feature-detail" onClick={() => setSelected(featured)}>View details</button></div>
     <div className="feature-stage">
       <div className="poster-stack smooth-stack">
-        {inlineTrailer ? <div className="inline-trailer"><iframe src={inlineTrailer} title={`${featured.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={() => setInlineTrailer(null)} aria-label="Close trailer"><X size={20} /></button></div> : items.map((item, rawIndex) => { const offset = (rawIndex - heroIndex + items.length) % items.length; if (offset > 2) return null; return <button key={item.id} aria-label={`Feature ${item.title}`} className={`stack-poster poster-${offset}`} onMouseEnter={() => queuePoster(rawIndex, offset)} onMouseLeave={cancelPoster} onFocus={() => queuePoster(rawIndex, offset)} onBlur={cancelPoster} onClick={() => offset ? setHeroIndex(rawIndex) : setSelected(item)} style={{ '--accent': item.accent }}><PosterArt item={item} /></button>; })}
+        {inlineTrailer ? <div className="inline-trailer"><iframe src={inlineTrailer} title={`${featured.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={() => setInlineTrailer(null)} aria-label="Close trailer"><X size={20} /></button></div> : items.map((item, rawIndex) => { const offset = (rawIndex - heroIndex + items.length) % items.length; if (offset > 2) return null; return <button key={item.id} aria-label={offset ? `Show ${item.title}` : `View ${item.title} details`} className={`stack-poster poster-${offset}`} onClick={() => selectPoster(item, rawIndex, offset)} style={{ '--accent': item.accent }}><PosterArt item={item} /></button>; })}
       </div>
       <div className="feature-copy">
         <div className="feature-kicker"><span>{featured?.year}</span><span>{runtimeLabel(featured?.runtime, featured?.type)}</span><span>{featured?.rating} rating</span></div>
@@ -250,6 +267,13 @@ function ListSection({ items, setSelected, cycleStatus, setStatus, toggleBookmar
 }
 
 
+const STATUS_META = {
+  unwatched: { detail: 'Not started', icon: RotateCcw },
+  watching: { detail: 'In progress', icon: Clock },
+  watched: { detail: 'Completed', icon: Check },
+  dropped: { detail: 'Stopped', icon: X },
+};
+
 function StatusSelect({ item, setStatus, compact = false }) {
   const [open, setOpen] = React.useState(false);
   const ref = useRef(null);
@@ -264,12 +288,16 @@ function StatusSelect({ item, setStatus, compact = false }) {
       <span className="status-label">{STATUS_LABELS[item.userStatus]}</span>
       <svg className="status-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
     </button>
-    {open && <div className="status-dropdown" role="listbox">
-      {STATUS.map(status => <button key={status} className={`status-option ${status} ${item.userStatus === status ? 'active' : ''}`} role="option" aria-selected={item.userStatus === status} onClick={() => { setStatus(item, status); setOpen(false); }}>
-        <span className="status-dot" />
-        <span>{STATUS_LABELS[status]}</span>
-        {item.userStatus === status && <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 7L5.5 10L11.5 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-      </button>)}
+    {open && <div className="status-dropdown" role="listbox" aria-label={`Set status for ${item.title}`}>
+      <p className="status-menu-title">Viewing status</p>
+      {STATUS.map(status => {
+        const StatusIcon = STATUS_META[status].icon;
+        return <button key={status} className={`status-option ${status} ${item.userStatus === status ? 'active' : ''}`} role="option" aria-selected={item.userStatus === status} onClick={() => { setStatus(item, status); setOpen(false); }}>
+          <span className="status-option-icon"><StatusIcon size={15} strokeWidth={2.2} /></span>
+          <span className="status-option-copy"><strong>{STATUS_LABELS[status]}</strong><small>{STATUS_META[status].detail}</small></span>
+          {item.userStatus === status && <Check className="status-option-check" size={15} strokeWidth={2.5} />}
+        </button>;
+      })}
     </div>}
   </div>;
 }

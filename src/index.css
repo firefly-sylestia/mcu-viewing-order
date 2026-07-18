@@ -553,7 +553,7 @@ a:hover {
   }
 }
 
-/* ─������� Stagger Animation Delays ───────────────────────────────────────────────── */
+/* ─��������� Stagger Animation Delays ───────────────────────────────────────────────── */
 .stagger-1 { animation-delay: 50ms; }
 .stagger-2 { animation-delay: 100ms; }
 .stagger-3 { animation-delay: 150ms; }
@@ -1005,3 +1005,68 @@ button { border: 0; color: inherit; cursor: pointer; }
   .web-grid { grid-template-columns: 1fr; }
   .movie-card .poster-button { height: 420px; }
 }
+
+/* Universe-aware branding and smoother poster carousel */
+.movie-site { --cinema-red: var(--brand-accent); }
+.movie-site .site-glow { background: color-mix(in srgb, var(--brand-accent) 14%, transparent); }
+.brand span,
+.universe-tabs .active,
+.bottom-nav button.active,
+.feature-play,
+.list-actions .list-trailer,
+.card-actions .trailer-chip { background: var(--brand-accent); }
+.brand span { box-shadow: 0 8px 24px color-mix(in srgb, var(--brand-accent) 32%, transparent); transition: background-color .24s ease, box-shadow .24s ease; }
+.eyebrow,
+.bookmark-chip.saved,
+.list-actions .saved { color: color-mix(in srgb, var(--brand-accent) 72%, #ffffff); }
+.top-carousel { background: #111111; }
+.top-carousel::before,
+.top-carousel::after { content: none; }
+.carousel-backdrop { position: absolute; inset: -42px; z-index: -2; width: calc(100% + 84px); height: calc(100% + 84px); object-fit: cover; object-position: center 30%; filter: blur(34px) saturate(.82) brightness(.7); opacity: .44; transform: scale(1.08); animation: carouselBackdropIn .48s cubic-bezier(.22,.8,.2,1) both; pointer-events: none; }
+.carousel-backdrop-shade { position: absolute; inset: 0; z-index: -1; background: rgba(8,8,8,.64); pointer-events: none; }
+@keyframes carouselBackdropIn { from { opacity: 0; transform: scale(1.13); } to { opacity: .44; transform: scale(1.08); } }
+.smooth-stack .stack-poster { transition: left .46s cubic-bezier(.22,.8,.2,1), transform .46s cubic-bezier(.22,.8,.2,1), opacity .38s ease, box-shadow .2s ease; }
+.smooth-stack .poster-1:hover { transform: translate3d(0,26px,0) rotate(2deg) scale(.89); opacity: .9; }
+.smooth-stack .poster-2:hover { transform: translate3d(0,52px,-30px) rotate(4deg) scale(.78); opacity: .68; }
+.smooth-stack .poster-0:hover { transform: translate3d(0,-5px,50px) scale(1.01); }
+
+/* Current status menu */
+.status-trigger { border-radius: 14px; background: #18191c; border-color: rgba(255,255,255,.12); }
+.status-trigger[aria-expanded="true"] { border-color: color-mix(in srgb, var(--brand-accent) 62%, rgba(255,255,255,.18)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-accent) 16%, transparent); }
+.status-dropdown { min-width: 218px; width: max-content; padding: 8px; border-radius: 18px; background: rgba(20,21,24,.97); border-color: rgba(255,255,255,.13); box-shadow: 0 20px 54px rgba(0,0,0,.68); backdrop-filter: blur(22px) saturate(125%); }
+.status-menu-title { margin: 2px 7px 7px; color: #838790; font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.status-option { min-height: 50px; padding: 7px 9px; gap: 10px; border-radius: 12px; text-transform: none; }
+.status-option:hover { background: rgba(255,255,255,.07); }
+.status-option.active { background: color-mix(in srgb, var(--brand-accent) 16%, #1a1b1f); }
+.status-option-icon { width: 32px; height: 32px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 10px; background: rgba(255,255,255,.06); color: #a7abb3; }
+.status-option.watched .status-option-icon { color: #42c879; }
+.status-option.watching .status-option-icon { color: #e8a93c; }
+.status-option.dropped .status-option-icon { color: #e56363; }
+.status-option-copy { display: grid; flex: 1; gap: 2px; text-align: left; }
+.status-option-copy strong { color: #f4f4f5; font-size: 13px; line-height: 1.15; }
+.status-option-copy small { color: #858991; font-size: 11px; line-height: 1.15; }
+.status-option-check { margin-left: auto; color: var(--brand-accent); }
+
+@media (max-width: 560px) {
+  .top-carousel { touch-action: pan-y; }
+  .carousel-backdrop { filter: blur(26px) saturate(.8) brightness(.66); opacity: .4; }
+  .smooth-stack .stack-poster { transition-duration: .38s; transition-timing-function: cubic-bezier(.2,.75,.2,1); will-change: transform, left, opacity; }
+  .smooth-stack .stack-poster:hover { box-shadow: 0 24px 60px rgba(0,0,0,.7); }
+  .smooth-stack .poster-0:hover { transform: translate3d(0,0,50px) scale(1); }
+  .movie-card .card-actions { grid-template-columns: minmax(0,1fr) 40px; gap: 6px; }
+  .movie-card .card-actions .bookmark-chip { width: 40px; min-width: 40px; padding: 0; }
+  .movie-card .status-select,
+  .movie-card .status-trigger { max-width: 100%; }
+  .movie-card .status-trigger { padding-inline: 10px; gap: 6px; }
+  .movie-card .status-dropdown { left: 0; right: auto; width: min(218px, calc(100vw - 32px)); }
+  .list-actions { width: 100%; grid-template-columns: minmax(0,.8fr) minmax(0,1.25fr) 40px; gap: 6px; }
+  .list-actions > button { min-width: 0; padding-inline: 8px; }
+  .list-row .list-actions .status-select { display: block; min-width: 0; width: 100%; }
+  .list-actions .status-trigger { min-width: 0; width: 100%; padding-inline: 10px; }
+  .list-actions .status-dropdown { left: auto; right: 0; width: min(218px, calc(100vw - 24px)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .carousel-backdrop { animation: none; }
+}
+
