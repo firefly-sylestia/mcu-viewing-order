@@ -187,7 +187,13 @@ export default function App() {
 function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) {
   const [paused, setPaused] = useState(false);
   const [inlineTrailer, setInlineTrailer] = useState(null);
+  const hoverTimer = useRef(null);
   const move = (dir) => setHeroIndex((heroIndex + dir + items.length) % Math.max(items.length, 1));
+  const queuePoster = (index, offset) => {
+    window.clearTimeout(hoverTimer.current);
+    if (offset) hoverTimer.current = window.setTimeout(() => setHeroIndex(index), 420);
+  };
+  const cancelPoster = () => window.clearTimeout(hoverTimer.current);
 
   useEffect(() => {
     if (paused || inlineTrailer || items.length < 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
@@ -206,7 +212,7 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
     <div className="feature-heading"><div><p className="eyebrow">{featured?.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} · Featured</p><h2>Top movies</h2></div><button className="feature-detail" onClick={() => setSelected(featured)}>View details</button></div>
     <div className="feature-stage">
       <div className="poster-stack smooth-stack">
-        {inlineTrailer ? <div className="inline-trailer"><iframe src={inlineTrailer} title={`${featured.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={() => setInlineTrailer(null)} aria-label="Close trailer"><X size={20} /></button></div> : items.map((item, rawIndex) => { const offset = (rawIndex - heroIndex + items.length) % items.length; if (offset > 2) return null; return <button key={item.id} aria-label={`Feature ${item.title}`} className={`stack-poster poster-${offset}`} onMouseEnter={() => offset && setHeroIndex(rawIndex)} onFocus={() => offset && setHeroIndex(rawIndex)} onClick={() => offset ? setHeroIndex(rawIndex) : setSelected(item)} style={{ '--accent': item.accent }}><PosterArt item={item} /></button>; })}
+        {inlineTrailer ? <div className="inline-trailer"><iframe src={inlineTrailer} title={`${featured.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={() => setInlineTrailer(null)} aria-label="Close trailer"><X size={20} /></button></div> : items.map((item, rawIndex) => { const offset = (rawIndex - heroIndex + items.length) % items.length; if (offset > 2) return null; return <button key={item.id} aria-label={`Feature ${item.title}`} className={`stack-poster poster-${offset}`} onMouseEnter={() => queuePoster(rawIndex, offset)} onMouseLeave={cancelPoster} onFocus={() => queuePoster(rawIndex, offset)} onBlur={cancelPoster} onClick={() => offset ? setHeroIndex(rawIndex) : setSelected(item)} style={{ '--accent': item.accent }}><PosterArt item={item} /></button>; })}
       </div>
       <div className="feature-copy">
         <div className="feature-kicker"><span>{featured?.year}</span><span>{runtimeLabel(featured?.runtime, featured?.type)}</span><span>{featured?.rating} rating</span></div>
@@ -233,7 +239,7 @@ function MovieRail({ title, items, setSelected, cycleStatus, setStatus, toggleBo
 
 function MovieCard({ item, setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer }) {
   return <article className="movie-card" style={{ '--accent': item.accent }}>
-    <button className="poster-button" onClick={() => setSelected(item)}><PosterArt item={item} /><span className="poster-play"><Play size={18} fill="currentColor" /></span></button>
+    <button className="poster-button" onClick={() => setSelected(item)}><PosterArt item={item} /></button>
     <div className="card-body"><button className="title-button" onClick={() => setSelected(item)}>{item.title}</button><span>{item.year} · {runtimeLabel(item.runtime, item.type)}</span></div>
     <div className="card-actions"><button onClick={() => playTrailer(item)} className="trailer-chip" aria-label={`Play ${item.title} trailer`}><Play size={16} fill="currentColor" /><span>Trailer</span></button><StatusSelect item={item} setStatus={setStatus} compact /><button onClick={() => toggleBookmark(item)} className={`bookmark-chip ${item.bookmarked ? 'saved' : ''}`} aria-label={item.bookmarked ? 'Remove bookmark' : 'Bookmark title'}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button></div>
   </article>;
@@ -280,10 +286,17 @@ function AnalyticsPanel({ stats, large = false }) {
   return <section className={`analytics-panel ${large ? 'large' : ''}`}><div><p className="eyebrow">Analytics</p><h2>{stats.percent}% complete</h2><div className="progress"><span style={{ width: `${stats.percent}%` }} /></div></div><div className="stat-grid"><div><b>{stats.total}</b><span>Total</span></div><div><b>{stats.watched}</b><span>Watched</span></div><div><b>{stats.watching}</b><span>Watching</span></div><div><b>{stats.dropped}</b><span>Dropped</span></div><div><b>{stats.bookmarked}</b><span>Saved</span></div></div></section>;
 }
 
-function DetailView({ item, onClose, toggleWatched, setStatus, toggleBookmark, playTrailer }) {
+function DetailView({ item, onClose, toggleWatched, setStatus, toggleBookmark }) {
+  const [inlineTrailer, setInlineTrailer] = useState(null);
+  const showTrailer = () => {
+    const match = getTrailerByTitle(item.title);
+    const youtubeId = match?.primary?.youtubeId || match?.youtubeId;
+    const baseUrl = youtubeId ? trailerEmbedUrl(youtubeId) : `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(`${item.title} trailer`)}`;
+    setInlineTrailer(`${baseUrl}${baseUrl.includes('?') ? '&' : '?'}autoplay=1`);
+  };
   return <aside className="detail-screen web-detail" style={{ '--accent': item.accent }}>
     <div className="detail-actions"><button onClick={onClose}><ArrowLeft /></button><button onClick={() => toggleBookmark(item)}><Bookmark fill={item.bookmarked ? 'currentColor' : 'none'} /></button></div>
-    <div className="wide-poster"><PosterArt item={item} /><button className="play" onClick={() => playTrailer(item)}><Play fill="currentColor" /></button></div>
+    <div className="wide-poster">{inlineTrailer ? <div className="detail-inline-trailer"><iframe src={inlineTrailer} title={`${item.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={() => setInlineTrailer(null)} aria-label="Close trailer"><X size={20} /></button></div> : <><PosterArt item={item} /><button className="play" onClick={showTrailer} aria-label={`Play ${item.title} trailer`}><Play fill="currentColor" /></button></>}</div>
     <section className="red-panel"><h1>{item.title}</h1><div className="chips"><span className="imdb">IMDB {item.rating.toFixed ? item.rating.toFixed(1) : item.rating}</span>{item.genres.slice(0,3).map(g => <span key={g}>{g}</span>)}</div></section>
     <section className="facts"><b>{item.year}</b><b>{item.universe.toUpperCase()}</b><b>{runtimeLabel(item.runtime, item.type)}</b><span><Calendar size={14}/> Year</span><span><Sparkles size={14}/> Universe</span><span><Timer size={14}/> Time</span></section>
     <section className="description"><p>{item.desc || `Follow ${item.title} in the ${item.universe === 'marvel' ? 'Marvel' : 'DC'} viewing order.`}</p><div>{[0,1,2,3,4].map(i => <Star key={i} className={i < 4 ? 'gold' : ''} size={18} fill="currentColor" />)}</div><div className="detail-cta-row"><button className="show-results" onClick={() => toggleWatched(item)}>{item.userStatus === 'watched' ? 'Mark unwatched' : 'Mark watched'}</button><StatusSelect item={item} setStatus={setStatus} /></div></section>
