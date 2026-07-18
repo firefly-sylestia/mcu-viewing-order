@@ -191,7 +191,7 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
   const move = (dir) => setHeroIndex((heroIndex + dir + items.length) % Math.max(items.length, 1));
   const queuePoster = (index, offset) => {
     window.clearTimeout(hoverTimer.current);
-    if (offset) hoverTimer.current = window.setTimeout(() => setHeroIndex(index), 420);
+    if (offset) hoverTimer.current = window.setTimeout(() => setHeroIndex(index), offset === 2 ? 820 : 560);
   };
   const cancelPoster = () => window.clearTimeout(hoverTimer.current);
 
@@ -294,7 +294,7 @@ function DetailView({ item, onClose, toggleWatched, setStatus, toggleBookmark })
     const baseUrl = youtubeId ? trailerEmbedUrl(youtubeId) : `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(`${item.title} trailer`)}`;
     setInlineTrailer(`${baseUrl}${baseUrl.includes('?') ? '&' : '?'}autoplay=1`);
   };
-  return <aside className="detail-screen web-detail" style={{ '--accent': item.accent }}>
+  return <aside className="detail-screen web-detail" style={{ '--accent': item.accent, '--detail-poster': item.poster ? `url(${item.poster})` : 'none' }}>
     <div className="detail-actions"><button onClick={onClose}><ArrowLeft /></button><button onClick={() => toggleBookmark(item)}><Bookmark fill={item.bookmarked ? 'currentColor' : 'none'} /></button></div>
     <div className="wide-poster">{inlineTrailer ? <div className="detail-inline-trailer"><iframe src={inlineTrailer} title={`${item.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={() => setInlineTrailer(null)} aria-label="Close trailer"><X size={20} /></button></div> : <><PosterArt item={item} /><button className="play" onClick={showTrailer} aria-label={`Play ${item.title} trailer`}><Play fill="currentColor" /></button></>}</div>
     <section className="red-panel"><h1>{item.title}</h1><div className="chips"><span className="imdb">IMDB {item.rating.toFixed ? item.rating.toFixed(1) : item.rating}</span>{item.genres.slice(0,3).map(g => <span key={g}>{g}</span>)}</div></section>
