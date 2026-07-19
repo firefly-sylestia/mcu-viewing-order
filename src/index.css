@@ -1226,8 +1226,43 @@ button { border: 0; color: inherit; cursor: pointer; }
 .watch-header > button:hover { background: rgba(255,255,255,.12); color: #fff; }
 .watch-header > div { flex: 1; min-width: 0; }
 .watch-kicker { font-size: 11px; font-weight: 800; letter-spacing: .1em; color: var(--brand-accent, var(--brand-accent,#b91c1c)); text-transform: uppercase; }
-.watch-header h1 { margin: 2px 0 0; font-size: clamp(16px,2.5vw,22px); letter-spacing: .04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.watch-toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); z-index: 100; padding: 10px 22px; border-radius: 12px; background: var(--brand-accent, #22c55e); color: #fff; font-weight: 800; font-size: 13px; letter-spacing: .03em; box-shadow: 0 8px 28px rgba(0,0,0,.4); animation: toastIn .22s var(--ease-out) both; pointer-events: none; }
+.watch-header h1 { margin: 2px 0 0; font-size: clamp(16px,2.5vw,22px); letter-spacing: .04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }.watch-toast {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  padding: 10px 22px;
+  border-radius: 12px;
+  background: var(--brand-accent, #22c55e);
+  color: #fff;
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: .03em;
+  box-shadow: 0 8px 28px rgba(0,0,0,.4);
+  animation: toastIn .22s var(--ease-out) both;
+  pointer-events: none;
+}
+.sync-toast {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  padding: 10px 22px;
+  border-radius: 12px;
+  background: #16a34a;
+  color: #fff;
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: .03em;
+  box-shadow: 0 8px 28px rgba(0,0,0,.4);
+  animation: toastIn .22s var(--ease-out) both;
+  pointer-events: none;
+}
+.sync-toast.sync-toast-error {
+  background: #dc2626;
+}
 @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(-10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
 @keyframes watchFadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 .watch-header-spacer { flex: 1; }

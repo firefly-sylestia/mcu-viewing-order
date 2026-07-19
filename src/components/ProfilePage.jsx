@@ -13,7 +13,7 @@ const formatTimeAgo = (timestamp) => {
   return 'Synced ' + Math.floor(hours / 24) + 'd ago';
 };
 
-function ProfilePage({ stats, activeItems, universe, setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, profileName, setProfileName, user, configured, onLogin, onLogout, lastSynced, syncing, onSync, conflict, onResolveRemote, onResolveLocal }) {
+function ProfilePage({ stats, activeItems, universe, setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, profileName, setProfileName, user, configured, onLogin, onLogout, lastSynced, syncing, onSync, conflict, onResolveRemote, onResolveLocal, syncToast }) {
   const [activeTab, setActiveTab] = useState('insights');
   
   const savedItems = activeItems.filter(i => i.bookmarked);
@@ -23,6 +23,13 @@ function ProfilePage({ stats, activeItems, universe, setSelected, cycleStatus, s
 
   return (
     <div className="profile-page">
+      {/* Sync Toast */}
+      {syncToast && (
+        <div className={`sync-toast ${syncToast.type === 'error' ? 'sync-toast-error' : ''}`}>
+          {syncToast.type === 'error' ? '⚠️' : '✓'} {syncToast.message}
+        </div>
+      )}
+      
       {/* Profile Header */}
       <ProfileHeader universe={universe} stats={stats} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={onLogin} onLogout={onLogout} lastSynced={lastSynced} syncing={syncing} onSync={onSync} />
       

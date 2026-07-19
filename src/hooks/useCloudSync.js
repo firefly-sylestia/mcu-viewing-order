@@ -11,7 +11,17 @@ export function useCloudSync(user, actions, profileName, setActions, setProfileN
 
   const [lastSynced, setLastSynced] = useState(null);
   const [syncing, setSyncing] = useState(false);
-  const [conflict, setConflict] = useState(null); // { remote, local } when conflict detected
+  const [conflict, setConflict] = useState(null);
+  const [toast, setToast] = useState(null);
+  const toastTimer = useRef(null);
+
+  // Auto-dismiss toast after 3s with proper cleanup
+  useEffect(() => {
+    if (!toast) return;
+    window.clearTimeout(toastTimer.current);
+    toastTimer.current = window.setTimeout(() => setToast(null), 3000);
+    return () => window.clearTimeout(toastTimer.current);
+  }, [toast]);
 
   // Keep a mutable ref of current local state for the onValue closure
   const localStateRef = useRef({ actions, profileName });
@@ -97,7 +107,10 @@ export function useCloudSync(user, actions, profileName, setActions, setProfileN
       lastSynced: Date.now(),
     }).then(() => {
       updateLastSynced();
-    }).catch(() => {}).finally(() => setSyncing(false));
+      setToast({ message: 'Synced successfully', type: 'success' });
+    }).catch(() => {
+      setToast({ message: 'Sync failed — check connection', type: 'error' });
+    }).finally(() => setSyncing(false));
 
   }, [user?.uid, actions, profileName]);
 
@@ -109,6 +122,7 @@ export function useCloudSync(user, actions, profileName, setActions, setProfileN
     lastSyncedActions.current = conflict.remoteActions;
     lastSyncedProfile.current = conflict.remoteProfile;
     setConflict(null);
+    setToast({ message: 'Synced from cloud', type: 'success' });
   }, [conflict, setActions, setProfileName]);
 
   // Resolve conflict: keep local data (overwrite remote)
@@ -125,8 +139,9 @@ export function useCloudSync(user, actions, profileName, setActions, setProfileN
     }).then(() => {
       updateLastSynced();
       setConflict(null);
+      setToast({ message: 'Local data kept — synced', type: 'success' });
     }).catch(() => {
-      // Keep conflict open if push fails
+      setToast({ message: 'Push failed — try again', type: 'error' });
     }).finally(() => setSyncing(false));
   }, [conflict, user, configured, updateLastSynced]);
 
@@ -162,5 +177,6 @@ export function useCloudSync(user, actions, profileName, setActions, setProfileN
     conflict,
     resolveUseRemote,
     resolveKeepLocal,
+    toast,
   };
 }
