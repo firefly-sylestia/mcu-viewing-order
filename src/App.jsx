@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Search, SlidersHorizontal, Home, Bookmark, Play, UserRound, X, ArrowLeft, Star, BarChart3, Check, Clock, ListFilter, RotateCcw, ChevronLeft, ChevronRight, Calendar, Timer, Sparkles } from 'lucide-react';
 import { RAW } from './data/mcuData';
 import { DC_RAW } from './data/dcData';
@@ -26,6 +26,15 @@ const watchTimeLabel = (item) => {
   const h = Math.floor(mins / 60);
   const m = mins % 60;
   return `${h}h ${m ? `${m}m` : ''} watched`;
+};
+
+const elapsedPctLabel = (item) => {
+  const ms = item.watchedDuration || 0;
+  if (ms < 30000) return 'Started';
+  const mins = Math.floor(ms / 60000);
+  const total = item.runtime || 120;
+  const pct = Math.min(Math.round((mins / total) * 100), 99);
+  return `${pct}%`;
 };
 
 const slugifyPosterName = (value) => String(value || '')
@@ -466,14 +475,6 @@ function ContinueWatching({ items, setSelected, setStatus, toggleBookmark, playT
     }
     onResume(item, null, 'movie');
   };
-  const elapsedLabel = (item) => {
-    const ms = item.watchedDuration || 0;
-    if (ms < 30000) return 'Started';
-    const mins = Math.floor(ms / 60000);
-    const total = item.runtime || 120;
-    const pct = Math.min(Math.round((mins / total) * 100), 99);
-    return `${pct}%`;
-  };
   return (
     <section className="continue-watching rail-card web-rail">
       <div className="section-title"><h2>Continue Watching</h2><button>{items.length} in progress</button></div>
@@ -486,7 +487,7 @@ function ContinueWatching({ items, setSelected, setStatus, toggleBookmark, playT
             </button>
             <div className="card-body">
               <button className="title-button" onClick={() => setSelected(item)}>{item.title}</button>
-              <span>{elapsedLabel(item)} complete</span>
+              <span>{elapsedPctLabel(item)} complete</span>
             </div>
             <div className="card-actions">
               <button onClick={() => handleResume(item)} className="trailer-chip"><Play size={16} fill="currentColor" /><span>Resume</span></button>
@@ -512,14 +513,6 @@ function WatchBrowse({ activeItems, onStartWatch, setSelected, setStatus, toggle
     }
     onStartWatch(item, null, 'movie');
   };
-  const elapsedLabel = (item) => {
-    const ms = item.watchedDuration || 0;
-    if (ms < 30000) return 'Started';
-    const mins = Math.floor(ms / 60000);
-    const total = item.runtime || 120;
-    const pct = Math.min(Math.round((mins / total) * 100), 99);
-    return `${pct}%`;
-  };
   return (
     <section className="watch-browse">
       <div className="watch-browse-hero">
@@ -537,7 +530,7 @@ function WatchBrowse({ activeItems, onStartWatch, setSelected, setStatus, toggle
                   <PosterArt item={item} />
                   <div className="continue-overlay"><Play size={28} fill="currentColor" /></div>
                 </button>
-                <div className="card-body"><button className="title-button" onClick={() => setSelected(item)}>{item.title}</button><span>{elapsedLabel(item)} complete</span></div>
+                <div className="card-body"><button className="title-button" onClick={() => setSelected(item)}>{item.title}</button><span>{elapsedPctLabel(item)} complete</span></div>
                 <div className="card-actions">
                   <button onClick={() => handleResume(item)} className="trailer-chip"><Play size={16} fill="currentColor" /><span>Resume</span></button>
                   <StatusSelect item={item} setStatus={setStatus} compact />
@@ -599,7 +592,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
     const handleKey = (e) => { if (e.key === 'Escape') handleBack(); };
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);
-  }, [item.id]);
+  }, [handleBack]);
 
   useEffect(() => {
     setElapsed(Math.min(currentItem.watchedDuration || 0, totalMs));
@@ -623,10 +616,10 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
     }
   }, [isComplete, currentItem.userStatus, currentItem.id, setStatus]);
 
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     updateAction(item, { watchedDuration: elapsedRef.current, watchStartedAt: null });
     onBack();
-  };
+  }, [item, updateAction, onBack]);
 
   const handleSwitchItem = async (rec) => {
     if (switching) return;
