@@ -377,17 +377,13 @@ function DetailView({ item, onClose, setStatus, toggleBookmark }) {
     setTimeout(() => setInlineTrailer(null), 400);
   };
   const handleWatchOnVideasy = async (item) => {
-    try {
-      const params = new URLSearchParams({ title: item.title, year: String(item.year || '') });
-      const res = await fetch(`/api/tmdb/poster?${params.toString()}`);
-      if (!res.ok) throw new Error('TMDB lookup failed');
-      const data = await res.json();
-      if (!data.tmdbId) throw new Error('No TMDB ID found');
-      const mediaType = data.mediaType === 'tv' ? 'tv' : 'movie';
-      window.open(`https://player.videasy.net/${mediaType}/${data.tmdbId}`, '_blank', 'noopener,noreferrer');
-    } catch {
-      window.open(`https://player.videasy.net/movie/${encodeURIComponent(item.title)}`, '_blank', 'noopener,noreferrer');
-    }
+    const params = new URLSearchParams({ title: item.title, year: String(item.year || '') });
+    const res = await fetch(`/api/tmdb/poster?${params.toString()}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data.tmdbId) return;
+    const mediaType = data.mediaType === 'tv' ? 'tv' : 'movie';
+    window.open(`https://player.videasy.net/${mediaType}/${data.tmdbId}`, '_blank', 'noopener,noreferrer');
   };
   const modalRef = React.useRef(null);
   React.useEffect(() => {
