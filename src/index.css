@@ -1169,8 +1169,10 @@ button { border: 0; color: inherit; cursor: pointer; }
 .detail-facts svg { color: var(--brand-accent); }
 .detail-facts span { color: #777d86; font-size: 10px; text-transform: uppercase; letter-spacing: .06em; }
 .detail-facts strong { overflow: hidden; color: #f1f2f4; font-size: 13px; text-transform: capitalize; text-overflow: ellipsis; white-space: nowrap; }
-.detail-progress-actions { display: grid; grid-template-columns: minmax(140px,1fr) 46px; gap: 8px; margin-top: 24px; }
-.detail-progress-actions > button { width: 46px; height: 46px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 10px; background: #1b1f25; border: 1px solid rgba(255,255,255,.1); font-weight: 800; }
+.detail-progress-actions { display: grid; grid-template-columns: minmax(120px,1fr) 46px auto; gap: 8px; margin-top: 24px; }
+.detail-progress-actions > button { height: 46px; padding: 0 14px; display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 10px; background: #1b1f25; border: 1px solid rgba(255,255,255,.1); font-weight: 800; font-size: 13px; }
+.detail-progress-actions .detail-bookmark { width: 46px; padding: 0; }
+.detail-progress-actions .detail-videasy { background: var(--brand-accent, #d6202d); color: #fff; border-color: transparent; }
 .detail-progress-actions .status-trigger { width: 100%; height: 46px; }
 .detail-progress-actions .status-label { display: block; }
 .detail-bookmark span { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
@@ -1216,8 +1218,11 @@ button { border: 0; color: inherit; cursor: pointer; }
   .detail-description { margin: 18px 0; font-size: 14px; }
   .detail-facts { gap: 6px; }
   .detail-facts > div { padding: 10px; }
-  .detail-progress-actions { grid-template-columns: minmax(0,1fr) 42px; }
-  .detail-progress-actions > button { width: 42px; height: 42px; }
+  .detail-progress-actions { grid-template-columns: minmax(0,1fr) 42px 42px; }
+  .detail-progress-actions > button { width: auto; height: 42px; padding: 0 10px; font-size: 12px; }
+  .detail-progress-actions .detail-bookmark { width: 42px; padding: 0; }
+  .detail-progress-actions .detail-videasy { width: 42px; padding: 0; }
+  .detail-progress-actions .detail-videasy span { display: none; }
   .detail-progress-actions .status-select { grid-column: auto; }
 }
 @media (hover: none) {
