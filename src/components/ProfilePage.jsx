@@ -129,6 +129,10 @@ function AnalyticsPanel({ stats, activeItems, inProgressItems }) {
           <b>{stats.bookmarked}</b>
           <span>Saved</span>
         </div>
+        <div>
+          <b>{stats.watchedTime}</b>
+          <span>Watch Time</span>
+        </div>
       </div>
     </section>
   );

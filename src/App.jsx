@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Search, SlidersHorizontal, Home, Bookmark, Play, UserRound, X, ArrowLeft, Star, BarChart3, Check, Clock, ListFilter, RotateCcw, ChevronLeft, ChevronRight, Calendar, Timer, Sparkles } from 'lucide-react';
 import { RAW } from './data/mcuData';
 import { DC_RAW } from './data/dcData';
@@ -16,6 +16,25 @@ const runtimeLabel = (minutes = 0, type = 'film') => {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
   return h ? `${h}h ${m ? `${m}m` : ''}`.trim() : `${m}m`;
+};
+
+const watchTimeLabel = (item) => {
+  const ms = item.watchedDuration || 0;
+  if (ms < 30000) return 'Just started';
+  const mins = Math.round(ms / 60000);
+  if (mins < 60) return `${mins}m watched`;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return `${h}h ${m ? `${m}m` : ''} watched`;
+};
+
+const elapsedPctLabel = (item) => {
+  const ms = item.watchedDuration || 0;
+  if (ms < 30000) return 'Started';
+  const mins = Math.floor(ms / 60000);
+  const total = item.runtime || 120;
+  const pct = Math.min(Math.round((mins / total) * 100), 99);
+  return `${pct}%`;
 };
 
 const slugifyPosterName = (value) => String(value || '')
@@ -67,6 +86,7 @@ export default function App() {
   const [actions, setActions] = useState(saved.actions || {});
   const [posterMap, setPosterMap] = useState({});
   const [trailer, setTrailer] = useState(null);
+  const [watchItem, setWatchItem] = useState(null);
 
   const allItems = useMemo(() => [...RAW.map(item => enhance(item, 'marvel')), ...DC_RAW.map(item => enhance(item, 'dc'))], []);
 
@@ -87,7 +107,7 @@ export default function App() {
       .filter(item => item.title.toLowerCase().includes(query.toLowerCase()))
       .filter(item => genre === 'All' || item.genres.includes(genre) || item.type === genre.toLowerCase())
       .filter(item => Number(item.rating) >= rating)
-      .map(item => ({ ...item, poster: item.poster || posterMap[item.id] || posterMap[String(item.id)] || posterMap[slugifyPosterName(item.title)] || '', userStatus: actions[item.id]?.status || 'unwatched', bookmarked: Boolean(actions[item.id]?.bookmarked) }));
+      .map(item => ({ ...item, poster: item.poster || posterMap[item.id] || posterMap[String(item.id)] || posterMap[slugifyPosterName(item.title)] || '', userStatus: actions[item.id]?.status || 'unwatched', bookmarked: Boolean(actions[item.id]?.bookmarked), watchStartedAt: actions[item.id]?.watchStartedAt || null, watchedDuration: actions[item.id]?.watchedDuration || 0 }));
     sorted.sort((a, b) => sortBy === 'year' ? a.year - b.year : sortBy === 'title' ? a.title.localeCompare(b.title) : a.order - b.order);
     return sorted;
   }, [actions, allItems, universe, query, genre, posterMap, rating, sortBy]);
@@ -117,7 +137,10 @@ export default function App() {
     const watching = activeItems.filter(item => item.userStatus === 'watching').length;
     const dropped = activeItems.filter(item => item.userStatus === 'dropped').length;
     const bookmarked = activeItems.filter(item => item.bookmarked).length;
-    return { total, watched, watching, dropped, bookmarked, percent: Math.round((watched / total) * 100) };
+    const watchedMinutes = activeItems.filter(item => item.userStatus === 'watched').reduce((sum, i) => sum + (i.runtime || 0), 0);
+    const watchedHours = Math.floor(watchedMinutes / 60);
+    const watchedTime = watchedHours >= 1 ? `${watchedHours}h ${watchedMinutes % 60}m` : `${watchedMinutes}m`;
+    return { total, watched, watching, dropped, bookmarked, percent: Math.round((watched / total) * 100), watchedMinutes, watchedTime };
   }, [activeItems]);
 
   const updateAction = (item, patch) => setActions(prev => ({ ...prev, [item.id]: { ...(prev[item.id] || {}), ...patch } }));
@@ -137,6 +160,13 @@ export default function App() {
     setTrailer({ title: item.title, url });
   };
   const resetFilters = () => { setQuery(''); setGenre('All'); setRating(0); setSortBy('order'); };
+  const handleStartWatch = (item, tmdbId, mediaType) => {
+    setWatchItem({ item, tmdbId, mediaType });
+    setStatus(item, 'watching');
+    updateAction(item, { watchStartedAt: Date.now() });
+    setSelected(null);
+    setSection('watch');
+  };
 
   const universeName = universe === 'marvel' ? 'MCU' : 'DC';
   const universeAccent = universe === 'marvel' ? '#d6202d' : '#1677d2';
@@ -145,14 +175,14 @@ export default function App() {
     <main className={`movie-site universe-${universe}`} style={{ '--brand-accent': universeAccent }}>
       <div className="site-glow" />
       <header className="site-header">
-        <button className="brand" onClick={() => { setSection('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} aria-label={`Go to ${universeName} Viewing Order home`}><span>{universeName}</span><b>{universeName} Viewing Order</b></button>
+        <button className="brand" onClick={() => { setQuery(''); setSection('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} aria-label={`Go to ${universeName} Viewing Order home`}><span>{universeName}</span><b>{universeName} Viewing Order</b></button>
         <div className="universe-tabs" role="tablist" aria-label="Universe">
           <button className={universe === 'marvel' ? 'active' : ''} onClick={() => { setUniverse('marvel'); setHeroIndex(0); }}>Marvel</button>
           <button className={universe === 'dc' ? 'active' : ''} onClick={() => { setUniverse('dc'); setHeroIndex(0); }}>DC</button>
         </div>
         <div className="header-search">
           <Search size={18} />
-          <input value={query} onChange={e => setQuery(e.target.value)} onFocus={() => setSection('list')} placeholder={`Search ${universe === 'marvel' ? 'Marvel' : 'DC'} titles…`} />
+          <input value={query} onChange={e => setQuery(e.target.value)} placeholder={`Search ${universe === 'marvel' ? 'Marvel' : 'DC'} titles…`} />
           {query && <button className="search-clear" onClick={() => setQuery('')}><X size={16} /></button>}
           <button className="header-filter-btn" onClick={() => setFiltersOpen(true)} aria-label="Open filters"><SlidersHorizontal size={18} /></button>
         </div>
@@ -167,20 +197,24 @@ export default function App() {
         <MovieRail title="Up next" items={activeItems.filter(i => i.userStatus === 'unwatched').slice(0, 24)} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} scrollable />
         <MovieRail title="Essential picks" items={activeItems.filter(i => i.essential)} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} paginated />
         <MovieRail title="Recently watched" items={activeItems.filter(i => i.userStatus === 'watched').slice(-24).reverse()} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} empty="Mark titles as watched to see them here." scrollable />
+        {activeItems.filter(i => i.userStatus === 'watching').length > 0 && <ContinueWatching items={activeItems.filter(i => i.userStatus === 'watching')} setSelected={setSelected} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} onResume={handleStartWatch} />}
       </>}
 
       {section === 'list' && <ListSection items={activeItems} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />}
       {section === 'analytics' && <><AnalyticsPanel stats={stats} large /><MovieRail title="In progress" items={activeItems.filter(i => i.userStatus === 'watching')} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} /></>}
       {section === 'profile' && <ProfilePage stats={stats} activeItems={activeItems} universe={universe} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />}
+      {section === 'watch' && watchItem && <WatchPage watchItem={watchItem} activeItems={activeItems} onBack={() => setWatchItem(null)} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={handleStartWatch} updateAction={updateAction} />}
+      {section === 'watch' && !watchItem && <WatchBrowse activeItems={activeItems} onStartWatch={handleStartWatch} setSelected={setSelected} setStatus={setStatus} toggleBookmark={toggleBookmark} setSection={setSection} />}
 
       <nav className="bottom-nav" aria-label="Primary">
-        <button className={section === 'home' ? 'active' : ''} onClick={() => setSection('home')}><Home size={22} /><span>Home</span></button>
-        <button className={section === 'list' ? 'active' : ''} onClick={() => setSection('list')}><ListFilter size={22} /><span>List</span></button>
-        <button className={section === 'analytics' ? 'active' : ''} onClick={() => setSection('analytics')}><BarChart3 size={22} /><span>Stats</span></button>
-        <button className={section === 'profile' ? 'active' : ''} onClick={() => setSection('profile')}><UserRound size={22} /><span>Profile</span></button>
+        <button className={section === 'home' ? 'active' : ''} onClick={() => { setQuery(''); setSection('home'); }}><Home size={22} /><span>Home</span></button>
+        <button className={section === 'list' ? 'active' : ''} onClick={() => { setQuery(''); setSection('list'); }}><ListFilter size={22} /><span>List</span></button>
+        <button className={section === 'analytics' ? 'active' : ''} onClick={() => { setQuery(''); setSection('analytics'); }}><BarChart3 size={22} /><span>Stats</span></button>
+        <button className={section === 'watch' ? 'active' : ''} onClick={() => { setQuery(''); setSection('watch'); }}><Play size={22} /><span>Watch</span></button>
+        <button className={section === 'profile' ? 'active' : ''} onClick={() => { setQuery(''); setSection('profile'); }}><UserRound size={22} /><span>Profile</span></button>
       </nav>
 
-      {selectedItem && <DetailView item={selectedItem} onClose={() => setSelected(null)} setStatus={setStatus} toggleBookmark={toggleBookmark} />}
+      {selectedItem && <DetailView item={selectedItem} onClose={() => setSelected(null)} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={handleStartWatch} />}
       {trailer && <TrailerModal trailer={trailer} onClose={() => setTrailer(null)} />}
       {filtersOpen && <Filters genre={genre} setGenre={setGenre} rating={rating} setRating={setRating} sortBy={sortBy} setSortBy={setSortBy} genres={genres} count={activeItems.length} onClose={() => setFiltersOpen(false)} />}
     </main>
@@ -290,7 +324,7 @@ function MovieRail({ title, items, setSelected, cycleStatus, setStatus, toggleBo
 function MovieCard({ item, setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer }) {
   return <article className="movie-card" style={{ '--accent': item.accent }}>
     <button className="poster-button" onClick={() => setSelected(item)}><PosterArt item={item} /></button>
-    <div className="card-body"><button className="title-button" onClick={() => setSelected(item)}>{item.title}</button><span>{item.year} · {runtimeLabel(item.runtime, item.type)}</span></div>
+    <div className="card-body"><button className="title-button" onClick={() => setSelected(item)}>{item.title}</button><span>{item.year} · {runtimeLabel(item.runtime, item.type)}{item.userStatus === 'watching' && item.watchedDuration > 30000 ? ` · ${watchTimeLabel(item)}` : ''}</span></div>
     <div className="card-actions"><button onClick={() => playTrailer(item)} className="trailer-chip" aria-label={`Play ${item.title} trailer`}><Play size={16} fill="currentColor" /><span>Trailer</span></button><StatusSelect item={item} setStatus={setStatus} compact /><button onClick={() => toggleBookmark(item)} className={`bookmark-chip ${item.bookmarked ? 'saved' : ''}`} aria-label={item.bookmarked ? 'Remove bookmark' : 'Bookmark title'}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button></div>
   </article>;
 }
@@ -359,10 +393,10 @@ function SuggestionStrip({ nextUp, stats, setSelected, playTrailer }) {
 }
 
 function AnalyticsPanel({ stats, large = false }) {
-  return <section className={`analytics-panel ${large ? 'large' : ''}`}><div><p className="eyebrow">Analytics</p><h2>{stats.percent}% complete</h2><div className="progress"><span style={{ width: `${stats.percent}%` }} /></div></div><div className="stat-grid"><div><b>{stats.total}</b><span>Total</span></div><div><b>{stats.watched}</b><span>Watched</span></div><div><b>{stats.watching}</b><span>Watching</span></div><div><b>{stats.dropped}</b><span>Dropped</span></div><div><b>{stats.bookmarked}</b><span>Saved</span></div></div></section>;
+  return <section className={`analytics-panel ${large ? 'large' : ''}`}><div><p className="eyebrow">Analytics</p><h2>{stats.percent}% complete</h2><div className="progress"><span style={{ width: `${stats.percent}%` }} /></div></div><div className="stat-grid"><div><b>{stats.total}</b><span>Total</span></div><div><b>{stats.watched}</b><span>Watched</span></div><div><b>{stats.watching}</b><span>Watching</span></div><div><b>{stats.dropped}</b><span>Dropped</span></div><div><b>{stats.bookmarked}</b><span>Saved</span></div><div><b>{stats.watchedTime}</b><span>Watch Time</span></div></div></section>;
 }
 
-function DetailView({ item, onClose, setStatus, toggleBookmark }) {
+function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch }) {
   const [inlineTrailer, setInlineTrailer] = useState(null);
   const [isTrailerExpanded, setIsTrailerExpanded] = useState(false);
   const showTrailer = () => {
@@ -376,14 +410,24 @@ function DetailView({ item, onClose, setStatus, toggleBookmark }) {
     setIsTrailerExpanded(false);
     setTimeout(() => setInlineTrailer(null), 400);
   };
+  const [watchLoading, setWatchLoading] = useState(false);
   const handleWatchOnVideasy = async (item) => {
-    const params = new URLSearchParams({ title: item.title, year: String(item.year || '') });
-    const res = await fetch(`/api/tmdb/poster?${params.toString()}`);
-    if (!res.ok) return;
-    const data = await res.json();
-    if (!data.tmdbId) return;
-    const mediaType = data.mediaType === 'tv' ? 'tv' : 'movie';
-    window.open(`https://player.videasy.net/${mediaType}/${data.tmdbId}`, '_blank', 'noopener,noreferrer');
+    if (watchLoading) return;
+    setWatchLoading(true);
+    try {
+      const params = new URLSearchParams({ title: item.title, year: String(item.year || '') });
+      const res = await fetch(`/api/tmdb/poster?${params.toString()}`);
+      if (!res.ok) throw new Error('TMDB lookup failed');
+      const data = await res.json();
+      if (!data.tmdbId) throw new Error('No TMDB ID found');
+      const mediaType = data.mediaType === 'tv' ? 'tv' : 'movie';
+      onStartWatch(item, data.tmdbId, mediaType);
+    } catch {
+      // fallback: try with title as ID (some Videasy instances support this)
+      onStartWatch(item, null, 'movie');
+    } finally {
+      setWatchLoading(false);
+    }
   };
   const modalRef = React.useRef(null);
   React.useEffect(() => {
@@ -408,8 +452,8 @@ function DetailView({ item, onClose, setStatus, toggleBookmark }) {
           <h1 id="detail-title">{item.title}</h1>
           <div className="detail-chips"><span className="detail-rating"><Star size={15} fill="currentColor" /> {item.rating.toFixed ? item.rating.toFixed(1) : item.rating}</span>{item.genres.slice(0,3).map(g => <span key={g}>{g}</span>)}</div>
           <p className="detail-description">{item.desc || `Follow ${item.title} in the complete ${item.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} viewing order.`}</p>
-          <div className="detail-facts"><div><Calendar size={18} /><span>Release year</span><strong>{item.year}</strong></div><div><Timer size={18} /><span>Runtime</span><strong>{runtimeLabel(item.runtime, item.type)}</strong></div><div><Sparkles size={18} /><span>Format</span><strong>{item.type}</strong></div></div>
-          <div className="detail-progress-actions"><StatusSelect item={item} setStatus={setStatus} /><button className={`detail-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={19} fill={item.bookmarked ? 'currentColor' : 'none'} /><span>{item.bookmarked ? 'Saved' : 'Save'}</span></button><button className="detail-videasy" onClick={() => handleWatchOnVideasy(item)} aria-label={`Watch ${item.title} on Videasy`}><Play size={18} fill="currentColor" /><span>Watch Now</span></button></div>
+          <div className="detail-facts"><div><Calendar size={18} /><span>Release year</span><strong>{item.year}</strong></div><div><Timer size={18} /><span>Runtime</span><strong>{runtimeLabel(item.runtime, item.type)}</strong></div><div><Sparkles size={18} /><span>Format</span><strong>{item.type}</strong></div>{item.userStatus === 'watching' && item.watchedDuration > 30000 && <div><Clock size={18} /><span>Watched</span><strong>{watchTimeLabel(item)}</strong></div>}</div>
+          <div className="detail-progress-actions"><StatusSelect item={item} setStatus={setStatus} /><button className={`detail-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={19} fill={item.bookmarked ? 'currentColor' : 'none'} /><span>{item.bookmarked ? 'Saved' : 'Save'}</span></button><button className="detail-videasy" onClick={() => handleWatchOnVideasy(item)} disabled={watchLoading} aria-label={`Watch ${item.title} on Videasy`}><Play size={18} fill="currentColor" /><span>{watchLoading ? 'Loading...' : 'Watch Now'}</span></button></div>
         </div>
       </div>
       </div>
@@ -419,6 +463,227 @@ function DetailView({ item, onClose, setStatus, toggleBookmark }) {
 
 function TrailerModal({ trailer, onClose }) {
   return <aside className="trailer-modal"><div><button className="trailer-close" onClick={onClose}><X /></button><h2>{trailer.title} trailer</h2><iframe src={trailer.url} title={`${trailer.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /></div></aside>;
+}
+
+function ContinueWatching({ items, setSelected, setStatus, toggleBookmark, playTrailer, onResume }) {
+  const handleResume = async (item) => {
+    const params = new URLSearchParams({ title: item.title, year: String(item.year || '') });
+    const res = await fetch(`/api/tmdb/poster?${params.toString()}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.tmdbId) { onResume(item, data.tmdbId, data.mediaType === 'tv' ? 'tv' : 'movie'); return; }
+    }
+    onResume(item, null, 'movie');
+  };
+  return (
+    <section className="continue-watching rail-card web-rail">
+      <div className="section-title"><h2>Continue Watching</h2><button>{items.length} in progress</button></div>
+      <div className="movie-grid web-grid rail-scroll">
+        {items.map(item => (
+          <article key={item.id} className="movie-card continue-card" style={{ '--accent': item.accent }}>
+            <button className="poster-button" onClick={() => handleResume(item)}>
+              <PosterArt item={item} />
+              <div className="continue-overlay"><Play size={28} fill="currentColor" /></div>
+            </button>
+            <div className="card-body">
+              <button className="title-button" onClick={() => setSelected(item)}>{item.title}</button>
+              <span>{elapsedPctLabel(item)} complete</span>
+            </div>
+            <div className="card-actions">
+              <button onClick={() => handleResume(item)} className="trailer-chip"><Play size={16} fill="currentColor" /><span>Resume</span></button>
+              <StatusSelect item={item} setStatus={setStatus} compact />
+              <button onClick={() => toggleBookmark(item)} className={`bookmark-chip ${item.bookmarked ? 'saved' : ''}`}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function WatchBrowse({ activeItems, onStartWatch, setSelected, setStatus, toggleBookmark, setSection }) {
+  const inProgress = activeItems.filter(i => i.userStatus === 'watching');
+  const upNext = activeItems.filter(i => i.userStatus === 'unwatched').slice(0, 12);
+  const handleResume = async (item) => {
+    const params = new URLSearchParams({ title: item.title, year: String(item.year || '') });
+    const res = await fetch(`/api/tmdb/poster?${params.toString()}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.tmdbId) { onStartWatch(item, data.tmdbId, data.mediaType === 'tv' ? 'tv' : 'movie'); return; }
+    }
+    onStartWatch(item, null, 'movie');
+  };
+  return (
+    <section className="watch-browse">
+      <div className="watch-browse-hero">
+        <div className="watch-browse-icon"><Play size={48} fill="currentColor" /></div>
+        <h1>Ready to watch?</h1>
+        <p>Pick up where you left off or discover something new to start watching.</p>
+      </div>
+      {inProgress.length > 0 && (
+        <section className="watch-browse-section">
+          <div className="section-title"><h2>Continue Watching</h2><button>{inProgress.length} in progress</button></div>
+          <div className="watch-browse-grid">
+            {inProgress.map(item => (
+              <article key={item.id} className="movie-card" style={{ '--accent': item.accent }}>
+                <button className="poster-button" onClick={() => handleResume(item)}>
+                  <PosterArt item={item} />
+                  <div className="continue-overlay"><Play size={28} fill="currentColor" /></div>
+                </button>
+                <div className="card-body"><button className="title-button" onClick={() => setSelected(item)}>{item.title}</button><span>{elapsedPctLabel(item)} complete</span></div>
+                <div className="card-actions">
+                  <button onClick={() => handleResume(item)} className="trailer-chip"><Play size={16} fill="currentColor" /><span>Resume</span></button>
+                  <StatusSelect item={item} setStatus={setStatus} compact />
+                  <button onClick={() => toggleBookmark(item)} className={`bookmark-chip ${item.bookmarked ? 'saved' : ''}`}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+      {upNext.length > 0 && (
+        <section className="watch-browse-section">
+          <div className="section-title"><h2>Start Watching</h2><button>{activeItems.filter(i => i.userStatus === 'unwatched').length} available</button></div>
+          <div className="watch-browse-grid">
+            {upNext.map(item => (
+              <article key={item.id} className="movie-card" style={{ '--accent': item.accent }}>
+                <button className="poster-button" onClick={() => setSelected(item)}><PosterArt item={item} /></button>
+                <div className="card-body"><button className="title-button" onClick={() => setSelected(item)}>{item.title}</button><span>{item.year} · {runtimeLabel(item.runtime, item.type)}</span></div>
+                <div className="card-actions">
+                  <button onClick={() => handleResume(item)} className="trailer-chip"><Play size={16} fill="currentColor" /><span>Watch</span></button>
+                  <StatusSelect item={item} setStatus={setStatus} compact />
+                  <button onClick={() => toggleBookmark(item)} className={`bookmark-chip ${item.bookmarked ? 'saved' : ''}`}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+      {inProgress.length === 0 && upNext.length === 0 && (
+        <div className="watch-browse-empty">
+          <h2>Nothing to watch yet</h2>
+          <p>Open a movie or show detail and tap "Watch Now" to get started.</p>
+          <button onClick={() => { setQuery(''); setSection('list'); }}>Browse titles</button>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, onStartWatch, updateAction }) {
+  const { item, tmdbId, mediaType } = watchItem;
+  const [switching, setSwitching] = useState(false);
+  const [toast, setToast] = useState('');
+  const videasyUrl = tmdbId ? `https://player.videasy.net/${mediaType}/${tmdbId}` : `https://player.videasy.net/movie/${encodeURIComponent(item.title)}`;
+  const upNext = activeItems
+    .filter(i => i.id !== item.id && i.userStatus !== 'watched' && i.userStatus !== 'dropped')
+    .slice(0, 12);
+  const currentItem = activeItems.find(i => i.id === item.id) || item;
+  const totalMs = (item.runtime || 120) * 60 * 1000;
+  const initialElapsed = Math.min(currentItem.watchedDuration || 0, totalMs);
+  const [elapsed, setElapsed] = useState(initialElapsed);
+  const elapsedRef = useRef(elapsed);
+  const progress = Math.min((elapsed / totalMs) * 100, 100);
+  const isComplete = progress >= 90;
+
+  const handleBack = useCallback(() => {
+    updateAction(item, { watchedDuration: elapsedRef.current, watchStartedAt: null });
+    onBack();
+  }, [item, updateAction, onBack]);
+
+  useEffect(() => { elapsedRef.current = elapsed; }, [elapsed]);
+
+  useEffect(() => {
+    const handleKey = (e) => { if (e.key === 'Escape') handleBack(); };
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, [handleBack]);
+
+  useEffect(() => {
+    setElapsed(Math.min(currentItem.watchedDuration || 0, totalMs));
+    const interval = setInterval(() => setElapsed(prev => prev + 1000), 1000);
+    return () => clearInterval(interval);
+  }, [item.id]);
+
+  useEffect(() => {
+    const save = setInterval(() => {
+      updateAction(item, { watchedDuration: elapsedRef.current });
+    }, 15000);
+    return () => {
+      clearInterval(save);
+      updateAction(item, { watchedDuration: elapsedRef.current, watchStartedAt: null });
+    };
+  }, [item.id]);
+
+  useEffect(() => {
+    if (isComplete && currentItem.userStatus === 'watching') {
+      setStatus(currentItem, 'watched');
+    }
+  }, [isComplete, currentItem.userStatus, currentItem.id, setStatus]);
+
+  const handleSwitchItem = async (rec) => {
+    if (switching) return;
+    updateAction(item, { watchedDuration: elapsedRef.current, watchStartedAt: null });
+    setSwitching(true);
+    try {
+      const params = new URLSearchParams({ title: rec.title, year: String(rec.year || '') });
+      const res = await fetch(`/api/tmdb/poster?${params.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.tmdbId) { onStartWatch(rec, data.tmdbId, data.mediaType === 'tv' ? 'tv' : 'movie'); return; }
+      }
+    } catch {}
+    onStartWatch(rec, null, 'movie');
+    setSwitching(false);
+  };
+  return (
+    <section className="watch-page" style={{ '--accent': currentItem.accent }}>
+      <header className="watch-header">
+        <button onClick={handleBack} aria-label="Back to browsing"><ChevronLeft size={22} /> <span>Back</span></button>
+        <div>
+          <span className="watch-kicker">{currentItem.universe === 'marvel' ? 'MCU' : 'DC'} · #{String(currentItem.order || currentItem.id).padStart(2, '0')}</span>
+          <h1>{currentItem.title}</h1>
+        </div>
+        <div className="watch-header-spacer" />
+      </header>
+      {toast && <div className="watch-toast">{toast}</div>}
+      <div className="watch-player">
+        <iframe src={videasyUrl} title={`Watch ${item.title}`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen />
+      </div>
+      <div className="watch-progress-bar"><span style={{ width: `${progress}%` }} /></div>
+      <div className="watch-info">
+        <div className="watch-meta">
+          <span>{currentItem.year}</span>
+          <span>·</span>
+          <span>{runtimeLabel(currentItem.runtime, currentItem.type)}</span>
+          <span>·</span>
+          <span><Star size={14} fill="currentColor" /> {currentItem.rating.toFixed ? currentItem.rating.toFixed(1) : currentItem.rating}</span>
+        </div>
+        <p className="watch-desc">{currentItem.desc || `Watch ${currentItem.title} in the complete ${currentItem.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} viewing order.`}</p>
+        <div className="watch-actions">
+          <StatusSelect item={currentItem} setStatus={setStatus} />
+          <button onClick={() => toggleBookmark(currentItem)} className={`watch-action-btn ${currentItem.bookmarked ? 'saved' : ''}`} aria-label={currentItem.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={18} fill={currentItem.bookmarked ? 'currentColor' : 'none'} /><span>{currentItem.bookmarked ? 'Saved' : 'Save'}</span></button>
+          {currentItem.userStatus !== 'watched' && <button onClick={() => { setStatus(currentItem, 'watched'); setToast('Marked as watched'); setTimeout(() => setToast(''), 2000); }} className="watch-action-btn mark-watched" aria-label="Mark as Watched"><Check size={18} /><span>Mark Watched</span></button>}
+        </div>
+      </div>
+      {upNext.length > 0 && (
+        <div className="watch-upnext">
+          <h2>Up Next</h2>
+          <div className="watch-upnext-rail">
+            {upNext.map(rec => (
+              <button key={rec.id} className="watch-rec-card" onClick={() => handleSwitchItem(rec)} style={{ '--accent': rec.accent }}>
+                <div className="watch-rec-poster">
+                  {rec.poster ? <img src={rec.poster} alt={rec.title} /> : <FallbackPoster item={rec} />}
+                </div>
+                <span>{rec.title}</span>
+                <small>{rec.year}</small>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </section>
+  );
 }
 
 function FilterSelect({ label, value, options, onChange }) {
