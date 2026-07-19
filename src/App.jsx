@@ -360,10 +360,10 @@ function DetailView({ item, onClose, setStatus, toggleBookmark }) {
     if (isTrailerExpanded && modalRef.current) modalRef.current.scrollTo({ top: 0, behavior: 'smooth' });
   }, [isTrailerExpanded]);
   return <div className="detail-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-    <article className="detail-modal" ref={modalRef} role="dialog" aria-modal="true" aria-labelledby="detail-title" style={{ '--accent': item.accent, '--detail-poster-bg': `url('${item.poster}')` }}>
-      {item.poster && <img className="detail-backdrop" src={item.poster} alt="" aria-hidden="true" />}
-      <div className="detail-backdrop-shade" aria-hidden="true" />
+    <article className="detail-modal" role="dialog" aria-modal="true" aria-labelledby="detail-title" style={{ '--accent': item.accent }}>
+      {item.poster && <div className="detail-bg" aria-hidden="true"><img className="detail-backdrop" src={item.poster} alt="" /><div className="detail-backdrop-shade" /></div>}
       <button className="detail-close" onClick={onClose} aria-label="Close details"><X size={21} /></button>
+      <div className="detail-modal-scroll" ref={modalRef}>
       <div className={`detail-layout${isTrailerExpanded ? ' has-trailer' : ''}`}>
         <div className="detail-media">
           <div className={`detail-poster${isTrailerExpanded ? ' is-expanded' : ''}`}>
@@ -381,6 +381,7 @@ function DetailView({ item, onClose, setStatus, toggleBookmark }) {
           <div className="detail-facts"><div><Calendar size={18} /><span>Release year</span><strong>{item.year}</strong></div><div><Timer size={18} /><span>Runtime</span><strong>{runtimeLabel(item.runtime, item.type)}</strong></div><div><Sparkles size={18} /><span>Format</span><strong>{item.type}</strong></div></div>
           <div className="detail-progress-actions"><StatusSelect item={item} setStatus={setStatus} /><button className={`detail-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={19} fill={item.bookmarked ? 'currentColor' : 'none'} /><span>{item.bookmarked ? 'Saved' : 'Save'}</span></button></div>
         </div>
+      </div>
       </div>
     </article>
   </div>;
