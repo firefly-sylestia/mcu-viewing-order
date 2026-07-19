@@ -82,17 +82,17 @@ export default function App() {
   const [rating, setRating] = useState(saved.rating || 0);
   const [sortBy, setSortBy] = useState(saved.sortBy || 'order');
   const [heroIndex, setHeroIndex] = useState(0);
-  const [section, setSection] = useState('home');
+  const [section, setSection] = useState(saved.section || 'home');
   const [actions, setActions] = useState(saved.actions || {});
   const [posterMap, setPosterMap] = useState({});
   const [trailer, setTrailer] = useState(null);
-  const [watchItem, setWatchItem] = useState(null);
+  const [watchItem, setWatchItem] = useState(saved.watchItem || null);
 
   const allItems = useMemo(() => [...RAW.map(item => enhance(item, 'marvel')), ...DC_RAW.map(item => enhance(item, 'dc'))], []);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ universe, query, genre, rating, sortBy, actions }));
-  }, [universe, query, genre, rating, sortBy, actions]);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ universe, query, genre, rating, sortBy, actions, section, watchItem }));
+  }, [universe, query, genre, rating, sortBy, actions, section, watchItem]);
 
   useEffect(() => {
     fetch('/posters/posters.json', { cache: 'force-cache' })
