@@ -88,7 +88,7 @@ export default function App() {
       .filter(item => item.title.toLowerCase().includes(query.toLowerCase()))
       .filter(item => genre === 'All' || item.genres.includes(genre) || item.type === genre.toLowerCase())
       .filter(item => Number(item.rating) >= rating)
-      .map(item => ({ ...item, poster: item.poster || posterMap[item.id] || posterMap[String(item.id)] || posterMap[slugifyPosterName(item.title)] || '', userStatus: actions[item.id]?.status || 'unwatched', bookmarked: Boolean(actions[item.id]?.bookmarked) }));
+      .map(item => ({ ...item, poster: item.poster || posterMap[item.id] || posterMap[String(item.id)] || posterMap[slugifyPosterName(item.title)] || '', userStatus: actions[item.id]?.status || 'unwatched', bookmarked: Boolean(actions[item.id]?.bookmarked), watchStartedAt: actions[item.id]?.watchStartedAt || null }));
     sorted.sort((a, b) => sortBy === 'year' ? a.year - b.year : sortBy === 'title' ? a.title.localeCompare(b.title) : a.order - b.order);
     return sorted;
   }, [actions, allItems, universe, query, genre, posterMap, rating, sortBy]);
@@ -140,6 +140,8 @@ export default function App() {
   const resetFilters = () => { setQuery(''); setGenre('All'); setRating(0); setSortBy('order'); };
   const handleStartWatch = (item, tmdbId, mediaType) => {
     setWatchItem({ item, tmdbId, mediaType });
+    setStatus(item, 'watching');
+    updateAction(item, { watchStartedAt: Date.now() });
     setSection('watch');
   };
 
@@ -172,6 +174,7 @@ export default function App() {
         <MovieRail title="Up next" items={activeItems.filter(i => i.userStatus === 'unwatched').slice(0, 24)} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} scrollable />
         <MovieRail title="Essential picks" items={activeItems.filter(i => i.essential)} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} paginated />
         <MovieRail title="Recently watched" items={activeItems.filter(i => i.userStatus === 'watched').slice(-24).reverse()} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} empty="Mark titles as watched to see them here." scrollable />
+        {activeItems.filter(i => i.userStatus === 'watching').length > 0 && <ContinueWatching items={activeItems.filter(i => i.userStatus === 'watching')} setSelected={setSelected} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} onResume={handleStartWatch} />}
       </>}
 
       {section === 'list' && <ListSection items={activeItems} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />}
@@ -183,6 +186,7 @@ export default function App() {
         <button className={section === 'home' ? 'active' : ''} onClick={() => setSection('home')}><Home size={22} /><span>Home</span></button>
         <button className={section === 'list' ? 'active' : ''} onClick={() => setSection('list')}><ListFilter size={22} /><span>List</span></button>
         <button className={section === 'analytics' ? 'active' : ''} onClick={() => setSection('analytics')}><BarChart3 size={22} /><span>Stats</span></button>
+        <button className={section === 'watch' ? 'active' : ''} onClick={() => { if (watchItem) setSection('watch'); }}><Play size={22} /><span>Watch</span></button>
         <button className={section === 'profile' ? 'active' : ''} onClick={() => setSection('profile')}><UserRound size={22} /><span>Profile</span></button>
       </nav>
 
@@ -437,19 +441,77 @@ function TrailerModal({ trailer, onClose }) {
   return <aside className="trailer-modal"><div><button className="trailer-close" onClick={onClose}><X /></button><h2>{trailer.title} trailer</h2><iframe src={trailer.url} title={`${trailer.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /></div></aside>;
 }
 
+function ContinueWatching({ items, setSelected, setStatus, toggleBookmark, playTrailer, onResume }) {
+  const handleResume = async (item) => {
+    const params = new URLSearchParams({ title: item.title, year: String(item.year || '') });
+    const res = await fetch(`/api/tmdb/poster?${params.toString()}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.tmdbId) { onResume(item, data.tmdbId, data.mediaType === 'tv' ? 'tv' : 'movie'); return; }
+    }
+    onResume(item, null, 'movie');
+  };
+  const elapsedLabel = (item) => {
+    const started = item.watchStartedAt;
+    if (!started) return '';
+    const elapsed = Math.floor((Date.now() - started) / 60000);
+    const total = item.runtime || 120;
+    const pct = Math.min(Math.round((elapsed / total) * 100), 99);
+    return pct > 0 ? `${pct}%` : 'Started';
+  };
+  return (
+    <section className="continue-watching rail-card web-rail">
+      <div className="section-title"><h2>Continue Watching</h2><button>{items.length} in progress</button></div>
+      <div className="movie-grid web-grid rail-scroll">
+        {items.map(item => (
+          <article key={item.id} className="movie-card continue-card" style={{ '--accent': item.accent }}>
+            <button className="poster-button" onClick={() => handleResume(item)}>
+              <PosterArt item={item} />
+              <div className="continue-overlay"><Play size={28} fill="currentColor" /></div>
+            </button>
+            <div className="card-body">
+              <button className="title-button" onClick={() => setSelected(item)}>{item.title}</button>
+              <span>{elapsedLabel(item)} complete</span>
+            </div>
+            <div className="card-actions">
+              <button onClick={() => handleResume(item)} className="trailer-chip"><Play size={16} fill="currentColor" /><span>Resume</span></button>
+              <StatusSelect item={item} setStatus={setStatus} compact />
+              <button onClick={() => toggleBookmark(item)} className={`bookmark-chip ${item.bookmarked ? 'saved' : ''}`}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, onStartWatch }) {
   const { item, tmdbId, mediaType } = watchItem;
   const [switching, setSwitching] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
   const videasyUrl = tmdbId ? `https://player.videasy.net/${mediaType}/${tmdbId}` : `https://player.videasy.net/movie/${encodeURIComponent(item.title)}`;
   const upNext = activeItems
     .filter(i => i.id !== item.id && i.userStatus !== 'watched' && i.userStatus !== 'dropped')
     .slice(0, 12);
   const currentItem = activeItems.find(i => i.id === item.id) || item;
+  const totalMs = (item.runtime || 120) * 60 * 1000;
+  const progress = Math.min((elapsed / totalMs) * 100, 100);
+  const isComplete = progress >= 90;
   useEffect(() => {
     const handleKey = (e) => { if (e.key === 'Escape') onBack(); };
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);
   }, [onBack]);
+  useEffect(() => {
+    setElapsed(0);
+    const interval = setInterval(() => setElapsed(prev => prev + 1000), 1000);
+    return () => clearInterval(interval);
+  }, [item.id]);
+  useEffect(() => {
+    if (isComplete && currentItem.userStatus === 'watching') {
+      setStatus(currentItem, 'watched');
+    }
+  }, [isComplete, currentItem.userStatus, currentItem.id, setStatus]);
   const handleSwitchItem = async (rec) => {
     if (switching) return;
     setSwitching(true);
@@ -479,6 +541,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
       <div className="watch-player">
         <iframe src={videasyUrl} title={`Watch ${item.title}`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen />
       </div>
+      <div className="watch-progress-bar"><span style={{ width: `${progress}%` }} /></div>
       <div className="watch-info">
         <div className="watch-meta">
           <span>{currentItem.year}</span>

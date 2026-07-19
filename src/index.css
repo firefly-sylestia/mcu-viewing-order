@@ -1168,6 +1168,8 @@ button { border: 0; color: inherit; cursor: pointer; }
 .watch-header-actions button:hover { background: rgba(255,255,255,.12); color: #fff; }
 .watch-header-actions button.saved { background: var(--brand-accent, #d6202d); color: #fff; }
 .watch-player { position: relative; width: 100%; max-width: 1100px; margin: 0 auto; aspect-ratio: 16/9; background: #000; border-left: 1px solid rgba(255,255,255,.06); border-right: 1px solid rgba(255,255,255,.06); box-shadow: 0 8px 40px rgba(0,0,0,.4); }
+.watch-progress-bar { max-width: 1100px; margin: 0 auto; height: 3px; background: rgba(255,255,255,.1); }
+.watch-progress-bar span { display: block; height: 100%; background: var(--brand-accent, #d6202d); transition: width 1s linear; }
 .watch-player iframe { width: 100%; height: 100%; border: 0; display: block; }
 .watch-info { max-width: 1100px; margin: 0 auto; padding: 20px clamp(12px,3vw,32px); }
 .watch-meta { display: flex; align-items: center; gap: 10px; color: #999; font-size: 14px; font-weight: 600; margin-bottom: 12px; }
@@ -1187,6 +1189,11 @@ button { border: 0; color: inherit; cursor: pointer; }
 .watch-rec-poster .fallback-poster strong { font-size: 16px; }
 .watch-rec-card > span { display: block; font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .watch-rec-card > small { color: #888; font-size: 11px; }
+
+.continue-card .poster-button { position: relative; }
+.continue-overlay { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(0,0,0,.5); opacity: 0; transition: opacity .18s ease; }
+.continue-card .poster-button:hover .continue-overlay { opacity: 1; }
+.continue-card .card-actions .trailer-chip { background: var(--brand-accent, #d6202d); }
 @media (max-width: 600px) {
   .watch-player { border-left: 0; border-right: 0; }
   .watch-header h1 { font-size: 15px; }
