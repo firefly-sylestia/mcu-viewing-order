@@ -7,6 +7,11 @@ import ProfilePage from './components/ProfilePage';
 import './index.css';
 
 const STORAGE_KEY = 'cinematic-viewing-ui-state-v2';
+const VALID_HASHES = ['home', 'list', 'analytics', 'watch', 'profile'];
+const hashSection = () => {
+  const h = window.location.hash.replace('#', '');
+  return VALID_HASHES.includes(h) ? h : null;
+};
 const STATUS = ['unwatched', 'watching', 'watched', 'dropped'];
 const STATUS_LABELS = { unwatched: 'Unwatched', watching: 'Watching', watched: 'Watched', dropped: 'Dropped' };
 const palette = ['#d6202d', '#8a1238', '#315f42', '#1f4977', '#6b3bc8', '#b36a17'];
@@ -82,7 +87,7 @@ export default function App() {
   const [rating, setRating] = useState(saved.rating || 0);
   const [sortBy, setSortBy] = useState(saved.sortBy || 'order');
   const [heroIndex, setHeroIndex] = useState(0);
-  const [section, setSection] = useState(saved.section || 'home');
+  const [section, setSection] = useState(hashSection() || saved.section || 'home');
   const [actions, setActions] = useState(saved.actions || {});
   const [posterMap, setPosterMap] = useState({});
   const [trailer, setTrailer] = useState(null);
@@ -95,7 +100,19 @@ export default function App() {
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ universe, query, genre, rating, sortBy, actions, section, watchItem }));
+    if (window.location.hash !== `#${section}`) {
+      window.history.replaceState(null, '', `#${section}`);
+    }
   }, [universe, query, genre, rating, sortBy, actions, section, watchItem]);
+
+  useEffect(() => {
+    const onHashChange = () => {
+      const h = hashSection();
+      if (h) setSection(h);
+    };
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
 
   useEffect(() => {
     fetch('/posters/posters.json', { cache: 'force-cache' })
@@ -178,7 +195,7 @@ export default function App() {
     <main className={`movie-site universe-${universe}`} style={{ '--brand-accent': universeAccent }}>
       <div className="site-glow" />
       <header className="site-header">
-        <button className="brand" onClick={() => { setQuery(''); setSection('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} aria-label={`Go to ${universeName} Viewing Order home`}><span>{universeName}</span><b>{universeName} Viewing Order</b></button>
+        <button className="brand" onClick={() => { setQuery(''); setSection('home'); setWatchItem(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }} aria-label={`Go to ${universeName} Viewing Order home`}><span>{universeName}</span><b>{universeName} Viewing Order</b></button>
         <div className="universe-tabs" role="tablist" aria-label="Universe">
           <button className={universe === 'marvel' ? 'active' : ''} onClick={() => { setUniverse('marvel'); setHeroIndex(0); }}>Marvel</button>
           <button className={universe === 'dc' ? 'active' : ''} onClick={() => { setUniverse('dc'); setHeroIndex(0); }}>DC</button>
@@ -210,7 +227,7 @@ export default function App() {
       {section === 'watch' && !safeWatchItem && <WatchBrowse activeItems={activeItems} onStartWatch={handleStartWatch} setSelected={setSelected} setStatus={setStatus} toggleBookmark={toggleBookmark} setSection={setSection} />}
 
       <nav className="bottom-nav" aria-label="Primary">
-        <button className={section === 'home' ? 'active' : ''} onClick={() => { setQuery(''); setSection('home'); }}><Home size={22} /><span>Home</span></button>
+        <button className={section === 'home' ? 'active' : ''} onClick={() => { setQuery(''); setSection('home'); setWatchItem(null); }}><Home size={22} /><span>Home</span></button>
         <button className={section === 'list' ? 'active' : ''} onClick={() => { setQuery(''); setSection('list'); }}><ListFilter size={22} /><span>List</span></button>
         <button className={section === 'analytics' ? 'active' : ''} onClick={() => { setQuery(''); setSection('analytics'); }}><BarChart3 size={22} /><span>Stats</span></button>
         <button className={section === 'watch' ? 'active' : ''} onClick={() => { setQuery(''); setSection('watch'); }}><Play size={22} /><span>Watch</span></button>
