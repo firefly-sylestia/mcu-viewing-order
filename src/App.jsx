@@ -374,7 +374,7 @@ function DetailView({ item, onClose, setStatus, toggleBookmark }) {
   };
   const closeTrailer = () => {
     setIsTrailerExpanded(false);
-    setTimeout(() => setInlineTrailer(null), 200);
+    setTimeout(() => setInlineTrailer(null), 400);
   };
   const modalRef = React.useRef(null);
   React.useEffect(() => {
