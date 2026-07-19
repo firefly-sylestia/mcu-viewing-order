@@ -15,7 +15,7 @@ const parseHash = () => {
   const slug = slash > -1 ? raw.slice(slash + 1) : null;
   return { section: VALID_HASHES.includes(section) ? section : null, slug };
 };
-const titleSlug = (title) => String(title || '').toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+
 const STATUS = ['unwatched', 'watching', 'watched', 'dropped'];
 const STATUS_LABELS = { unwatched: 'Unwatched', watching: 'Watching', watched: 'Watched', dropped: 'Dropped' };
 const palette = ['#d6202d', '#8a1238', '#315f42', '#1f4977', '#6b3bc8', '#b36a17'];
@@ -116,17 +116,18 @@ export default function App() {
   }, [universe, query, genre, rating, sortBy, actions, section, watchItem]);
 
   useEffect(() => {
-    if (window.location.hash !== `#${section}`) {
-      window.history.replaceState(null, '', `#${section}`);
+    const currentHashSection = parseHash().section;
+    if (currentHashSection !== section || (!safeWatchItem && window.location.hash.includes('/'))) {
+      window.history.replaceState(null, '', safeWatchItem ? `#watch/${slugifyPosterName(safeWatchItem.item.title)}` : `#${section}`);
     }
-  }, [section]);
+  }, [section, safeWatchItem]);
 
   useEffect(() => {
     const onHashChange = () => {
       const { section: s, slug } = parseHash();
       if (s) setSection(s);
       if (s === 'watch' && slug && allItems.length) {
-        const found = allItems.find(i => titleSlug(i.title) === slug);
+        const found = allItems.find(i => slugifyPosterName(i.title) === slug);
         if (found) handleStartWatch(found, null, 'movie');
       }
     };
@@ -206,7 +207,7 @@ export default function App() {
     updateAction(item, { watchStartedAt: Date.now() });
     setSelected(null);
     setSection('watch');
-    window.history.replaceState(null, '', `#watch/${titleSlug(item.title)}`);
+    window.history.replaceState(null, '', `#watch/${slugifyPosterName(item.title)}`);
   };
 
   const universeName = universe === 'marvel' ? 'MCU' : 'DC';
