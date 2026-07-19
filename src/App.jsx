@@ -569,6 +569,7 @@ function WatchBrowse({ activeItems, onStartWatch, setSelected, setStatus, toggle
 function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, onStartWatch }) {
   const { item, tmdbId, mediaType } = watchItem;
   const [switching, setSwitching] = useState(false);
+  const [toast, setToast] = useState('');
   const videasyUrl = tmdbId ? `https://player.videasy.net/${mediaType}/${tmdbId}` : `https://player.videasy.net/movie/${encodeURIComponent(item.title)}`;
   const upNext = activeItems
     .filter(i => i.id !== item.id && i.userStatus !== 'watched' && i.userStatus !== 'dropped')
@@ -617,10 +618,11 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
           <h1>{currentItem.title}</h1>
         </div>
         <div className="watch-header-actions">
-          {currentItem.userStatus !== 'watched' && <button onClick={() => setStatus(currentItem, 'watched')} title="Mark as Watched" aria-label="Mark as Watched"><Check size={20} /></button>}
+          {currentItem.userStatus !== 'watched' && <button onClick={() => { setStatus(currentItem, 'watched'); setToast('Marked as watched'); setTimeout(() => setToast(''), 2000); }} title="Mark as Watched" aria-label="Mark as Watched"><Check size={20} /></button>}
           <button onClick={() => toggleBookmark(currentItem)} className={currentItem.bookmarked ? 'saved' : ''} aria-label={currentItem.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={20} fill={currentItem.bookmarked ? 'currentColor' : 'none'} /></button>
         </div>
       </header>
+      {toast && <div className="watch-toast">{toast}</div>}
       <div className="watch-player">
         <iframe src={videasyUrl} title={`Watch ${item.title}`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen />
       </div>
