@@ -13,7 +13,7 @@ const formatTimeAgo = (timestamp) => {
   return 'Synced ' + Math.floor(hours / 24) + 'd ago';
 };
 
-function ProfilePage({ stats, activeItems, universe, setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, profileName, setProfileName, user, configured, onLogin, onLogout, lastSynced, syncing, onSync }) {
+function ProfilePage({ stats, activeItems, universe, setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, profileName, setProfileName, user, configured, onLogin, onLogout, lastSynced, syncing, onSync, conflict, onResolveRemote, onResolveLocal, syncToast }) {
   const [activeTab, setActiveTab] = useState('insights');
   
   const savedItems = activeItems.filter(i => i.bookmarked);
@@ -23,8 +23,30 @@ function ProfilePage({ stats, activeItems, universe, setSelected, cycleStatus, s
 
   return (
     <div className="profile-page">
+      {/* Sync Toast */}
+      {syncToast && (
+        <div className={`sync-toast ${syncToast.type === 'error' ? 'sync-toast-error' : ''}`}>
+          {syncToast.type === 'error' ? '⚠️' : '✓'} {syncToast.message}
+        </div>
+      )}
+      
       {/* Profile Header */}
       <ProfileHeader universe={universe} stats={stats} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={onLogin} onLogout={onLogout} lastSynced={lastSynced} syncing={syncing} onSync={onSync} />
+      
+      {/* Conflict Resolution */}
+      {conflict && (
+        <div className="sync-conflict-banner">
+          <div className="sync-conflict-icon">⚠️</div>
+          <div className="sync-conflict-body">
+            <strong>Sync Conflict</strong>
+            <p>Your data has changed on another device. Which version would you like to keep?</p>
+          </div>
+          <div className="sync-conflict-actions">
+            <button className="sync-conflict-btn primary" onClick={onResolveRemote}>Use Cloud</button>
+            <button className="sync-conflict-btn" onClick={onResolveLocal}>Keep Mine</button>
+          </div>
+        </div>
+      )}
       
       {/* Tabs */}
       <div className="profile-tabs-container">
@@ -94,9 +116,10 @@ function ProfilePage({ stats, activeItems, universe, setSelected, cycleStatus, s
 function ProfileHeader({ universe, stats, profileName, setProfileName, user, configured, onLogin, onLogout, lastSynced, syncing, onSync }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(profileName);
+  const [confirmingLogout, setConfirmingLogout] = useState(false);
   const inputRef = useRef(null);
   const universeName = universe === 'marvel' ? 'MCU' : 'DC';
-  const universeAccent = universe === 'marvel' ? '#334155' : '#1677d2';
+  const universeAccent = universe === 'marvel' ? '#9a4a4a' : '#1677d2';
   const displayName = profileName || `${universeName} Viewer`;
 
   const save = () => {
@@ -153,12 +176,18 @@ function ProfileHeader({ universe, stats, profileName, setProfileName, user, con
               <button className="sync-now-btn" onClick={onSync} disabled={syncing} title="Sync now">
                 <RefreshCw size={14} className={syncing ? 'spinning' : ''} />
               </button>
-              <button className="profile-auth-btn signed-in" onClick={onLogout} title="Sign out">
-                <span className="auth-user-label">
-                  {user.email ? user.email.split('@')[0] : 'Guest'}
-                </span>
-                <LogOut size={14} />
-              </button>
+              {confirmingLogout ? (
+                <div className="profile-auth-confirm">
+                  <span>Sign out?</span>
+                  <button className="confirm-yes" onClick={() => { onLogout(); setConfirmingLogout(false); }}>Yes</button>
+                  <button className="confirm-no" onClick={() => setConfirmingLogout(false)}>No</button>
+                </div>
+              ) : (
+                <button className="profile-auth-btn signed-in" onClick={() => setConfirmingLogout(true)} title="Sign out">
+                  <span className="auth-user-avatar">{displayName.charAt(0).toUpperCase()}</span>
+                  <LogOut size={14} />
+                </button>
+              )}
             </>
           ) : (
             <button className="profile-auth-btn sign-in" onClick={onLogin}>

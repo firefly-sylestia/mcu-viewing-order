@@ -31,7 +31,7 @@ export const SEMANTIC_COLOR_MATRIX = {
     emphasis: '#121a2a',
     success: '#15803d',
     warning: '#b45309',
-    error: '#b91c1c',
+    error: '#9a4a4a',
     textPrimary: '#121a2a',
     textSecondary: '#4f5c70',
   },
