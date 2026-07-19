@@ -355,14 +355,22 @@ function DetailView({ item, onClose, setStatus, toggleBookmark }) {
     setIsTrailerExpanded(false);
     setTimeout(() => setInlineTrailer(null), 200);
   };
-  return <div className="detail-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !isTrailerExpanded) onClose(); }}>
-    <article className="detail-modal" role="dialog" aria-modal="true" aria-labelledby="detail-title" style={{ '--accent': item.accent, '--detail-poster-bg': `url('${item.poster}')` }}>
+  const modalRef = React.useRef(null);
+  React.useEffect(() => {
+    if (isTrailerExpanded && modalRef.current) modalRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [isTrailerExpanded]);
+  return <div className="detail-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+    <article className="detail-modal" ref={modalRef} role="dialog" aria-modal="true" aria-labelledby="detail-title" style={{ '--accent': item.accent, '--detail-poster-bg': `url('${item.poster}')` }}>
       {item.poster && <img className="detail-backdrop" src={item.poster} alt="" aria-hidden="true" />}
       <div className="detail-backdrop-shade" aria-hidden="true" />
       <button className="detail-close" onClick={onClose} aria-label="Close details"><X size={21} /></button>
-      <div className="detail-layout">
+      <div className={`detail-layout${isTrailerExpanded ? ' has-trailer' : ''}`}>
         <div className="detail-media">
-          <div className={`detail-poster ${isTrailerExpanded ? 'is-expanded' : ''}`}>{inlineTrailer ? <div className="detail-inline-trailer"><iframe src={inlineTrailer} title={`${item.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={closeTrailer} aria-label="Close trailer"><X size={20} /></button></div> : <PosterArt item={item} />}</div>
+          <div className={`detail-poster${isTrailerExpanded ? ' is-expanded' : ''}`}>
+            {inlineTrailer
+              ? <div className="detail-inline-trailer"><iframe src={inlineTrailer} title={`${item.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={closeTrailer} aria-label="Close trailer"><X size={20} /></button></div>
+              : <PosterArt item={item} />}
+          </div>
           {!isTrailerExpanded && <button className="detail-trailer" onClick={showTrailer}><Play size={18} fill="currentColor" /> Watch trailer</button>}
         </div>
         <div className="detail-content">

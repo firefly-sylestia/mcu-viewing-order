@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Rajdhani:wght@500;600;700&display=swap');
+/* Geom variable font loaded via @fontsource-variable/geom in main.jsx */
 /* ═══════════════════════════════════════════════════════════════════════════
    MCU VIEWING TRACKER — Core Design Tokens
    Cinematic dark interface for timeline-driven viewing workflows
@@ -124,10 +124,10 @@
   --duration-cinematic: 600ms;
   
   /* Typography Roles */
-  --sans: "Outfit", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-display: "Bebas Neue", "Rajdhani", "Outfit", system-ui, sans-serif;
-  --font-ui: "Rajdhani", "Outfit", system-ui, sans-serif;
-  --font-body: "Outfit", "Rajdhani", system-ui, sans-serif;
+  --sans: "Geom Variable", "Geom", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Geom Variable", "Geom", system-ui, sans-serif;
+  --font-ui: "Geom Variable", "Geom", system-ui, sans-serif;
+  --font-body: "Geom Variable", "Geom", system-ui, sans-serif;
   --font-marvel-display: var(--font-display);
   --font-marvel-ui: var(--font-ui);
   --font-marvel-body: var(--font-body);
@@ -553,7 +553,7 @@ a:hover {
   }
 }
 
-/* ─����������������������������������������������� Stagger Animation Delays ─────────────────────���─���───���───���─���─────���─���─���───���─ */
+/* ─������������������������������������������������� Stagger Animation Delays ───────────────────���─���─���───���───���─���─────���─���─���───���─ */
 .stagger-1 { animation-delay: 50ms; }
 .stagger-2 { animation-delay: 100ms; }
 .stagger-3 { animation-delay: 150ms; }
@@ -791,7 +791,7 @@ button:active {
 /* Movie app redesign */
 * { box-sizing: border-box; }
 html, body, #root { min-height: 100%; background: #090808 !important; }
-body { margin: 0; font-family: Inter, Manrope, system-ui, sans-serif; color: #fff; overflow-x: hidden; }
+body { margin: 0; font-family: "Geom Variable", "Geom", system-ui, sans-serif; color: #fff; overflow-x: hidden; }
 button, input { font: inherit; }
 button { border: 0; color: inherit; cursor: pointer; }
 .cinema-app { min-height: 100svh; display: grid; place-items: center; padding: clamp(14px, 4vw, 44px); background: radial-gradient(circle at 43% 12%, rgba(95, 10, 20, .42), transparent 34%), linear-gradient(115deg, #060606, #16090d 48%, #060606); position: relative; isolation: isolate; }
@@ -1138,20 +1138,23 @@ button { border: 0; color: inherit; cursor: pointer; }
 
 /* Cinematic detail modal */
 .detail-overlay { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 20px; background: rgba(3,4,6,.82); backdrop-filter: blur(16px); }
-.detail-modal { position: relative; isolation: isolate; width: min(1040px,100%); max-height: min(760px,calc(100svh - 40px)); overflow: auto; border: 1px solid rgba(255,255,255,.14); border-radius: 28px; background: #111419; box-shadow: 0 40px 100px rgba(0,0,0,.75); }
-.detail-backdrop { position: absolute; inset: -60px 0 auto 0; z-index: -2; width: 100%; height: 76%; object-fit: cover; object-position: center 22%; filter: blur(34px) saturate(.75); opacity: .26; transform: scale(1.1); }
-.detail-backdrop-shade { position: absolute; inset: 0; z-index: -1; background: rgba(17,20,25,.78); }
+.detail-modal { position: relative; isolation: isolate; width: min(1040px,100%); max-height: min(820px,calc(100svh - 40px)); overflow: auto; border: 1px solid rgba(255,255,255,.14); border-radius: 28px; background: #111419; box-shadow: 0 40px 100px rgba(0,0,0,.75); scroll-behavior: smooth; }
+.detail-backdrop { position: absolute; inset: -80px 0 auto 0; z-index: -2; width: 100%; height: 90%; object-fit: cover; object-position: center 22%; filter: blur(48px) saturate(1.4) brightness(.85); opacity: .55; transform: scale(1.14); }
+.detail-backdrop-shade { position: absolute; inset: 0; z-index: -1; background: linear-gradient(160deg, rgba(10,12,17,.72) 0%, rgba(10,12,17,.92) 55%, rgba(10,12,17,.98) 100%); }
 .detail-close { position: absolute; top: 18px; right: 18px; z-index: 4; width: 42px; height: 42px; display: grid; place-items: center; border-radius: 13px; background: rgba(9,10,12,.75); border: 1px solid rgba(255,255,255,.12); backdrop-filter: blur(12px); }
 .detail-layout { display: grid; grid-template-columns: minmax(250px,340px) minmax(0,1fr); gap: clamp(28px,4vw,54px); padding: clamp(26px,4vw,52px); }
+.detail-layout.has-trailer { grid-template-columns: 1fr; }
 .detail-media { display: grid; align-content: start; gap: 12px; position: relative; }
+.detail-layout.has-trailer .detail-media { grid-template-columns: 1fr; }
 .detail-media::before { content: ''; position: absolute; inset: -28px; z-index: -2; background-image: var(--detail-poster-bg, url('')); background-size: cover; background-position: center 22%; filter: blur(34px) saturate(.75) brightness(.7); opacity: .18; transform: scale(1.08); pointer-events: none; }
-.detail-poster { position: relative; aspect-ratio: 2/3; overflow: hidden; border-radius: 22px; background: #090a0c; box-shadow: 0 24px 60px rgba(0,0,0,.5); transition: max-height 380ms cubic-bezier(.22,.8,.2,1), transform 380ms cubic-bezier(.22,.8,.2,1); }
-.detail-poster.is-expanded { position: fixed; inset: 20px; aspect-ratio: auto; width: auto; height: auto; max-height: 90vh; border-radius: 24px; z-index: 100; }
+.detail-poster { position: relative; aspect-ratio: 2/3; overflow: hidden; border-radius: 22px; background: #090a0c; box-shadow: 0 24px 60px rgba(0,0,0,.5); transition: aspect-ratio 380ms cubic-bezier(.22,.8,.2,1), border-radius 380ms cubic-bezier(.22,.8,.2,1); }
+.detail-poster.is-expanded { aspect-ratio: 16/9; border-radius: 18px; }
 .detail-poster > img { width: 100%; height: 100%; object-fit: cover; }
-.detail-inline-trailer { position: absolute; inset: 0; }
-.detail-inline-trailer iframe { width: 100%; height: 100%; border: 0; }
-.detail-inline-trailer button { position: absolute; top: 10px; right: 10px; width: 38px; height: 38px; display: grid; place-items: center; border-radius: 11px; background: rgba(0,0,0,.75); transition: background 180ms ease; }
+.detail-inline-trailer { position: absolute; inset: 0; background: #000; animation: trailerReveal .3s var(--ease-out) both; }
+.detail-inline-trailer iframe { width: 100%; height: 100%; border: 0; display: block; }
+.detail-inline-trailer button { position: absolute; top: 12px; right: 12px; width: 38px; height: 38px; display: grid; place-items: center; border-radius: 11px; background: rgba(0,0,0,.75); transition: background 180ms ease; z-index: 2; }
 .detail-inline-trailer button:hover { background: rgba(0,0,0,.95); }
+@keyframes trailerReveal { from { opacity: 0; } to { opacity: 1; } }
 .detail-trailer { height: 50px; display: flex; align-items: center; justify-content: center; gap: 9px; border-radius: 15px; background: var(--brand-accent); font-weight: 850; }
 .detail-content { align-self: center; min-width: 0; }
 .detail-kicker { display: flex; justify-content: space-between; gap: 18px; color: color-mix(in srgb, var(--brand-accent) 72%, #ffffff); font-size: 11px; font-weight: 900; letter-spacing: .11em; text-transform: uppercase; }
@@ -1203,7 +1206,9 @@ button { border: 0; color: inherit; cursor: pointer; }
   .detail-modal { max-height: calc(100svh - 16px); border-radius: 24px; }
   .detail-layout { grid-template-columns: 1fr; gap: 22px; padding: 54px 18px 22px; }
   .detail-media { grid-template-columns: 112px 1fr; align-items: end; }
+  .detail-layout.has-trailer .detail-media { grid-template-columns: 1fr; }
   .detail-poster { border-radius: 16px; }
+  .detail-poster.is-expanded { aspect-ratio: 16/9; border-radius: 14px; }
   .detail-trailer { align-self: end; }
   .detail-content h1 { margin-top: 10px; font-size: 38px; }
   .detail-description { margin: 18px 0; font-size: 14px; }
