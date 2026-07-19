@@ -116,9 +116,12 @@ export default function App() {
   }, [universe, query, genre, rating, sortBy, actions, section, watchItem]);
 
   useEffect(() => {
-    const currentHashSection = parseHash().section;
-    if (currentHashSection !== section || (!safeWatchItem && window.location.hash.includes('/'))) {
-      window.history.replaceState(null, '', safeWatchItem ? `#watch/${slugifyPosterName(safeWatchItem.item.title)}` : `#${section}`);
+    const hashed = parseHash().section;
+    if (hashed !== section) {
+      const target = section === 'watch' && safeWatchItem
+        ? `#watch/${slugifyPosterName(safeWatchItem.item.title)}`
+        : `#${section}`;
+      window.history.replaceState(null, '', target);
     }
   }, [section, safeWatchItem]);
 
