@@ -553,7 +553,7 @@ a:hover {
   }
 }
 
-/* ─������������������������������� Stagger Animation Delays ───────────────────────────────────────���─���─���───���─ */
+/* ─��������������������������������� Stagger Animation Delays ───────────────────────────────────────���─���─���───���─ */
 .stagger-1 { animation-delay: 50ms; }
 .stagger-2 { animation-delay: 100ms; }
 .stagger-3 { animation-delay: 150ms; }
@@ -915,7 +915,7 @@ button { border: 0; color: inherit; cursor: pointer; }
 .suggestion-actions button:hover { transform: translateY(-1px); }
 .suggestion-actions button:first-child { background: #fff; color: #101010; }
 .status-select { position: relative; min-width: 120px; }
-.status-trigger { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 14px; border-radius: 12px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); color: #fff; font-weight: 700; font-size: 13px; transition: all .18s ease; min-height: 44px; cursor: pointer; letter-spacing: .02em; }
+.status-trigger { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 14px; border-radius: 12px; background: rgba(255,255,255,.06); border: none; color: #fff; font-weight: 700; font-size: 13px; transition: all .18s ease; min-height: 44px; cursor: pointer; letter-spacing: .02em; }
 .status-trigger:hover { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.22); transform: translateY(-1px); }
 .status-trigger:active { transform: translateY(0) scale(.98); }
 .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: currentColor; opacity: .5; display: none; }
@@ -933,14 +933,14 @@ button { border: 0; color: inherit; cursor: pointer; }
 .status-option.watching .status-dot { background: #f59e0b; opacity: 1; }
 .status-option.dropped .status-dot { background: #ef4444; opacity: 1; }
 .status-option.unwatched .status-dot { background: #6b7280; opacity: 1; }
-.status-select.watched .status-trigger { background: #22c55e; border-color: #16a34a; color: #fff; }
-.status-select.watched .status-trigger:hover { background: #16a34a; border-color: #15803d; }
-.status-select.watching .status-trigger { background: #f59e0b; border-color: #d97706; color: #fff; }
-.status-select.watching .status-trigger:hover { background: #d97706; border-color: #b45309; }
-.status-select.dropped .status-trigger { background: #ef4444; border-color: #dc2626; color: #fff; }
-.status-select.dropped .status-trigger:hover { background: #dc2626; border-color: #991b1b; }
-.status-select.unwatched .status-trigger { background: #6b7280; border-color: #4b5563; color: #fff; }
-.status-select.unwatched .status-trigger:hover { background: #4b5563; border-color: #374151; }
+.status-select.watched .status-trigger { background: #22c55e; color: #fff; }
+.status-select.watched .status-trigger:hover { background: #16a34a; }
+.status-select.watching .status-trigger { background: #f59e0b; color: #fff; }
+.status-select.watching .status-trigger:hover { background: #d97706; }
+.status-select.dropped .status-trigger { background: #ef4444; color: #fff; }
+.status-select.dropped .status-trigger:hover { background: #dc2626; }
+.status-select.unwatched .status-trigger { background: #6b7280; color: #fff; }
+.status-select.unwatched .status-trigger:hover { background: #4b5563; }
 .status-select.compact .status-trigger { padding: 8px 12px; min-height: 36px; font-size: 12px; gap: 6px; border-radius: 10px; }
 .status-select.compact { min-width: 100px; }
 .status-select.watched .status-trigger .status-dot { background: #22c55e; opacity: 1; }
