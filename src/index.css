@@ -1157,7 +1157,7 @@ button { border: 0; color: inherit; cursor: pointer; }
 .detail-inline-trailer button:hover { background: rgba(0,0,0,.95); }
 @keyframes trailerReveal { from { opacity: 0; } to { opacity: 1; } }
 
-.watch-browse { min-height: 100svh; padding: 24px clamp(12px,3vw,32px) 100px; }
+.watch-browse { min-height: 100svh; padding: 24px clamp(12px,3vw,32px) 100px; animation: watchFadeIn .28s var(--ease-out) both; }
 .watch-browse-hero { text-align: center; padding: clamp(40px,8vh,80px) 16px clamp(32px,6vh,60px); }
 .watch-browse-icon { width: 88px; height: 88px; margin: 0 auto 20px; display: grid; place-items: center; border-radius: 50%; background: var(--brand-accent, #d6202d); opacity: .85; }
 .watch-browse-hero h1 { font-size: clamp(24px,4vw,36px); margin-bottom: 10px; letter-spacing: .04em; }
@@ -1172,7 +1172,7 @@ button { border: 0; color: inherit; cursor: pointer; }
 .watch-browse-empty button { padding: 12px 24px; border-radius: 12px; background: var(--brand-accent, #d6202d); color: #fff; font-weight: 800; font-size: 14px; transition: transform .15s ease; }
 .watch-browse-empty button:hover { transform: translateY(-2px); }
 
-.watch-page { min-height: 100svh; background: #050507; color: #fff; padding-bottom: 100px; }
+.watch-page { min-height: 100svh; background: #050507; color: #fff; padding-bottom: 100px; animation: watchFadeIn .3s var(--ease-out) both; }
 .watch-header { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 16px; padding: 16px clamp(12px,3vw,32px); border-bottom: 1px solid rgba(255,255,255,.06); background: rgba(5,5,7,.92); backdrop-filter: blur(16px); }
 .watch-header > button { display: flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 10px; background: rgba(255,255,255,.06); color: #ccc; font-weight: 700; font-size: 14px; transition: background .15s ease; }
 .watch-header > button:hover { background: rgba(255,255,255,.12); color: #fff; }
@@ -1181,6 +1181,7 @@ button { border: 0; color: inherit; cursor: pointer; }
 .watch-header h1 { margin: 2px 0 0; font-size: clamp(16px,2.5vw,22px); letter-spacing: .04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .watch-toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); z-index: 100; padding: 10px 22px; border-radius: 12px; background: var(--brand-accent, #22c55e); color: #fff; font-weight: 800; font-size: 13px; letter-spacing: .03em; box-shadow: 0 8px 28px rgba(0,0,0,.4); animation: toastIn .22s var(--ease-out) both; pointer-events: none; }
 @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(-10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+@keyframes watchFadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 .watch-header-actions button { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 10px; background: rgba(255,255,255,.06); color: #ccc; transition: all .15s ease; }
 .watch-header-actions button:hover { background: rgba(255,255,255,.12); color: #fff; }
 .watch-header-actions button.saved { background: var(--brand-accent, #d6202d); color: #fff; }
