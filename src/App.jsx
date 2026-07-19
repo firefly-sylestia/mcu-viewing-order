@@ -188,7 +188,7 @@ export default function App() {
         <button className={section === 'home' ? 'active' : ''} onClick={() => setSection('home')}><Home size={22} /><span>Home</span></button>
         <button className={section === 'list' ? 'active' : ''} onClick={() => setSection('list')}><ListFilter size={22} /><span>List</span></button>
         <button className={section === 'analytics' ? 'active' : ''} onClick={() => setSection('analytics')}><BarChart3 size={22} /><span>Stats</span></button>
-        <button className={section === 'watch' ? 'active' : ''} onClick={() => { if (watchItem) { setSection('watch'); } else { const watching = activeItems.find(i => i.userStatus === 'watching'); if (watching) setSelected(watching); else setSection('home'); } }}><Play size={22} /><span>Watch</span></button>
+        <button className={section === 'watch' ? 'active' : ''} onClick={() => setSection('watch')}><Play size={22} /><span>Watch</span></button>
         <button className={section === 'profile' ? 'active' : ''} onClick={() => setSection('profile')}><UserRound size={22} /><span>Profile</span></button>
       </nav>
 
@@ -617,10 +617,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
           <span className="watch-kicker">{currentItem.universe === 'marvel' ? 'MCU' : 'DC'} · #{String(currentItem.order || currentItem.id).padStart(2, '0')}</span>
           <h1>{currentItem.title}</h1>
         </div>
-        <div className="watch-header-actions">
-          {currentItem.userStatus !== 'watched' && <button onClick={() => { setStatus(currentItem, 'watched'); setToast('Marked as watched'); setTimeout(() => setToast(''), 2000); }} title="Mark as Watched" aria-label="Mark as Watched"><Check size={20} /></button>}
-          <button onClick={() => toggleBookmark(currentItem)} className={currentItem.bookmarked ? 'saved' : ''} aria-label={currentItem.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={20} fill={currentItem.bookmarked ? 'currentColor' : 'none'} /></button>
-        </div>
+        <div className="watch-header-spacer" />
       </header>
       {toast && <div className="watch-toast">{toast}</div>}
       <div className="watch-player">
@@ -638,6 +635,8 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
         <p className="watch-desc">{currentItem.desc || `Watch ${currentItem.title} in the complete ${currentItem.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} viewing order.`}</p>
         <div className="watch-actions">
           <StatusSelect item={currentItem} setStatus={setStatus} />
+          <button onClick={() => toggleBookmark(currentItem)} className={`watch-action-btn ${currentItem.bookmarked ? 'saved' : ''}`} aria-label={currentItem.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={18} fill={currentItem.bookmarked ? 'currentColor' : 'none'} /><span>{currentItem.bookmarked ? 'Saved' : 'Save'}</span></button>
+          {currentItem.userStatus !== 'watched' && <button onClick={() => { setStatus(currentItem, 'watched'); setToast('Marked as watched'); setTimeout(() => setToast(''), 2000); }} className="watch-action-btn mark-watched" aria-label="Mark as Watched"><Check size={18} /><span>Mark Watched</span></button>}
         </div>
       </div>
       {upNext.length > 0 && (
