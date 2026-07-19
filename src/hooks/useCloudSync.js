@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { ref, set, get, onValue, off } from 'firebase/database';
 import { db, configured } from '../firebase';
 
@@ -6,11 +6,19 @@ export function useCloudSync(user, actions, profileName, setActions, setProfileN
   const pushTimer = useRef(null);
   const lastActions = useRef(null);
   const lastProfile = useRef(null);
+  const [lastSynced, setLastSynced] = useState(null);
+  const [syncing, setSyncing] = useState(false);
+
+  const updateLastSynced = () => {
+    const now = Date.now();
+    setLastSynced(now);
+  };
 
   // Pull data from cloud on login
   useEffect(() => {
     if (!configured || !user) return;
     const userRef = ref(db, `users/${user.uid}`);
+    setSyncing(true);
     get(userRef).then(snapshot => {
       const data = snapshot.val();
       if (!data) return;
@@ -22,7 +30,8 @@ export function useCloudSync(user, actions, profileName, setActions, setProfileN
         setProfileName(data.profileName);
         lastProfile.current = data.profileName;
       }
-    }).catch(() => {});
+      updateLastSynced();
+    }).catch(() => {}).finally(() => setSyncing(false));
   }, [user?.uid]);
 
   // Listen for remote changes while logged in
@@ -40,6 +49,7 @@ export function useCloudSync(user, actions, profileName, setActions, setProfileN
         setProfileName(data.profileName);
         lastProfile.current = data.profileName;
       }
+      updateLastSynced();
     });
     return () => off(userRef, 'value', handle);
   }, [user?.uid]);
@@ -47,12 +57,13 @@ export function useCloudSync(user, actions, profileName, setActions, setProfileN
   // Push local changes to cloud (debounced)
   const pushToCloud = useCallback(() => {
     if (!configured || !user) return;
+    setSyncing(true);
     const userRef = ref(db, `users/${user.uid}`);
     set(userRef, {
       actions,
       profileName,
       lastSynced: Date.now(),
-    }).catch(() => {});
+    }).then(updateLastSynced).catch(() => {}).finally(() => setSyncing(false));
     lastActions.current = actions;
     lastProfile.current = profileName;
   }, [user?.uid, actions, profileName]);
@@ -71,8 +82,8 @@ export function useCloudSync(user, actions, profileName, setActions, setProfileN
   const pushBeforeLogout = useCallback(() => {
     if (!configured || !user) return Promise.resolve();
     const userRef = ref(db, `users/${user.uid}`);
-    return set(userRef, { actions, profileName, lastSynced: Date.now() });
+    return set(userRef, { actions, profileName, lastSynced: Date.now() }).then(updateLastSynced);
   }, [user?.uid, actions, profileName]);
 
-  return { pushToCloud, pushBeforeLogout };
+  return { pushToCloud, pushBeforeLogout, lastSynced, syncing };
 }

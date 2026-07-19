@@ -2,6 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  signInWithPopup,
+  signInAnonymously,
+  GoogleAuthProvider,
   signOut,
   onAuthStateChanged,
 } from 'firebase/auth';
@@ -30,10 +33,21 @@ export function useAuth() {
     await createUserWithEmailAndPassword(auth, email, password);
   }, []);
 
+  const googleSignIn = useCallback(async () => {
+    if (!configured) throw new Error('Firebase not configured');
+    const provider = new GoogleAuthProvider();
+    await signInWithPopup(auth, provider);
+  }, []);
+
+  const anonymousSignIn = useCallback(async () => {
+    if (!configured) throw new Error('Firebase not configured');
+    await signInAnonymously(auth);
+  }, []);
+
   const logout = useCallback(async () => {
     if (!configured) return;
     await signOut(auth);
   }, []);
 
-  return { user, loading, login, signup, logout, configured };
+  return { user, loading, login, signup, googleSignIn, anonymousSignIn, logout, configured };
 }
