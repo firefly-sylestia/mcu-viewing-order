@@ -537,6 +537,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
           <h1>{currentItem.title}</h1>
         </div>
         <div className="watch-header-actions">
+          {currentItem.userStatus !== 'watched' && <button onClick={() => setStatus(currentItem, 'watched')} title="Mark as Watched" aria-label="Mark as Watched"><Check size={20} /></button>}
           <button onClick={() => toggleBookmark(currentItem)} className={currentItem.bookmarked ? 'saved' : ''} aria-label={currentItem.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={20} fill={currentItem.bookmarked ? 'currentColor' : 'none'} /></button>
         </div>
       </header>
