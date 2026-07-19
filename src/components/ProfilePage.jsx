@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
-import { Play, Bookmark, RotateCcw, Clock, Check, X, Pencil, Trophy } from 'lucide-react';
+import { Play, Bookmark, RotateCcw, Clock, Check, X, Pencil, Trophy, LogIn, LogOut, Cloud } from 'lucide-react';
 
-function ProfilePage({ stats, activeItems, universe, setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, profileName, setProfileName }) {
+function ProfilePage({ stats, activeItems, universe, setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, profileName, setProfileName, user, configured, onLogin, onLogout }) {
   const [activeTab, setActiveTab] = useState('insights');
   
   const savedItems = activeItems.filter(i => i.bookmarked);
@@ -12,7 +12,7 @@ function ProfilePage({ stats, activeItems, universe, setSelected, cycleStatus, s
   return (
     <div className="profile-page">
       {/* Profile Header */}
-      <ProfileHeader universe={universe} stats={stats} profileName={profileName} setProfileName={setProfileName} />
+      <ProfileHeader universe={universe} stats={stats} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={onLogin} onLogout={onLogout} />
       
       {/* Tabs */}
       <div className="profile-tabs-container">
@@ -79,7 +79,7 @@ function ProfilePage({ stats, activeItems, universe, setSelected, cycleStatus, s
   );
 }
 
-function ProfileHeader({ universe, stats, profileName, setProfileName }) {
+function ProfileHeader({ universe, stats, profileName, setProfileName, user, configured, onLogin, onLogout }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(profileName);
   const inputRef = useRef(null);
@@ -128,6 +128,22 @@ function ProfileHeader({ universe, stats, profileName, setProfileName }) {
           {stats.percent}% complete · {stats.total} titles tracked
         </p>
       </div>
+      {configured && (
+        <div className="profile-auth">
+          {user ? (
+            <button className="profile-auth-btn" onClick={onLogout} title="Sign out">
+              <Cloud size={16} />
+              <span>{user.email?.split('@')[0]}</span>
+              <LogOut size={14} />
+            </button>
+          ) : (
+            <button className="profile-auth-btn" onClick={onLogin}>
+              <LogIn size={16} />
+              <span>Sign in to sync</span>
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

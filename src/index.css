@@ -1539,3 +1539,65 @@ button { border: 0; color: inherit; cursor: pointer; }
 .profile-name-edit input:focus { border-color: var(--accent, #d6202d); }
 .streak-stat { color: #f0b90b !important; }
 .streak-stat b { display: flex; align-items: center; gap: 4px; }
+
+/* ── Auth Modal ─────────────────────────────────────────────────────── */
+.auth-modal {
+  background: #141518;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 28px;
+  padding: 32px 28px;
+  width: min(400px, 90vw);
+  position: relative;
+  animation: authIn .3s cubic-bezier(.2,.8,.2,1) both;
+}
+@keyframes authIn { from { opacity: 0; transform: translateY(16px) scale(.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.auth-header { text-align: center; margin-bottom: 24px; }
+.auth-icon { color: var(--accent, #d6202d); margin-bottom: 12px; }
+.auth-header h2 { font-size: 22px; margin: 0 0 6px; }
+.auth-header p { color: #888; font-size: 14px; margin: 0; }
+.auth-form { display: flex; flex-direction: column; gap: 14px; }
+.auth-form label { display: flex; flex-direction: column; gap: 5px; }
+.auth-form label span { font-size: 13px; font-weight: 700; color: #aaa; }
+.auth-form input {
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 12px;
+  padding: 12px 14px;
+  color: #fff;
+  font-size: 15px;
+  transition: border-color .15s ease;
+}
+.auth-form input:focus { border-color: var(--accent, #d6202d); }
+.auth-error { color: #ff4444; font-size: 13px; margin: 0; }
+.auth-submit {
+  height: 48px;
+  border-radius: 14px;
+  background: #d6202d;
+  color: #fff;
+  font-weight: 800;
+  font-size: 15px;
+  margin-top: 4px;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.auth-submit:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(214,32,45,.35); }
+.auth-submit:disabled { opacity: .6; cursor: not-allowed; }
+.auth-switch { text-align: center; color: #888; font-size: 13px; margin: 18px 0 0; }
+.auth-switch button { background: transparent; color: var(--accent, #d6202d); font-weight: 700; padding: 0; }
+
+/* ── Profile Auth Buttons ──────────────────────────────────────────── */
+.profile-auth { margin-left: auto; }
+.profile-auth-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.1);
+  color: #ccc;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all .15s ease;
+}
+.profile-auth-btn:hover { background: rgba(255,255,255,.1); color: #fff; }
+.profile-auth-btn svg:first-child { color: #4ade80; }
