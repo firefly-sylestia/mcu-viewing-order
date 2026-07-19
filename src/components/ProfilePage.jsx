@@ -94,6 +94,7 @@ function ProfilePage({ stats, activeItems, universe, setSelected, cycleStatus, s
 function ProfileHeader({ universe, stats, profileName, setProfileName, user, configured, onLogin, onLogout, lastSynced, syncing, onSync }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(profileName);
+  const [confirmingLogout, setConfirmingLogout] = useState(false);
   const inputRef = useRef(null);
   const universeName = universe === 'marvel' ? 'MCU' : 'DC';
   const universeAccent = universe === 'marvel' ? '#b91c1c' : '#1677d2';
@@ -153,12 +154,18 @@ function ProfileHeader({ universe, stats, profileName, setProfileName, user, con
               <button className="sync-now-btn" onClick={onSync} disabled={syncing} title="Sync now">
                 <RefreshCw size={14} className={syncing ? 'spinning' : ''} />
               </button>
-              <button className="profile-auth-btn signed-in" onClick={onLogout} title="Sign out">
-                <span className="auth-user-label">
-                  {user.email ? user.email.split('@')[0] : 'Guest'}
-                </span>
-                <LogOut size={14} />
-              </button>
+              {confirmingLogout ? (
+                <div className="profile-auth-confirm">
+                  <span>Sign out?</span>
+                  <button className="confirm-yes" onClick={() => { onLogout(); setConfirmingLogout(false); }}>Yes</button>
+                  <button className="confirm-no" onClick={() => setConfirmingLogout(false)}>No</button>
+                </div>
+              ) : (
+                <button className="profile-auth-btn signed-in" onClick={() => setConfirmingLogout(true)} title="Sign out">
+                  <span className="auth-user-avatar">{displayName.charAt(0).toUpperCase()}</span>
+                  <LogOut size={14} />
+                </button>
+              )}
             </>
           ) : (
             <button className="profile-auth-btn sign-in" onClick={onLogin}>

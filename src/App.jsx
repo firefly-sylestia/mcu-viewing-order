@@ -250,7 +250,7 @@ export default function App() {
           {user ? (
             <span className="header-user-badge">
               <Cloud size={13} />
-              <span className="header-user-name">{user.email ? user.email.split('@')[0] : 'Guest'}</span>
+              <span className="header-user-name">{profileName ? profileName.charAt(0).toUpperCase() : (user.email ? user.email.charAt(0).toUpperCase() : '?')}</span>
             </span>
           ) : (
             <span className="header-signin-badge">
