@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
-import { Play, Bookmark, RotateCcw, Clock, Check, X, Pencil } from 'lucide-react';
+import { Play, Bookmark, RotateCcw, Clock, Check, X, Pencil, Trophy } from 'lucide-react';
 
-function ProfilePage({ stats, activeItems, universe, setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer }) {
+function ProfilePage({ stats, activeItems, universe, setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, profileName, setProfileName }) {
   const [activeTab, setActiveTab] = useState('insights');
   
   const savedItems = activeItems.filter(i => i.bookmarked);
@@ -12,7 +12,7 @@ function ProfilePage({ stats, activeItems, universe, setSelected, cycleStatus, s
   return (
     <div className="profile-page">
       {/* Profile Header */}
-      <ProfileHeader universe={universe} stats={stats} />
+      <ProfileHeader universe={universe} stats={stats} profileName={profileName} setProfileName={setProfileName} />
       
       {/* Tabs */}
       <div className="profile-tabs-container">
@@ -79,17 +79,51 @@ function ProfilePage({ stats, activeItems, universe, setSelected, cycleStatus, s
   );
 }
 
-function ProfileHeader({ universe, stats }) {
+function ProfileHeader({ universe, stats, profileName, setProfileName }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(profileName);
+  const inputRef = useRef(null);
   const universeName = universe === 'marvel' ? 'MCU' : 'DC';
   const universeAccent = universe === 'marvel' ? '#d6202d' : '#1677d2';
+  const displayName = profileName || `${universeName} Viewer`;
+
+  const save = () => {
+    const trimmed = draft.trim();
+    setProfileName(trimmed);
+    setDraft(trimmed);
+    setEditing(false);
+  };
+
+  const startEdit = () => {
+    setDraft(profileName);
+    setEditing(true);
+    setTimeout(() => inputRef.current?.focus(), 0);
+  };
 
   return (
     <div className="profile-header" style={{ '--accent': universeAccent }}>
       <div className="profile-avatar">
-        <span className="avatar-initials">{universeName.charAt(0)}</span>
+        <span className="avatar-initials">{displayName.charAt(0).toUpperCase()}</span>
       </div>
       <div className="profile-info">
-        <h1 className="profile-title">{universeName} Viewer</h1>
+        {editing ? (
+          <div className="profile-name-edit">
+            <input
+              ref={inputRef}
+              value={draft}
+              onChange={e => setDraft(e.target.value)}
+              onBlur={save}
+              onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') { setDraft(profileName); setEditing(false); } }}
+              placeholder="Your name"
+              maxLength={30}
+            />
+          </div>
+        ) : (
+          <h1 className="profile-title" onClick={startEdit} title="Click to edit">
+            {displayName}
+            <Pencil size={14} className="profile-edit-icon" />
+          </h1>
+        )}
         <p className="profile-subtitle">
           {stats.percent}% complete · {stats.total} titles tracked
         </p>
@@ -133,6 +167,12 @@ function AnalyticsPanel({ stats, activeItems, inProgressItems }) {
           <b>{stats.watchedTime}</b>
           <span>Watch Time</span>
         </div>
+        {stats.streak > 1 && (
+          <div className="streak-stat">
+            <b><Trophy size={16} /> {stats.streak}</b>
+            <span>Best Streak</span>
+          </div>
+        )}
       </div>
     </section>
   );
