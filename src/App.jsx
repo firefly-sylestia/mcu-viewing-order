@@ -18,6 +18,16 @@ const runtimeLabel = (minutes = 0, type = 'film') => {
   return h ? `${h}h ${m ? `${m}m` : ''}`.trim() : `${m}m`;
 };
 
+const watchTimeLabel = (item) => {
+  const ms = item.watchedDuration || 0;
+  if (ms < 30000) return 'Just started';
+  const mins = Math.round(ms / 60000);
+  if (mins < 60) return `${mins}m watched`;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return `${h}h ${m ? `${m}m` : ''} watched`;
+};
+
 const slugifyPosterName = (value) => String(value || '')
   .toLowerCase()
   .replace(/&/g, 'and')
@@ -88,7 +98,7 @@ export default function App() {
       .filter(item => item.title.toLowerCase().includes(query.toLowerCase()))
       .filter(item => genre === 'All' || item.genres.includes(genre) || item.type === genre.toLowerCase())
       .filter(item => Number(item.rating) >= rating)
-      .map(item => ({ ...item, poster: item.poster || posterMap[item.id] || posterMap[String(item.id)] || posterMap[slugifyPosterName(item.title)] || '', userStatus: actions[item.id]?.status || 'unwatched', bookmarked: Boolean(actions[item.id]?.bookmarked), watchStartedAt: actions[item.id]?.watchStartedAt || null }));
+      .map(item => ({ ...item, poster: item.poster || posterMap[item.id] || posterMap[String(item.id)] || posterMap[slugifyPosterName(item.title)] || '', userStatus: actions[item.id]?.status || 'unwatched', bookmarked: Boolean(actions[item.id]?.bookmarked), watchStartedAt: actions[item.id]?.watchStartedAt || null, watchedDuration: actions[item.id]?.watchedDuration || 0 }));
     sorted.sort((a, b) => sortBy === 'year' ? a.year - b.year : sortBy === 'title' ? a.title.localeCompare(b.title) : a.order - b.order);
     return sorted;
   }, [actions, allItems, universe, query, genre, posterMap, rating, sortBy]);
@@ -184,7 +194,7 @@ export default function App() {
       {section === 'list' && <ListSection items={activeItems} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />}
       {section === 'analytics' && <><AnalyticsPanel stats={stats} large /><MovieRail title="In progress" items={activeItems.filter(i => i.userStatus === 'watching')} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} /></>}
       {section === 'profile' && <ProfilePage stats={stats} activeItems={activeItems} universe={universe} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />}
-      {section === 'watch' && watchItem && <WatchPage watchItem={watchItem} activeItems={activeItems} onBack={() => setWatchItem(null)} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={handleStartWatch} />}
+      {section === 'watch' && watchItem && <WatchPage watchItem={watchItem} activeItems={activeItems} onBack={() => setWatchItem(null)} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={handleStartWatch} updateAction={updateAction} />}
       {section === 'watch' && !watchItem && <WatchBrowse activeItems={activeItems} onStartWatch={handleStartWatch} setSelected={setSelected} setStatus={setStatus} toggleBookmark={toggleBookmark} setSection={setSection} />}
 
       <nav className="bottom-nav" aria-label="Primary">
@@ -305,7 +315,7 @@ function MovieRail({ title, items, setSelected, cycleStatus, setStatus, toggleBo
 function MovieCard({ item, setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer }) {
   return <article className="movie-card" style={{ '--accent': item.accent }}>
     <button className="poster-button" onClick={() => setSelected(item)}><PosterArt item={item} /></button>
-    <div className="card-body"><button className="title-button" onClick={() => setSelected(item)}>{item.title}</button><span>{item.year} · {runtimeLabel(item.runtime, item.type)}</span></div>
+    <div className="card-body"><button className="title-button" onClick={() => setSelected(item)}>{item.title}</button><span>{item.year} · {runtimeLabel(item.runtime, item.type)}{item.userStatus === 'watching' && item.watchedDuration > 30000 ? ` · ${watchTimeLabel(item)}` : ''}</span></div>
     <div className="card-actions"><button onClick={() => playTrailer(item)} className="trailer-chip" aria-label={`Play ${item.title} trailer`}><Play size={16} fill="currentColor" /><span>Trailer</span></button><StatusSelect item={item} setStatus={setStatus} compact /><button onClick={() => toggleBookmark(item)} className={`bookmark-chip ${item.bookmarked ? 'saved' : ''}`} aria-label={item.bookmarked ? 'Remove bookmark' : 'Bookmark title'}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button></div>
   </article>;
 }
@@ -433,7 +443,7 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch }) 
           <h1 id="detail-title">{item.title}</h1>
           <div className="detail-chips"><span className="detail-rating"><Star size={15} fill="currentColor" /> {item.rating.toFixed ? item.rating.toFixed(1) : item.rating}</span>{item.genres.slice(0,3).map(g => <span key={g}>{g}</span>)}</div>
           <p className="detail-description">{item.desc || `Follow ${item.title} in the complete ${item.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} viewing order.`}</p>
-          <div className="detail-facts"><div><Calendar size={18} /><span>Release year</span><strong>{item.year}</strong></div><div><Timer size={18} /><span>Runtime</span><strong>{runtimeLabel(item.runtime, item.type)}</strong></div><div><Sparkles size={18} /><span>Format</span><strong>{item.type}</strong></div></div>
+          <div className="detail-facts"><div><Calendar size={18} /><span>Release year</span><strong>{item.year}</strong></div><div><Timer size={18} /><span>Runtime</span><strong>{runtimeLabel(item.runtime, item.type)}</strong></div><div><Sparkles size={18} /><span>Format</span><strong>{item.type}</strong></div>{item.userStatus === 'watching' && item.watchedDuration > 30000 && <div><Clock size={18} /><span>Watched</span><strong>{watchTimeLabel(item)}</strong></div>}</div>
           <div className="detail-progress-actions"><StatusSelect item={item} setStatus={setStatus} /><button className={`detail-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={19} fill={item.bookmarked ? 'currentColor' : 'none'} /><span>{item.bookmarked ? 'Saved' : 'Save'}</span></button><button className="detail-videasy" onClick={() => handleWatchOnVideasy(item)} disabled={watchLoading} aria-label={`Watch ${item.title} on Videasy`}><Play size={18} fill="currentColor" /><span>{watchLoading ? 'Loading...' : 'Watch Now'}</span></button></div>
         </div>
       </div>
@@ -457,12 +467,11 @@ function ContinueWatching({ items, setSelected, setStatus, toggleBookmark, playT
     onResume(item, null, 'movie');
   };
   const elapsedLabel = (item) => {
-    const started = item.watchStartedAt;
-    if (!started) return 'Started';
-    const elapsed = Math.floor((Date.now() - started) / 60000);
+    const ms = item.watchedDuration || 0;
+    if (ms < 30000) return 'Started';
+    const mins = Math.floor(ms / 60000);
     const total = item.runtime || 120;
-    if (elapsed < 1) return 'Started';
-    const pct = Math.min(Math.round((elapsed / total) * 100), 99);
+    const pct = Math.min(Math.round((mins / total) * 100), 99);
     return `${pct}%`;
   };
   return (
@@ -504,12 +513,11 @@ function WatchBrowse({ activeItems, onStartWatch, setSelected, setStatus, toggle
     onStartWatch(item, null, 'movie');
   };
   const elapsedLabel = (item) => {
-    const started = item.watchStartedAt;
-    if (!started) return 'Started';
-    const elapsed = Math.floor((Date.now() - started) / 60000);
+    const ms = item.watchedDuration || 0;
+    if (ms < 30000) return 'Started';
+    const mins = Math.floor(ms / 60000);
     const total = item.runtime || 120;
-    if (elapsed < 1) return 'Started';
-    const pct = Math.min(Math.round((elapsed / total) * 100), 99);
+    const pct = Math.min(Math.round((mins / total) * 100), 99);
     return `${pct}%`;
   };
   return (
@@ -569,7 +577,7 @@ function WatchBrowse({ activeItems, onStartWatch, setSelected, setStatus, toggle
   );
 }
 
-function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, onStartWatch }) {
+function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, onStartWatch, updateAction }) {
   const { item, tmdbId, mediaType } = watchItem;
   const [switching, setSwitching] = useState(false);
   const [toast, setToast] = useState('');
@@ -579,27 +587,50 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
     .slice(0, 12);
   const currentItem = activeItems.find(i => i.id === item.id) || item;
   const totalMs = (item.runtime || 120) * 60 * 1000;
-  const initialElapsed = currentItem.watchStartedAt ? Math.min(Date.now() - currentItem.watchStartedAt, totalMs) : 0;
+  const initialElapsed = Math.min(currentItem.watchedDuration || 0, totalMs);
   const [elapsed, setElapsed] = useState(initialElapsed);
+  const elapsedRef = useRef(elapsed);
   const progress = Math.min((elapsed / totalMs) * 100, 100);
   const isComplete = progress >= 90;
+
+  useEffect(() => { elapsedRef.current = elapsed; }, [elapsed]);
+
   useEffect(() => {
-    const handleKey = (e) => { if (e.key === 'Escape') onBack(); };
+    const handleKey = (e) => { if (e.key === 'Escape') handleBack(); };
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);
-  }, [onBack]);
+  }, [item.id]);
+
   useEffect(() => {
-    setElapsed(currentItem.watchStartedAt ? Math.min(Date.now() - currentItem.watchStartedAt, totalMs) : 0);
+    setElapsed(Math.min(currentItem.watchedDuration || 0, totalMs));
     const interval = setInterval(() => setElapsed(prev => prev + 1000), 1000);
     return () => clearInterval(interval);
   }, [item.id]);
+
+  useEffect(() => {
+    const save = setInterval(() => {
+      updateAction(item, { watchedDuration: elapsedRef.current });
+    }, 15000);
+    return () => {
+      clearInterval(save);
+      updateAction(item, { watchedDuration: elapsedRef.current, watchStartedAt: null });
+    };
+  }, [item.id]);
+
   useEffect(() => {
     if (isComplete && currentItem.userStatus === 'watching') {
       setStatus(currentItem, 'watched');
     }
   }, [isComplete, currentItem.userStatus, currentItem.id, setStatus]);
+
+  const handleBack = () => {
+    updateAction(item, { watchedDuration: elapsedRef.current, watchStartedAt: null });
+    onBack();
+  };
+
   const handleSwitchItem = async (rec) => {
     if (switching) return;
+    updateAction(item, { watchedDuration: elapsedRef.current, watchStartedAt: null });
     setSwitching(true);
     try {
       const params = new URLSearchParams({ title: rec.title, year: String(rec.year || '') });
@@ -615,7 +646,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
   return (
     <section className="watch-page" style={{ '--accent': currentItem.accent }}>
       <header className="watch-header">
-        <button onClick={onBack} aria-label="Back to browsing"><ChevronLeft size={22} /> <span>Back</span></button>
+        <button onClick={handleBack} aria-label="Back to browsing"><ChevronLeft size={22} /> <span>Back</span></button>
         <div>
           <span className="watch-kicker">{currentItem.universe === 'marvel' ? 'MCU' : 'DC'} · #{String(currentItem.order || currentItem.id).padStart(2, '0')}</span>
           <h1>{currentItem.title}</h1>
