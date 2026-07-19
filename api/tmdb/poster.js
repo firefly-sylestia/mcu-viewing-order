@@ -55,6 +55,8 @@ export default async function handler(req, res) {
     poster: `https://image.tmdb.org/t/p/w500${best.poster_path}`,
     backdrop: best.backdrop_path ? `https://image.tmdb.org/t/p/w780${best.backdrop_path}` : null,
     source: 'tmdb',
+    tmdbId: best.id,
+    mediaType: best.media_type || requestedMediaType,
     details,
   });
 }
