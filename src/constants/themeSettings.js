@@ -15,7 +15,7 @@ export const THEME_CHOICES = [
   { id: 'captain-america', label: 'Captain America', dcLabel: 'Wonder Woman', swatch: '#3b5fa4', dcSwatch: '#355f9f' },
   { id: 'daredevil', label: 'Daredevil', dcLabel: 'Harley Quinn', swatch: '#bf0615', dcSwatch: '#d42b6a' },
   { id: 'panther-tech', label: 'Panther Tech', dcLabel: 'Cyborg', swatch: '#6bb0bf', dcSwatch: '#35a4c6' },
-  { id: 'marvel-red', label: 'Marvel Red', dcLabel: 'Shazam', swatch: '#b91c1c', dcSwatch: '#d97706' },
+  { id: 'marvel-red', label: 'Marvel Red', dcLabel: 'Shazam', swatch: '#9a4a4a', dcSwatch: '#d97706' },
   { id: 'hela', label: 'Hela', dcLabel: 'Green Lantern', swatch: '#49a561', dcSwatch: '#2ea44f' },
 ];
 
@@ -32,7 +32,7 @@ export const THEME_PALETTES = {
   'captain-america': { accent: '#3b5fa4', accentAlt: '#9b3430', darkSurface: 'rgba(23,27,49,0.92)', lightSurface: 'rgba(254,254,254,0.96)', darkSurfaceHover: 'rgba(31,38,64,0.94)', lightSurfaceHover: 'rgba(174,183,194,0.34)', darkCompCard: 'rgba(23,27,49,0.88)', lightCompCard: 'rgba(254,254,254,0.95)' },
   daredevil: { accent: '#BF0615', accentAlt: '#A61731', darkSurface: 'rgba(64,1,1,0.92)', lightSurface: 'rgba(255,242,243,0.96)', darkSurfaceHover: 'rgba(78,4,4,0.94)', lightSurfaceHover: 'rgba(255,228,230,0.98)', darkCompCard: 'rgba(64,1,1,0.88)', lightCompCard: 'rgba(255,246,247,0.95)' },
   'panther-tech': { accent: '#6BB0BF', accentAlt: '#3B3F8C', darkSurface: 'rgba(26,27,27,0.92)', lightSurface: 'rgba(243,244,248,0.96)', darkSurfaceHover: 'rgba(38,40,49,0.94)', lightSurfaceHover: 'rgba(232,234,242,0.97)', darkCompCard: 'rgba(26,27,27,0.88)', lightCompCard: 'rgba(246,247,252,0.95)' },
-  'marvel-red': { accent: '#b91c1c', accentAlt: '#b45309', darkSurface: 'rgba(15,3,3,0.94)', lightSurface: 'rgba(255,245,245,0.96)', darkSurfaceHover: 'rgba(22,5,5,0.95)', lightSurfaceHover: 'rgba(255,235,235,0.97)', darkCompCard: 'rgba(14,5,5,0.90)', lightCompCard: 'rgba(255,248,248,0.95)' },
+  'marvel-red': { accent: '#9a4a4a', accentAlt: '#b45309', darkSurface: 'rgba(15,3,3,0.94)', lightSurface: 'rgba(255,245,245,0.96)', darkSurfaceHover: 'rgba(22,5,5,0.95)', lightSurfaceHover: 'rgba(255,235,235,0.97)', darkCompCard: 'rgba(14,5,5,0.90)', lightCompCard: 'rgba(255,248,248,0.95)' },
   hela: { accent: '#49a561', accentAlt: '#d0d500', darkSurface: 'rgba(3,11,9,0.92)', lightSurface: 'rgba(242,248,244,0.96)', darkSurfaceHover: 'rgba(20,45,39,0.94)', lightSurfaceHover: 'rgba(231,243,235,0.97)', darkCompCard: 'rgba(13,34,28,0.88)', lightCompCard: 'rgba(246,251,247,0.95)' },
 };
 
