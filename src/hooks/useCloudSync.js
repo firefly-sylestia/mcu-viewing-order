@@ -2,12 +2,13 @@ import { useEffect, useRef, useCallback, useState } from 'react';
 import { ref, set, onValue, off } from 'firebase/database';
 import { db, configured } from '../firebase';
 
-export function useCloudSync(user, actions, profileName, setActions, setProfileName) {
+export function useCloudSync(user, actions, profileName, setActions, setProfileName, watchItem, setWatchItem) {
   const pushTimer = useRef(null);
 
   // Track the last known state from the cloud to avoid echo loops
   const lastSyncedActions = useRef(null);
   const lastSyncedProfile = useRef(null);
+  const lastSyncedWatchItem = useRef(null);
 
   const [lastSynced, setLastSynced] = useState(null);
   const [syncing, setSyncing] = useState(false);
@@ -24,10 +25,10 @@ export function useCloudSync(user, actions, profileName, setActions, setProfileN
   }, [toast]);
 
   // Keep a mutable ref of current local state for the onValue closure
-  const localStateRef = useRef({ actions, profileName });
+  const localStateRef = useRef({ actions, profileName, watchItem });
   useEffect(() => {
-    localStateRef.current = { actions, profileName };
-  }, [actions, profileName]);
+    localStateRef.current = { actions, profileName, watchItem };
+  }, [actions, profileName, watchItem]);
 
   const updateLastSynced = () => {
     setLastSynced(Date.now());
@@ -49,7 +50,9 @@ export function useCloudSync(user, actions, profileName, setActions, setProfileN
       const syncedActionsStr = JSON.stringify(lastSyncedActions.current || {});
 
       // If remote matches our last known synced state, this is an echo of our own push — ignore
-      if (remoteActionsStr === syncedActionsStr && data.profileName === lastSyncedProfile.current) {
+      const remoteWatchStr = JSON.stringify(data.watchItem || null);
+      const syncedWatchStr = JSON.stringify(lastSyncedWatchItem.current || null);
+      if (remoteActionsStr === syncedActionsStr && data.profileName === lastSyncedProfile.current && remoteWatchStr === syncedWatchStr) {
         return;
       }
 
@@ -64,6 +67,7 @@ export function useCloudSync(user, actions, profileName, setActions, setProfileN
         setConflict({
           remoteActions: data.actions || {},
           remoteProfile: data.profileName || '',
+          remoteWatchItem: data.watchItem || null,
         });
         return; // Don't auto-merge — let user resolve
       }
@@ -80,6 +84,11 @@ export function useCloudSync(user, actions, profileName, setActions, setProfileN
       if (data.profileName && data.profileName !== localStateRef.current.profileName) {
         setProfileName(data.profileName);
         lastSyncedProfile.current = data.profileName;
+      }
+
+      if (data.watchItem && JSON.stringify(data.watchItem) !== JSON.stringify(localStateRef.current.watchItem)) {
+        setWatchItem(data.watchItem);
+        lastSyncedWatchItem.current = data.watchItem;
       }
 
       if (data.lastSynced) {
@@ -100,10 +109,12 @@ export function useCloudSync(user, actions, profileName, setActions, setProfileN
     // Update refs BEFORE pushing so the upcoming onValue echo is ignored
     lastSyncedActions.current = actions;
     lastSyncedProfile.current = profileName;
+    lastSyncedWatchItem.current = watchItem;
 
     set(userRef, {
       actions,
       profileName,
+      watchItem,
       lastSynced: Date.now(),
     }).then(() => {
       updateLastSynced();
@@ -112,15 +123,17 @@ export function useCloudSync(user, actions, profileName, setActions, setProfileN
       setToast({ message: 'Sync failed — check connection', type: 'error' });
     }).finally(() => setSyncing(false));
 
-  }, [user?.uid, actions, profileName]);
+  }, [user?.uid, actions, profileName, watchItem]);
 
   // Resolve conflict: use remote data (discard local)
   const resolveUseRemote = useCallback(() => {
     if (!conflict) return;
     setActions(conflict.remoteActions);
     if (conflict.remoteProfile) setProfileName(conflict.remoteProfile);
+    if (conflict.remoteWatchItem !== undefined) setWatchItem(conflict.remoteWatchItem);
     lastSyncedActions.current = conflict.remoteActions;
     lastSyncedProfile.current = conflict.remoteProfile;
+    lastSyncedWatchItem.current = conflict.remoteWatchItem;
     setConflict(null);
     setToast({ message: 'Synced from cloud', type: 'success' });
   }, [conflict, setActions, setProfileName]);
@@ -132,9 +145,11 @@ export function useCloudSync(user, actions, profileName, setActions, setProfileN
     const userRef = ref(db, `users/${user.uid}`);
     lastSyncedActions.current = localStateRef.current.actions;
     lastSyncedProfile.current = localStateRef.current.profileName;
+    lastSyncedWatchItem.current = localStateRef.current.watchItem;
     set(userRef, {
       actions: localStateRef.current.actions,
       profileName: localStateRef.current.profileName,
+      watchItem: localStateRef.current.watchItem,
       lastSynced: Date.now(),
     }).then(() => {
       updateLastSynced();
@@ -151,8 +166,12 @@ export function useCloudSync(user, actions, profileName, setActions, setProfileN
 
     const currentActionsStr = JSON.stringify(actions || {});
     const syncedActionsStr = JSON.stringify(lastSyncedActions.current || {});
+    const currentWatchStr = JSON.stringify(watchItem || null);
+    const syncedWatchStr = JSON.stringify(lastSyncedWatchItem.current || null);
 
-    const changed = currentActionsStr !== syncedActionsStr || profileName !== lastSyncedProfile.current;
+    const changed = currentActionsStr !== syncedActionsStr
+      || profileName !== lastSyncedProfile.current
+      || currentWatchStr !== syncedWatchStr;
 
     if (!changed) return;
 
@@ -160,14 +179,17 @@ export function useCloudSync(user, actions, profileName, setActions, setProfileN
     pushTimer.current = window.setTimeout(pushToCloud, 5000);
 
     return () => window.clearTimeout(pushTimer.current);
-  }, [actions, profileName, user?.uid, pushToCloud]);
+  }, [actions, profileName, watchItem, user?.uid, pushToCloud]);
 
   // Push on logout (always immediate, no conflict check needed)
   const pushBeforeLogout = useCallback(() => {
     if (!configured || !user) return Promise.resolve();
     const userRef = ref(db, `users/${user.uid}`);
-    return set(userRef, { actions, profileName, lastSynced: Date.now() }).then(updateLastSynced);
-  }, [user?.uid, actions, profileName]);
+    lastSyncedActions.current = actions;
+    lastSyncedProfile.current = profileName;
+    lastSyncedWatchItem.current = watchItem;
+    return set(userRef, { actions, profileName, watchItem, lastSynced: Date.now() }).then(updateLastSynced);
+  }, [user?.uid, actions, profileName, watchItem]);
 
   return {
     pushToCloud,
