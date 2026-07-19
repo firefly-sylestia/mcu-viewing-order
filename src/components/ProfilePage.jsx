@@ -258,51 +258,28 @@ function StatusSelect({ item, setStatus, compact = false }) {
         aria-haspopup="listbox"
         aria-expanded={open}
       >
-        <span className="status-dot" />
         <span className="status-label">{STATUS_LABELS[item.userStatus]}</span>
-        <svg
-          className="status-chevron"
-          width="10"
-          height="6"
-          viewBox="0 0 10 6"
-          fill="none"
-        >
-          <path
-            d="M1 1L5 5L9 1"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
       </button>
       {open && (
         <div className="status-dropdown" role="listbox" aria-label={`Set status for ${item.title}`}>
           <p className="status-menu-title">Viewing status</p>
-          {STATUS.map(status => {
-            const StatusIcon = STATUS_META[status].icon;
-            return (
-              <button
-                key={status}
-                className={`status-option ${status} ${item.userStatus === status ? 'active' : ''}`}
-                role="option"
-                aria-selected={item.userStatus === status}
-                onClick={() => {
-                  setStatus(item, status);
-                  setOpen(false);
-                }}
-              >
-                <span className="status-option-icon">
-                  <StatusIcon size={15} strokeWidth={2.2} />
-                </span>
-                <span className="status-option-copy">
-                  <strong>{STATUS_LABELS[status]}</strong>
-                  <small>{STATUS_META[status].detail}</small>
-                </span>
-                {item.userStatus === status && <Check className="status-option-check" size={15} strokeWidth={2.5} />}
-              </button>
-            );
-          })}
+          {STATUS.map(status => (
+            <button
+              key={status}
+              className={`status-option ${status} ${item.userStatus === status ? 'active' : ''}`}
+              role="option"
+              aria-selected={item.userStatus === status}
+              onClick={() => {
+                setStatus(item, status);
+                setOpen(false);
+              }}
+            >
+              <span className="status-option-copy">
+                <strong>{STATUS_LABELS[status]}</strong>
+                <small>{STATUS_META[status].detail}</small>
+              </span>
+            </button>
+          ))}
         </div>
       )}
     </div>
