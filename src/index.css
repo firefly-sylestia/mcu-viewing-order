@@ -1157,6 +1157,21 @@ button { border: 0; color: inherit; cursor: pointer; }
 .detail-inline-trailer button:hover { background: rgba(0,0,0,.95); }
 @keyframes trailerReveal { from { opacity: 0; } to { opacity: 1; } }
 
+.watch-browse { min-height: 100svh; padding: 24px clamp(12px,3vw,32px) 100px; }
+.watch-browse-hero { text-align: center; padding: clamp(40px,8vh,80px) 16px clamp(32px,6vh,60px); }
+.watch-browse-icon { width: 88px; height: 88px; margin: 0 auto 20px; display: grid; place-items: center; border-radius: 50%; background: var(--brand-accent, #d6202d); opacity: .85; }
+.watch-browse-hero h1 { font-size: clamp(24px,4vw,36px); margin-bottom: 10px; letter-spacing: .04em; }
+.watch-browse-hero p { color: #999; font-size: 15px; max-width: 400px; margin: 0 auto; line-height: 1.5; }
+.watch-browse-section { max-width: 1180px; margin: 0 auto 32px; }
+.watch-browse-section .section-title { margin-bottom: 16px; }
+.watch-browse-section .section-title h2 { font-size: 20px; }
+.watch-browse-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 18px; }
+.watch-browse-empty { text-align: center; padding: 60px 16px; }
+.watch-browse-empty h2 { font-size: 22px; margin-bottom: 8px; }
+.watch-browse-empty p { color: #999; margin-bottom: 20px; }
+.watch-browse-empty button { padding: 12px 24px; border-radius: 12px; background: var(--brand-accent, #d6202d); color: #fff; font-weight: 800; font-size: 14px; transition: transform .15s ease; }
+.watch-browse-empty button:hover { transform: translateY(-2px); }
+
 .watch-page { min-height: 100svh; background: #050507; color: #fff; padding-bottom: 100px; }
 .watch-header { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 16px; padding: 16px clamp(12px,3vw,32px); border-bottom: 1px solid rgba(255,255,255,.06); background: rgba(5,5,7,.92); backdrop-filter: blur(16px); }
 .watch-header > button { display: flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 10px; background: rgba(255,255,255,.06); color: #ccc; font-weight: 700; font-size: 14px; transition: background .15s ease; }

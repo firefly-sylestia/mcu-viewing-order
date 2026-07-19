@@ -142,6 +142,7 @@ export default function App() {
     setWatchItem({ item, tmdbId, mediaType });
     setStatus(item, 'watching');
     updateAction(item, { watchStartedAt: Date.now() });
+    setSelected(null);
     setSection('watch');
   };
 
@@ -181,6 +182,7 @@ export default function App() {
       {section === 'analytics' && <><AnalyticsPanel stats={stats} large /><MovieRail title="In progress" items={activeItems.filter(i => i.userStatus === 'watching')} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} /></>}
       {section === 'profile' && <ProfilePage stats={stats} activeItems={activeItems} universe={universe} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />}
       {section === 'watch' && watchItem && <WatchPage watchItem={watchItem} activeItems={activeItems} onBack={() => { setSection('home'); setWatchItem(null); }} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={handleStartWatch} />}
+      {section === 'watch' && !watchItem && <WatchBrowse activeItems={activeItems} onStartWatch={handleStartWatch} setSelected={setSelected} setStatus={setStatus} toggleBookmark={toggleBookmark} setSection={setSection} />}
 
       <nav className="bottom-nav" aria-label="Primary">
         <button className={section === 'home' ? 'active' : ''} onClick={() => setSection('home')}><Home size={22} /><span>Home</span></button>
@@ -482,6 +484,84 @@ function ContinueWatching({ items, setSelected, setStatus, toggleBookmark, playT
           </article>
         ))}
       </div>
+    </section>
+  );
+}
+
+function WatchBrowse({ activeItems, onStartWatch, setSelected, setStatus, toggleBookmark, setSection }) {
+  const inProgress = activeItems.filter(i => i.userStatus === 'watching');
+  const upNext = activeItems.filter(i => i.userStatus === 'unwatched').slice(0, 12);
+  const handleResume = async (item) => {
+    const params = new URLSearchParams({ title: item.title, year: String(item.year || '') });
+    const res = await fetch(`/api/tmdb/poster?${params.toString()}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.tmdbId) { onStartWatch(item, data.tmdbId, data.mediaType === 'tv' ? 'tv' : 'movie'); return; }
+    }
+    onStartWatch(item, null, 'movie');
+  };
+  const elapsedLabel = (item) => {
+    const started = item.watchStartedAt;
+    if (!started) return 'Started';
+    const elapsed = Math.floor((Date.now() - started) / 60000);
+    const total = item.runtime || 120;
+    if (elapsed < 1) return 'Started';
+    const pct = Math.min(Math.round((elapsed / total) * 100), 99);
+    return `${pct}%`;
+  };
+  return (
+    <section className="watch-browse">
+      <div className="watch-browse-hero">
+        <div className="watch-browse-icon"><Play size={48} fill="currentColor" /></div>
+        <h1>Ready to watch?</h1>
+        <p>Pick up where you left off or discover something new to start watching.</p>
+      </div>
+      {inProgress.length > 0 && (
+        <section className="watch-browse-section">
+          <div className="section-title"><h2>Continue Watching</h2><button>{inProgress.length} in progress</button></div>
+          <div className="watch-browse-grid">
+            {inProgress.map(item => (
+              <article key={item.id} className="movie-card" style={{ '--accent': item.accent }}>
+                <button className="poster-button" onClick={() => handleResume(item)}>
+                  <PosterArt item={item} />
+                  <div className="continue-overlay"><Play size={28} fill="currentColor" /></div>
+                </button>
+                <div className="card-body"><button className="title-button" onClick={() => setSelected(item)}>{item.title}</button><span>{elapsedLabel(item)} complete</span></div>
+                <div className="card-actions">
+                  <button onClick={() => handleResume(item)} className="trailer-chip"><Play size={16} fill="currentColor" /><span>Resume</span></button>
+                  <StatusSelect item={item} setStatus={setStatus} compact />
+                  <button onClick={() => toggleBookmark(item)} className={`bookmark-chip ${item.bookmarked ? 'saved' : ''}`}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+      {upNext.length > 0 && (
+        <section className="watch-browse-section">
+          <div className="section-title"><h2>Start Watching</h2><button>{activeItems.filter(i => i.userStatus === 'unwatched').length} available</button></div>
+          <div className="watch-browse-grid">
+            {upNext.map(item => (
+              <article key={item.id} className="movie-card" style={{ '--accent': item.accent }}>
+                <button className="poster-button" onClick={() => setSelected(item)}><PosterArt item={item} /></button>
+                <div className="card-body"><button className="title-button" onClick={() => setSelected(item)}>{item.title}</button><span>{item.year} · {runtimeLabel(item.runtime, item.type)}</span></div>
+                <div className="card-actions">
+                  <button onClick={() => handleResume(item)} className="trailer-chip"><Play size={16} fill="currentColor" /><span>Watch</span></button>
+                  <StatusSelect item={item} setStatus={setStatus} compact />
+                  <button onClick={() => toggleBookmark(item)} className={`bookmark-chip ${item.bookmarked ? 'saved' : ''}`}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+      {inProgress.length === 0 && upNext.length === 0 && (
+        <div className="watch-browse-empty">
+          <h2>Nothing to watch yet</h2>
+          <p>Open a movie or show detail and tap "Watch Now" to get started.</p>
+          <button onClick={() => setSection('list')}>Browse titles</button>
+        </div>
+      )}
     </section>
   );
 }
