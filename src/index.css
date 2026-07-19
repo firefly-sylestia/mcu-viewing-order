@@ -995,7 +995,7 @@ button { border: 0; color: inherit; cursor: pointer; }
 .web-detail .wide-poster::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgba(8,8,8,.08), rgba(8,8,8,.58)); }
 .web-detail .wide-poster > img { position: relative; z-index: 1; width: auto; max-width: 82%; margin-inline: auto; object-fit: contain; object-position: center top; background: transparent; box-shadow: 0 24px 60px rgba(0,0,0,.5); }
 .detail-inline-trailer { position: absolute; inset: 0; z-index: 4; background: #000; animation: trailerReveal .24s var(--ease-out) both; border: 1px solid rgba(255,255,255,.08); box-shadow: 0 0 30px color-mix(in srgb, var(--accent, #d6202d) 20%, transparent), 0 0 60px color-mix(in srgb, var(--accent, #d6202d) 8%, transparent), inset 0 1px 0 rgba(255,255,255,.04); }
-.detail-inline-trailer iframe { width: 100%; height: 100%; border: 0; }
+.detail-inline-trailer iframe { width: 100%; height: 100%; border: 0; pointer-events: none; }
 .detail-inline-trailer > button { position: absolute; top: 12px; right: 12px; width: 40px; height: 40px; display: grid; place-items: center; border-radius: 50%; background: rgba(0,0,0,.8); }
 .detail-inline-trailer + * { display: none; }
 @media (max-width: 560px) {
@@ -1152,7 +1152,7 @@ button { border: 0; color: inherit; cursor: pointer; }
 .detail-poster.is-expanded { aspect-ratio: 16/9; border-radius: 18px; }
 .detail-poster > img { width: 100%; height: 100%; object-fit: cover; }
 .detail-inline-trailer { position: absolute; inset: 0; background: #000; animation: trailerReveal .3s var(--ease-out) both; border: 1px solid rgba(255,255,255,.08); box-shadow: 0 0 30px color-mix(in srgb, var(--accent, #d6202d) 20%, transparent), 0 0 60px color-mix(in srgb, var(--accent, #d6202d) 8%, transparent), inset 0 1px 0 rgba(255,255,255,.04); }
-.detail-inline-trailer iframe { width: 100%; height: 100%; border: 0; display: block; }
+.detail-inline-trailer iframe { width: 100%; height: 100%; border: 0; display: block; pointer-events: none; }
 .detail-inline-trailer button { position: absolute; top: 12px; right: 12px; width: 38px; height: 38px; display: grid; place-items: center; border-radius: 11px; background: rgba(0,0,0,.75); transition: background 180ms ease; z-index: 2; }
 .detail-inline-trailer button:hover { background: rgba(0,0,0,.95); }
 @keyframes trailerReveal { from { opacity: 0; } to { opacity: 1; } }
