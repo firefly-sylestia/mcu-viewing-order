@@ -553,7 +553,7 @@ a:hover {
   }
 }
 
-/* ─������������������������������������� Stagger Animation Delays ───────────────────────────────���─���─────���─���─���───���─ */
+/* ─��������������������������������������� Stagger Animation Delays ───────────────────────────────���─���─────���─���─���───���─ */
 .stagger-1 { animation-delay: 50ms; }
 .stagger-2 { animation-delay: 100ms; }
 .stagger-3 { animation-delay: 150ms; }
@@ -944,6 +944,9 @@ button { border: 0; color: inherit; cursor: pointer; }
 .status-select.compact .status-trigger { padding: 8px 12px; min-height: 36px; font-size: 12px; gap: 6px; border-radius: 10px; }
 .status-select.compact { min-width: 100px; }
 .status-select.watched { border-radius: 16px; }
+.status-select.watching { border-radius: 16px; }
+.status-select.dropped { border-radius: 16px; }
+.status-select.unwatched { border-radius: 16px; }
 .status-select.watched .status-trigger .status-dot { background: #22c55e; opacity: 1; }
 .status-select.watching .status-trigger .status-dot { background: #f59e0b; opacity: 1; }
 .status-select.dropped .status-trigger .status-dot { background: #ef4444; opacity: 1; }
