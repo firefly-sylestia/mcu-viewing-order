@@ -1,11 +1,13 @@
 import React, { useState, useRef } from 'react';
-import { Play, Bookmark, RotateCcw, Clock, Check, X } from 'lucide-react';
+import { Play, Bookmark, RotateCcw, Clock, Check, X, Pencil } from 'lucide-react';
 
 function ProfilePage({ stats, activeItems, universe, setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer }) {
   const [activeTab, setActiveTab] = useState('insights');
   
   const savedItems = activeItems.filter(i => i.bookmarked);
   const inProgressItems = activeItems.filter(i => i.userStatus === 'watching');
+  const watchedItems = activeItems.filter(i => i.userStatus === 'watched');
+  const droppedItems = activeItems.filter(i => i.userStatus === 'dropped');
 
   return (
     <div className="profile-page">
@@ -43,17 +45,17 @@ function ProfilePage({ stats, activeItems, universe, setSelected, cycleStatus, s
         {activeTab === 'insights' && (
           <div id="insights-panel" role="tabpanel" className="profile-panel insights-panel">
             <AnalyticsPanel stats={stats} activeItems={activeItems} inProgressItems={inProgressItems} />
-            
             {inProgressItems.length > 0 && (
-              <MovieRail
-                title="In progress"
-                items={inProgressItems}
-                setSelected={setSelected}
-                cycleStatus={cycleStatus}
-                setStatus={setStatus}
-                toggleBookmark={toggleBookmark}
-                playTrailer={playTrailer}
-              />
+              <MovieRail title="In progress" items={inProgressItems} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />
+            )}
+            {watchedItems.length > 0 && (
+              <MovieRail title="Watched" items={watchedItems} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />
+            )}
+            {droppedItems.length > 0 && (
+              <MovieRail title="Dropped" items={droppedItems} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />
+            )}
+            {savedItems.length > 0 && (
+              <MovieRail title="Bookmarked" items={savedItems} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />
             )}
           </div>
         )}
