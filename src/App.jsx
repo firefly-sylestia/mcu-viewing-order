@@ -153,7 +153,7 @@ export default function App() {
     <main className={`movie-site universe-${universe}`} style={{ '--brand-accent': universeAccent }}>
       <div className="site-glow" />
       <header className="site-header">
-        <button className="brand" onClick={() => { setSection('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} aria-label={`Go to ${universeName} Viewing Order home`}><span>{universeName}</span><b>{universeName} Viewing Order</b></button>
+        <button className="brand" onClick={() => { setQuery(''); setSection('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} aria-label={`Go to ${universeName} Viewing Order home`}><span>{universeName}</span><b>{universeName} Viewing Order</b></button>
         <div className="universe-tabs" role="tablist" aria-label="Universe">
           <button className={universe === 'marvel' ? 'active' : ''} onClick={() => { setUniverse('marvel'); setHeroIndex(0); }}>Marvel</button>
           <button className={universe === 'dc' ? 'active' : ''} onClick={() => { setUniverse('dc'); setHeroIndex(0); }}>DC</button>
@@ -185,11 +185,11 @@ export default function App() {
       {section === 'watch' && !watchItem && <WatchBrowse activeItems={activeItems} onStartWatch={handleStartWatch} setSelected={setSelected} setStatus={setStatus} toggleBookmark={toggleBookmark} setSection={setSection} />}
 
       <nav className="bottom-nav" aria-label="Primary">
-        <button className={section === 'home' ? 'active' : ''} onClick={() => setSection('home')}><Home size={22} /><span>Home</span></button>
-        <button className={section === 'list' ? 'active' : ''} onClick={() => setSection('list')}><ListFilter size={22} /><span>List</span></button>
-        <button className={section === 'analytics' ? 'active' : ''} onClick={() => setSection('analytics')}><BarChart3 size={22} /><span>Stats</span></button>
-        <button className={section === 'watch' ? 'active' : ''} onClick={() => setSection('watch')}><Play size={22} /><span>Watch</span></button>
-        <button className={section === 'profile' ? 'active' : ''} onClick={() => setSection('profile')}><UserRound size={22} /><span>Profile</span></button>
+        <button className={section === 'home' ? 'active' : ''} onClick={() => { setQuery(''); setSection('home'); }}><Home size={22} /><span>Home</span></button>
+        <button className={section === 'list' ? 'active' : ''} onClick={() => { setQuery(''); setSection('list'); }}><ListFilter size={22} /><span>List</span></button>
+        <button className={section === 'analytics' ? 'active' : ''} onClick={() => { setQuery(''); setSection('analytics'); }}><BarChart3 size={22} /><span>Stats</span></button>
+        <button className={section === 'watch' ? 'active' : ''} onClick={() => { setQuery(''); setSection('watch'); }}><Play size={22} /><span>Watch</span></button>
+        <button className={section === 'profile' ? 'active' : ''} onClick={() => { setQuery(''); setSection('profile'); }}><UserRound size={22} /><span>Profile</span></button>
       </nav>
 
       {selectedItem && <DetailView item={selectedItem} onClose={() => setSelected(null)} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={handleStartWatch} />}
@@ -559,7 +559,7 @@ function WatchBrowse({ activeItems, onStartWatch, setSelected, setStatus, toggle
         <div className="watch-browse-empty">
           <h2>Nothing to watch yet</h2>
           <p>Open a movie or show detail and tap "Watch Now" to get started.</p>
-          <button onClick={() => setSection('list')}>Browse titles</button>
+          <button onClick={() => { setQuery(''); setSection('list'); }}>Browse titles</button>
         </div>
       )}
     </section>
