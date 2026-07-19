@@ -586,6 +586,11 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
   const progress = Math.min((elapsed / totalMs) * 100, 100);
   const isComplete = progress >= 90;
 
+  const handleBack = useCallback(() => {
+    updateAction(item, { watchedDuration: elapsedRef.current, watchStartedAt: null });
+    onBack();
+  }, [item, updateAction, onBack]);
+
   useEffect(() => { elapsedRef.current = elapsed; }, [elapsed]);
 
   useEffect(() => {
@@ -615,11 +620,6 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
       setStatus(currentItem, 'watched');
     }
   }, [isComplete, currentItem.userStatus, currentItem.id, setStatus]);
-
-  const handleBack = useCallback(() => {
-    updateAction(item, { watchedDuration: elapsedRef.current, watchStartedAt: null });
-    onBack();
-  }, [item, updateAction, onBack]);
 
   const handleSwitchItem = async (rec) => {
     if (switching) return;
