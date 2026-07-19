@@ -553,7 +553,7 @@ a:hover {
   }
 }
 
-/* ─����������������������������������������� Stagger Animation Delays ───────────────────────────���───���─���─────���─���─���───���─ */
+/* ─������������������������������������������� Stagger Animation Delays ───────────────────────────���───���─���─────���─���─���───���─ */
 .stagger-1 { animation-delay: 50ms; }
 .stagger-2 { animation-delay: 100ms; }
 .stagger-3 { animation-delay: 150ms; }
@@ -1042,15 +1042,9 @@ button { border: 0; color: inherit; cursor: pointer; }
 .status-trigger[aria-expanded="true"] { }
 .status-dropdown { min-width: 218px; width: max-content; padding: 8px; border-radius: 18px; background: rgba(20,21,24,.97); border-color: rgba(255,255,255,.13); box-shadow: 0 20px 54px rgba(0,0,0,.68); backdrop-filter: blur(22px) saturate(125%); }
 .status-menu-title { margin: 2px 7px 7px; color: #838790; font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
-.status-option { min-height: 50px; padding: 7px 9px; gap: 10px; border-radius: 12px; text-transform: none; }
+.status-option { min-height: 50px; padding: 7px 12px; border-radius: 12px; text-transform: none; }
 .status-option:hover { background: rgba(255,255,255,.07); }
 .status-option.active { background: color-mix(in srgb, var(--brand-accent) 16%, #1a1b1f); }
-.status-option-icon { width: 34px; height: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 34px; border-radius: 9px; background: rgba(255,255,255,.06); color: #a7abb3; line-height: 0; }
-.status-option-icon svg { display: block; margin: 0; }
-.status-option.unwatched .status-option-icon { color: #a7abb3; }
-.status-option.watched .status-option-icon { color: #42c879; }
-.status-option.watching .status-option-icon { color: #e8a93c; }
-.status-option.dropped .status-option-icon { color: #e56363; }
 .status-option-copy { display: grid; flex: 1; gap: 2px; text-align: left; }
 .status-option-copy strong { color: #f4f4f5; font-size: 13px; line-height: 1.15; }
 .status-option-copy small { color: #858991; font-size: 11px; line-height: 1.15; }
@@ -1171,13 +1165,9 @@ button { border: 0; color: inherit; cursor: pointer; }
 .detail-facts svg { color: var(--brand-accent); }
 .detail-facts span { color: #777d86; font-size: 10px; text-transform: uppercase; letter-spacing: .06em; }
 .detail-facts strong { overflow: hidden; color: #f1f2f4; font-size: 13px; text-transform: capitalize; text-overflow: ellipsis; white-space: nowrap; }
-.detail-progress-actions { display: grid; grid-template-columns: minmax(140px,1fr) 46px 46px; gap: 8px; margin-top: 24px; }
+.detail-progress-actions { display: grid; grid-template-columns: minmax(140px,1fr) 46px; gap: 8px; margin-top: 24px; }
 .detail-progress-actions > button { width: 46px; height: 46px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 10px; background: #1b1f25; border: 1px solid rgba(255,255,255,.1); font-weight: 800; }
 .detail-progress-actions .status-trigger { width: 100%; height: 46px; }
-.detail-status-mark.unwatched { color: #a7abb3; }
-.detail-status-mark.watching { color: #e8a93c; border-color: color-mix(in srgb, #e8a93c 42%, transparent); }
-.detail-status-mark.watched { color: #42c879; border-color: color-mix(in srgb, #42c879 42%, transparent); }
-.detail-status-mark.dropped { color: #e56363; border-color: color-mix(in srgb, #e56363 42%, transparent); }
 .detail-bookmark span { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 .detail-bookmark.saved { background: var(--brand-accent); color: #ffffff; border-color: var(--brand-accent); }
 .bookmark-chip.saved,
@@ -1219,7 +1209,7 @@ button { border: 0; color: inherit; cursor: pointer; }
   .detail-description { margin: 18px 0; font-size: 14px; }
   .detail-facts { gap: 6px; }
   .detail-facts > div { padding: 10px; }
-  .detail-progress-actions { grid-template-columns: minmax(0,1fr) 42px 42px; }
+  .detail-progress-actions { grid-template-columns: minmax(0,1fr) 42px; }
   .detail-progress-actions > button { width: 42px; height: 42px; }
   .detail-progress-actions .status-select { grid-column: auto; }
 }
