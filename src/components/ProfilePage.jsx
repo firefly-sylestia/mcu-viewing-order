@@ -96,7 +96,7 @@ function ProfileHeader({ universe, stats, profileName, setProfileName, user, con
   const [draft, setDraft] = useState(profileName);
   const inputRef = useRef(null);
   const universeName = universe === 'marvel' ? 'MCU' : 'DC';
-  const universeAccent = universe === 'marvel' ? '#334155' : '#1677d2';
+  const universeAccent = universe === 'marvel' ? '#b91c1c' : '#1677d2';
   const displayName = profileName || `${universeName} Viewer`;
 
   const save = () => {

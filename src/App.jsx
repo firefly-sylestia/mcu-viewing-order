@@ -22,7 +22,7 @@ const parseHash = () => {
 
 const STATUS = ['unwatched', 'watching', 'watched', 'dropped'];
 const STATUS_LABELS = { unwatched: 'Unwatched', watching: 'Watching', watched: 'Watched', dropped: 'Dropped' };
-const palette = ['#334155', '#8a1238', '#315f42', '#1f4977', '#6b3bc8', '#b36a17'];
+const palette = ['#b91c1c', '#8a1238', '#315f42', '#1f4977', '#6b3bc8', '#b36a17'];
 
 const runtimeLabel = (minutes = 0, type = 'film') => {
   if (!minutes) return type === 'series' ? 'Series' : 'TBA';
@@ -229,7 +229,7 @@ export default function App() {
   };
 
   const universeName = universe === 'marvel' ? 'MCU' : 'DC';
-  const universeAccent = universe === 'marvel' ? '#334155' : '#1677d2';
+  const universeAccent = universe === 'marvel' ? '#b91c1c' : '#1677d2';
 
   return (
     <main className={`movie-site universe-${universe}`} style={{ '--brand-accent': universeAccent }}>
@@ -343,7 +343,7 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
     setInlineTrailer(`${baseUrl}${baseUrl.includes('?') ? '&' : '?'}autoplay=1`);
   };
 
-  return <section className="top-carousel" style={{ '--accent': featured?.accent || '#334155' }} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocusCapture={() => setPaused(true)} onBlurCapture={() => setPaused(false)} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+  return <section className="top-carousel" style={{ '--accent': featured?.accent || '#b91c1c' }} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocusCapture={() => setPaused(true)} onBlurCapture={() => setPaused(false)} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
     {featured?.poster && <img key={featured.id} className="carousel-backdrop" src={featured.poster} alt="" aria-hidden="true" />}
     <div className="carousel-backdrop-shade" aria-hidden="true" />
     <div className="feature-heading"><div><p className="eyebrow">{featured?.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} · Featured</p><h2>Top movies</h2></div><button className="feature-detail" onClick={() => setSelected(featured)}>View details</button></div>
