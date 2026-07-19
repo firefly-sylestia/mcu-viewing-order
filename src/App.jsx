@@ -100,10 +100,13 @@ export default function App() {
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ universe, query, genre, rating, sortBy, actions, section, watchItem }));
+  }, [universe, query, genre, rating, sortBy, actions, section, watchItem]);
+
+  useEffect(() => {
     if (window.location.hash !== `#${section}`) {
       window.history.replaceState(null, '', `#${section}`);
     }
-  }, [universe, query, genre, rating, sortBy, actions, section, watchItem]);
+  }, [section]);
 
   useEffect(() => {
     const onHashChange = () => {
