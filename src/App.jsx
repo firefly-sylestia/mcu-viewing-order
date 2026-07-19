@@ -445,6 +445,11 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
     .filter(i => i.id !== item.id && i.userStatus !== 'watched' && i.userStatus !== 'dropped')
     .slice(0, 12);
   const currentItem = activeItems.find(i => i.id === item.id) || item;
+  useEffect(() => {
+    const handleKey = (e) => { if (e.key === 'Escape') onBack(); };
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, [onBack]);
   const handleSwitchItem = async (rec) => {
     if (switching) return;
     setSwitching(true);
