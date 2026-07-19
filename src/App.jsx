@@ -186,7 +186,7 @@ export default function App() {
         <button className={section === 'home' ? 'active' : ''} onClick={() => setSection('home')}><Home size={22} /><span>Home</span></button>
         <button className={section === 'list' ? 'active' : ''} onClick={() => setSection('list')}><ListFilter size={22} /><span>List</span></button>
         <button className={section === 'analytics' ? 'active' : ''} onClick={() => setSection('analytics')}><BarChart3 size={22} /><span>Stats</span></button>
-        <button className={section === 'watch' ? 'active' : ''} onClick={() => { if (watchItem) setSection('watch'); }}><Play size={22} /><span>Watch</span></button>
+        <button className={section === 'watch' ? 'active' : ''} onClick={() => { if (watchItem) { setSection('watch'); } else { const watching = activeItems.find(i => i.userStatus === 'watching'); if (watching) setSelected(watching); else setSection('home'); } }}><Play size={22} /><span>Watch</span></button>
         <button className={section === 'profile' ? 'active' : ''} onClick={() => setSection('profile')}><UserRound size={22} /><span>Profile</span></button>
       </nav>
 
@@ -453,11 +453,12 @@ function ContinueWatching({ items, setSelected, setStatus, toggleBookmark, playT
   };
   const elapsedLabel = (item) => {
     const started = item.watchStartedAt;
-    if (!started) return '';
+    if (!started) return 'Started';
     const elapsed = Math.floor((Date.now() - started) / 60000);
     const total = item.runtime || 120;
+    if (elapsed < 1) return 'Started';
     const pct = Math.min(Math.round((elapsed / total) * 100), 99);
-    return pct > 0 ? `${pct}%` : 'Started';
+    return `${pct}%`;
   };
   return (
     <section className="continue-watching rail-card web-rail">
@@ -488,13 +489,14 @@ function ContinueWatching({ items, setSelected, setStatus, toggleBookmark, playT
 function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, onStartWatch }) {
   const { item, tmdbId, mediaType } = watchItem;
   const [switching, setSwitching] = useState(false);
-  const [elapsed, setElapsed] = useState(0);
   const videasyUrl = tmdbId ? `https://player.videasy.net/${mediaType}/${tmdbId}` : `https://player.videasy.net/movie/${encodeURIComponent(item.title)}`;
   const upNext = activeItems
     .filter(i => i.id !== item.id && i.userStatus !== 'watched' && i.userStatus !== 'dropped')
     .slice(0, 12);
   const currentItem = activeItems.find(i => i.id === item.id) || item;
   const totalMs = (item.runtime || 120) * 60 * 1000;
+  const initialElapsed = currentItem.watchStartedAt ? Math.min(Date.now() - currentItem.watchStartedAt, totalMs) : 0;
+  const [elapsed, setElapsed] = useState(initialElapsed);
   const progress = Math.min((elapsed / totalMs) * 100, 100);
   const isComplete = progress >= 90;
   useEffect(() => {
@@ -503,7 +505,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
     return () => document.removeEventListener('keydown', handleKey);
   }, [onBack]);
   useEffect(() => {
-    setElapsed(0);
+    setElapsed(currentItem.watchStartedAt ? Math.min(Date.now() - currentItem.watchStartedAt, totalMs) : 0);
     const interval = setInterval(() => setElapsed(prev => prev + 1000), 1000);
     return () => clearInterval(interval);
   }, [item.id]);
