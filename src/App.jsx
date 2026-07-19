@@ -316,20 +316,19 @@ function StatusSelect({ item, setStatus, compact = false }) {
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
+  const CurrentStatusIcon = STATUS_META[item.userStatus].icon;
   return <div className={`status-select ${item.userStatus} ${compact ? 'compact' : ''}`} ref={ref}>
     <button className="status-trigger" onClick={() => setOpen(!open)} aria-haspopup="listbox" aria-expanded={open}>
-      <span className="status-dot" />
+      <CurrentStatusIcon className="status-trigger-icon" size={16} strokeWidth={2.3} />
       <span className="status-label">{STATUS_LABELS[item.userStatus]}</span>
-      <svg className="status-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
     </button>
     {open && <div className="status-dropdown" role="listbox" aria-label={`Set status for ${item.title}`}>
       <p className="status-menu-title">Viewing status</p>
       {STATUS.map(status => {
         const StatusIcon = STATUS_META[status].icon;
         return <button key={status} className={`status-option ${status} ${item.userStatus === status ? 'active' : ''}`} role="option" aria-selected={item.userStatus === status} onClick={() => { setStatus(item, status); setOpen(false); }}>
-          <span className="status-option-icon"><StatusIcon size={15} strokeWidth={2.2} /></span>
+          <span className="status-option-icon"><StatusIcon size={16} strokeWidth={2.2} /></span>
           <span className="status-option-copy"><strong>{STATUS_LABELS[status]}</strong><small>{STATUS_META[status].detail}</small></span>
-          {item.userStatus === status && <Check className="status-option-check" size={15} strokeWidth={2.5} />}
         </button>;
       })}
     </div>}
@@ -362,6 +361,7 @@ function DetailView({ item, onClose, toggleWatched, setStatus, toggleBookmark })
     setIsTrailerExpanded(false);
     setTimeout(() => setInlineTrailer(null), 200);
   };
+  const CurrentStatusIcon = STATUS_META[item.userStatus].icon;
   return <div className="detail-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !isTrailerExpanded) onClose(); }}>
     <article className="detail-modal" role="dialog" aria-modal="true" aria-labelledby="detail-title" style={{ '--accent': item.accent, '--detail-poster-bg': `url('${item.poster}')` }}>
       {item.poster && <img className="detail-backdrop" src={item.poster} alt="" aria-hidden="true" />}
@@ -378,7 +378,7 @@ function DetailView({ item, onClose, toggleWatched, setStatus, toggleBookmark })
           <div className="detail-chips"><span className="detail-rating"><Star size={15} fill="currentColor" /> {item.rating.toFixed ? item.rating.toFixed(1) : item.rating}</span>{item.genres.slice(0,3).map(g => <span key={g}>{g}</span>)}</div>
           <p className="detail-description">{item.desc || `Follow ${item.title} in the complete ${item.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} viewing order.`}</p>
           <div className="detail-facts"><div><Calendar size={18} /><span>Release year</span><strong>{item.year}</strong></div><div><Timer size={18} /><span>Runtime</span><strong>{runtimeLabel(item.runtime, item.type)}</strong></div><div><Sparkles size={18} /><span>Format</span><strong>{item.type}</strong></div></div>
-          <div className="detail-progress-actions"><StatusSelect item={item} setStatus={setStatus} /><button className={`detail-watched ${item.userStatus === 'watched' ? 'active' : ''}`} onClick={() => toggleWatched(item)}><Check size={18} />{item.userStatus === 'watched' ? 'Watched' : 'Mark watched'}</button><button className={`detail-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={19} fill={item.bookmarked ? 'currentColor' : 'none'} /><span>{item.bookmarked ? 'Saved' : 'Save'}</span></button></div>
+          <div className="detail-progress-actions"><StatusSelect item={item} setStatus={setStatus} /><button className={`detail-status-mark ${item.userStatus}`} onClick={() => toggleWatched(item)} aria-label={item.userStatus === 'watched' ? 'Mark as unwatched' : 'Mark as watched'} title={STATUS_LABELS[item.userStatus]}><CurrentStatusIcon size={19} strokeWidth={2.4} /></button><button className={`detail-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={19} fill={item.bookmarked ? 'currentColor' : 'none'} /><span>{item.bookmarked ? 'Saved' : 'Save'}</span></button></div>
         </div>
       </div>
     </article>
