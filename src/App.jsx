@@ -8,10 +8,14 @@ import './index.css';
 
 const STORAGE_KEY = 'cinematic-viewing-ui-state-v2';
 const VALID_HASHES = ['home', 'list', 'analytics', 'watch', 'profile'];
-const hashSection = () => {
-  const h = window.location.hash.replace('#', '');
-  return VALID_HASHES.includes(h) ? h : null;
+const parseHash = () => {
+  const raw = window.location.hash.replace('#', '');
+  const slash = raw.indexOf('/');
+  const section = slash > -1 ? raw.slice(0, slash) : raw;
+  const slug = slash > -1 ? raw.slice(slash + 1) : null;
+  return { section: VALID_HASHES.includes(section) ? section : null, slug };
 };
+const titleSlug = (title) => String(title || '').toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 const STATUS = ['unwatched', 'watching', 'watched', 'dropped'];
 const STATUS_LABELS = { unwatched: 'Unwatched', watching: 'Watching', watched: 'Watched', dropped: 'Dropped' };
 const palette = ['#d6202d', '#8a1238', '#315f42', '#1f4977', '#6b3bc8', '#b36a17'];
@@ -87,7 +91,7 @@ export default function App() {
   const [rating, setRating] = useState(saved.rating || 0);
   const [sortBy, setSortBy] = useState(saved.sortBy || 'order');
   const [heroIndex, setHeroIndex] = useState(0);
-  const [section, setSection] = useState(hashSection() || saved.section || 'home');
+  const [section, setSection] = useState(parseHash().section || saved.section || 'home');
   const [actions, setActions] = useState(saved.actions || {});
   const [posterMap, setPosterMap] = useState({});
   const [trailer, setTrailer] = useState(null);
@@ -95,6 +99,15 @@ export default function App() {
 
   // Guard against stale watchItem from a different universe on reload
   const safeWatchItem = watchItem && watchItem.item?.universe === universe ? watchItem : null;
+
+  // Auto-start watching from item-level deep link (e.g. #watch/iron-man) on mount
+  useEffect(() => {
+    const { section: s, slug } = parseHash();
+    if (s === 'watch' && slug && allItems.length && !watchItem) {
+      const found = allItems.find(i => titleSlug(i.title) === slug);
+      if (found) handleStartWatch(found, null, 'movie');
+    }
+  }, []);
 
   const allItems = useMemo(() => [...RAW.map(item => enhance(item, 'marvel')), ...DC_RAW.map(item => enhance(item, 'dc'))], []);
 
@@ -110,8 +123,12 @@ export default function App() {
 
   useEffect(() => {
     const onHashChange = () => {
-      const h = hashSection();
-      if (h) setSection(h);
+      const { section: s, slug } = parseHash();
+      if (s) setSection(s);
+      if (s === 'watch' && slug && allItems.length) {
+        const found = allItems.find(i => titleSlug(i.title) === slug);
+        if (found) handleStartWatch(found, null, 'movie');
+      }
     };
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
@@ -189,6 +206,7 @@ export default function App() {
     updateAction(item, { watchStartedAt: Date.now() });
     setSelected(null);
     setSection('watch');
+    window.history.replaceState(null, '', `#watch/${titleSlug(item.title)}`);
   };
 
   const universeName = universe === 'marvel' ? 'MCU' : 'DC';
@@ -226,7 +244,7 @@ export default function App() {
       {section === 'list' && <ListSection items={activeItems} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />}
       {section === 'analytics' && <><AnalyticsPanel stats={stats} large /><MovieRail title="In progress" items={activeItems.filter(i => i.userStatus === 'watching')} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} /></>}
       {section === 'profile' && <ProfilePage stats={stats} activeItems={activeItems} universe={universe} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />}
-      {section === 'watch' && safeWatchItem && <WatchPage watchItem={safeWatchItem} activeItems={activeItems} onBack={() => setWatchItem(null)} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={handleStartWatch} updateAction={updateAction} />}
+      {section === 'watch' && safeWatchItem && <WatchPage watchItem={safeWatchItem} activeItems={activeItems} onBack={() => { setWatchItem(null); window.history.replaceState(null, '', '#watch'); }} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={handleStartWatch} updateAction={updateAction} />}
       {section === 'watch' && !safeWatchItem && <WatchBrowse activeItems={activeItems} onStartWatch={handleStartWatch} setSelected={setSelected} setStatus={setStatus} toggleBookmark={toggleBookmark} setSection={setSection} />}
 
       <nav className="bottom-nav" aria-label="Primary">
