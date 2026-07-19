@@ -1,9 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Search, SlidersHorizontal, Home, Bookmark, Play, UserRound, X, ArrowLeft, Star, BarChart3, Check, Clock, ListFilter, RotateCcw, ChevronLeft, ChevronRight, Calendar, Timer, Sparkles } from 'lucide-react';
+import { Search, SlidersHorizontal, Home, Bookmark, Play, UserRound, X, ArrowLeft, Star, BarChart3, Check, Clock, ListFilter, RotateCcw, ChevronLeft, ChevronRight, Calendar, Timer, Sparkles, LogIn, LogOut, Cloud } from 'lucide-react';
 import { RAW } from './data/mcuData';
 import { DC_RAW } from './data/dcData';
 import { getTrailerByTitle, trailerEmbedUrl } from './data/trailerData';
 import ProfilePage from './components/ProfilePage';
+import AuthModal from './components/AuthModal';
+import { useAuth } from './hooks/useAuth';
+import { useCloudSync } from './hooks/useCloudSync';
+import { configured as firebaseReady } from './firebase';
 import './index.css';
 
 const STORAGE_KEY = 'cinematic-viewing-ui-state-v2';
@@ -18,7 +22,7 @@ const parseHash = () => {
 
 const STATUS = ['unwatched', 'watching', 'watched', 'dropped'];
 const STATUS_LABELS = { unwatched: 'Unwatched', watching: 'Watching', watched: 'Watched', dropped: 'Dropped' };
-const palette = ['#d6202d', '#8a1238', '#315f42', '#1f4977', '#6b3bc8', '#b36a17'];
+const palette = ['#334155', '#8a1238', '#315f42', '#1f4977', '#6b3bc8', '#b36a17'];
 
 const runtimeLabel = (minutes = 0, type = 'film') => {
   if (!minutes) return type === 'series' ? 'Series' : 'TBA';
@@ -78,7 +82,7 @@ const enhance = (item, universe) => ({
   rating: Number((6.7 + ((item.id * 17) % 25) / 10).toFixed(1)),
   genres: item.type === 'series' ? ['Series', 'Action', 'Drama'] : ['Action', item.phase >= 4 ? 'Adventure' : 'Sci-fi', item.essential ? 'Essential' : 'Canon'],
   poster: localPoster(item),
-  accent: universe === 'dc' ? '#1677d2' : (item.id >= 5000 ? '#d6202d' : palette[item.phase % palette.length]),
+  accent: universe === 'dc' ? '#1677d2' : (item.id >= 5000 ? '#334155' : palette[item.phase % palette.length]),
 });
 
 export default function App() {
@@ -97,6 +101,9 @@ export default function App() {
   const [trailer, setTrailer] = useState(null);
   const [watchItem, setWatchItem] = useState(saved.watchItem || null);
   const [profileName, setProfileName] = useState(saved.profileName || '');
+  const [authOpen, setAuthOpen] = useState(false);
+  const { user, login, signup, googleSignIn, anonymousSignIn, logout: authLogout, configured } = useAuth();
+  const { pushToCloud, pushBeforeLogout, lastSynced, syncing } = useCloudSync(user, actions, profileName, setActions, setProfileName, setWatchItem);
 
   // Guard against stale watchItem from a different universe on reload
   const safeWatchItem = watchItem && watchItem.item?.universe === universe ? watchItem : null;
@@ -222,7 +229,7 @@ export default function App() {
   };
 
   const universeName = universe === 'marvel' ? 'MCU' : 'DC';
-  const universeAccent = universe === 'marvel' ? '#d6202d' : '#1677d2';
+  const universeAccent = universe === 'marvel' ? '#334155' : '#1677d2';
 
   return (
     <main className={`movie-site universe-${universe}`} style={{ '--brand-accent': universeAccent }}>
@@ -239,6 +246,19 @@ export default function App() {
           {query && <button className="search-clear" onClick={() => setQuery('')}><X size={16} /></button>}
           <button className="header-filter-btn" onClick={() => setFiltersOpen(true)} aria-label="Open filters"><SlidersHorizontal size={18} /></button>
         </div>
+        <button className="header-auth-btn" onClick={() => { if (user) { setSection('profile'); } else { setAuthOpen(true); } }} title={user ? 'View profile' : 'Sign in'}>
+          {user ? (
+            <span className="header-user-badge">
+              <Cloud size={13} />
+              <span className="header-user-name">{user.email ? user.email.split('@')[0] : 'Guest'}</span>
+            </span>
+          ) : (
+            <span className="header-signin-badge">
+              <LogIn size={15} />
+              <span>Sign in</span>
+            </span>
+          )}
+        </button>
       </header>
 
       {section === 'home' && <>
@@ -255,7 +275,7 @@ export default function App() {
 
       {section === 'list' && <ListSection items={activeItems} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />}
       {section === 'analytics' && <><AnalyticsPanel stats={stats} large /><MovieRail title="In progress" items={activeItems.filter(i => i.userStatus === 'watching')} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} /></>}
-      {section === 'profile' && <ProfilePage stats={stats} activeItems={activeItems} universe={universe} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} profileName={profileName} setProfileName={setProfileName} />}
+            {section === 'profile' && <ProfilePage stats={stats} activeItems={activeItems} universe={universe} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} />}
       {section === 'watch' && safeWatchItem && <WatchPage watchItem={safeWatchItem} activeItems={activeItems} onBack={() => { setWatchItem(null); window.history.replaceState(null, '', '#watch'); }} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={handleStartWatch} updateAction={updateAction} />}
       {section === 'watch' && !safeWatchItem && <WatchBrowse activeItems={activeItems} onStartWatch={handleStartWatch} setSelected={setSelected} setStatus={setStatus} toggleBookmark={toggleBookmark} setSection={setSection} />}
 
@@ -270,6 +290,7 @@ export default function App() {
       {selectedItem && <DetailView item={selectedItem} onClose={() => setSelected(null)} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={handleStartWatch} />}
       {trailer && <TrailerModal trailer={trailer} onClose={() => setTrailer(null)} />}
       {filtersOpen && <Filters genre={genre} setGenre={setGenre} rating={rating} setRating={setRating} sortBy={sortBy} setSortBy={setSortBy} genres={genres} count={activeItems.length} onClose={() => setFiltersOpen(false)} />}
+      {authOpen && <AuthModal onClose={() => setAuthOpen(false)} onLogin={login} onSignup={signup} onGoogleSignIn={googleSignIn} onAnonymousSignIn={anonymousSignIn} />}
     </main>
   );
 }
@@ -322,7 +343,7 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
     setInlineTrailer(`${baseUrl}${baseUrl.includes('?') ? '&' : '?'}autoplay=1`);
   };
 
-  return <section className="top-carousel" style={{ '--accent': featured?.accent || '#d6202d' }} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocusCapture={() => setPaused(true)} onBlurCapture={() => setPaused(false)} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+  return <section className="top-carousel" style={{ '--accent': featured?.accent || '#334155' }} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocusCapture={() => setPaused(true)} onBlurCapture={() => setPaused(false)} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
     {featured?.poster && <img key={featured.id} className="carousel-backdrop" src={featured.poster} alt="" aria-hidden="true" />}
     <div className="carousel-backdrop-shade" aria-hidden="true" />
     <div className="feature-heading"><div><p className="eyebrow">{featured?.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} · Featured</p><h2>Top movies</h2></div><button className="feature-detail" onClick={() => setSelected(featured)}>View details</button></div>
