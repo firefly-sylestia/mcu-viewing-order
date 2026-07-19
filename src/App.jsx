@@ -374,7 +374,16 @@ function DetailView({ item, onClose, setStatus, toggleBookmark }) {
   };
   const closeTrailer = () => {
     setIsTrailerExpanded(false);
-    setTimeout(() => setInlineTrailer(null), 200);
+    setTimeout(() => setInlineTrailer(null), 400);
+  };
+  const handleWatchOnVideasy = async (item) => {
+    const params = new URLSearchParams({ title: item.title, year: String(item.year || '') });
+    const res = await fetch(`/api/tmdb/poster?${params.toString()}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data.tmdbId) return;
+    const mediaType = data.mediaType === 'tv' ? 'tv' : 'movie';
+    window.open(`https://player.videasy.net/${mediaType}/${data.tmdbId}`, '_blank', 'noopener,noreferrer');
   };
   const modalRef = React.useRef(null);
   React.useEffect(() => {
@@ -400,7 +409,7 @@ function DetailView({ item, onClose, setStatus, toggleBookmark }) {
           <div className="detail-chips"><span className="detail-rating"><Star size={15} fill="currentColor" /> {item.rating.toFixed ? item.rating.toFixed(1) : item.rating}</span>{item.genres.slice(0,3).map(g => <span key={g}>{g}</span>)}</div>
           <p className="detail-description">{item.desc || `Follow ${item.title} in the complete ${item.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} viewing order.`}</p>
           <div className="detail-facts"><div><Calendar size={18} /><span>Release year</span><strong>{item.year}</strong></div><div><Timer size={18} /><span>Runtime</span><strong>{runtimeLabel(item.runtime, item.type)}</strong></div><div><Sparkles size={18} /><span>Format</span><strong>{item.type}</strong></div></div>
-          <div className="detail-progress-actions"><StatusSelect item={item} setStatus={setStatus} /><button className={`detail-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={19} fill={item.bookmarked ? 'currentColor' : 'none'} /><span>{item.bookmarked ? 'Saved' : 'Save'}</span></button></div>
+          <div className="detail-progress-actions"><StatusSelect item={item} setStatus={setStatus} /><button className={`detail-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={19} fill={item.bookmarked ? 'currentColor' : 'none'} /><span>{item.bookmarked ? 'Saved' : 'Save'}</span></button><button className="detail-videasy" onClick={() => handleWatchOnVideasy(item)} aria-label={`Watch ${item.title} on Videasy`}><Play size={18} fill="currentColor" /><span>Watch Now</span></button></div>
         </div>
       </div>
       </div>
