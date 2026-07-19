@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Play, Bookmark, RotateCcw, Clock, Check, X, Pencil, Trophy, LogIn, LogOut, Cloud } from 'lucide-react';
+import { Play, Bookmark, RotateCcw, Clock, Check, X, Pencil, Trophy, LogIn, LogOut, Cloud, RefreshCw } from 'lucide-react';
 
 const formatTimeAgo = (timestamp) => {
   if (!timestamp) return '';
@@ -13,7 +13,7 @@ const formatTimeAgo = (timestamp) => {
   return 'Synced ' + Math.floor(hours / 24) + 'd ago';
 };
 
-function ProfilePage({ stats, activeItems, universe, setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, profileName, setProfileName, user, configured, onLogin, onLogout, lastSynced, syncing }) {
+function ProfilePage({ stats, activeItems, universe, setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, profileName, setProfileName, user, configured, onLogin, onLogout, lastSynced, syncing, onSync }) {
   const [activeTab, setActiveTab] = useState('insights');
   
   const savedItems = activeItems.filter(i => i.bookmarked);
@@ -24,7 +24,7 @@ function ProfilePage({ stats, activeItems, universe, setSelected, cycleStatus, s
   return (
     <div className="profile-page">
       {/* Profile Header */}
-      <ProfileHeader universe={universe} stats={stats} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={onLogin} onLogout={onLogout} lastSynced={lastSynced} syncing={syncing} />
+      <ProfileHeader universe={universe} stats={stats} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={onLogin} onLogout={onLogout} lastSynced={lastSynced} syncing={syncing} onSync={onSync} />
       
       {/* Tabs */}
       <div className="profile-tabs-container">
@@ -91,12 +91,12 @@ function ProfilePage({ stats, activeItems, universe, setSelected, cycleStatus, s
   );
 }
 
-function ProfileHeader({ universe, stats, profileName, setProfileName, user, configured, onLogin, onLogout, lastSynced, syncing }) {
+function ProfileHeader({ universe, stats, profileName, setProfileName, user, configured, onLogin, onLogout, lastSynced, syncing, onSync }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(profileName);
   const inputRef = useRef(null);
   const universeName = universe === 'marvel' ? 'MCU' : 'DC';
-  const universeAccent = universe === 'marvel' ? '#d6202d' : '#1677d2';
+  const universeAccent = universe === 'marvel' ? '#334155' : '#1677d2';
   const displayName = profileName || `${universeName} Viewer`;
 
   const save = () => {
@@ -144,11 +144,15 @@ function ProfileHeader({ universe, stats, profileName, setProfileName, user, con
         <div className="profile-auth">
           {user ? (
             <>
-              <div className="profile-sync-status">
+              <div className="profile-sync-status" title={lastSynced ? new Date(lastSynced).toLocaleString() : ''}>
                 {syncing && <span className="sync-spinner" />}
                 {lastSynced && !syncing && <Cloud size={13} className="sync-ok" />}
                 {lastSynced && !syncing && <span className="sync-label">{formatTimeAgo(lastSynced)}</span>}
+                {!lastSynced && !syncing && <span className="sync-label">Not synced yet</span>}
               </div>
+              <button className="sync-now-btn" onClick={onSync} disabled={syncing} title="Sync now">
+                <RefreshCw size={14} className={syncing ? 'spinning' : ''} />
+              </button>
               <button className="profile-auth-btn signed-in" onClick={onLogout} title="Sign out">
                 <span className="auth-user-label">
                   {user.email ? user.email.split('@')[0] : 'Guest'}
