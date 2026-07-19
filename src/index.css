@@ -1518,3 +1518,24 @@ button { border: 0; color: inherit; cursor: pointer; }
   }
 }
 
+
+/* ── Profile: Inline name editing ─────────────────────────────────────── */
+.profile-title { cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: opacity .15s ease; }
+.profile-title:hover { opacity: .8; }
+.profile-edit-icon { opacity: 0; transition: opacity .15s ease; }
+.profile-title:hover .profile-edit-icon { opacity: .5; }
+.profile-name-edit input {
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 1.25rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  width: 220px;
+  outline: none;
+  transition: border-color .15s ease;
+}
+.profile-name-edit input:focus { border-color: var(--accent, #d6202d); }
+.streak-stat { color: #f0b90b !important; }
+.streak-stat b { display: flex; align-items: center; gap: 4px; }

@@ -96,6 +96,7 @@ export default function App() {
   const [posterMap, setPosterMap] = useState({});
   const [trailer, setTrailer] = useState(null);
   const [watchItem, setWatchItem] = useState(saved.watchItem || null);
+  const [profileName, setProfileName] = useState(saved.profileName || '');
 
   // Guard against stale watchItem from a different universe on reload
   const safeWatchItem = watchItem && watchItem.item?.universe === universe ? watchItem : null;
@@ -112,8 +113,8 @@ export default function App() {
   const allItems = useMemo(() => [...RAW.map(item => enhance(item, 'marvel')), ...DC_RAW.map(item => enhance(item, 'dc'))], []);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ universe, query, genre, rating, sortBy, actions, section, watchItem }));
-  }, [universe, query, genre, rating, sortBy, actions, section, watchItem]);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ universe, query, genre, rating, sortBy, actions, section, watchItem, profileName }));
+  }, [universe, query, genre, rating, sortBy, actions, section, watchItem, profileName]);
 
   useEffect(() => {
     const hashed = parseHash().section;
@@ -184,7 +185,14 @@ export default function App() {
     const watchedMinutes = activeItems.filter(item => item.userStatus === 'watched').reduce((sum, i) => sum + (i.runtime || 0), 0);
     const watchedHours = Math.floor(watchedMinutes / 60);
     const watchedTime = watchedHours >= 1 ? `${watchedHours}h ${watchedMinutes % 60}m` : `${watchedMinutes}m`;
-    return { total, watched, watching, dropped, bookmarked, percent: Math.round((watched / total) * 100), watchedMinutes, watchedTime };
+    const watchedByOrder = activeItems.filter(item => item.userStatus === 'watched').map(i => i.order).sort((a, b) => a - b);
+    let streak = 0, best = 0;
+    for (let i = 0; i < watchedByOrder.length; i++) {
+      if (i === 0 || watchedByOrder[i] === watchedByOrder[i - 1] + 1) streak++;
+      else streak = 1;
+      if (streak > best) best = streak;
+    }
+    return { total, watched, watching, dropped, bookmarked, percent: Math.round((watched / total) * 100), watchedMinutes, watchedTime, streak: best };
   }, [activeItems]);
 
   const updateAction = (item, patch) => setActions(prev => ({ ...prev, [item.id]: { ...(prev[item.id] || {}), ...patch } }));
@@ -247,7 +255,7 @@ export default function App() {
 
       {section === 'list' && <ListSection items={activeItems} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />}
       {section === 'analytics' && <><AnalyticsPanel stats={stats} large /><MovieRail title="In progress" items={activeItems.filter(i => i.userStatus === 'watching')} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} /></>}
-      {section === 'profile' && <ProfilePage stats={stats} activeItems={activeItems} universe={universe} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />}
+      {section === 'profile' && <ProfilePage stats={stats} activeItems={activeItems} universe={universe} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} profileName={profileName} setProfileName={setProfileName} />}
       {section === 'watch' && safeWatchItem && <WatchPage watchItem={safeWatchItem} activeItems={activeItems} onBack={() => { setWatchItem(null); window.history.replaceState(null, '', '#watch'); }} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={handleStartWatch} updateAction={updateAction} />}
       {section === 'watch' && !safeWatchItem && <WatchBrowse activeItems={activeItems} onStartWatch={handleStartWatch} setSelected={setSelected} setStatus={setStatus} toggleBookmark={toggleBookmark} setSection={setSection} />}
 
