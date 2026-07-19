@@ -1006,7 +1006,7 @@ button { border: 0; color: inherit; cursor: pointer; }
 :root { --cinema-bg: #080808; --cinema-surface: #151515; --cinema-text: #ffffff; --cinema-muted: #9a9a9a; --cinema-red: var(--brand-accent,#b91c1c); }
 .movie-site { padding-top: 10px; background: var(--cinema-bg); }
 .site-glow { opacity: .5; }
-.site-header { max-width: 1240px; margin-inline: auto; grid-template-columns: auto auto minmax(220px, 420px) 42px; justify-content: space-between; gap: 8px; padding: 8px; border: 1px solid rgba(255,255,255,.07); border-radius: 18px; background: rgba(12,12,12,.86); }
+.site-header { max-width: 1240px; margin-inline: auto; grid-template-columns: auto auto minmax(220px, 420px) auto; justify-content: space-between; gap: 8px; padding: 8px; border: 1px solid rgba(255,255,255,.07); border-radius: 18px; background: rgba(12,12,12,.86); }
 .brand { gap: 8px; font-size: 14px; white-space: nowrap; }.brand span { width: 44px; height: 34px; border-radius: 10px; }.universe-tabs { gap: 3px; }.universe-tabs button { padding: 7px 11px; background: transparent; }.header-search { height: 38px; border-radius: 12px; }.header-filter-btn { width: 38px; height: 38px; border-radius: 12px; }
 .hero-layout { display: block; max-width: 1240px; margin: 12px auto 20px; }
 .top-carousel { min-height: 620px; padding: clamp(16px, 2.5vw, 30px); border-radius: 30px; background: rgba(17,17,17,.96); isolation: isolate; }
