@@ -1156,6 +1156,43 @@ button { border: 0; color: inherit; cursor: pointer; }
 .detail-inline-trailer button { position: absolute; top: 12px; right: 12px; width: 38px; height: 38px; display: grid; place-items: center; border-radius: 11px; background: rgba(0,0,0,.75); transition: background 180ms ease; z-index: 2; }
 .detail-inline-trailer button:hover { background: rgba(0,0,0,.95); }
 @keyframes trailerReveal { from { opacity: 0; } to { opacity: 1; } }
+
+.watch-page { min-height: 100svh; background: #050507; color: #fff; padding-bottom: 100px; }
+.watch-header { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 16px; padding: 16px clamp(12px,3vw,32px); border-bottom: 1px solid rgba(255,255,255,.06); background: rgba(5,5,7,.92); backdrop-filter: blur(16px); }
+.watch-header > button { display: flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 10px; background: rgba(255,255,255,.06); color: #ccc; font-weight: 700; font-size: 14px; transition: background .15s ease; }
+.watch-header > button:hover { background: rgba(255,255,255,.12); color: #fff; }
+.watch-header > div { flex: 1; min-width: 0; }
+.watch-kicker { font-size: 11px; font-weight: 800; letter-spacing: .1em; color: var(--brand-accent, #d6202d); text-transform: uppercase; }
+.watch-header h1 { margin: 2px 0 0; font-size: clamp(16px,2.5vw,22px); letter-spacing: .04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.watch-header-actions button { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 10px; background: rgba(255,255,255,.06); color: #ccc; transition: all .15s ease; }
+.watch-header-actions button:hover { background: rgba(255,255,255,.12); color: #fff; }
+.watch-header-actions button.saved { background: var(--brand-accent, #d6202d); color: #fff; }
+.watch-player { position: relative; width: 100%; max-width: 1100px; margin: 0 auto; aspect-ratio: 16/9; background: #000; border-left: 1px solid rgba(255,255,255,.06); border-right: 1px solid rgba(255,255,255,.06); box-shadow: 0 8px 40px rgba(0,0,0,.4); }
+.watch-player iframe { width: 100%; height: 100%; border: 0; display: block; }
+.watch-info { max-width: 1100px; margin: 0 auto; padding: 20px clamp(12px,3vw,32px); }
+.watch-meta { display: flex; align-items: center; gap: 10px; color: #999; font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+.watch-meta span:last-of-type { color: #ffcf3a; display: flex; align-items: center; gap: 4px; }
+.watch-desc { color: #aaa; font-size: 14px; line-height: 1.6; max-width: 680px; margin-bottom: 18px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.watch-actions { max-width: 340px; }
+.watch-actions .status-select { min-width: 100%; }
+.watch-upnext { max-width: 1100px; margin: 0 auto; padding: 12px clamp(12px,3vw,32px) 20px; }
+.watch-upnext h2 { font-size: 18px; font-weight: 800; letter-spacing: .05em; margin-bottom: 14px; }
+.watch-upnext-rail { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; -ms-overflow-style: none; }
+.watch-upnext-rail::-webkit-scrollbar { display: none; }
+.watch-rec-card { flex: 0 0 140px; background: transparent; border: 0; padding: 0; text-align: left; cursor: pointer; color: inherit; transition: transform .15s ease; }
+.watch-rec-card:hover { transform: translateY(-4px); }
+.watch-rec-poster { width: 140px; height: 198px; border-radius: 14px; overflow: hidden; background: var(--accent, #1a1a1a); margin-bottom: 8px; box-shadow: 0 6px 20px rgba(0,0,0,.3); }
+.watch-rec-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.watch-rec-poster .fallback-poster { height: 100%; padding: 14px; display: grid; align-content: end; }
+.watch-rec-poster .fallback-poster strong { font-size: 16px; }
+.watch-rec-card > span { display: block; font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.watch-rec-card > small { color: #888; font-size: 11px; }
+@media (max-width: 600px) {
+  .watch-player { border-left: 0; border-right: 0; }
+  .watch-header h1 { font-size: 15px; }
+  .watch-rec-card { flex: 0 0 110px; }
+  .watch-rec-poster { width: 110px; height: 156px; }
+}
 .detail-trailer { height: 50px; display: flex; align-items: center; justify-content: center; gap: 9px; border-radius: 15px; background: var(--brand-accent); font-weight: 850; }
 .detail-content { align-self: center; min-width: 0; }
 .detail-kicker { display: flex; justify-content: space-between; gap: 18px; color: color-mix(in srgb, var(--brand-accent) 72%, #ffffff); font-size: 11px; font-weight: 900; letter-spacing: .11em; text-transform: uppercase; }
