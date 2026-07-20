@@ -18,7 +18,7 @@ export const DC_RAW = [
   { id: 5009, order: 9, title: 'Shazam!', ageRating: 'PG-13', year: 2019, phase: 2, type: 'film', essential: true, runtime: 132, releaseDate: '2019-04-05', status: 'unwatched', prereq: 'Justice League' },
   { id: 5010, order: 10, title: 'Birds of Prey', ageRating: 'R', year: 2020, phase: 2, type: 'film', essential: false, runtime: 109, releaseDate: '2020-02-07', status: 'unwatched', prereq: 'Suicide Squad' },
   { id: 5011, order: 11, title: 'The Suicide Squad', ageRating: 'R', year: 2021, phase: 2, type: 'film', essential: true, runtime: 132, releaseDate: '2021-08-06', status: 'unwatched', prereq: 'Suicide Squad' },
-  { id: 5012, order: 12, title: 'Peacemaker Season 1', ageRating: 'TV-MA', year: 2022, phase: 3, type: 'series', essential: false, runtime: 368, releaseDate: '2022-01-13', status: 'unwatched', prereq: 'The Suicide Squad' },
+  { id: 5012, order: 12, title: 'Peacemaker Season 1', ageRating: 'TV-MA', year: 2022, phase: 3, type: 'series', essential: false, runtime: 368, releaseDate: '2022-01-13', status: 'unwatched', prereq: 'The Suicide Squad', tmdbId: 105971, season: 1, epStart: 1, epEnd: 8 },
   { id: 5013, order: 13, title: 'Black Adam', ageRating: 'PG-13', year: 2022, phase: 3, type: 'film', essential: false, runtime: 125, releaseDate: '2022-10-21', status: 'unwatched', prereq: 'Shazam!' },
   { id: 5014, order: 14, title: 'Shazam! Fury of the Gods', ageRating: 'PG-13', year: 2023, phase: 3, type: 'film', essential: false, runtime: 130, releaseDate: '2023-03-17', status: 'unwatched', prereq: 'Shazam!' },
   { id: 5015, order: 15, title: 'The Flash', ageRating: 'PG-13', year: 2023, phase: 3, type: 'film', essential: true, runtime: 144, releaseDate: '2023-06-16', status: 'unwatched', prereq: 'Zack Snyder’s Justice League' },
@@ -27,7 +27,7 @@ export const DC_RAW = [
   { id: 5018, order: 18, title: 'Joker', ageRating: 'R', year: 2019, phase: 4, type: 'film', essential: false, runtime: 122, releaseDate: '2019-10-04', status: 'unwatched', prereq: 'Standalone Elseworlds' },
   { id: 5019, order: 19, title: 'The Batman', ageRating: 'PG-13', year: 2022, phase: 4, type: 'film', essential: false, runtime: 176, releaseDate: '2022-03-04', status: 'unwatched', prereq: 'Standalone Elseworlds' },
   { id: 5020, order: 20, title: 'Joker: Folie à Deux', ageRating: 'R', year: 2024, phase: 4, type: 'film', essential: false, runtime: 138, releaseDate: '2024-10-04', status: 'unwatched', prereq: 'Joker' },
-  { id: 5021, order: 21, title: 'Creature Commandos Season 1', ageRating: 'TV-MA', year: 2024, phase: 5, type: 'series', essential: false, runtime: 175, releaseDate: '2024-12-05', status: 'unwatched', prereq: 'The Suicide Squad' },
+  { id: 5021, order: 21, title: 'Creature Commandos Season 1', ageRating: 'TV-MA', year: 2024, phase: 5, type: 'series', essential: false, runtime: 175, releaseDate: '2024-12-05', status: 'unwatched', prereq: 'The Suicide Squad', tmdbId: 124364, season: 1, epStart: 1, epEnd: 7 },
   { id: 5022, order: 22, title: 'Superman', ageRating: 'PG-13', year: 2025, phase: 5, type: 'film', essential: true, runtime: 0, releaseDate: '2025-07-11', status: 'unwatched', upcoming: true, prereq: 'Creature Commandos Season 1' },
 ];
 

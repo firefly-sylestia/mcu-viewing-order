@@ -694,14 +694,47 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
   const [switching, setSwitching] = useState(false);
   const [toast, setToast] = useState('');
   const currentItem = activeItems.find(i => i.id === item.id) || item;
+  const isSeries = currentItem.type === 'series' && currentItem.tmdbId;
+  const [episodes, setEpisodes] = useState([]);
+  const [selectedEpisode, setSelectedEpisode] = useState(currentItem.epStart || 1);
+  const [episodeLoading, setEpisodeLoading] = useState(false);
+
+  useEffect(() => { setSelectedEpisode(currentItem.epStart || 1); }, [currentItem.id, currentItem.epStart]);
+
+  useEffect(() => {
+    if (!isSeries) { setEpisodes([]); return; }
+    setEpisodeLoading(true);
+    let cancelled = false;
+    const season = currentItem.season || 1;
+    fetch(`/api/tmdb/episodes?tmdbId=${currentItem.tmdbId}&season=${season}`, { cache: 'force-cache' })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (cancelled) return;
+        if (data?.episodes) {
+          const filtered = currentItem.epStart
+            ? data.episodes.filter(ep => ep.episode >= (currentItem.epStart || 1) && ep.episode <= (currentItem.epEnd || 999))
+            : data.episodes;
+          setEpisodes(filtered);
+          if (filtered.length) setSelectedEpisode(prev => filtered.find(e => e.episode === prev) ? prev : filtered[0].episode);
+        }
+        setEpisodeLoading(false);
+      })
+      .catch(() => { if (!cancelled) setEpisodeLoading(false); });
+    return () => { cancelled = true; };
+  }, [currentItem.tmdbId, currentItem.season, currentItem.epStart, currentItem.epEnd, isSeries]);
+
   const videasyUrl = useMemo(() => {
     const base = tmdbId ? `https://player.videasy.net/${mediaType}/${tmdbId}` : `https://player.videasy.net/movie/${encodeURIComponent(item.title)}`;
     const params = new URLSearchParams();
     params.set('autoplay', '1');
     const startSec = Math.floor((currentItem.watchedDuration || 0) / 1000);
     if (startSec > 5) params.set('progress', String(startSec));
+    if (isSeries && selectedEpisode) {
+      params.set('season', String(currentItem.season || 1));
+      params.set('episode', String(selectedEpisode));
+    }
     return `${base}?${params.toString()}`;
-  }, [tmdbId, mediaType, item.title, currentItem.watchedDuration]);
+  }, [tmdbId, mediaType, item.title, currentItem.watchedDuration, currentItem.season, isSeries, selectedEpisode]);
   const upNext = activeItems
     .filter(i => i.id !== item.id && i.userStatus !== 'watched' && i.userStatus !== 'dropped')
     .slice(0, 12);
@@ -777,6 +810,16 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
         <iframe src={videasyUrl} title={`Watch ${item.title}`} allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope; clipboard-write; web-share" allowFullScreen referrerPolicy="no-referrer" />
       </div>
       <div className="watch-progress-bar"><span style={{ width: `${progress}%` }} /></div>
+      {isSeries && episodes.length > 0 && (
+        <div className="watch-episode-picker">
+          <span className="watch-episode-label">{episodeLoading ? 'Loading episodes...' : `Episode ${selectedEpisode} of ${episodes.length}`}</span>
+          <select className="watch-episode-select" value={selectedEpisode} onChange={e => setSelectedEpisode(Number(e.target.value))}>
+            {episodes.map(ep => (
+              <option key={ep.episode} value={ep.episode}>{ep.episode}. {ep.title}</option>
+            ))}
+          </select>
+        </div>
+      )}
       <div className="watch-info">
         <div className="watch-meta">
           <span>{currentItem.year}</span>
