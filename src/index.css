@@ -939,17 +939,35 @@ button { border: 0; color: inherit; cursor: pointer; }
   white-space: nowrap;
 }
 .header-user-badge {
-  background: color-mix(in srgb, var(--brand-accent,#9a4a4a) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--brand-accent,#9a4a4a) 22%, transparent);
-  color: var(--brand-accent,#9a4a4a);
+  min-width: 44px;
+  justify-content: center;
+  gap: 0;
+  padding: 5px;
+  background: color-mix(in srgb, var(--theme-surface, #161a1d) 86%, transparent);
+  border: 1px solid color-mix(in srgb, var(--brand-accent, var(--accent)) 38%, rgba(255,255,255,.12));
+  color: var(--theme-text, #f5f3f4);
+  box-shadow: 0 10px 26px rgba(0,0,0,.26), inset 0 1px 0 rgba(255,255,255,.08);
 }
 .header-user-badge:hover {
-  background: color-mix(in srgb, var(--brand-accent,#9a4a4a) 20%, transparent);
+  background: color-mix(in srgb, var(--brand-accent, var(--accent)) 18%, var(--theme-surface, #161a1d));
+  border-color: color-mix(in srgb, var(--brand-accent, var(--accent)) 58%, rgba(255,255,255,.14));
+  transform: translateY(-1px);
 }
+.header-user-badge svg { display: none; }
 .header-user-name {
-  max-width: 80px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--brand-accent, var(--accent)), color-mix(in srgb, var(--brand-accent, var(--accent)) 68%, #ffffff));
+  color: #fff;
+  font-size: 14px;
+  font-weight: 950;
+  letter-spacing: -.01em;
+  text-shadow: 0 1px 2px rgba(0,0,0,.35);
+  box-shadow: 0 0 0 1px rgba(255,255,255,.12), 0 8px 18px color-mix(in srgb, var(--brand-accent, var(--accent)) 28%, transparent);
 }
 .header-signin-badge {
   background: rgba(255,255,255,.06);
@@ -1456,14 +1474,17 @@ button { border: 0; color: inherit; cursor: pointer; }
   width: 80px;
   height: 80px;
   border-radius: 20px;
-  background: linear-gradient(135deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 70%, #7f7f7f) 100%);
+  background: color-mix(in srgb, var(--theme-surface, #161a1d) 84%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 42%, rgba(255,255,255,.14));
+  box-shadow: 0 18px 42px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.09);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   font-weight: 900;
   font-size: 32px;
-  color: rgba(0,0,0,.9);
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0,0,0,.35);
 }
 
 .profile-info {
@@ -1603,8 +1624,9 @@ button { border: 0; color: inherit; cursor: pointer; }
   .profile-header {
     flex-direction: column;
     text-align: center;
-    padding: 24px;
+    padding: 22px 18px;
     margin-bottom: 24px;
+    gap: 14px;
   }
 
   .profile-title {
@@ -1616,9 +1638,23 @@ button { border: 0; color: inherit; cursor: pointer; }
   }
 
   .profile-avatar {
-    width: 64px;
-    height: 64px;
+    width: 58px;
+    height: 58px;
     font-size: 24px;
+    border-radius: 18px;
+  }
+
+  .profile-auth {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .profile-sync-status {
+    order: 3;
+    width: 100%;
+    justify-content: center;
   }
 }
 
@@ -1908,6 +1944,33 @@ button { border: 0; color: inherit; cursor: pointer; }
   font-weight: 700;
   font-size: 13px;
   letter-spacing: 0;
+}
+
+@media (max-width: 860px) {
+  .profile-auth {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .profile-sync-status {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .header-user-badge {
+    min-width: 40px;
+    padding: 4px;
+    border-radius: 12px;
+  }
+
+  .header-user-name {
+    width: 30px;
+    height: 30px;
+    font-size: 13px;
+  }
 }
 .profile-auth-confirm {
   display: flex;

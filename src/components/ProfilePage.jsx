@@ -121,6 +121,7 @@ function ProfileHeader({ universe, stats, profileName, setProfileName, user, con
   const universeName = universe === 'marvel' ? 'MCU' : 'DC';
   const universeAccent = universe === 'marvel' ? '#da1e37' : '#2f80ed';
   const displayName = profileName || `${universeName} Viewer`;
+  const avatarInitial = 'J';
 
   const save = () => {
     const trimmed = draft.trim();
@@ -138,7 +139,7 @@ function ProfileHeader({ universe, stats, profileName, setProfileName, user, con
   return (
     <div className="profile-header" style={{ '--accent': universeAccent }}>
       <div className="profile-avatar">
-        <span className="avatar-initials">{displayName.charAt(0).toUpperCase()}</span>
+        <span className="avatar-initials">{avatarInitial}</span>
       </div>
       <div className="profile-info">
         {editing ? (
@@ -184,7 +185,7 @@ function ProfileHeader({ universe, stats, profileName, setProfileName, user, con
                 </div>
               ) : (
                 <button className="profile-auth-btn signed-in" onClick={() => setConfirmingLogout(true)} title="Sign out">
-                  <span className="auth-user-avatar">{displayName.charAt(0).toUpperCase()}</span>
+                  <span className="auth-user-avatar">{avatarInitial}</span>
                   <LogOut size={14} />
                 </button>
               )}
