@@ -604,7 +604,7 @@ function WatchBrowse({ activeItems, onStartWatch, setSelected, setStatus, toggle
           <div className="section-title"><h2>Continue Watching</h2><button>{inProgress.length} in progress</button></div>
           <div className="watch-browse-grid">
             {inProgress.map(item => (
-              <article key={item.id} className="movie-card" style={{ '--accent': item.accent }}>
+              <article key={item.id} className="movie-card watch-browse-card in-progress-card" style={{ '--accent': item.accent }}>
                 <button className="poster-button" onClick={() => handleResume(item)}>
                   <PosterArt item={item} />
                   <div className="continue-overlay"><Play size={28} fill="currentColor" /></div>
@@ -625,13 +625,12 @@ function WatchBrowse({ activeItems, onStartWatch, setSelected, setStatus, toggle
           <div className="section-title"><h2>Start Watching</h2><button>{activeItems.filter(i => i.userStatus === 'unwatched').length} available</button></div>
           <div className="watch-browse-grid">
             {upNext.map(item => (
-              <article key={item.id} className="movie-card" style={{ '--accent': item.accent }}>
+              <article key={item.id} className="movie-card watch-browse-card start-card" style={{ '--accent': item.accent }}>
                 <button className="poster-button" onClick={() => setSelected(item)}><PosterArt item={item} /></button>
                 <div className="card-body"><button className="title-button" onClick={() => setSelected(item)}>{item.title}</button><span>{item.year} · {runtimeLabel(item.runtime, item.type)}</span></div>
-                <div className="card-actions">
-                  <button onClick={() => handleResume(item)} className="trailer-chip"><Play size={16} fill="currentColor" /><span>Watch</span></button>
-                  <StatusSelect item={item} setStatus={setStatus} compact />
-                  <button onClick={() => toggleBookmark(item)} className={`bookmark-chip ${item.bookmarked ? 'saved' : ''}`}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button>
+                <div className="card-actions watch-start-actions">
+                  <button onClick={() => handleResume(item)} className="trailer-chip watch-primary-action"><Play size={16} fill="currentColor" /><span>Watch</span></button>
+                  <button onClick={() => toggleBookmark(item)} className={`bookmark-chip watch-bookmark-action ${item.bookmarked ? 'saved' : ''}`}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /><span>{item.bookmarked ? 'Saved' : 'Bookmark'}</span></button>
                 </div>
               </article>
             ))}
