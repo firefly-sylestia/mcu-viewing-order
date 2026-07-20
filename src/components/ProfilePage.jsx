@@ -316,6 +316,9 @@ function PosterArt({ item }) {
       <img
         src={item.poster}
         alt={`${item.title} poster`}
+        width="300"
+        height="450"
+        loading="lazy"
         onError={e => {
           e.currentTarget.style.display = 'none';
           e.currentTarget.nextElementSibling?.removeAttribute('hidden');
