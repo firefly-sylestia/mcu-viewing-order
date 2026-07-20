@@ -2669,3 +2669,83 @@ button { border: 0; color: inherit; cursor: pointer; }
 .upnext-grid.rail-scroll {
   contain: none !important;
 }
+
+/* Follow-up: revert desktop rail appearance, neutral borders, and no load/unload compositing. */
+@media (min-width: 561px) {
+  .rail-density-toggle {
+    display: none !important;
+  }
+
+  .web-rail .web-grid:not(.rail-scroll),
+  .web-rail .movie-grid:not(.rail-scroll) {
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)) !important;
+  }
+}
+
+.list-section.is-grid-view .list-card-grid,
+.list-card-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+.movie-site .site-header,
+.movie-site .top-carousel,
+.movie-site .movie-card,
+.movie-site .list-row,
+.movie-site .profile-header,
+.movie-site .profile-analytics,
+.movie-site .profile-rail,
+.movie-site .web-rail,
+.movie-site .analytics-panel,
+.movie-site .list-section,
+.movie-site .status-trigger,
+.movie-site .rail-density-toggle,
+.movie-site .rail-density-toggle button.active {
+  border-color: rgba(255,255,255,.14) !important;
+}
+
+.movie-site.universe-marvel,
+.movie-site.universe-dc {
+  --palette-border: rgba(255,255,255,.14);
+}
+
+.movie-site .status-select.unwatched .status-trigger {
+  border-color: rgba(255,255,255,.16) !important;
+  color: rgba(255,255,255,.86);
+}
+
+.movie-site .movie-card:hover,
+.web-rail .movie-card:hover {
+  border-color: rgba(255,255,255,.2) !important;
+}
+
+.upnext-grid.rail-scroll,
+.web-rail .rail-scroll {
+  will-change: auto !important;
+  transform: none !important;
+  backface-visibility: visible !important;
+  contain: none !important;
+}
+
+.upnext-grid .poster-button,
+.upnext-grid .poster-button img,
+.movie-card .poster-button img {
+  display: block;
+}
+
+.upnext-grid .poster-button {
+  line-height: 0;
+  margin-bottom: 0;
+}
+
+@media (max-width: 560px) {
+  .list-section.is-grid-view .list-card-grid,
+  .list-card-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .web-rail .movie-card {
+    content-visibility: visible !important;
+    contain: none !important;
+    contain-intrinsic-size: auto !important;
+  }
+}
