@@ -1213,8 +1213,13 @@ button { border: 0; color: inherit; cursor: pointer; }
 .movie-site .show-results:hover,
 .movie-site .hero-actions button:hover { box-shadow: 0 8px 24px var(--accent-soft); }
 
-/* Improved hover preview */
-.smooth-stack .stack-poster { transform-origin: center bottom; }
+/* Carousel poster hover highlight */
+.smooth-stack .stack-poster { transform-origin: center bottom; transition: transform .46s cubic-bezier(.22,.8,.2,1), opacity .38s ease, box-shadow .4s ease, filter .35s ease; }
+.smooth-stack .stack-poster:hover { z-index: 8; filter: brightness(1.15); box-shadow: 0 0 0 2px rgba(255,255,255,.18), 0 8px 40px rgba(0,0,0,.5), 0 0 60px rgba(255,255,255,.06); }
+
+.smooth-stack .poster-0:hover { transform: translateX(14%) translate3d(0,-4px,50px) scale(1.015); }
+.smooth-stack .poster-1:hover { transform: translateX(70%) translate3d(0,22px,0) rotate(6deg) scale(.905); opacity: .95; }
+.smooth-stack .poster-2:hover { transform: translateX(109%) translate3d(0,48px,-30px) rotate(10deg) scale(.795); opacity: .78; }
 
 /* Paginated viewing list */
 .list-section { max-width: 1240px; gap: 0; padding: clamp(18px,3vw,34px); overflow: visible; background: #14181d; border-color: rgba(255,255,255,.1); }
