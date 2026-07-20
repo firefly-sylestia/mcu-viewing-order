@@ -104,7 +104,7 @@ export default function App() {
   const [watchItem, setWatchItem] = useState(saved.watchItem || null);
   const [profileName, setProfileName] = useState(saved.profileName || '');
   const [authOpen, setAuthOpen] = useState(false);
-  const { user, login, signup, googleSignIn, anonymousSignIn, logout: authLogout, configured } = useAuth();
+  const { user, login, signup, googleSignIn, anonymousSignIn, logout: authLogout, resetPassword, configured } = useAuth();
   const { pushToCloud, pushBeforeLogout, lastSynced, syncing, conflict, resolveUseRemote, resolveKeepLocal, toast } = useCloudSync(user, actions, profileName, setActions, setProfileName, watchItem, setWatchItem);
 
   // Guard against stale watchItem from a different universe on reload
