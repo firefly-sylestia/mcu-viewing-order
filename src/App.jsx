@@ -175,15 +175,19 @@ export default function App() {
     const fetchBatch = async (startIndex) => {
       if (cancelled || startIndex >= missing.length) return;
       const batch = missing.slice(startIndex, startIndex + batchSize);
-      await Promise.allSettled(batch.map(item => {
+      const results = await Promise.allSettled(batch.map(item => {
         const params = new URLSearchParams({ title: item.title, year: String(item.year || '') });
         return fetch(`/api/tmdb/poster?${params.toString()}`, { cache: 'force-cache' })
-          .then(response => response.ok ? response.json() : null)
-          .then(data => {
-            if (!cancelled && data?.poster) setPosterMap(prev => ({ ...prev, [item.id]: data.poster }));
-          });
+          .then(response => response.ok ? response.json() : null);
       }));
-      if (!cancelled) fetchBatch(startIndex + batchSize);
+      if (!cancelled) {
+        const updates = {};
+        results.forEach((result, i) => {
+          if (result.status === 'fulfilled' && result.value?.poster) updates[batch[i].id] = result.value.poster;
+        });
+        if (Object.keys(updates).length) setPosterMap(prev => ({ ...prev, ...updates }));
+        fetchBatch(startIndex + batchSize);
+      }
     };
     fetchBatch(0);
     return () => { cancelled = true; };
