@@ -2843,3 +2843,90 @@ button { border: 0; color: inherit; cursor: pointer; }
     color: rgba(255,255,255,.86);
   }
 }
+
+/* Follow-up: title inside poster only, meta below, smoother simple rails. */
+.movie-card .poster-title-overlay {
+  display: grid !important;
+}
+
+.movie-card .poster-title-overlay small {
+  display: none !important;
+}
+
+.movie-card .card-body {
+  display: block;
+  min-height: 24px;
+  padding: 8px 3px 7px;
+}
+
+.movie-card .card-body .title-button {
+  display: none !important;
+}
+
+.movie-card .card-body span {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: rgba(255,255,255,.68);
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+.web-rail .movie-card,
+.upnext-grid.rail-scroll .movie-card {
+  transition: border-color 120ms ease, box-shadow 120ms ease !important;
+}
+
+.rail-scroll {
+  scroll-behavior: auto !important;
+}
+
+@media (max-width: 560px) {
+  .movie-card .card-body,
+  .watch-browse-card .card-body {
+    display: block !important;
+    min-height: 21px;
+    padding: 5px 2px 5px !important;
+  }
+
+  .movie-card .card-body span,
+  .watch-browse-card .card-body span {
+    font-size: 9px !important;
+    line-height: 1.15;
+  }
+
+  .movie-card .poster-title-overlay {
+    display: grid !important;
+    padding: 4px 5px;
+  }
+
+  .movie-card .poster-title-overlay strong {
+    font-size: 7px !important;
+    line-height: 1.04;
+  }
+
+  .watch-start-actions {
+    grid-template-columns: minmax(0, 1fr) 38px !important;
+    align-items: center;
+  }
+
+  .watch-start-actions .watch-bookmark-action {
+    width: 38px !important;
+    min-width: 38px !important;
+    padding: 0 !important;
+  }
+
+  .watch-start-actions .watch-bookmark-action span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+
+.watch-browse-card .card-body .title-button {
+  display: -webkit-box !important;
+}
