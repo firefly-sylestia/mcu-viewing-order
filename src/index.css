@@ -2198,3 +2198,227 @@ button { border: 0; color: inherit; cursor: pointer; }
 .movie-site .status-select.open {
   z-index: 10045;
 }
+
+/* Mobile density and alternate grid/list controls. */
+.section-title-actions,
+.list-view-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.section-title-actions > span,
+.list-view-toggle > span {
+  color: var(--cinema-muted, var(--text-muted));
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.rail-view-btn,
+.list-view-toggle button {
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--palette-border, var(--border)) 82%, transparent);
+  background: color-mix(in srgb, var(--palette-bg-raised, var(--theme-surface)) 86%, transparent);
+  color: var(--theme-text, #fff);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: .04em;
+}
+
+.rail-view-btn:hover,
+.list-view-toggle button.active,
+.list-view-toggle button:hover {
+  background: linear-gradient(135deg, var(--palette-primary, var(--brand-accent)), var(--palette-secondary, var(--accent)));
+  color: #fff;
+}
+
+.poster-button {
+  overflow: hidden;
+}
+
+.poster-title-overlay {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  z-index: 4;
+  display: grid;
+  gap: 2px;
+  max-width: calc(100% - 16px);
+  padding: 7px 8px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(11,9,10,.54), rgba(11,9,10,.82));
+  border: 1px solid rgba(255,255,255,.12);
+  color: #fff;
+  text-align: left;
+  backdrop-filter: blur(10px) saturate(135%);
+  -webkit-backdrop-filter: blur(10px) saturate(135%);
+  pointer-events: none;
+}
+
+.poster-title-overlay strong,
+.poster-title-overlay small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.poster-title-overlay strong {
+  font-size: clamp(10px, 1vw, 12px);
+  line-height: 1.1;
+  font-weight: 950;
+}
+
+.poster-title-overlay small {
+  color: rgba(255,255,255,.72);
+  font-size: 10px;
+  line-height: 1.1;
+}
+
+.list-card-grid {
+  margin-top: 14px;
+}
+
+@media (max-width: 860px) {
+  .header-signin-badge {
+    width: 40px;
+    height: 40px;
+    justify-content: center;
+    padding: 0;
+    border-radius: 13px;
+  }
+
+  .header-signin-badge span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .site-header {
+    grid-template-columns: auto minmax(0, 1fr) 40px !important;
+  }
+
+  .universe-tabs {
+    min-width: 0;
+  }
+
+  .universe-tabs button {
+    min-width: 0;
+    padding-inline: 8px !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .section-title {
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .section-title-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .web-grid,
+  .movie-grid,
+  .list-card-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 7px !important;
+  }
+
+  .rail-scroll {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: calc((100% - 21px) / 4);
+    grid-template-columns: none !important;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scroll-snap-type: x proximity;
+    padding-bottom: 8px;
+  }
+
+  .rail-scroll .movie-card {
+    scroll-snap-align: start;
+  }
+
+  .movie-card {
+    min-width: 0;
+    padding: 4px !important;
+    border-radius: 14px !important;
+  }
+
+  .movie-card .poster-button,
+  .poster-button {
+    height: clamp(116px, 35vw, 154px) !important;
+    border-radius: 12px !important;
+  }
+
+  .poster-title-overlay {
+    left: 5px;
+    right: 5px;
+    bottom: 5px;
+    max-width: calc(100% - 10px);
+    padding: 5px 6px;
+    border-radius: 8px;
+  }
+
+  .poster-title-overlay strong { font-size: 9.5px; }
+  .poster-title-overlay small { display: none; }
+
+  .movie-card .card-body {
+    display: none;
+  }
+
+  .movie-card .card-actions {
+    grid-template-columns: minmax(0, 1fr) 28px !important;
+    gap: 4px !important;
+    margin-top: 5px;
+  }
+
+  .movie-card .card-actions .trailer-chip {
+    display: none;
+  }
+
+  .movie-card .card-actions button,
+  .movie-card .status-trigger {
+    min-height: 28px !important;
+    height: 28px !important;
+    border-radius: 9px !important;
+    padding: 0 6px !important;
+    font-size: 9px !important;
+  }
+
+  .movie-card .card-actions .bookmark-chip {
+    width: 28px !important;
+    min-width: 28px !important;
+  }
+
+  .movie-card .status-label {
+    display: inline !important;
+  }
+
+  .list-results-bar {
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .list-view-toggle {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .list-view-toggle button {
+    flex: 1;
+    min-height: 32px;
+  }
+}
