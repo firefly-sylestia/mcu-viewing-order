@@ -324,9 +324,10 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
   const touchStartX = useRef(null);
   const didSwipe = useRef(false);
   const hoverTimer = useRef(null);
-  const previewCooldown = useRef(0);
+  const isTransitioning = useRef(false);
   const move = (dir) => {
     setInlineTrailer(null);
+    isTransitioning.current = true;
     setHeroIndex((heroIndex + dir + items.length) % Math.max(items.length, 1));
   };
   const handleTouchStart = (event) => { touchStartX.current = event.touches[0]?.clientX ?? null; didSwipe.current = false; };
@@ -338,16 +339,19 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
     if (didSwipe.current) move(distance < 0 ? 1 : -1);
   };
   const previewPoster = (rawIndex, offset) => {
+    if (isTransitioning.current) return;
     window.clearTimeout(hoverTimer.current);
     if (!offset || window.matchMedia('(hover: none)').matches) return;
-    if (Date.now() - previewCooldown.current < 600) return;
     hoverTimer.current = window.setTimeout(() => {
       setInlineTrailer(null);
       setHeroIndex(rawIndex);
-      previewCooldown.current = Date.now();
+      isTransitioning.current = true;
     }, offset === 1 ? 280 : 420);
   };
-  const cancelPreview = () => window.clearTimeout(hoverTimer.current);
+  const cancelPreview = () => {
+    if (isTransitioning.current) return;
+    window.clearTimeout(hoverTimer.current);
+  };
   const selectPoster = (item, rawIndex, offset) => {
     cancelPreview();
     if (didSwipe.current) { didSwipe.current = false; return; }
@@ -355,6 +359,12 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
     offset ? setHeroIndex(rawIndex) : setSelected(item);
   };
   useEffect(() => () => window.clearTimeout(hoverTimer.current), []);
+
+  useEffect(() => {
+    if (!isTransitioning.current) return;
+    const unlock = window.setTimeout(() => { isTransitioning.current = false; }, 500);
+    return () => window.clearTimeout(unlock);
+  }, [heroIndex]);
 
   useEffect(() => {
     if (paused || inlineTrailer || items.length < 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
