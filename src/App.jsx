@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Search, SlidersHorizontal, Home, Bookmark, Play, UserRound, X, ArrowLeft, Star, BarChart3, Check, Clock, ListFilter, RotateCcw, ChevronLeft, ChevronRight, Calendar, Timer, Sparkles, LogIn, LogOut, Cloud } from 'lucide-react';
+import { Search, SlidersHorizontal, Home, Bookmark, Play, UserRound, X, ArrowLeft, Star, BarChart3, Check, Clock, ListFilter, RotateCcw, ChevronLeft, ChevronRight, Calendar, Timer, Sparkles, LogIn, LogOut, Cloud, Download } from 'lucide-react';
 import { RAW } from './data/mcuData';
 import { DC_RAW } from './data/dcData';
 import { getTrailerByTitle, trailerEmbedUrl } from './data/trailerData';
@@ -22,7 +22,8 @@ const parseHash = () => {
 
 const STATUS = ['unwatched', 'watching', 'watched', 'dropped'];
 const STATUS_LABELS = { unwatched: 'Unwatched', watching: 'Watching', watched: 'Watched', dropped: 'Dropped' };
-const palette = ['#9a4a4a', '#8a1238', '#315f42', '#1f4977', '#6b3bc8', '#b36a17'];
+const marvelPalette = ['#641220', '#85182a', '#a11d33', '#b21e35', '#bd1f36', '#da1e37'];
+const dcPalette = ['#061226', '#08204a', '#0b3a78', '#0d4f9c', '#1367c8', '#2f80ed'];
 
 const runtimeLabel = (minutes = 0, type = 'film') => {
   if (!minutes) return type === 'series' ? 'Series' : 'TBA';
@@ -82,7 +83,7 @@ const enhance = (item, universe) => ({
   rating: Number((6.7 + ((item.id * 17) % 25) / 10).toFixed(1)),
   genres: item.type === 'series' ? ['Series', 'Action', 'Drama'] : ['Action', item.phase >= 4 ? 'Adventure' : 'Sci-fi', item.essential ? 'Essential' : 'Canon'],
   poster: localPoster(item),
-  accent: universe === 'dc' ? '#1677d2' : (item.id >= 5000 ? '#334155' : palette[item.phase % palette.length]),
+  accent: universe === 'dc' ? dcPalette[(item.phase - 1) % dcPalette.length] : marvelPalette[(item.phase - 1) % marvelPalette.length],
 });
 
 export default function App() {
@@ -93,6 +94,7 @@ export default function App() {
   const [selected, setSelected] = useState(null);
   const [genre, setGenre] = useState(saved.genre || 'All');
   const [rating, setRating] = useState(saved.rating || 0);
+  const [ageRatingFilter, setAgeRatingFilter] = useState(saved.ageRatingFilter || 'All');
   const [sortBy, setSortBy] = useState(saved.sortBy || 'order');
   const [heroIndex, setHeroIndex] = useState(0);
   const [section, setSection] = useState(parseHash().section || saved.section || 'home');
@@ -112,16 +114,16 @@ export default function App() {
   useEffect(() => {
     const { section: s, slug } = parseHash();
     if (s === 'watch' && slug && allItems.length && !watchItem) {
-      const found = allItems.find(i => titleSlug(i.title) === slug);
-      if (found) handleStartWatch(found, null, 'movie');
+      const found = allItems.find(i => slugifyPosterName(i.title) === slug);
+      if (found) handleStartWatch(found, found.tmdbId || null, found.type === 'series' ? 'tv' : 'movie');
     }
   }, []);
 
   const allItems = useMemo(() => [...RAW.map(item => enhance(item, 'marvel')), ...DC_RAW.map(item => enhance(item, 'dc'))], []);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ universe, query, genre, rating, sortBy, actions, section, watchItem, profileName }));
-  }, [universe, query, genre, rating, sortBy, actions, section, watchItem, profileName]);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ universe, query, genre, rating, ageRatingFilter, sortBy, actions, section, watchItem, profileName }));
+  }, [universe, query, genre, rating, ageRatingFilter, sortBy, actions, section, watchItem, profileName]);
 
   useEffect(() => {
     const hashed = parseHash().section;
@@ -139,7 +141,7 @@ export default function App() {
       if (s) setSection(s);
       if (s === 'watch' && slug && allItems.length) {
         const found = allItems.find(i => slugifyPosterName(i.title) === slug);
-        if (found) handleStartWatch(found, null, 'movie');
+        if (found) handleStartWatch(found, found.tmdbId || null, found.type === 'series' ? 'tv' : 'movie');
       }
     };
     window.addEventListener('hashchange', onHashChange);
@@ -159,24 +161,45 @@ export default function App() {
       .filter(item => item.title.toLowerCase().includes(query.toLowerCase()))
       .filter(item => genre === 'All' || item.genres.includes(genre) || item.type === genre.toLowerCase())
       .filter(item => Number(item.rating) >= rating)
-      .map(item => ({ ...item, poster: item.poster || posterMap[item.id] || posterMap[String(item.id)] || posterMap[slugifyPosterName(item.title)] || '', userStatus: actions[item.id]?.status || 'unwatched', bookmarked: Boolean(actions[item.id]?.bookmarked), watchStartedAt: actions[item.id]?.watchStartedAt || null, watchedDuration: actions[item.id]?.watchedDuration || 0 }));
+      .filter(item => ageRatingFilter === 'All' || (item.ageRating || (item.type === 'series' ? 'TV-14' : 'PG-13')) === ageRatingFilter)
+      .map(item => ({ ...item, poster: item.poster || posterMap[item.id] || posterMap[String(item.id)] || posterMap[slugifyPosterName(item.title)] || '', userStatus: actions[item.id]?.status || 'unwatched', bookmarked: Boolean(actions[item.id]?.bookmarked), watchStartedAt: actions[item.id]?.watchStartedAt || null, watchedDuration: actions[item.id]?.watchedDuration || 0, watchedEpisodes: actions[item.id]?.watchedEpisodes || [] }));
     sorted.sort((a, b) => sortBy === 'year' ? a.year - b.year : sortBy === 'title' ? a.title.localeCompare(b.title) : a.order - b.order);
     return sorted;
-  }, [actions, allItems, universe, query, genre, posterMap, rating, sortBy]);
+  }, [actions, allItems, universe, query, genre, posterMap, rating, ageRatingFilter, sortBy]);
+
+  const failedRef = useRef(new Set());
 
   useEffect(() => {
-    const missing = activeItems.filter(item => !item.poster && !posterMap[item.id]).slice(0, 10);
+    const missing = activeItems.filter(item => !item.poster && !posterMap[item.id] && !failedRef.current.has(item.id)).slice(0, 6);
     if (!missing.length) return;
     let cancelled = false;
-    missing.forEach(item => {
-      const params = new URLSearchParams({ title: item.title, year: String(item.year || '') });
-      fetch(`/api/tmdb/poster?${params.toString()}`, { cache: 'force-cache' })
-        .then(response => response.ok ? response.json() : null)
-        .then(data => {
-          if (!cancelled && data?.poster) setPosterMap(prev => ({ ...prev, [item.id]: data.poster }));
-        })
-        .catch(() => {});
-    });
+    const batchSize = 3;
+    const fetchBatch = async (startIndex) => {
+      if (cancelled || startIndex >= missing.length) return;
+      const batch = missing.slice(startIndex, startIndex + batchSize);
+      const results = await Promise.allSettled(batch.map(item => {
+        const params = new URLSearchParams({ title: item.title, year: String(item.year || '') });
+        return fetch(`/api/tmdb/poster?${params.toString()}`, { cache: 'force-cache' })
+          .then(response => response.ok ? response.json() : null);
+      }));
+      if (!cancelled) {
+        const updates = {};
+        const failed = [];
+        results.forEach((result, i) => {
+          if (result.status === 'fulfilled') {
+            if (result.value?.poster) {
+              updates[batch[i].id] = result.value.poster;
+            } else {
+              failed.push(batch[i].id);
+            }
+          }
+        });
+        failed.forEach(id => failedRef.current.add(id));
+        if (Object.keys(updates).length) setPosterMap(prev => ({ ...prev, ...updates }));
+        fetchBatch(startIndex + batchSize);
+      }
+    };
+    fetchBatch(0);
     return () => { cancelled = true; };
   }, [activeItems, posterMap]);
 
@@ -218,7 +241,7 @@ export default function App() {
     const url = youtubeId ? trailerEmbedUrl(youtubeId) : `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(`${item.title} trailer`)}`;
     setTrailer({ title: item.title, url });
   };
-  const resetFilters = () => { setQuery(''); setGenre('All'); setRating(0); setSortBy('order'); };
+  const resetFilters = () => { setQuery(''); setGenre('All'); setRating(0); setAgeRatingFilter('All'); setSortBy('order'); };
   const handleStartWatch = (item, tmdbId, mediaType) => {
     setWatchItem({ item, tmdbId, mediaType });
     setStatus(item, 'watching');
@@ -229,10 +252,11 @@ export default function App() {
   };
 
   const universeName = universe === 'marvel' ? 'MCU' : 'DC';
-  const universeAccent = universe === 'marvel' ? '#9a4a4a' : '#1677d2';
+  const universeAccent = universe === 'marvel' ? '#da1e37' : '#2f80ed';
+  const profileInitial = (profileName?.trim()?.[0] || (universe === 'marvel' ? 'M' : 'D')).toUpperCase();
 
   return (
-    <main className={`movie-site universe-${universe}`} style={{ '--brand-accent': universeAccent }}>
+    <main className={`movie-site universe-${universe}`} style={{ '--brand-accent': universeAccent, '--accent': universeAccent, '--theme-accent': universeAccent }}>
       <div className="site-glow" />
       <header className="site-header">
         <button className="brand" onClick={() => { setQuery(''); setSection('home'); setWatchItem(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }} aria-label={`Go to ${universeName} Viewing Order home`}><span>{universeName}</span><b>{universeName} Viewing Order</b></button>
@@ -250,7 +274,7 @@ export default function App() {
           {user ? (
             <span className="header-user-badge">
               <Cloud size={13} />
-              <span className="header-user-name">{profileName ? profileName.charAt(0).toUpperCase() : (user.email ? user.email.charAt(0).toUpperCase() : '?')}</span>
+              <span className="header-user-name" aria-hidden="true">{profileInitial}</span>
             </span>
           ) : (
             <span className="header-signin-badge">
@@ -266,9 +290,8 @@ export default function App() {
           <TopCarousel items={heroItems} featured={featured} heroIndex={heroIndex} setHeroIndex={setHeroIndex} setSelected={setSelected} />
         </section>
         <SuggestionStrip nextUp={nextUp} stats={stats} setSelected={setSelected} playTrailer={playTrailer} />
-        <AnalyticsPanel stats={stats} />
-        <MovieRail title="Up next" items={activeItems.filter(i => i.userStatus === 'unwatched').slice(0, 24)} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} scrollable />
-        <MovieRail title="Essential picks" items={activeItems.filter(i => i.essential)} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} paginated />
+        <MovieRail title="Up next" items={activeItems.filter(i => i.userStatus === 'unwatched').slice(0, 10)} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} scrollable variant="upnext" />
+        <MovieRail title="Essential picks" items={activeItems.filter(i => i.essential)} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} paginated gridControls />
         <MovieRail title="Recently watched" items={activeItems.filter(i => i.userStatus === 'watched').slice(-24).reverse()} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} empty="Mark titles as watched to see them here." scrollable />
         {activeItems.filter(i => i.userStatus === 'watching').length > 0 && <ContinueWatching items={activeItems.filter(i => i.userStatus === 'watching')} setSelected={setSelected} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} onResume={handleStartWatch} />}
       </>}
@@ -289,7 +312,7 @@ export default function App() {
 
       {selectedItem && <DetailView item={selectedItem} onClose={() => setSelected(null)} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={handleStartWatch} />}
       {trailer && <TrailerModal trailer={trailer} onClose={() => setTrailer(null)} />}
-      {filtersOpen && <Filters genre={genre} setGenre={setGenre} rating={rating} setRating={setRating} sortBy={sortBy} setSortBy={setSortBy} genres={genres} count={activeItems.length} onClose={() => setFiltersOpen(false)} />}
+      {filtersOpen && <Filters genre={genre} setGenre={setGenre} rating={rating} setRating={setRating} ageRatingFilter={ageRatingFilter} setAgeRatingFilter={setAgeRatingFilter} sortBy={sortBy} setSortBy={setSortBy} genres={genres} count={activeItems.length} onClose={() => setFiltersOpen(false)} />}
       {authOpen && <AuthModal onClose={() => setAuthOpen(false)} onLogin={login} onSignup={signup} onGoogleSignIn={googleSignIn} onAnonymousSignIn={anonymousSignIn} />}
     </main>
   );
@@ -300,7 +323,6 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
   const [inlineTrailer, setInlineTrailer] = useState(null);
   const touchStartX = useRef(null);
   const didSwipe = useRef(false);
-  const hoverTimer = useRef(null);
   const move = (dir) => {
     setInlineTrailer(null);
     setHeroIndex((heroIndex + dir + items.length) % Math.max(items.length, 1));
@@ -313,26 +335,15 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
     didSwipe.current = Math.abs(distance) > 42;
     if (didSwipe.current) move(distance < 0 ? 1 : -1);
   };
-  const previewPoster = (rawIndex, offset) => {
-    window.clearTimeout(hoverTimer.current);
-    if (!offset || window.matchMedia('(hover: none)').matches) return;
-    hoverTimer.current = window.setTimeout(() => {
-      setInlineTrailer(null);
-      setHeroIndex(rawIndex);
-    }, offset === 1 ? 280 : 420);
-  };
-  const cancelPreview = () => window.clearTimeout(hoverTimer.current);
   const selectPoster = (item, rawIndex, offset) => {
-    cancelPreview();
     if (didSwipe.current) { didSwipe.current = false; return; }
     setInlineTrailer(null);
     offset ? setHeroIndex(rawIndex) : setSelected(item);
   };
-  useEffect(() => () => window.clearTimeout(hoverTimer.current), []);
 
   useEffect(() => {
     if (paused || inlineTrailer || items.length < 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
-    const timer = window.setTimeout(() => setHeroIndex((heroIndex + 1) % items.length), 4800);
+    const timer = window.setTimeout(() => setHeroIndex((heroIndex + 1) % items.length), 3000);
     return () => window.clearTimeout(timer);
   }, [heroIndex, inlineTrailer, items.length, paused, setHeroIndex]);
 
@@ -344,12 +355,12 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
   };
 
   return <section className="top-carousel" style={{ '--accent': featured?.accent || '#9a4a4a' }} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocusCapture={() => setPaused(true)} onBlurCapture={() => setPaused(false)} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
-    {featured?.poster && <img key={featured.id} className="carousel-backdrop" src={featured.poster} alt="" aria-hidden="true" />}
+    {featured?.poster && <img key={featured.id} className="carousel-backdrop" src={featured.poster} alt="" aria-hidden="true" width="300" height="450" referrerPolicy="no-referrer" />}
     <div className="carousel-backdrop-shade" aria-hidden="true" />
     <div className="feature-heading"><div><p className="eyebrow">{featured?.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} · Featured</p><h2>Top movies</h2></div><button className="feature-detail" onClick={() => setSelected(featured)}>View details</button></div>
     <div className="feature-stage">
       <div className="poster-stack smooth-stack">
-        {inlineTrailer ? <div className="inline-trailer"><iframe src={inlineTrailer} title={`${featured.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={() => setInlineTrailer(null)} aria-label="Close trailer"><X size={20} /></button></div> : items.map((item, rawIndex) => { const offset = (rawIndex - heroIndex + items.length) % items.length; if (offset > 2) return null; return <button key={item.id} aria-label={offset ? `Show ${item.title}` : `View ${item.title} details`} className={`stack-poster poster-${offset}`} onMouseEnter={() => previewPoster(rawIndex, offset)} onMouseLeave={cancelPreview} onFocus={() => previewPoster(rawIndex, offset)} onBlur={cancelPreview} onClick={() => selectPoster(item, rawIndex, offset)} style={{ '--accent': item.accent }}><PosterArt item={item} /></button>; })}
+        {inlineTrailer ? <div className="inline-trailer"><iframe src={inlineTrailer} title={`${featured.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={() => setInlineTrailer(null)} aria-label="Close trailer"><X size={20} /></button></div> : items.map((item, rawIndex) => { const offset = (rawIndex - heroIndex + items.length) % items.length; if (offset > 2) return null; return <button key={item.id} aria-label={offset ? `Show ${item.title}` : `View ${item.title} details`} className={`stack-poster poster-${offset}`} onClick={() => selectPoster(item, rawIndex, offset)} style={{ '--accent': item.accent }}><PosterArt item={item} loading="eager" fetchPriority={offset === 0 ? 'high' : 'auto'} /></button>; })}
       </div>
       <div className="feature-copy">
         <div className="feature-kicker"><span>{featured?.year}</span><span>{runtimeLabel(featured?.runtime, featured?.type)}</span><span>{featured?.rating} rating</span></div>
@@ -362,27 +373,28 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
   </section>;
 }
 
-function PosterArt({ item }) {
+function PosterArt({ item, loading: loadingProp = 'lazy', fetchPriority: fetchPriorityProp = 'auto' }) {
   return item.poster ? <>
-    <img src={item.poster} alt={`${item.title} poster`} onError={e => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling?.removeAttribute('hidden'); }} />
+    <img src={item.poster} alt={`${item.title} poster`} width="300" height="450" loading={loadingProp} fetchPriority={fetchPriorityProp} referrerPolicy="no-referrer" onError={e => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling?.removeAttribute('hidden'); }} />
     <FallbackPoster item={item} hidden />
   </> : <FallbackPoster item={item} />;
 }
 function FallbackPoster({ item, hidden = false }) { return <div className="fallback-poster" hidden={hidden}><strong>{item.title}</strong><span>{item.year}</span></div>; }
 
-function MovieRail({ title, items, setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, empty, scrollable, paginated }) {
+function MovieRail({ title, items, setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, empty, scrollable, paginated, gridControls = false, variant = 'default' }) {
   const pageSize = 12;
   const [page, setPage] = useState(1);
+  const [gridDensity, setGridDensity] = useState(2);
   const pageCount = Math.max(1, Math.ceil(items.length / pageSize));
   const currentPage = Math.min(page, pageCount);
   const visibleItems = paginated ? items.slice((currentPage - 1) * pageSize, currentPage * pageSize) : items;
   useEffect(() => { setPage(1); }, [items.length]);
 
-  return <section className="rail-card web-rail">
-    <div className="section-title"><h2>{title}</h2><button>{items.length} titles</button></div>
+  return <section className={`rail-card web-rail ${variant === 'upnext' ? 'upnext-rail-card' : ''}`}>
+    <div className="section-title"><h2>{title}</h2><div className="section-title-actions"><span>{items.length} titles</span>{gridControls && <div className="rail-density-toggle" role="group" aria-label={`${title} grid columns`}>{[2, 3].map(count => <button key={count} className={gridDensity === count ? 'active' : ''} onClick={() => setGridDensity(count)}>{count}</button>)}</div>}</div></div>
     {items.length
       ? <>
-          <div className={scrollable ? 'movie-grid web-grid rail-scroll' : 'movie-grid web-grid'}>
+          <div className={`${scrollable ? 'movie-grid web-grid rail-scroll' : 'movie-grid web-grid'} grid-${gridDensity}${variant === 'upnext' ? ' upnext-grid' : ''}`}>
             {visibleItems.map(item => <MovieCard key={item.id} item={item} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />)}
           </div>
           {paginated && pageCount > 1 && <nav className="pagination" aria-label={`${title} pages`}>
@@ -406,6 +418,7 @@ function MovieCard({ item, setSelected, cycleStatus, setStatus, toggleBookmark, 
 function ListSection({ items, setSelected, setStatus, toggleBookmark, playTrailer }) {
   const pageSize = 12;
   const [page, setPage] = useState(1);
+  const [viewMode, setViewMode] = useState('list');
   const pageCount = Math.max(1, Math.ceil(items.length / pageSize));
   const currentPage = Math.min(page, pageCount);
   const firstItem = (currentPage - 1) * pageSize;
@@ -416,15 +429,15 @@ function ListSection({ items, setSelected, setStatus, toggleBookmark, playTraile
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  return <section className="list-section">
+  return <section className={`list-section ${viewMode === 'grid' ? 'is-grid-view' : 'is-list-view'}`}>
     <div className="list-heading"><div><p className="eyebrow">Every story, in order</p><h2>Complete viewing list</h2><p className="list-intro">Track every chapter, update your progress, and keep the next story within reach.</p></div><div className="list-summary"><strong>{items.length}</strong><span>titles</span></div></div>
-    <div className="list-results-bar"><span>Showing {items.length ? firstItem + 1 : 0}–{Math.min(firstItem + pageSize, items.length)} of {items.length}</span><span>Page {currentPage} of {pageCount}</span></div>
-    <div className="list-grid">{visibleItems.map((item, index) => <article className="list-row" key={item.id} style={{ '--accent': item.accent }} onClick={() => setSelected(item)} role="button" tabIndex={0} aria-label={`View ${item.title} details`} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(item); } }}>
+    <div className="list-results-bar"><span>Showing {items.length ? firstItem + 1 : 0}–{Math.min(firstItem + pageSize, items.length)} of {items.length}</span><div className="list-view-toggle" role="group" aria-label="List view mode"><span>Page {currentPage} of {pageCount}</span><button className={viewMode === 'list' ? 'active' : ''} onClick={() => setViewMode('list')}>List</button><button className={viewMode === 'grid' ? 'active' : ''} onClick={() => setViewMode('grid')}>Grid</button></div></div>
+    {viewMode === 'grid' ? <div className="movie-grid web-grid list-card-grid">{visibleItems.map(item => <MovieCard key={item.id} item={item} setSelected={setSelected} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />)}</div> : <div className="list-grid">{visibleItems.map((item, index) => <article className="list-row" key={item.id} style={{ '--accent': item.accent }} onClick={() => setSelected(item)} role="button" tabIndex={0} aria-label={`View ${item.title} details`} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(item); } }}>
       <span className="list-index">{String(firstItem + index + 1).padStart(2, '0')}</span>
-      <div className="list-poster"><img src={item.poster} alt={`${item.title} poster`} /></div>
+      <div className="list-poster"><img src={item.poster} alt={`${item.title} poster`} width="82" height="108" loading="lazy" /></div>
       <div className="list-copy"><div className="list-title-line"><strong>{item.title}</strong>{item.essential && <span>Essential</span>}</div><span>{item.year} · {item.type} · {runtimeLabel(item.runtime, item.type)}</span><p>{item.desc || `${item.title} in the complete ${item.universe === 'marvel' ? 'MCU' : 'DC'} story timeline.`}</p><div className="list-tags">{item.genres.slice(0,3).map(g => <span key={g}>{g}</span>)}</div></div>
       <div className="list-actions" onClick={e => e.stopPropagation()}><button className="list-trailer" onClick={() => playTrailer(item)} aria-label={`Play ${item.title} trailer`}><Play size={16} fill="currentColor" /><span>Trailer</span></button><StatusSelect item={item} setStatus={setStatus} /><button className={`list-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Bookmark title'}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button></div>
-    </article>)}</div>
+    </article>)}</div>}
     {pageCount > 1 && <nav className="pagination" aria-label="Viewing list pages"><button onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} aria-label="Previous page"><ChevronLeft size={18} /></button>{Array.from({ length: pageCount }, (_, index) => index + 1).map(pageNumber => <button key={pageNumber} className={currentPage === pageNumber ? 'active' : ''} aria-current={currentPage === pageNumber ? 'page' : undefined} onClick={() => goToPage(pageNumber)}>{pageNumber}</button>)}<button onClick={() => goToPage(currentPage + 1)} disabled={currentPage === pageCount} aria-label="Next page"><ChevronRight size={18} /></button></nav>}
   </section>;
 }
@@ -440,14 +453,15 @@ const STATUS_META = {
 function StatusSelect({ item, setStatus, compact = false }) {
   const [open, setOpen] = React.useState(false);
   const ref = useRef(null);
+  const triggerLabel = compact && item.userStatus === 'unwatched' ? 'Unseen' : STATUS_LABELS[item.userStatus];
   React.useEffect(() => {
     const handleClick = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
-  return <div className={`status-select ${item.userStatus} ${compact ? 'compact' : ''}`} ref={ref}>
+  return <div className={`status-select ${item.userStatus} ${compact ? 'compact' : ''} ${open ? 'open' : ''}`} ref={ref}>
     <button className="status-trigger" onClick={() => setOpen(!open)} aria-haspopup="listbox" aria-expanded={open}>
-      <span className="status-label">{STATUS_LABELS[item.userStatus]}</span>
+      <span className="status-label">{triggerLabel}</span>
     </button>
     {open && <div className="status-dropdown" role="listbox" aria-label={`Set status for ${item.title}`}>
       <p className="status-menu-title">Viewing status</p>
@@ -485,6 +499,31 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch }) 
     setTimeout(() => setInlineTrailer(null), 400);
   };
   const [watchLoading, setWatchLoading] = useState(false);
+  const [downloadOpen, setDownloadOpen] = useState(false);
+  const [torrents, setTorrents] = useState(null);
+  const downloadRef = useRef(null);
+
+  useEffect(() => { setTorrents(null); setDownloadOpen(false); }, [item.id]);
+
+  const searchTorrents = async () => {
+    if (torrents) { setDownloadOpen(!downloadOpen); return; }
+    setDownloadOpen(true);
+    try {
+      const params = new URLSearchParams({ title: item.title, year: String(item.year || '') });
+      const res = await fetch(`/api/torrent/search?${params.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        setTorrents(data.torrents || []);
+      }
+    } catch { setTorrents([]); }
+  };
+
+  useEffect(() => {
+    const close = (e) => { if (downloadRef.current && !downloadRef.current.contains(e.target)) setDownloadOpen(false); };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, []);
+
   const handleWatchOnVideasy = async (item) => {
     if (watchLoading) return;
     setWatchLoading(true);
@@ -497,8 +536,7 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch }) 
       const mediaType = data.mediaType === 'tv' ? 'tv' : 'movie';
       onStartWatch(item, data.tmdbId, mediaType);
     } catch {
-      // fallback: try with title as ID (some Videasy instances support this)
-      onStartWatch(item, null, 'movie');
+      // fallback: try with title as ID (some Videasy instances support this)        onStartWatch(item, item.tmdbId || null, item.type === 'series' ? 'tv' : 'movie');
     } finally {
       setWatchLoading(false);
     }
@@ -527,7 +565,7 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch }) 
           <div className="detail-chips"><span className="detail-rating"><Star size={15} fill="currentColor" /> {item.rating.toFixed ? item.rating.toFixed(1) : item.rating}</span>{item.genres.slice(0,3).map(g => <span key={g}>{g}</span>)}</div>
           <p className="detail-description">{item.desc || `Follow ${item.title} in the complete ${item.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} viewing order.`}</p>
           <div className="detail-facts"><div><Calendar size={18} /><span>Release year</span><strong>{item.year}</strong></div><div><Timer size={18} /><span>Runtime</span><strong>{runtimeLabel(item.runtime, item.type)}</strong></div><div><Sparkles size={18} /><span>Format</span><strong>{item.type}</strong></div>{item.userStatus === 'watching' && item.watchedDuration > 30000 && <div><Clock size={18} /><span>Watched</span><strong>{watchTimeLabel(item)}</strong></div>}</div>
-          <div className="detail-progress-actions"><StatusSelect item={item} setStatus={setStatus} /><button className={`detail-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={19} fill={item.bookmarked ? 'currentColor' : 'none'} /><span>{item.bookmarked ? 'Saved' : 'Save'}</span></button><button className="detail-videasy" onClick={() => handleWatchOnVideasy(item)} disabled={watchLoading} aria-label={`Watch ${item.title} on Videasy`}><Play size={18} fill="currentColor" /><span>{watchLoading ? 'Loading...' : 'Watch Now'}</span></button></div>
+          <div className="detail-progress-actions"><StatusSelect item={item} setStatus={setStatus} /><button className={`detail-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={19} fill={item.bookmarked ? 'currentColor' : 'none'} /></button><button className="detail-videasy" onClick={() => handleWatchOnVideasy(item)} disabled={watchLoading} aria-label={`Watch ${item.title} on Videasy`}><Play size={18} fill="currentColor" /><span>{watchLoading ? 'Loading...' : 'Watch Now'}</span></button><div className="detail-download-wrap" ref={downloadRef}><button className="detail-download" onClick={searchTorrents} aria-label={`Download ${item.title}`}><Download size={18} /><span>Download</span></button>{downloadOpen && <div className="download-dropdown">{torrents === null ? <span className="download-loading">Searching...</span> : torrents.length === 0 ? <span className="download-empty">No torrents found</span> : torrents.map((t, i) => <a key={i} className="download-option" href={t.magnet} target="_blank" rel="noopener noreferrer" onClick={() => setDownloadOpen(false)}><span className="download-quality">{t.quality}</span><span className="download-size">{t.size}</span><span className="download-seeds">{t.seeds} seeds</span></a>)}</div>}</div></div>
         </div>
       </div>
       </div>
@@ -547,7 +585,7 @@ function ContinueWatching({ items, setSelected, setStatus, toggleBookmark, playT
       const data = await res.json();
       if (data.tmdbId) { onResume(item, data.tmdbId, data.mediaType === 'tv' ? 'tv' : 'movie'); return; }
     }
-    onResume(item, null, 'movie');
+    onResume(item, item.tmdbId || null, item.type === 'series' ? 'tv' : 'movie');
   };
   return (
     <section className="continue-watching rail-card web-rail">
@@ -576,8 +614,14 @@ function ContinueWatching({ items, setSelected, setStatus, toggleBookmark, playT
 }
 
 function WatchBrowse({ activeItems, onStartWatch, setSelected, setStatus, toggleBookmark, setSection }) {
+  const pageSize = 12;
+  const [upNextPage, setUpNextPage] = useState(1);
   const inProgress = activeItems.filter(i => i.userStatus === 'watching');
-  const upNext = activeItems.filter(i => i.userStatus === 'unwatched').slice(0, 12);
+  const allUpNext = activeItems.filter(i => i.userStatus === 'unwatched');
+  const upNextPageCount = Math.max(1, Math.ceil(allUpNext.length / pageSize));
+  const currentUpNextPage = Math.min(upNextPage, upNextPageCount);
+  const upNext = allUpNext.slice((currentUpNextPage - 1) * pageSize, currentUpNextPage * pageSize);
+  useEffect(() => { setUpNextPage(1); }, [allUpNext.length]);
   const handleResume = async (item) => {
     const params = new URLSearchParams({ title: item.title, year: String(item.year || '') });
     const res = await fetch(`/api/tmdb/poster?${params.toString()}`);
@@ -585,7 +629,7 @@ function WatchBrowse({ activeItems, onStartWatch, setSelected, setStatus, toggle
       const data = await res.json();
       if (data.tmdbId) { onStartWatch(item, data.tmdbId, data.mediaType === 'tv' ? 'tv' : 'movie'); return; }
     }
-    onStartWatch(item, null, 'movie');
+    onStartWatch(item, item.tmdbId || null, item.type === 'series' ? 'tv' : 'movie');
   };
   return (
     <section className="watch-browse">
@@ -599,7 +643,7 @@ function WatchBrowse({ activeItems, onStartWatch, setSelected, setStatus, toggle
           <div className="section-title"><h2>Continue Watching</h2><button>{inProgress.length} in progress</button></div>
           <div className="watch-browse-grid">
             {inProgress.map(item => (
-              <article key={item.id} className="movie-card" style={{ '--accent': item.accent }}>
+              <article key={item.id} className="movie-card watch-browse-card in-progress-card" style={{ '--accent': item.accent }}>
                 <button className="poster-button" onClick={() => handleResume(item)}>
                   <PosterArt item={item} />
                   <div className="continue-overlay"><Play size={28} fill="currentColor" /></div>
@@ -617,23 +661,23 @@ function WatchBrowse({ activeItems, onStartWatch, setSelected, setStatus, toggle
       )}
       {upNext.length > 0 && (
         <section className="watch-browse-section">
-          <div className="section-title"><h2>Start Watching</h2><button>{activeItems.filter(i => i.userStatus === 'unwatched').length} available</button></div>
+          <div className="section-title"><h2>Start Watching</h2><button>{allUpNext.length} available</button></div>
           <div className="watch-browse-grid">
             {upNext.map(item => (
-              <article key={item.id} className="movie-card" style={{ '--accent': item.accent }}>
+              <article key={item.id} className="movie-card watch-browse-card start-card" style={{ '--accent': item.accent }}>
                 <button className="poster-button" onClick={() => setSelected(item)}><PosterArt item={item} /></button>
                 <div className="card-body"><button className="title-button" onClick={() => setSelected(item)}>{item.title}</button><span>{item.year} · {runtimeLabel(item.runtime, item.type)}</span></div>
-                <div className="card-actions">
-                  <button onClick={() => handleResume(item)} className="trailer-chip"><Play size={16} fill="currentColor" /><span>Watch</span></button>
-                  <StatusSelect item={item} setStatus={setStatus} compact />
-                  <button onClick={() => toggleBookmark(item)} className={`bookmark-chip ${item.bookmarked ? 'saved' : ''}`}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button>
+                <div className="card-actions watch-start-actions">
+                  <button onClick={() => handleResume(item)} className="trailer-chip watch-primary-action"><Play size={16} fill="currentColor" /><span>Watch</span></button>
+                  <button onClick={() => toggleBookmark(item)} className={`bookmark-chip watch-bookmark-action ${item.bookmarked ? 'saved' : ''}`}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /><span>{item.bookmarked ? 'Saved' : 'Save'}</span></button>
                 </div>
               </article>
             ))}
           </div>
+          {upNextPageCount > 1 && <nav className="pagination" aria-label="Start watching pages"><button onClick={() => setUpNextPage(p => Math.max(1, p - 1))} disabled={currentUpNextPage === 1} aria-label="Previous page"><ChevronLeft size={18} /></button>{Array.from({ length: upNextPageCount }, (_, i) => i + 1).map(n => <button key={n} className={currentUpNextPage === n ? 'active' : ''} aria-current={currentUpNextPage === n ? 'page' : undefined} onClick={() => setUpNextPage(n)}>{n}</button>)}<button onClick={() => setUpNextPage(p => Math.min(upNextPageCount, p + 1))} disabled={currentUpNextPage === upNextPageCount} aria-label="Next page"><ChevronRight size={18} /></button></nav>}
         </section>
       )}
-      {inProgress.length === 0 && upNext.length === 0 && (
+      {inProgress.length === 0 && allUpNext.length === 0 && (
         <div className="watch-browse-empty">
           <h2>Nothing to watch yet</h2>
           <p>Open a movie or show detail and tap "Watch Now" to get started.</p>
@@ -648,11 +692,65 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
   const { item, tmdbId, mediaType } = watchItem;
   const [switching, setSwitching] = useState(false);
   const [toast, setToast] = useState('');
-  const videasyUrl = tmdbId ? `https://player.videasy.net/${mediaType}/${tmdbId}` : `https://player.videasy.net/movie/${encodeURIComponent(item.title)}`;
+  const currentItem = activeItems.find(i => i.id === item.id) || item;
+  const isSeries = currentItem.type === 'series' && currentItem.tmdbId;
+  const [episodes, setEpisodes] = useState([]);
+  const [selectedEpisode, setSelectedEpisode] = useState(currentItem.epStart || 1);
+  const [episodeLoading, setEpisodeLoading] = useState(false);
+  const watchedEpisodes = currentItem.watchedEpisodes || [];
+
+  const toggleEpisode = (epNum) => {
+    const next = watchedEpisodes.includes(epNum)
+      ? watchedEpisodes.filter(e => e !== epNum)
+      : [...watchedEpisodes, epNum].sort((a, b) => a - b);
+    updateAction(currentItem, { watchedEpisodes: next });
+  };
+
+  const episodeRangeTotal = currentItem.epEnd ? (currentItem.epEnd - (currentItem.epStart || 1) + 1) : episodes.length;
+  const allEpisodesWatched = episodeRangeTotal > 0 && watchedEpisodes.length >= episodeRangeTotal;
+
+  useEffect(() => { setSelectedEpisode(currentItem.epStart || 1); }, [currentItem.id, currentItem.epStart]);
+
+  useEffect(() => {
+    if (!isSeries) { setEpisodes([]); return; }
+    setEpisodeLoading(true);
+    let cancelled = false;
+    const season = currentItem.season || 1;
+    fetch(`/api/tmdb/episodes?tmdbId=${currentItem.tmdbId}&season=${season}`, { cache: 'force-cache' })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (cancelled) return;
+        if (data?.episodes) {
+          const filtered = currentItem.epStart
+            ? data.episodes.filter(ep => ep.episode >= (currentItem.epStart || 1) && ep.episode <= (currentItem.epEnd || 999))
+            : data.episodes;
+          setEpisodes(filtered);
+          if (filtered.length) setSelectedEpisode(prev => filtered.find(e => e.episode === prev) ? prev : filtered[0].episode);
+        }
+        setEpisodeLoading(false);
+      })
+      .catch(() => { if (!cancelled) setEpisodeLoading(false); });
+    return () => { cancelled = true; };
+  }, [currentItem.tmdbId, currentItem.season, currentItem.epStart, currentItem.epEnd, isSeries]);
+
+  const videasyUrl = useMemo(() => {
+    const effectiveTmdbId = currentItem.tmdbId || tmdbId;
+    const effectiveMediaType = currentItem.type === 'series' ? 'tv' : 'movie';
+    const season = currentItem.season || 1;
+    let base = effectiveTmdbId
+      ? (isSeries && selectedEpisode
+        ? `https://player.videasy.net/${effectiveMediaType}/${effectiveTmdbId}/${season}/${selectedEpisode}`
+        : `https://player.videasy.net/${effectiveMediaType}/${effectiveTmdbId}`)
+      : `https://player.videasy.net/${effectiveMediaType}/${encodeURIComponent(item.title)}`;
+    const params = new URLSearchParams();
+    params.set('autoplay', '1');
+    const startSec = Math.floor((currentItem.watchedDuration || 0) / 1000);
+    if (startSec > 5) params.set('progress', String(startSec));
+    return `${base}?${params.toString()}`;
+  }, [tmdbId, item.title, currentItem.tmdbId, currentItem.type, currentItem.watchedDuration, currentItem.season, isSeries, selectedEpisode]);
   const upNext = activeItems
     .filter(i => i.id !== item.id && i.userStatus !== 'watched' && i.userStatus !== 'dropped')
     .slice(0, 12);
-  const currentItem = activeItems.find(i => i.id === item.id) || item;
   const totalMs = (item.runtime || 120) * 60 * 1000;
   const initialElapsed = Math.min(currentItem.watchedDuration || 0, totalMs);
   const [elapsed, setElapsed] = useState(initialElapsed);
@@ -695,6 +793,12 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
     }
   }, [isComplete, currentItem.userStatus, currentItem.id, setStatus]);
 
+  useEffect(() => {
+    if (isSeries && allEpisodesWatched && currentItem.userStatus === 'watching') {
+      setStatus(currentItem, 'watched');
+    }
+  }, [isSeries, allEpisodesWatched, currentItem.userStatus, currentItem.id, setStatus]);
+
   const handleSwitchItem = async (rec) => {
     if (switching) return;
     updateAction(item, { watchedDuration: elapsedRef.current, watchStartedAt: null });
@@ -707,7 +811,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
         if (data.tmdbId) { onStartWatch(rec, data.tmdbId, data.mediaType === 'tv' ? 'tv' : 'movie'); return; }
       }
     } catch {}
-    onStartWatch(rec, null, 'movie');
+    onStartWatch(rec, rec.tmdbId || null, rec.type === 'series' ? 'tv' : 'movie');
     setSwitching(false);
   };
   return (
@@ -722,21 +826,42 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
       </header>
       {toast && <div className="watch-toast">{toast}</div>}
       <div className="watch-player">
-        <iframe src={videasyUrl} title={`Watch ${item.title}`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen />
+        <iframe key={isSeries ? `ep-${currentItem.tmdbId}-${currentItem.season || 1}-${selectedEpisode}` : currentItem.tmdbId || item.id} src={videasyUrl} title={`Watch ${item.title}`} allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope; clipboard-write; web-share" allowFullScreen referrerPolicy="no-referrer" />
       </div>
       <div className="watch-progress-bar"><span style={{ width: `${progress}%` }} /></div>
+      {isSeries && episodes.length > 0 && (
+        <div className="watch-episode-picker">
+          <span className="watch-episode-label">{episodeLoading ? 'Loading...' : `${watchedEpisodes.length}/${episodeRangeTotal} watched`}</span>
+          <div className="watch-episode-list">
+            {episodes.map(ep => {
+              const isWatched = watchedEpisodes.includes(ep.episode);
+              const isSelected = selectedEpisode === ep.episode;
+              return <button
+                key={ep.episode}
+                className={`watch-episode-row ${isWatched ? 'watched' : ''} ${isSelected ? 'selected' : ''}`}
+                onClick={() => { setSelectedEpisode(ep.episode); toggleEpisode(ep.episode); }}
+              >
+                <span className="watch-ep-num">{String(ep.episode).padStart(2, '0')}</span>
+                <span className="watch-ep-title">{ep.title}</span>
+                <span className="watch-ep-check">{isWatched ? <Check size={15} /> : <Play size={15} />}</span>
+              </button>;
+            })}
+          </div>
+        </div>
+      )}
       <div className="watch-info">
         <div className="watch-meta">
           <span>{currentItem.year}</span>
           <span>·</span>
           <span>{runtimeLabel(currentItem.runtime, currentItem.type)}</span>
           <span>·</span>
-          <span><Star size={14} fill="currentColor" /> {currentItem.rating.toFixed ? currentItem.rating.toFixed(1) : currentItem.rating}</span>
+          <span className="watch-rating"><Star size={14} fill="currentColor" /> {currentItem.rating.toFixed ? currentItem.rating.toFixed(1) : currentItem.rating}</span>
         </div>
         <p className="watch-desc">{currentItem.desc || `Watch ${currentItem.title} in the complete ${currentItem.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} viewing order.`}</p>
         <div className="watch-actions">
           <StatusSelect item={currentItem} setStatus={setStatus} />
-          <button onClick={() => toggleBookmark(currentItem)} className={`watch-action-btn ${currentItem.bookmarked ? 'saved' : ''}`} aria-label={currentItem.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={18} fill={currentItem.bookmarked ? 'currentColor' : 'none'} /><span>{currentItem.bookmarked ? 'Saved' : 'Save'}</span></button>
+          <button onClick={() => toggleBookmark(currentItem)} className={`watch-action-btn ${currentItem.bookmarked ? 'saved' : ''}`} aria-label={currentItem.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={18} fill={currentItem.bookmarked ? 'currentColor' : 'none'} /></button>
+          <span className="watch-age-badge">{currentItem.ageRating || (currentItem.type === 'series' ? 'TV-14' : 'PG-13')}</span>
           {currentItem.userStatus !== 'watched' && <button onClick={() => { setStatus(currentItem, 'watched'); setToast('Marked as watched'); setTimeout(() => setToast(''), 2000); }} className="watch-action-btn mark-watched" aria-label="Mark as Watched"><Check size={18} /><span>Mark Watched</span></button>}
         </div>
       </div>
@@ -747,7 +872,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
             {upNext.map(rec => (
               <button key={rec.id} className="watch-rec-card" onClick={() => handleSwitchItem(rec)} style={{ '--accent': rec.accent }}>
                 <div className="watch-rec-poster">
-                  {rec.poster ? <img src={rec.poster} alt={rec.title} /> : <FallbackPoster item={rec} />}
+                  {rec.poster ? <img src={rec.poster} alt={rec.title} width="200" height="284" loading="lazy" /> : <FallbackPoster item={rec} />}
                 </div>
                 <span>{rec.title}</span>
                 <small>{rec.year}</small>
@@ -783,13 +908,17 @@ function FilterSelect({ label, value, options, onChange }) {
   </div>;
 }
 
-function Filters({ genre, setGenre, rating, setRating, sortBy, setSortBy, genres, count, onClose }) {
+const AGE_RATINGS = ['PG-13', 'R', 'TV-14', 'TV-PG', 'TV-MA', 'Not Rated'];
+
+function Filters({ genre, setGenre, rating, setRating, ageRatingFilter, setAgeRatingFilter, sortBy, setSortBy, genres, count, onClose }) {
   return <aside className="filter-screen web-filter">
-    <div className="filter-head"><button onClick={() => { setGenre('All'); setRating(0); setSortBy('order'); }}>Clear All</button><b>Filters</b><button onClick={onClose}><X /></button></div>
+    <div className="filter-head"><button onClick={() => { setGenre('All'); setRating(0); setAgeRatingFilter('All'); setSortBy('order'); }}>Clear All</button><b>Filters</b><button onClick={onClose}><X /></button></div>
     <label>Sort by</label>
     <FilterSelect value={sortBy} onChange={setSortBy} options={[{ value: 'order', label: 'Recommended' }, { value: 'year', label: 'Year' }, { value: 'title', label: 'Title' }]} />
     <label>Minimum rating</label>
     <FilterSelect value={rating} onChange={v => setRating(Number(v))} options={[{ value: 0, label: 'Any rating' }, { value: 8, label: '8 & above' }, { value: 7, label: '7 & above' }, { value: 6, label: '6 & above' }]} />
+    <label>Age rating</label>
+    <FilterSelect value={ageRatingFilter} onChange={setAgeRatingFilter} options={[{ value: 'All', label: 'All ratings' }, ...AGE_RATINGS.map(r => ({ value: r, label: r }))]} />
     <div className="genre-title">Genres <span>{genre === 'All' ? 0 : 1}</span></div><div className="filter-chips">{genres.map(g => <button key={g} className={genre === g ? 'selected' : ''} onClick={() => setGenre(g)}>{g}</button>)}</div>
     <button className="show-results" onClick={onClose}>Show {count} results</button>
   </aside>;

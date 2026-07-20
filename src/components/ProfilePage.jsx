@@ -119,8 +119,9 @@ function ProfileHeader({ universe, stats, profileName, setProfileName, user, con
   const [confirmingLogout, setConfirmingLogout] = useState(false);
   const inputRef = useRef(null);
   const universeName = universe === 'marvel' ? 'MCU' : 'DC';
-  const universeAccent = universe === 'marvel' ? '#9a4a4a' : '#1677d2';
+  const universeAccent = universe === 'marvel' ? '#da1e37' : '#2f80ed';
   const displayName = profileName || `${universeName} Viewer`;
+  const avatarInitial = (displayName.trim()[0] || universeName[0]).toUpperCase();
 
   const save = () => {
     const trimmed = draft.trim();
@@ -138,7 +139,7 @@ function ProfileHeader({ universe, stats, profileName, setProfileName, user, con
   return (
     <div className="profile-header" style={{ '--accent': universeAccent }}>
       <div className="profile-avatar">
-        <span className="avatar-initials">{displayName.charAt(0).toUpperCase()}</span>
+        <span className="avatar-initials">{avatarInitial}</span>
       </div>
       <div className="profile-info">
         {editing ? (
@@ -184,7 +185,7 @@ function ProfileHeader({ universe, stats, profileName, setProfileName, user, con
                 </div>
               ) : (
                 <button className="profile-auth-btn signed-in" onClick={() => setConfirmingLogout(true)} title="Sign out">
-                  <span className="auth-user-avatar">{displayName.charAt(0).toUpperCase()}</span>
+                  <span className="auth-user-avatar">{avatarInitial}</span>
                   <LogOut size={14} />
                 </button>
               )}
@@ -315,6 +316,10 @@ function PosterArt({ item }) {
       <img
         src={item.poster}
         alt={`${item.title} poster`}
+        width="300"
+        height="450"
+        loading="lazy"
+        referrerPolicy="no-referrer"
         onError={e => {
           e.currentTarget.style.display = 'none';
           e.currentTarget.nextElementSibling?.removeAttribute('hidden');
@@ -366,7 +371,7 @@ function StatusSelect({ item, setStatus, compact = false }) {
   }, []);
 
   return (
-    <div className={`status-select ${item.userStatus} ${compact ? 'compact' : ''}`} ref={ref}>
+    <div className={`status-select ${item.userStatus} ${compact ? 'compact' : ''} ${open ? 'open' : ''}`} ref={ref}>
       <button
         className="status-trigger"
         onClick={() => setOpen(!open)}

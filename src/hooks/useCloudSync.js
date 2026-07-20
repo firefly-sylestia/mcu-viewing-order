@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
-import { ref, set, onValue, off } from 'firebase/database';
+import { ref, set, get } from 'firebase/database';
 import { db, configured } from '../firebase';
 
 export function useCloudSync(user, actions, profileName, setActions, setProfileName, watchItem, setWatchItem) {
@@ -24,7 +24,7 @@ export function useCloudSync(user, actions, profileName, setActions, setProfileN
     return () => window.clearTimeout(toastTimer.current);
   }, [toast]);
 
-  // Keep a mutable ref of current local state for the onValue closure
+  // Keep a mutable ref of current local state for background sync writes
   const localStateRef = useRef({ actions, profileName, watchItem });
   useEffect(() => {
     localStateRef.current = { actions, profileName, watchItem };
@@ -34,96 +34,75 @@ export function useCloudSync(user, actions, profileName, setActions, setProfileN
     setLastSynced(Date.now());
   };
 
-  // Pull data on login and listen for remote changes
-  useEffect(() => {
-    if (!configured || !user) return;
-    const userRef = ref(db, `users/${user.uid}`);
-    setSyncing(true);
-
-    let firstMerge = true;
-    const handle = onValue(userRef, (snapshot) => {
-      const data = snapshot.val();
-      if (firstMerge) { firstMerge = false; setSyncing(false); }
-      if (!data) return;
-
-      const remoteActionsStr = JSON.stringify(data.actions || {});
-      const syncedActionsStr = JSON.stringify(lastSyncedActions.current || {});
-
-      // If remote matches our last known synced state, this is an echo of our own push — ignore
-      const remoteWatchStr = JSON.stringify(data.watchItem || null);
-      const syncedWatchStr = JSON.stringify(lastSyncedWatchItem.current || null);
-      if (remoteActionsStr === syncedActionsStr && data.profileName === lastSyncedProfile.current && remoteWatchStr === syncedWatchStr) {
-        return;
-      }
-
-      const localActionsStr = JSON.stringify(localStateRef.current.actions || {});
-
-      // Check if local has unsynced changes that differ from remote → conflict
-      const localDiffersFromSynced = syncedActionsStr !== localActionsStr;
-      const remoteDiffersFromLocal = remoteActionsStr !== localActionsStr;
-
-      if (localDiffersFromSynced && remoteDiffersFromLocal) {
-        // Conflict: both local and remote changed since last sync
-        setConflict({
-          remoteActions: data.actions || {},
-          remoteProfile: data.profileName || '',
-          remoteWatchItem: data.watchItem || null,
-        });
-        return; // Don't auto-merge — let user resolve
-      }
-
-      // No conflict: apply remote changes
-      if (data.actions && remoteActionsStr !== localActionsStr) {
-        setActions(prev => {
-          const merged = { ...prev, ...data.actions };
-          lastSyncedActions.current = merged;
-          return merged;
-        });
-      }
-
-      if (data.profileName && data.profileName !== localStateRef.current.profileName) {
-        setProfileName(data.profileName);
-        lastSyncedProfile.current = data.profileName;
-      }
-
-      if (data.watchItem && JSON.stringify(data.watchItem) !== JSON.stringify(localStateRef.current.watchItem)) {
-        setWatchItem(data.watchItem);
-        lastSyncedWatchItem.current = data.watchItem;
-      }
-
-      if (data.lastSynced) {
-        setLastSynced(data.lastSynced);
-      }
-    });
-
-    return () => off(userRef, 'value', handle);
-  }, [user?.uid]);
-
   // Push local changes to cloud (debounced)
-  const pushToCloud = useCallback(() => {
+  const pushToCloud = useCallback(({ silent = false } = {}) => {
     if (!configured || !user) return;
 
+    const { actions: currentActions, profileName: currentProfileName, watchItem: currentWatchItem } = localStateRef.current;
     setSyncing(true);
     const userRef = ref(db, `users/${user.uid}`);
 
-    // Update refs BEFORE pushing so the upcoming onValue echo is ignored
-    lastSyncedActions.current = actions;
-    lastSyncedProfile.current = profileName;
-    lastSyncedWatchItem.current = watchItem;
+    lastSyncedActions.current = currentActions;
+    lastSyncedProfile.current = currentProfileName;
+    lastSyncedWatchItem.current = currentWatchItem;
 
     set(userRef, {
-      actions,
-      profileName,
-      watchItem,
+      actions: currentActions,
+      profileName: currentProfileName,
+      watchItem: currentWatchItem,
       lastSynced: Date.now(),
     }).then(() => {
       updateLastSynced();
-      setToast({ message: 'Synced successfully', type: 'success' });
+      if (!silent) setToast({ message: 'Synced successfully', type: 'success' });
     }).catch(() => {
       setToast({ message: 'Sync failed — check connection', type: 'error' });
     }).finally(() => setSyncing(false));
 
-  }, [user?.uid, actions, profileName, watchItem]);
+  }, [user?.uid]);
+
+  // Pull data once on login/site open. Do not keep a live listener; local updates push behind
+  // the scenes only when tracked progress/profile/watch state changes.
+  useEffect(() => {
+    if (!configured || !user) return;
+    const userRef = ref(db, `users/${user.uid}`);
+    let cancelled = false;
+    setSyncing(true);
+
+    get(userRef).then((snapshot) => {
+      if (cancelled) return;
+      const data = snapshot.val();
+
+      if (!data) {
+        lastSyncedActions.current = localStateRef.current.actions;
+        lastSyncedProfile.current = localStateRef.current.profileName;
+        lastSyncedWatchItem.current = localStateRef.current.watchItem;
+        pushToCloud({ silent: true });
+        return;
+      }
+
+      const remoteActions = data.actions || {};
+      const remoteProfile = data.profileName || '';
+      const remoteWatchItem = data.watchItem || null;
+
+      lastSyncedActions.current = remoteActions;
+      lastSyncedProfile.current = remoteProfile;
+      lastSyncedWatchItem.current = remoteWatchItem;
+
+      setActions(remoteActions);
+      if (remoteProfile) setProfileName(remoteProfile);
+      if (remoteWatchItem) setWatchItem(remoteWatchItem);
+      if (data.lastSynced) setLastSynced(data.lastSynced);
+    }).catch(() => {
+      if (!cancelled) setToast({ message: 'Cloud sync unavailable — changes stay local', type: 'error' });
+    }).finally(() => {
+      if (!cancelled) setSyncing(false);
+    });
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(pushTimer.current);
+    };
+  }, [user?.uid, pushToCloud, setActions, setProfileName, setWatchItem]);
 
   // Resolve conflict: use remote data (discard local)
   const resolveUseRemote = useCallback(() => {
