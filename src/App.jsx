@@ -268,9 +268,9 @@ export default function App() {
         </section>
         <SuggestionStrip nextUp={nextUp} stats={stats} setSelected={setSelected} playTrailer={playTrailer} />
         <AnalyticsPanel stats={stats} />
-        <MovieRail title="Up next" items={activeItems.filter(i => i.userStatus === 'unwatched').slice(0, 24)} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} scrollable onViewAll={() => setSection('list')} />
-        <MovieRail title="Essential picks" items={activeItems.filter(i => i.essential)} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} paginated onViewAll={() => setSection('list')} />
-        <MovieRail title="Recently watched" items={activeItems.filter(i => i.userStatus === 'watched').slice(-24).reverse()} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} empty="Mark titles as watched to see them here." scrollable onViewAll={() => setSection('list')} />
+        <MovieRail title="Up next" items={activeItems.filter(i => i.userStatus === 'unwatched').slice(0, 24)} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} scrollable />
+        <MovieRail title="Essential picks" items={activeItems.filter(i => i.essential)} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} paginated />
+        <MovieRail title="Recently watched" items={activeItems.filter(i => i.userStatus === 'watched').slice(-24).reverse()} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} empty="Mark titles as watched to see them here." scrollable />
         {activeItems.filter(i => i.userStatus === 'watching').length > 0 && <ContinueWatching items={activeItems.filter(i => i.userStatus === 'watching')} setSelected={setSelected} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} onResume={handleStartWatch} />}
       </>}
 
@@ -371,19 +371,20 @@ function PosterArt({ item }) {
 }
 function FallbackPoster({ item, hidden = false }) { return <div className="fallback-poster" hidden={hidden}><strong>{item.title}</strong><span>{item.year}</span></div>; }
 
-function MovieRail({ title, items, setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, empty, scrollable, paginated, onViewAll }) {
+function MovieRail({ title, items, setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, empty, scrollable, paginated }) {
   const pageSize = 12;
   const [page, setPage] = useState(1);
+  const [twoGrid, setTwoGrid] = useState(false);
   const pageCount = Math.max(1, Math.ceil(items.length / pageSize));
   const currentPage = Math.min(page, pageCount);
   const visibleItems = paginated ? items.slice((currentPage - 1) * pageSize, currentPage * pageSize) : items;
   useEffect(() => { setPage(1); }, [items.length]);
 
   return <section className="rail-card web-rail">
-    <div className="section-title"><h2>{title}</h2><div className="section-title-actions"><span>{items.length} titles</span>{onViewAll && <button className="rail-view-btn" onClick={onViewAll}>View all</button>}</div></div>
+    <div className="section-title"><h2>{title}</h2><div className="section-title-actions"><span>{items.length} titles</span>{scrollable && <button className="rail-view-btn" onClick={() => setTwoGrid(value => !value)} aria-pressed={twoGrid}>{twoGrid ? '4 Grid' : '2 Grid'}</button>}</div></div>
     {items.length
       ? <>
-          <div className={scrollable ? 'movie-grid web-grid rail-scroll' : 'movie-grid web-grid'}>
+          <div className={`${scrollable ? 'movie-grid web-grid rail-scroll' : 'movie-grid web-grid'}${twoGrid ? ' two-grid' : ''}`}>
             {visibleItems.map(item => <MovieCard key={item.id} item={item} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />)}
           </div>
           {paginated && pageCount > 1 && <nav className="pagination" aria-label={`${title} pages`}>
