@@ -737,15 +737,16 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
   const videasyUrl = useMemo(() => {
     const effectiveTmdbId = currentItem.tmdbId || tmdbId;
     const effectiveMediaType = currentItem.type === 'series' ? 'tv' : 'movie';
-    const base = effectiveTmdbId ? `https://player.videasy.net/${effectiveMediaType}/${effectiveTmdbId}` : `https://player.videasy.net/${effectiveMediaType}/${encodeURIComponent(item.title)}`;
+    const season = currentItem.season || 1;
+    let base = effectiveTmdbId
+      ? (isSeries && selectedEpisode
+        ? `https://player.videasy.net/${effectiveMediaType}/${effectiveTmdbId}/${season}/${selectedEpisode}`
+        : `https://player.videasy.net/${effectiveMediaType}/${effectiveTmdbId}`)
+      : `https://player.videasy.net/${effectiveMediaType}/${encodeURIComponent(item.title)}`;
     const params = new URLSearchParams();
     params.set('autoplay', '1');
     const startSec = Math.floor((currentItem.watchedDuration || 0) / 1000);
     if (startSec > 5) params.set('progress', String(startSec));
-    if (isSeries && selectedEpisode) {
-      params.set('season', String(currentItem.season || 1));
-      params.set('episode', String(selectedEpisode));
-    }
     return `${base}?${params.toString()}`;
   }, [tmdbId, item.title, currentItem.tmdbId, currentItem.type, currentItem.watchedDuration, currentItem.season, isSeries, selectedEpisode]);
   const upNext = activeItems
@@ -826,7 +827,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
       </header>
       {toast && <div className="watch-toast">{toast}</div>}
       <div className="watch-player">
-        <iframe src={videasyUrl} title={`Watch ${item.title}`} allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope; clipboard-write; web-share" allowFullScreen referrerPolicy="no-referrer" />
+        <iframe key={isSeries ? `ep-${currentItem.tmdbId}-${currentItem.season || 1}-${selectedEpisode}` : currentItem.tmdbId || item.id} src={videasyUrl} title={`Watch ${item.title}`} allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope; clipboard-write; web-share" allowFullScreen referrerPolicy="no-referrer" />
       </div>
       <div className="watch-progress-bar"><span style={{ width: `${progress}%` }} /></div>
       {isSeries && episodes.length > 0 && (
