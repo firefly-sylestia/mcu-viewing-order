@@ -1001,8 +1001,8 @@ button { border: 0; color: inherit; cursor: pointer; }
 .carousel-controls button { width: 38px; height: 38px; border-radius: 999px; background: rgba(0,0,0,.72); display: grid; place-items: center; border: 1px solid rgba(255,255,255,.12); backdrop-filter: blur(14px); transition: transform .18s ease, background .18s ease; }
 .carousel-controls button:hover { transform: translateY(-2px); background: linear-gradient(135deg, #1a1a1e 0%, #2a2a30 50%, #1a1a1e 100%); border-color: rgba(255,255,255,.15); }
 .smooth-stack .stack-poster { transition: transform .35s cubic-bezier(.2,.8,.2,1), opacity .35s ease, box-shadow .22s ease; }
-.movie-card { transition: transform .25s cubic-bezier(.2,.8,.2,1), border-color .25s ease, box-shadow .25s ease; }
-.movie-card:hover { transform: rotateY(3deg) rotateX(-2deg) translateY(-8px); border-color: color-mix(in srgb, var(--accent) 60%, white 10%); box-shadow: 0 28px 70px rgba(0,0,0,.44), 0 8px 20px rgba(0,0,0,.2); }
+.movie-card { transition: transform .3s cubic-bezier(.2,.8,.2,1), border-color .3s ease, box-shadow .35s ease, filter .3s ease; }
+.movie-card:hover { transform: translateY(-6px) scale(1.02); border-color: color-mix(in srgb, var(--brand-accent,#da1e37) 40%, white 15%); box-shadow: 0 0 0 1px rgba(255,255,255,.15), 0 12px 40px rgba(0,0,0,.6), 0 0 40px color-mix(in srgb, var(--brand-accent,#da1e37) 18%, transparent); filter: brightness(1.06); }
 .card-actions { grid-template-columns: 1fr 1fr 44px; }
 .card-actions .trailer-chip { background: linear-gradient(135deg, #1a1a1e 0%, #252529 60%, #1a1a1e 100%); color: #e0e0e0; font-weight: 900; border: 1px solid rgba(255,255,255,.1); }
 .list-row { grid-template-columns: 48px minmax(180px,1fr) minmax(160px,auto) 54px 112px 48px; border: 1px solid transparent; transition: border-color .18s ease, background .18s ease, transform .18s ease; }
@@ -2619,7 +2619,9 @@ button { border: 0; color: inherit; cursor: pointer; }
 }
 
 .web-rail .movie-card:hover {
-  box-shadow: 0 12px 28px rgba(0,0,0,.26);
+  border-color: rgba(255,255,255,.18) !important;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.12), 0 10px 32px rgba(0,0,0,.5), 0 0 36px color-mix(in srgb, var(--brand-accent,#da1e37) 14%, transparent) !important;
+  filter: brightness(1.05);
 }
 
 .web-rail .poster-button::after,
@@ -2719,7 +2721,7 @@ button { border: 0; color: inherit; cursor: pointer; }
 
 .movie-site .movie-card:hover,
 .web-rail .movie-card:hover {
-  border-color: rgba(255,255,255,.2) !important;
+  border-color: color-mix(in srgb, var(--brand-accent,#da1e37) 40%, white 15%) !important;
 }
 
 .upnext-grid.rail-scroll,
