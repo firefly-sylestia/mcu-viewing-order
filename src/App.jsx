@@ -162,7 +162,7 @@ export default function App() {
       .filter(item => genre === 'All' || item.genres.includes(genre) || item.type === genre.toLowerCase())
       .filter(item => Number(item.rating) >= rating)
       .filter(item => ageRatingFilter === 'All' || (item.ageRating || (item.type === 'series' ? 'TV-14' : 'PG-13')) === ageRatingFilter)
-      .map(item => ({ ...item, poster: item.poster || posterMap[item.id] || posterMap[String(item.id)] || posterMap[slugifyPosterName(item.title)] || '', userStatus: actions[item.id]?.status || 'unwatched', bookmarked: Boolean(actions[item.id]?.bookmarked), watchStartedAt: actions[item.id]?.watchStartedAt || null, watchedDuration: actions[item.id]?.watchedDuration || 0 }));
+      .map(item => ({ ...item, poster: item.poster || posterMap[item.id] || posterMap[String(item.id)] || posterMap[slugifyPosterName(item.title)] || '', userStatus: actions[item.id]?.status || 'unwatched', bookmarked: Boolean(actions[item.id]?.bookmarked), watchStartedAt: actions[item.id]?.watchStartedAt || null, watchedDuration: actions[item.id]?.watchedDuration || 0, watchedEpisodes: actions[item.id]?.watchedEpisodes || [] }));
     sorted.sort((a, b) => sortBy === 'year' ? a.year - b.year : sortBy === 'title' ? a.title.localeCompare(b.title) : a.order - b.order);
     return sorted;
   }, [actions, allItems, universe, query, genre, posterMap, rating, ageRatingFilter, sortBy]);
@@ -698,6 +698,17 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
   const [episodes, setEpisodes] = useState([]);
   const [selectedEpisode, setSelectedEpisode] = useState(currentItem.epStart || 1);
   const [episodeLoading, setEpisodeLoading] = useState(false);
+  const watchedEpisodes = currentItem.watchedEpisodes || [];
+
+  const toggleEpisode = (epNum) => {
+    const next = watchedEpisodes.includes(epNum)
+      ? watchedEpisodes.filter(e => e !== epNum)
+      : [...watchedEpisodes, epNum].sort((a, b) => a - b);
+    updateAction(currentItem, { watchedEpisodes: next });
+  };
+
+  const episodeRangeTotal = currentItem.epEnd ? (currentItem.epEnd - (currentItem.epStart || 1) + 1) : episodes.length;
+  const allEpisodesWatched = episodeRangeTotal > 0 && watchedEpisodes.length >= episodeRangeTotal;
 
   useEffect(() => { setSelectedEpisode(currentItem.epStart || 1); }, [currentItem.id, currentItem.epStart]);
 
@@ -780,6 +791,12 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
     }
   }, [isComplete, currentItem.userStatus, currentItem.id, setStatus]);
 
+  useEffect(() => {
+    if (isSeries && allEpisodesWatched && currentItem.userStatus === 'watching') {
+      setStatus(currentItem, 'watched');
+    }
+  }, [isSeries, allEpisodesWatched, currentItem.userStatus, currentItem.id, setStatus]);
+
   const handleSwitchItem = async (rec) => {
     if (switching) return;
     updateAction(item, { watchedDuration: elapsedRef.current, watchStartedAt: null });
@@ -812,12 +829,22 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
       <div className="watch-progress-bar"><span style={{ width: `${progress}%` }} /></div>
       {isSeries && episodes.length > 0 && (
         <div className="watch-episode-picker">
-          <span className="watch-episode-label">{episodeLoading ? 'Loading episodes...' : `Episode ${selectedEpisode} of ${episodes.length}`}</span>
-          <select className="watch-episode-select" value={selectedEpisode} onChange={e => setSelectedEpisode(Number(e.target.value))}>
-            {episodes.map(ep => (
-              <option key={ep.episode} value={ep.episode}>{ep.episode}. {ep.title}</option>
-            ))}
-          </select>
+          <span className="watch-episode-label">{episodeLoading ? 'Loading...' : `${watchedEpisodes.length}/${episodeRangeTotal} watched`}</span>
+          <div className="watch-episode-list">
+            {episodes.map(ep => {
+              const isWatched = watchedEpisodes.includes(ep.episode);
+              const isSelected = selectedEpisode === ep.episode;
+              return <button
+                key={ep.episode}
+                className={`watch-episode-row ${isWatched ? 'watched' : ''} ${isSelected ? 'selected' : ''}`}
+                onClick={() => { setSelectedEpisode(ep.episode); toggleEpisode(ep.episode); }}
+              >
+                <span className="watch-ep-num">{String(ep.episode).padStart(2, '0')}</span>
+                <span className="watch-ep-title">{ep.title}</span>
+                <span className="watch-ep-check">{isWatched ? <Check size={15} /> : <Play size={15} />}</span>
+              </button>;
+            })}
+          </div>
         </div>
       )}
       <div className="watch-info">

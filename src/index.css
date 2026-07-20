@@ -1341,10 +1341,19 @@ button { border: 0; color: inherit; cursor: pointer; }
 .watch-player { position: relative; width: 100%; max-width: 1100px; margin: 0 auto; aspect-ratio: 16/9; background: #000; border-left: 1px solid rgba(255,255,255,.06); border-right: 1px solid rgba(255,255,255,.06); box-shadow: 0 8px 40px rgba(0,0,0,.4); }
 .watch-progress-bar { max-width: 1100px; margin: 0 auto; height: 3px; background: rgba(255,255,255,.1); }
 .watch-progress-bar span { display: block; height: 100%; background: linear-gradient(90deg, #2a2a30, #3a3a42); transition: width 1s linear; }
-.watch-episode-picker { max-width: 1100px; margin: 12px auto 0; display: flex; align-items: center; gap: 12px; }
-.watch-episode-label { color: #999; font-size: 13px; font-weight: 700; white-space: nowrap; }
-.watch-episode-select { flex: 1; min-width: 0; padding: 10px 14px; border-radius: 10px; background: #14181d; border: 1px solid rgba(255,255,255,.1); color: #e0e0e0; font-size: 14px; font-weight: 600; cursor: pointer; appearance: auto; }
-.watch-episode-select:focus { outline: 2px solid rgba(255,255,255,.25); outline-offset: -2px; }
+.watch-episode-picker { max-width: 1100px; margin: 12px auto 0; }
+.watch-episode-label { display: block; color: #999; font-size: 12px; font-weight: 700; margin-bottom: 6px; }
+.watch-episode-list { display: flex; flex-direction: column; gap: 2px; max-height: 220px; overflow-y: auto; border-radius: 12px; background: #0f1318; border: 1px solid rgba(255,255,255,.08); }
+.watch-episode-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: transparent; border: 0; cursor: pointer; text-align: left; color: #bbb; font-size: 13px; transition: background .12s ease; }
+.watch-episode-row:hover { background: rgba(255,255,255,.04); }
+.watch-episode-row.selected { background: rgba(255,255,255,.06); color: #fff; }
+.watch-episode-row.watched .watch-ep-title { color: #666; text-decoration: line-through; }
+.watch-episode-row.watched .watch-ep-num { color: #4ade80; }
+.watch-ep-num { font-size: 11px; font-weight: 700; color: #888; min-width: 20px; font-variant-numeric: tabular-nums; }
+.watch-ep-title { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.watch-ep-check { flex-shrink: 0; color: #666; display: grid; place-items: center; width: 22px; height: 22px; }
+.watch-episode-row.watched .watch-ep-check { color: #4ade80; }
+.watch-episode-row.selected .watch-ep-check { color: #fff; }
 .watch-player iframe { width: 100%; height: 100%; border: 0; display: block; }
 .watch-info { max-width: 1100px; margin: 0 auto; padding: 20px clamp(12px,3vw,32px); }.watch-meta { display: flex; align-items: center; gap: 10px; color: #999; font-size: 14px; font-weight: 600; margin-bottom: 12px; }.watch-rating { color: #ffcf3a; display: flex; align-items: center; gap: 4px; }.watch-age-badge { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,.25); background: rgba(255,255,255,.1); color: #ddd; font-size: 12px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
 .watch-desc { color: #aaa; font-size: 14px; line-height: 1.6; max-width: 680px; margin-bottom: 18px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
