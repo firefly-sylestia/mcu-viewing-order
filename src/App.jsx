@@ -94,6 +94,7 @@ export default function App() {
   const [selected, setSelected] = useState(null);
   const [genre, setGenre] = useState(saved.genre || 'All');
   const [rating, setRating] = useState(saved.rating || 0);
+  const [ageRatingFilter, setAgeRatingFilter] = useState(saved.ageRatingFilter || 'All');
   const [sortBy, setSortBy] = useState(saved.sortBy || 'order');
   const [heroIndex, setHeroIndex] = useState(0);
   const [section, setSection] = useState(parseHash().section || saved.section || 'home');
@@ -121,8 +122,8 @@ export default function App() {
   const allItems = useMemo(() => [...RAW.map(item => enhance(item, 'marvel')), ...DC_RAW.map(item => enhance(item, 'dc'))], []);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ universe, query, genre, rating, sortBy, actions, section, watchItem, profileName }));
-  }, [universe, query, genre, rating, sortBy, actions, section, watchItem, profileName]);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ universe, query, genre, rating, ageRatingFilter, sortBy, actions, section, watchItem, profileName }));
+  }, [universe, query, genre, rating, ageRatingFilter, sortBy, actions, section, watchItem, profileName]);
 
   useEffect(() => {
     const hashed = parseHash().section;
@@ -160,10 +161,11 @@ export default function App() {
       .filter(item => item.title.toLowerCase().includes(query.toLowerCase()))
       .filter(item => genre === 'All' || item.genres.includes(genre) || item.type === genre.toLowerCase())
       .filter(item => Number(item.rating) >= rating)
+      .filter(item => ageRatingFilter === 'All' || (item.ageRating || (item.type === 'series' ? 'TV-14' : 'PG-13')) === ageRatingFilter)
       .map(item => ({ ...item, poster: item.poster || posterMap[item.id] || posterMap[String(item.id)] || posterMap[slugifyPosterName(item.title)] || '', userStatus: actions[item.id]?.status || 'unwatched', bookmarked: Boolean(actions[item.id]?.bookmarked), watchStartedAt: actions[item.id]?.watchStartedAt || null, watchedDuration: actions[item.id]?.watchedDuration || 0 }));
     sorted.sort((a, b) => sortBy === 'year' ? a.year - b.year : sortBy === 'title' ? a.title.localeCompare(b.title) : a.order - b.order);
     return sorted;
-  }, [actions, allItems, universe, query, genre, posterMap, rating, sortBy]);
+  }, [actions, allItems, universe, query, genre, posterMap, rating, ageRatingFilter, sortBy]);
 
   useEffect(() => {
     const missing = activeItems.filter(item => !item.poster && !posterMap[item.id]).slice(0, 10);
@@ -219,7 +221,7 @@ export default function App() {
     const url = youtubeId ? trailerEmbedUrl(youtubeId) : `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(`${item.title} trailer`)}`;
     setTrailer({ title: item.title, url });
   };
-  const resetFilters = () => { setQuery(''); setGenre('All'); setRating(0); setSortBy('order'); };
+  const resetFilters = () => { setQuery(''); setGenre('All'); setRating(0); setAgeRatingFilter('All'); setSortBy('order'); };
   const handleStartWatch = (item, tmdbId, mediaType) => {
     setWatchItem({ item, tmdbId, mediaType });
     setStatus(item, 'watching');
@@ -268,7 +270,6 @@ export default function App() {
           <TopCarousel items={heroItems} featured={featured} heroIndex={heroIndex} setHeroIndex={setHeroIndex} setSelected={setSelected} />
         </section>
         <SuggestionStrip nextUp={nextUp} stats={stats} setSelected={setSelected} playTrailer={playTrailer} />
-        <AnalyticsPanel stats={stats} />
         <MovieRail title="Up next" items={activeItems.filter(i => i.userStatus === 'unwatched').slice(0, 10)} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} scrollable variant="upnext" />
         <MovieRail title="Essential picks" items={activeItems.filter(i => i.essential)} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} paginated gridControls />
         <MovieRail title="Recently watched" items={activeItems.filter(i => i.userStatus === 'watched').slice(-24).reverse()} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} empty="Mark titles as watched to see them here." scrollable />
@@ -291,7 +292,7 @@ export default function App() {
 
       {selectedItem && <DetailView item={selectedItem} onClose={() => setSelected(null)} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={handleStartWatch} />}
       {trailer && <TrailerModal trailer={trailer} onClose={() => setTrailer(null)} />}
-      {filtersOpen && <Filters genre={genre} setGenre={setGenre} rating={rating} setRating={setRating} sortBy={sortBy} setSortBy={setSortBy} genres={genres} count={activeItems.length} onClose={() => setFiltersOpen(false)} />}
+      {filtersOpen && <Filters genre={genre} setGenre={setGenre} rating={rating} setRating={setRating} ageRatingFilter={ageRatingFilter} setAgeRatingFilter={setAgeRatingFilter} sortBy={sortBy} setSortBy={setSortBy} genres={genres} count={activeItems.length} onClose={() => setFiltersOpen(false)} />}
       {authOpen && <AuthModal onClose={() => setAuthOpen(false)} onLogin={login} onSignup={signup} onGoogleSignIn={googleSignIn} onAnonymousSignIn={anonymousSignIn} />}
     </main>
   );
@@ -581,8 +582,14 @@ function ContinueWatching({ items, setSelected, setStatus, toggleBookmark, playT
 }
 
 function WatchBrowse({ activeItems, onStartWatch, setSelected, setStatus, toggleBookmark, setSection }) {
+  const pageSize = 12;
+  const [upNextPage, setUpNextPage] = useState(1);
   const inProgress = activeItems.filter(i => i.userStatus === 'watching');
-  const upNext = activeItems.filter(i => i.userStatus === 'unwatched').slice(0, 12);
+  const allUpNext = activeItems.filter(i => i.userStatus === 'unwatched');
+  const upNextPageCount = Math.max(1, Math.ceil(allUpNext.length / pageSize));
+  const currentUpNextPage = Math.min(upNextPage, upNextPageCount);
+  const upNext = allUpNext.slice((currentUpNextPage - 1) * pageSize, currentUpNextPage * pageSize);
+  useEffect(() => { setUpNextPage(1); }, [allUpNext.length]);
   const handleResume = async (item) => {
     const params = new URLSearchParams({ title: item.title, year: String(item.year || '') });
     const res = await fetch(`/api/tmdb/poster?${params.toString()}`);
@@ -622,7 +629,7 @@ function WatchBrowse({ activeItems, onStartWatch, setSelected, setStatus, toggle
       )}
       {upNext.length > 0 && (
         <section className="watch-browse-section">
-          <div className="section-title"><h2>Start Watching</h2><button>{activeItems.filter(i => i.userStatus === 'unwatched').length} available</button></div>
+          <div className="section-title"><h2>Start Watching</h2><button>{allUpNext.length} available</button></div>
           <div className="watch-browse-grid">
             {upNext.map(item => (
               <article key={item.id} className="movie-card watch-browse-card start-card" style={{ '--accent': item.accent }}>
@@ -635,9 +642,10 @@ function WatchBrowse({ activeItems, onStartWatch, setSelected, setStatus, toggle
               </article>
             ))}
           </div>
+          {upNextPageCount > 1 && <nav className="pagination" aria-label="Start watching pages"><button onClick={() => setUpNextPage(p => Math.max(1, p - 1))} disabled={currentUpNextPage === 1} aria-label="Previous page"><ChevronLeft size={18} /></button>{Array.from({ length: upNextPageCount }, (_, i) => i + 1).map(n => <button key={n} className={currentUpNextPage === n ? 'active' : ''} aria-current={currentUpNextPage === n ? 'page' : undefined} onClick={() => setUpNextPage(n)}>{n}</button>)}<button onClick={() => setUpNextPage(p => Math.min(upNextPageCount, p + 1))} disabled={currentUpNextPage === upNextPageCount} aria-label="Next page"><ChevronRight size={18} /></button></nav>}
         </section>
       )}
-      {inProgress.length === 0 && upNext.length === 0 && (
+      {inProgress.length === 0 && allUpNext.length === 0 && (
         <div className="watch-browse-empty">
           <h2>Nothing to watch yet</h2>
           <p>Open a movie or show detail and tap "Watch Now" to get started.</p>
@@ -652,7 +660,14 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
   const { item, tmdbId, mediaType } = watchItem;
   const [switching, setSwitching] = useState(false);
   const [toast, setToast] = useState('');
-  const videasyUrl = tmdbId ? `https://player.videasy.net/${mediaType}/${tmdbId}` : `https://player.videasy.net/movie/${encodeURIComponent(item.title)}`;
+  const videasyUrl = useMemo(() => {
+    const base = tmdbId ? `https://player.videasy.net/${mediaType}/${tmdbId}` : `https://player.videasy.net/movie/${encodeURIComponent(item.title)}`;
+    const params = new URLSearchParams();
+    params.set('autoplay', '1');
+    const startSec = Math.floor((currentItem.watchedDuration || 0) / 1000);
+    if (startSec > 5) params.set('progress', String(startSec));
+    return `${base}?${params.toString()}`;
+  }, [tmdbId, mediaType, item.title, currentItem.watchedDuration]);
   const upNext = activeItems
     .filter(i => i.id !== item.id && i.userStatus !== 'watched' && i.userStatus !== 'dropped')
     .slice(0, 12);
@@ -726,7 +741,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
       </header>
       {toast && <div className="watch-toast">{toast}</div>}
       <div className="watch-player">
-        <iframe src={videasyUrl} title={`Watch ${item.title}`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen />
+        <iframe src={videasyUrl} title={`Watch ${item.title}`} allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope; clipboard-write; web-share" allowFullScreen referrerPolicy="no-referrer" />
       </div>
       <div className="watch-progress-bar"><span style={{ width: `${progress}%` }} /></div>
       <div className="watch-info">
@@ -789,13 +804,17 @@ function FilterSelect({ label, value, options, onChange }) {
   </div>;
 }
 
-function Filters({ genre, setGenre, rating, setRating, sortBy, setSortBy, genres, count, onClose }) {
+const AGE_RATINGS = ['PG-13', 'R', 'TV-14', 'TV-PG', 'TV-MA', 'Not Rated'];
+
+function Filters({ genre, setGenre, rating, setRating, ageRatingFilter, setAgeRatingFilter, sortBy, setSortBy, genres, count, onClose }) {
   return <aside className="filter-screen web-filter">
-    <div className="filter-head"><button onClick={() => { setGenre('All'); setRating(0); setSortBy('order'); }}>Clear All</button><b>Filters</b><button onClick={onClose}><X /></button></div>
+    <div className="filter-head"><button onClick={() => { setGenre('All'); setRating(0); setAgeRatingFilter('All'); setSortBy('order'); }}>Clear All</button><b>Filters</b><button onClick={onClose}><X /></button></div>
     <label>Sort by</label>
     <FilterSelect value={sortBy} onChange={setSortBy} options={[{ value: 'order', label: 'Recommended' }, { value: 'year', label: 'Year' }, { value: 'title', label: 'Title' }]} />
     <label>Minimum rating</label>
     <FilterSelect value={rating} onChange={v => setRating(Number(v))} options={[{ value: 0, label: 'Any rating' }, { value: 8, label: '8 & above' }, { value: 7, label: '7 & above' }, { value: 6, label: '6 & above' }]} />
+    <label>Age rating</label>
+    <FilterSelect value={ageRatingFilter} onChange={setAgeRatingFilter} options={[{ value: 'All', label: 'All ratings' }, ...AGE_RATINGS.map(r => ({ value: r, label: r }))]} />
     <div className="genre-title">Genres <span>{genre === 'All' ? 0 : 1}</span></div><div className="filter-chips">{genres.map(g => <button key={g} className={genre === g ? 'selected' : ''} onClick={() => setGenre(g)}>{g}</button>)}</div>
     <button className="show-results" onClick={onClose}>Show {count} results</button>
   </aside>;
