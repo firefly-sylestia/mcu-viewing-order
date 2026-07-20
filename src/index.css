@@ -2602,3 +2602,42 @@ button { border: 0; color: inherit; cursor: pointer; }
     padding-inline: 3px !important;
   }
 }
+
+/* Follow-up: remove 4-up density and keep home rails smooth like list cards. */
+.rail-density-toggle button:nth-child(n+3) {
+  display: none;
+}
+
+.web-rail .movie-card,
+.web-rail .movie-card:hover {
+  animation: none !important;
+  transform: none !important;
+}
+
+.web-rail .movie-card:hover {
+  box-shadow: 0 12px 28px rgba(0,0,0,.26);
+}
+
+.web-rail .poster-button::after,
+.web-rail .movie-card:hover .poster-button::after {
+  opacity: 0 !important;
+}
+
+.web-rail .rail-scroll {
+  will-change: scroll-position;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+@media (max-width: 560px) {
+  .movie-grid.grid-4,
+  .web-grid.grid-4,
+  .list-card-grid.grid-4 {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .web-rail .movie-card {
+    content-visibility: auto;
+    contain-intrinsic-size: 210px 260px;
+  }
+}

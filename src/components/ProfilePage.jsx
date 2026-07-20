@@ -121,7 +121,7 @@ function ProfileHeader({ universe, stats, profileName, setProfileName, user, con
   const universeName = universe === 'marvel' ? 'MCU' : 'DC';
   const universeAccent = universe === 'marvel' ? '#da1e37' : '#2f80ed';
   const displayName = profileName || `${universeName} Viewer`;
-  const avatarInitial = 'J';
+  const avatarInitial = (displayName.trim()[0] || universeName[0]).toUpperCase();
 
   const save = () => {
     const trimmed = draft.trim();
