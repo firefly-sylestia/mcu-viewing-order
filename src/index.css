@@ -1103,9 +1103,7 @@ button { border: 0; color: inherit; cursor: pointer; }
 
 /* Card controls and inline detail playback */
 .web-grid { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
-.movie-card { display: flex; min-width: 0; flex-direction: column; overflow: visible; }.web-grid .movie-card::before, .watch-browse-grid .movie-card::before { content: ''; position: absolute; inset: -1px; border-radius: 21px; z-index: 0; background-image: var(--poster, none); background-size: cover; background-position: center; filter: blur(28px) saturate(.6) brightness(.25); opacity: .55; pointer-events: none; transition: opacity .3s ease, filter .3s ease; }.web-grid .movie-card:hover::before, .watch-browse-grid .movie-card:hover::before { opacity: .72; filter: blur(22px) saturate(.8) brightness(.35); }.web-grid .movie-card { content-visibility: auto; contain-intrinsic-size: 190px 420px; }
-@media (max-width: 860px) { .web-grid .movie-card { contain-intrinsic-size: 160px 360px; } }
-@media (max-width: 560px) { .web-grid .movie-card { contain-intrinsic-size: 150px 300px; } }
+.movie-card { display: flex; min-width: 0; flex-direction: column; overflow: visible; }
 .movie-card .poster-button { height: 290px; position: relative; z-index: 1; aspect-ratio: 2/3; }
 .movie-card .card-body { min-width: 0; position: relative; z-index: 1; }
 .movie-card .card-actions { display: grid; grid-template-columns: minmax(0, 1fr) 44px; gap: 7px; width: 100%; position: relative; z-index: 1; }
@@ -1136,8 +1134,6 @@ button { border: 0; color: inherit; cursor: pointer; }
   .movie-card, .list-row { will-change: auto; }
   .web-rail, .analytics-panel, .list-section { backdrop-filter: none; -webkit-backdrop-filter: none; }
   .movie-card { background: rgba(10,10,12,.55); }
-  .movie-card::before { filter: blur(20px) saturate(.5) brightness(.2); }
-  .web-grid .movie-card { contain-intrinsic-size: 160px 340px; }
   .rail-scroll, .web-grid.rail-scroll { -webkit-overflow-scrolling: touch; will-change: scroll-position; }
 }
 @media (max-width: 390px) {
@@ -2267,14 +2263,12 @@ button { border: 0; color: inherit; cursor: pointer; }
   display: grid;
   gap: 2px;
   max-width: calc(100% - 16px);
-  padding: 7px 8px;
-  border-radius: 10px;
-  background: linear-gradient(180deg, rgba(11,9,10,.54), rgba(11,9,10,.82));
-  border: 1px solid rgba(255,255,255,.12);
+  padding: 5px 7px;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,.22);
   color: #fff;
   text-align: left;
-  backdrop-filter: blur(10px) saturate(135%);
-  -webkit-backdrop-filter: blur(10px) saturate(135%);
   pointer-events: none;
 }
 
@@ -2290,12 +2284,14 @@ button { border: 0; color: inherit; cursor: pointer; }
   font-size: clamp(10px, 1vw, 12px);
   line-height: 1.1;
   font-weight: 950;
+  text-shadow: 0 0 8px rgba(0,0,0,.9), 0 1px 2px rgba(0,0,0,.8), 0 0 2px rgba(255,255,255,.15);
 }
 
 .poster-title-overlay small {
   color: rgba(255,255,255,.72);
   font-size: 10px;
   line-height: 1.1;
+  text-shadow: 0 0 6px rgba(0,0,0,.9), 0 1px 2px rgba(0,0,0,.8);
 }
 
 .list-card-grid {
