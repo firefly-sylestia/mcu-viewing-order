@@ -997,7 +997,7 @@ button { border: 0; color: inherit; cursor: pointer; }
 /* Refinement pass: single navigation, working carousel/trailer, richer details */
 .desktop-nav { display: none !important; }
 .top-carousel, .movie-card, .list-row, .analytics-panel, .web-detail, .web-filter { animation: uiRise .42s cubic-bezier(.2,.8,.2,1) both; }
-@keyframes uiRise { from { opacity: 0; transform: translateY(18px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes uiRise { from { opacity: 0; } to { opacity: 1; } }
 .carousel-controls { position: absolute; z-index: 6; right: 20px; top: 62px; display: flex; gap: 8px; }
 .top-carousel { position: relative; overflow: hidden; }
 .carousel-controls button { width: 38px; height: 38px; border-radius: 999px; background: rgba(0,0,0,.72); display: grid; place-items: center; border: 1px solid rgba(255,255,255,.12); backdrop-filter: blur(14px); transition: transform .18s ease, background .18s ease; }
