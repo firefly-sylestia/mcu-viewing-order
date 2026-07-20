@@ -324,6 +324,7 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
   const touchStartX = useRef(null);
   const didSwipe = useRef(false);
   const hoverTimer = useRef(null);
+  const previewCooldown = useRef(0);
   const move = (dir) => {
     setInlineTrailer(null);
     setHeroIndex((heroIndex + dir + items.length) % Math.max(items.length, 1));
@@ -339,9 +340,11 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
   const previewPoster = (rawIndex, offset) => {
     window.clearTimeout(hoverTimer.current);
     if (!offset || window.matchMedia('(hover: none)').matches) return;
+    if (Date.now() - previewCooldown.current < 600) return;
     hoverTimer.current = window.setTimeout(() => {
       setInlineTrailer(null);
       setHeroIndex(rawIndex);
+      previewCooldown.current = Date.now();
     }, offset === 1 ? 280 : 420);
   };
   const cancelPreview = () => window.clearTimeout(hoverTimer.current);
