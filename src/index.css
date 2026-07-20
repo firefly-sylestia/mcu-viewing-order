@@ -1390,6 +1390,18 @@ button { border: 0; color: inherit; cursor: pointer; }
 .detail-progress-actions { display: grid; grid-template-columns: minmax(120px,1fr) 46px auto; gap: 8px; margin-top: 24px; }
 .detail-progress-actions > button { height: 46px; padding: 0 14px; display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 10px; background: #1b1f25; border: 1px solid rgba(255,255,255,.1); font-weight: 800; font-size: 13px; }
 .detail-progress-actions .detail-bookmark { width: 46px; padding: 0; }
+.detail-download-wrap { position: relative; grid-column: 1 / -1; }
+.detail-download-wrap .detail-download { width: 100%; }
+.detail-download { height: 46px; padding: 0 14px; border-radius: 10px; background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #1e293b 100%); border: 1px solid rgba(255,255,255,.1); color: #e0e0e0; display: inline-flex; align-items: center; gap: 7px; font-weight: 700; font-size: 13px; white-space: nowrap; cursor: pointer; transition: background .2s ease, border-color .2s ease; }
+.detail-download:hover { background: linear-gradient(135deg, #2a3a50 0%, #3d5268 50%, #2a3a50 100%); border-color: rgba(255,255,255,.2); }
+.download-dropdown { position: absolute; right: 0; top: calc(100% + 6px); min-width: 220px; background: #14181d; border: 1px solid rgba(255,255,255,.12); border-radius: 14px; padding: 6px; z-index: 50; box-shadow: 0 12px 40px rgba(0,0,0,.6); animation: dropIn .15s ease; }
+@keyframes dropIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+.download-loading, .download-empty { display: block; padding: 12px 14px; color: #888; font-size: 13px; text-align: center; }
+.download-option { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 10px; color: #ddd; text-decoration: none; font-size: 13px; transition: background .15s ease; }
+.download-option:hover { background: rgba(255,255,255,.06); }
+.download-quality { font-weight: 800; color: #fff; min-width: 44px; }
+.download-size { color: #888; font-size: 12px; flex: 1; text-align: right; }
+.download-seeds { color: #4ade80; font-size: 11px; font-weight: 700; min-width: 56px; text-align: right; }
 .detail-progress-actions .detail-videasy { background: linear-gradient(135deg, #1a3a5c 0%, #1e5080 50%, #1a3a5c 100%); border: 1px solid rgba(100,180,255,.25); color: #e8f0ff; font-weight: 800; }
 .detail-progress-actions .status-trigger { width: 100%; height: 46px; }
 .detail-progress-actions .status-label { display: block; }
