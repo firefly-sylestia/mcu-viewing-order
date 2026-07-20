@@ -115,7 +115,7 @@ export default function App() {
     const { section: s, slug } = parseHash();
     if (s === 'watch' && slug && allItems.length && !watchItem) {
       const found = allItems.find(i => slugifyPosterName(i.title) === slug);
-      if (found) handleStartWatch(found, null, 'movie');
+      if (found) handleStartWatch(found, found.tmdbId || null, found.type === 'series' ? 'tv' : 'movie');
     }
   }, []);
 
@@ -141,7 +141,7 @@ export default function App() {
       if (s) setSection(s);
       if (s === 'watch' && slug && allItems.length) {
         const found = allItems.find(i => slugifyPosterName(i.title) === slug);
-        if (found) handleStartWatch(found, null, 'movie');
+        if (found) handleStartWatch(found, found.tmdbId || null, found.type === 'series' ? 'tv' : 'movie');
       }
     };
     window.addEventListener('hashchange', onHashChange);
@@ -536,8 +536,7 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch }) 
       const mediaType = data.mediaType === 'tv' ? 'tv' : 'movie';
       onStartWatch(item, data.tmdbId, mediaType);
     } catch {
-      // fallback: try with title as ID (some Videasy instances support this)
-      onStartWatch(item, null, 'movie');
+      // fallback: try with title as ID (some Videasy instances support this)        onStartWatch(item, item.tmdbId || null, item.type === 'series' ? 'tv' : 'movie');
     } finally {
       setWatchLoading(false);
     }
@@ -586,7 +585,7 @@ function ContinueWatching({ items, setSelected, setStatus, toggleBookmark, playT
       const data = await res.json();
       if (data.tmdbId) { onResume(item, data.tmdbId, data.mediaType === 'tv' ? 'tv' : 'movie'); return; }
     }
-    onResume(item, null, 'movie');
+    onResume(item, item.tmdbId || null, item.type === 'series' ? 'tv' : 'movie');
   };
   return (
     <section className="continue-watching rail-card web-rail">
@@ -630,7 +629,7 @@ function WatchBrowse({ activeItems, onStartWatch, setSelected, setStatus, toggle
       const data = await res.json();
       if (data.tmdbId) { onStartWatch(item, data.tmdbId, data.mediaType === 'tv' ? 'tv' : 'movie'); return; }
     }
-    onStartWatch(item, null, 'movie');
+    onStartWatch(item, item.tmdbId || null, item.type === 'series' ? 'tv' : 'movie');
   };
   return (
     <section className="watch-browse">
@@ -812,7 +811,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
         if (data.tmdbId) { onStartWatch(rec, data.tmdbId, data.mediaType === 'tv' ? 'tv' : 'movie'); return; }
       }
     } catch {}
-    onStartWatch(rec, null, 'movie');
+    onStartWatch(rec, rec.tmdbId || null, rec.type === 'series' ? 'tv' : 'movie');
     setSwitching(false);
   };
   return (
