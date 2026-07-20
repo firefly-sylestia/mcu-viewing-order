@@ -784,13 +784,12 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
           <span>{runtimeLabel(currentItem.runtime, currentItem.type)}</span>
           <span>·</span>
           <span className="watch-rating"><Star size={14} fill="currentColor" /> {currentItem.rating.toFixed ? currentItem.rating.toFixed(1) : currentItem.rating}</span>
-          <span>·</span>
-          <span className="watch-age-badge">{currentItem.ageRating || (currentItem.type === 'series' ? 'TV-14' : 'PG-13')}</span>
         </div>
         <p className="watch-desc">{currentItem.desc || `Watch ${currentItem.title} in the complete ${currentItem.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} viewing order.`}</p>
         <div className="watch-actions">
           <StatusSelect item={currentItem} setStatus={setStatus} />
           <button onClick={() => toggleBookmark(currentItem)} className={`watch-action-btn ${currentItem.bookmarked ? 'saved' : ''}`} aria-label={currentItem.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={18} fill={currentItem.bookmarked ? 'currentColor' : 'none'} /></button>
+          <span className="watch-age-badge">{currentItem.ageRating || (currentItem.type === 'series' ? 'TV-14' : 'PG-13')}</span>
           {currentItem.userStatus !== 'watched' && <button onClick={() => { setStatus(currentItem, 'watched'); setToast('Marked as watched'); setTimeout(() => setToast(''), 2000); }} className="watch-action-btn mark-watched" aria-label="Mark as Watched"><Check size={18} /><span>Mark Watched</span></button>}
         </div>
       </div>
