@@ -319,6 +319,7 @@ function PosterArt({ item }) {
         width="300"
         height="450"
         loading="lazy"
+        referrerPolicy="no-referrer"
         onError={e => {
           e.currentTarget.style.display = 'none';
           e.currentTarget.nextElementSibling?.removeAttribute('hidden');

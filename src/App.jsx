@@ -168,18 +168,24 @@ export default function App() {
   }, [actions, allItems, universe, query, genre, posterMap, rating, ageRatingFilter, sortBy]);
 
   useEffect(() => {
-    const missing = activeItems.filter(item => !item.poster && !posterMap[item.id]).slice(0, 10);
+    const missing = activeItems.filter(item => !item.poster && !posterMap[item.id]).slice(0, 6);
     if (!missing.length) return;
     let cancelled = false;
-    missing.forEach(item => {
-      const params = new URLSearchParams({ title: item.title, year: String(item.year || '') });
-      fetch(`/api/tmdb/poster?${params.toString()}`, { cache: 'force-cache' })
-        .then(response => response.ok ? response.json() : null)
-        .then(data => {
-          if (!cancelled && data?.poster) setPosterMap(prev => ({ ...prev, [item.id]: data.poster }));
-        })
-        .catch(() => {});
-    });
+    const batchSize = 3;
+    const fetchBatch = async (startIndex) => {
+      if (cancelled || startIndex >= missing.length) return;
+      const batch = missing.slice(startIndex, startIndex + batchSize);
+      await Promise.allSettled(batch.map(item => {
+        const params = new URLSearchParams({ title: item.title, year: String(item.year || '') });
+        return fetch(`/api/tmdb/poster?${params.toString()}`, { cache: 'force-cache' })
+          .then(response => response.ok ? response.json() : null)
+          .then(data => {
+            if (!cancelled && data?.poster) setPosterMap(prev => ({ ...prev, [item.id]: data.poster }));
+          });
+      }));
+      if (!cancelled) fetchBatch(startIndex + batchSize);
+    };
+    fetchBatch(0);
     return () => { cancelled = true; };
   }, [activeItems, posterMap]);
 
@@ -347,7 +353,7 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
   };
 
   return <section className="top-carousel" style={{ '--accent': featured?.accent || '#9a4a4a' }} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocusCapture={() => setPaused(true)} onBlurCapture={() => setPaused(false)} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
-    {featured?.poster && <img key={featured.id} className="carousel-backdrop" src={featured.poster} alt="" aria-hidden="true" width="300" height="450" />}
+    {featured?.poster && <img key={featured.id} className="carousel-backdrop" src={featured.poster} alt="" aria-hidden="true" width="300" height="450" referrerPolicy="no-referrer" />}
     <div className="carousel-backdrop-shade" aria-hidden="true" />
     <div className="feature-heading"><div><p className="eyebrow">{featured?.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} · Featured</p><h2>Top movies</h2></div><button className="feature-detail" onClick={() => setSelected(featured)}>View details</button></div>
     <div className="feature-stage">
@@ -367,7 +373,7 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
 
 function PosterArt({ item, loading: loadingProp = 'lazy', fetchPriority: fetchPriorityProp = 'auto' }) {
   return item.poster ? <>
-    <img src={item.poster} alt={`${item.title} poster`} width="300" height="450" loading={loadingProp} fetchPriority={fetchPriorityProp} onError={e => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling?.removeAttribute('hidden'); }} />
+    <img src={item.poster} alt={`${item.title} poster`} width="300" height="450" loading={loadingProp} fetchPriority={fetchPriorityProp} referrerPolicy="no-referrer" onError={e => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling?.removeAttribute('hidden'); }} />
     <FallbackPoster item={item} hidden />
   </> : <FallbackPoster item={item} />;
 }
