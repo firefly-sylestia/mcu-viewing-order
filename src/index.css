@@ -2422,3 +2422,511 @@ button { border: 0; color: inherit; cursor: pointer; }
     min-height: 32px;
   }
 }
+
+/* Focused rail/card refinements: keep accents subtle and preserve smooth scrolling. */
+.movie-site {
+  --accent-metal: var(--palette-highlight, #f6c453);
+}
+
+.movie-site.universe-dc {
+  --accent-metal: #8ec5ff;
+}
+
+.movie-site .section-title h2,
+.movie-site .list-heading h2,
+.movie-site .watch-upnext h2 {
+  text-shadow: 0 0 18px color-mix(in srgb, var(--accent-metal) 18%, transparent);
+}
+
+.movie-site .rail-view-btn,
+.movie-site .list-view-toggle button.active,
+.movie-site .pagination button.active,
+.movie-site .rail-density-toggle button.active {
+  border-color: color-mix(in srgb, var(--accent-metal) 48%, var(--palette-border, rgba(255,255,255,.12)));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--accent-metal) 24%, transparent);
+}
+
+.movie-site .status-select.unwatched .status-trigger {
+  background: color-mix(in srgb, var(--palette-bg-raised, #111) 88%, #000);
+  border: 1px solid color-mix(in srgb, var(--accent-metal) 38%, var(--palette-border, rgba(255,255,255,.12)));
+  color: color-mix(in srgb, var(--accent-metal) 78%, #fff);
+}
+
+.poster-title-overlay {
+  padding: 4px 5px;
+}
+
+.poster-title-overlay strong {
+  display: -webkit-box;
+  white-space: normal;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  font-size: clamp(7px, .62vw, 8.75px) !important;
+  line-height: 1.04;
+  overflow-wrap: anywhere;
+}
+
+.poster-title-overlay small {
+  font-size: 7.25px;
+}
+
+.rail-density-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--palette-bg-raised, var(--theme-surface)) 86%, transparent);
+  border: 1px solid color-mix(in srgb, var(--palette-border, var(--theme-border)) 76%, transparent);
+}
+
+.rail-density-toggle button {
+  min-width: 32px;
+  min-height: 28px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--theme-text, #fff);
+  font-size: 12px;
+  font-weight: 900;
+  box-shadow: none;
+}
+
+.rail-density-toggle button.active {
+  background: color-mix(in srgb, var(--accent-metal) 16%, var(--palette-surface, #151515));
+  color: color-mix(in srgb, var(--accent-metal) 82%, #fff);
+}
+
+.upnext-rail-card .section-title-actions .rail-density-toggle {
+  display: none;
+}
+
+.upnext-grid.rail-scroll {
+  display: flex !important;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  gap: 14px;
+  padding: 2px 2px 12px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-inline: contain;
+  scroll-snap-type: none;
+}
+
+.upnext-grid.rail-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.upnext-grid.rail-scroll .movie-card {
+  flex: 0 0 180px;
+  width: 180px;
+  scroll-snap-align: none;
+}
+
+.upnext-grid .movie-card .poster-button {
+  height: 290px;
+}
+
+@media (max-width: 560px) {
+  .poster-title-overlay {
+    left: 4px;
+    right: 4px;
+    bottom: 4px;
+    max-width: calc(100% - 8px);
+    padding: 3px 4px;
+  }
+
+  .poster-title-overlay strong {
+    font-size: 6.6px !important;
+    line-height: 1.02;
+  }
+
+  .poster-title-overlay small {
+    display: none;
+  }
+
+  .movie-grid.grid-2,
+  .web-grid.grid-2,
+  .list-card-grid.grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .movie-grid.grid-3,
+  .web-grid.grid-3,
+  .list-card-grid.grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+  .movie-grid.grid-4,
+  .web-grid.grid-4,
+  .list-card-grid.grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+
+  .rail-scroll,
+  .rail-scroll.two-grid {
+    display: flex !important;
+    flex-wrap: nowrap;
+    grid-auto-flow: initial;
+    grid-auto-columns: initial;
+    grid-template-columns: none !important;
+    gap: 10px !important;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: none;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-inline: contain;
+    contain: layout paint;
+  }
+
+  .rail-scroll .movie-card {
+    flex: 0 0 calc((100% - 20px) / 3);
+  }
+
+  .upnext-grid.rail-scroll .movie-card {
+    flex-basis: calc((100% - 20px) / 3);
+  }
+
+  .rail-scroll .movie-card .poster-button,
+  .upnext-grid .movie-card .poster-button {
+    height: clamp(142px, 45vw, 186px) !important;
+  }
+
+  .movie-grid.grid-2:not(.rail-scroll) .movie-card .poster-button,
+  .web-grid.grid-2:not(.rail-scroll) .movie-card .poster-button {
+    height: clamp(202px, 65vw, 260px) !important;
+  }
+
+  .movie-grid.grid-4:not(.rail-scroll) .movie-card .poster-button,
+  .web-grid.grid-4:not(.rail-scroll) .movie-card .poster-button {
+    height: clamp(112px, 34vw, 146px) !important;
+  }
+
+  .movie-grid.grid-4 .status-trigger,
+  .web-grid.grid-4 .status-trigger {
+    font-size: 7px !important;
+    padding-inline: 3px !important;
+  }
+}
+
+/* Follow-up: remove 4-up density and keep home rails smooth like list cards. */
+.rail-density-toggle button:nth-child(n+3) {
+  display: none;
+}
+
+.web-rail .movie-card,
+.web-rail .movie-card:hover {
+  animation: none !important;
+  transform: none !important;
+}
+
+.web-rail .movie-card:hover {
+  box-shadow: 0 12px 28px rgba(0,0,0,.26);
+}
+
+.web-rail .poster-button::after,
+.web-rail .movie-card:hover .poster-button::after {
+  opacity: 0 !important;
+}
+
+.web-rail .rail-scroll {
+  will-change: scroll-position;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+@media (max-width: 560px) {
+  .movie-grid.grid-4,
+  .web-grid.grid-4,
+  .list-card-grid.grid-4 {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .web-rail .movie-card {
+    content-visibility: auto;
+    contain-intrinsic-size: 210px 260px;
+  }
+}
+
+/* Follow-up: no poster text overlays, no content-visibility flashes, desktop density works. */
+.movie-card .poster-title-overlay {
+  display: none !important;
+}
+
+.movie-grid.grid-2:not(.rail-scroll),
+.web-grid.grid-2:not(.rail-scroll),
+.list-card-grid.grid-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+.movie-grid.grid-3:not(.rail-scroll),
+.web-grid.grid-3:not(.rail-scroll),
+.list-card-grid.grid-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+.web-rail .movie-card {
+  content-visibility: visible !important;
+  contain: none !important;
+  contain-intrinsic-size: auto !important;
+}
+
+.rail-scroll,
+.upnext-grid.rail-scroll {
+  contain: none !important;
+}
+
+/* Follow-up: revert desktop rail appearance, neutral borders, and no load/unload compositing. */
+@media (min-width: 561px) {
+  .rail-density-toggle {
+    display: none !important;
+  }
+
+  .web-rail .web-grid:not(.rail-scroll),
+  .web-rail .movie-grid:not(.rail-scroll) {
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)) !important;
+  }
+}
+
+.list-section.is-grid-view .list-card-grid,
+.list-card-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+.movie-site .site-header,
+.movie-site .top-carousel,
+.movie-site .movie-card,
+.movie-site .list-row,
+.movie-site .profile-header,
+.movie-site .profile-analytics,
+.movie-site .profile-rail,
+.movie-site .web-rail,
+.movie-site .analytics-panel,
+.movie-site .list-section,
+.movie-site .status-trigger,
+.movie-site .rail-density-toggle,
+.movie-site .rail-density-toggle button.active {
+  border-color: rgba(255,255,255,.14) !important;
+}
+
+.movie-site.universe-marvel,
+.movie-site.universe-dc {
+  --palette-border: rgba(255,255,255,.14);
+}
+
+.movie-site .status-select.unwatched .status-trigger {
+  border-color: rgba(255,255,255,.16) !important;
+  color: rgba(255,255,255,.86);
+}
+
+.movie-site .movie-card:hover,
+.web-rail .movie-card:hover {
+  border-color: rgba(255,255,255,.2) !important;
+}
+
+.upnext-grid.rail-scroll,
+.web-rail .rail-scroll {
+  will-change: auto !important;
+  transform: none !important;
+  backface-visibility: visible !important;
+  contain: none !important;
+}
+
+.upnext-grid .poster-button,
+.upnext-grid .poster-button img,
+.movie-card .poster-button img {
+  display: block;
+}
+
+.upnext-grid .poster-button {
+  line-height: 0;
+  margin-bottom: 0;
+}
+
+@media (max-width: 560px) {
+  .list-section.is-grid-view .list-card-grid,
+  .list-card-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .web-rail .movie-card {
+    content-visibility: visible !important;
+    contain: none !important;
+    contain-intrinsic-size: auto !important;
+  }
+}
+
+/* Watch tab mobile card cleanup. */
+.watch-browse-card .poster-button {
+  aspect-ratio: 2 / 3;
+  height: auto !important;
+}
+
+.watch-start-actions {
+  grid-template-columns: 1fr !important;
+}
+
+.watch-start-actions .watch-primary-action,
+.watch-start-actions .watch-bookmark-action {
+  width: 100%;
+}
+
+.watch-start-actions .watch-bookmark-action {
+  gap: 7px;
+}
+
+.watch-start-actions .watch-bookmark-action span {
+  display: inline;
+}
+
+@media (max-width: 560px) {
+  .watch-browse {
+    padding-inline: 10px;
+  }
+
+  .watch-browse-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+    align-items: start;
+  }
+
+  .watch-browse-card {
+    padding: 6px !important;
+    border-radius: 16px !important;
+  }
+
+  .watch-browse-card .poster-button {
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    height: auto !important;
+    min-height: 0 !important;
+    border-radius: 12px !important;
+  }
+
+  .watch-browse-card .card-body {
+    display: block !important;
+    padding: 7px 2px 6px !important;
+  }
+
+  .watch-browse-card .title-button {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    font-size: 11px !important;
+    line-height: 1.12;
+  }
+
+  .watch-browse-card .card-body span {
+    display: block;
+    margin-top: 3px;
+    font-size: 9.5px !important;
+    line-height: 1.2;
+  }
+
+  .watch-browse-card .card-actions,
+  .watch-browse-card .watch-start-actions {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 6px !important;
+    margin-top: 0;
+  }
+
+  .watch-browse-card .watch-primary-action,
+  .watch-browse-card .watch-bookmark-action {
+    display: inline-flex !important;
+    min-height: 32px !important;
+    height: 32px !important;
+    border-radius: 10px !important;
+    font-size: 10px !important;
+    font-weight: 900;
+  }
+
+  .watch-browse-card .watch-bookmark-action {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 0 8px !important;
+    color: rgba(255,255,255,.86);
+  }
+}
+
+/* Follow-up: title inside poster only, meta below, smoother simple rails. */
+.movie-card .poster-title-overlay {
+  display: grid !important;
+}
+
+.movie-card .poster-title-overlay small {
+  display: none !important;
+}
+
+.movie-card .card-body {
+  display: block;
+  min-height: 24px;
+  padding: 8px 3px 7px;
+}
+
+.movie-card .card-body .title-button {
+  display: none !important;
+}
+
+.movie-card .card-body span {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: rgba(255,255,255,.68);
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+.web-rail .movie-card,
+.upnext-grid.rail-scroll .movie-card {
+  transition: border-color 120ms ease, box-shadow 120ms ease !important;
+}
+
+.rail-scroll {
+  scroll-behavior: auto !important;
+}
+
+@media (max-width: 560px) {
+  .movie-card .card-body,
+  .watch-browse-card .card-body {
+    display: block !important;
+    min-height: 21px;
+    padding: 5px 2px 5px !important;
+  }
+
+  .movie-card .card-body span,
+  .watch-browse-card .card-body span {
+    font-size: 9px !important;
+    line-height: 1.15;
+  }
+
+  .movie-card .poster-title-overlay {
+    display: grid !important;
+    padding: 4px 5px;
+  }
+
+  .movie-card .poster-title-overlay strong {
+    font-size: 7px !important;
+    line-height: 1.04;
+  }
+
+  .watch-start-actions {
+    grid-template-columns: minmax(0, 1fr) 38px !important;
+    align-items: center;
+  }
+
+  .watch-start-actions .watch-bookmark-action {
+    width: 38px !important;
+    min-width: 38px !important;
+    padding: 0 !important;
+  }
+
+  .watch-start-actions .watch-bookmark-action span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+
+.watch-browse-card .card-body .title-button {
+  display: -webkit-box !important;
+}
