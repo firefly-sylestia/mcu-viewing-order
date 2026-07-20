@@ -114,7 +114,7 @@ export default function App() {
   useEffect(() => {
     const { section: s, slug } = parseHash();
     if (s === 'watch' && slug && allItems.length && !watchItem) {
-      const found = allItems.find(i => titleSlug(i.title) === slug);
+      const found = allItems.find(i => slugifyPosterName(i.title) === slug);
       if (found) handleStartWatch(found, null, 'movie');
     }
   }, []);
@@ -660,6 +660,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
   const { item, tmdbId, mediaType } = watchItem;
   const [switching, setSwitching] = useState(false);
   const [toast, setToast] = useState('');
+  const currentItem = activeItems.find(i => i.id === item.id) || item;
   const videasyUrl = useMemo(() => {
     const base = tmdbId ? `https://player.videasy.net/${mediaType}/${tmdbId}` : `https://player.videasy.net/movie/${encodeURIComponent(item.title)}`;
     const params = new URLSearchParams();
@@ -671,7 +672,6 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
   const upNext = activeItems
     .filter(i => i.id !== item.id && i.userStatus !== 'watched' && i.userStatus !== 'dropped')
     .slice(0, 12);
-  const currentItem = activeItems.find(i => i.id === item.id) || item;
   const totalMs = (item.runtime || 120) * 60 * 1000;
   const initialElapsed = Math.min(currentItem.watchedDuration || 0, totalMs);
   const [elapsed, setElapsed] = useState(initialElapsed);
