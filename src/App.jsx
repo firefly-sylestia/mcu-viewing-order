@@ -446,7 +446,7 @@ function StatusSelect({ item, setStatus, compact = false }) {
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
-  return <div className={`status-select ${item.userStatus} ${compact ? 'compact' : ''}`} ref={ref}>
+  return <div className={`status-select ${item.userStatus} ${compact ? 'compact' : ''} ${open ? 'open' : ''}`} ref={ref}>
     <button className="status-trigger" onClick={() => setOpen(!open)} aria-haspopup="listbox" aria-expanded={open}>
       <span className="status-label">{STATUS_LABELS[item.userStatus]}</span>
     </button>

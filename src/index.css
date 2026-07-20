@@ -2089,3 +2089,112 @@ button { border: 0; color: inherit; cursor: pointer; }
     text-align: center;
   }
 }
+
+/* Final palette hierarchy pass: MCU uses the provided reds with gold highlights; DC mirrors the hierarchy in blues. */
+.movie-site {
+  --palette-bg: var(--onyx);
+  --palette-bg-raised: var(--carbon-black);
+  --palette-surface: color-mix(in srgb, var(--night-bordeaux) 34%, var(--carbon-black));
+  --palette-surface-strong: color-mix(in srgb, var(--burgundy-2) 42%, var(--carbon-black));
+  --palette-border: color-mix(in srgb, var(--ruby-red) 38%, rgba(255,255,255,.10));
+  --palette-primary: var(--classic-crimson);
+  --palette-secondary: var(--carmine);
+  --palette-muted-accent: var(--night-bordeaux);
+  --palette-highlight: #f6c453;
+  --palette-highlight-soft: rgba(246, 196, 83, .16);
+  --palette-on-accent: var(--white);
+  --cinema-bg: var(--palette-bg);
+  --cinema-surface: var(--palette-surface);
+  --cinema-muted: var(--silver);
+  --cinema-red: var(--palette-primary);
+  --theme-bg: var(--palette-bg);
+  --theme-surface: var(--palette-surface);
+  --theme-surface-hover: var(--palette-surface-strong);
+  --theme-border: var(--palette-border);
+  --theme-accent-alt: var(--palette-secondary);
+}
+
+.movie-site.universe-dc {
+  --palette-bg: var(--dc-midnight);
+  --palette-bg-raised: color-mix(in srgb, var(--dc-navy) 58%, var(--carbon-black));
+  --palette-surface: color-mix(in srgb, var(--dc-navy) 54%, var(--carbon-black));
+  --palette-surface-strong: color-mix(in srgb, var(--dc-deep-blue) 52%, var(--carbon-black));
+  --palette-border: color-mix(in srgb, var(--dc-bright-blue) 36%, rgba(255,255,255,.11));
+  --palette-primary: var(--dc-sky-blue);
+  --palette-secondary: var(--dc-hero-blue);
+  --palette-muted-accent: var(--dc-navy);
+  --palette-highlight: #8ec5ff;
+  --palette-highlight-soft: rgba(142, 197, 255, .15);
+}
+
+.movie-site .site-header,
+.movie-site .top-carousel,
+.movie-site .movie-card,
+.movie-site .list-row,
+.movie-site .profile-header,
+.movie-site .profile-analytics,
+.movie-site .profile-rail {
+  background: linear-gradient(145deg, color-mix(in srgb, var(--palette-surface) 88%, transparent), color-mix(in srgb, var(--palette-bg-raised) 94%, transparent));
+  border-color: var(--palette-border);
+}
+
+.movie-site .brand span,
+.movie-site .universe-tabs .active,
+.movie-site .bottom-nav button.active,
+.movie-site .feature-play,
+.movie-site .list-actions .list-trailer,
+.movie-site .card-actions .trailer-chip {
+  background: linear-gradient(135deg, var(--palette-primary), var(--palette-secondary));
+  color: var(--palette-on-accent);
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--palette-primary) 34%, transparent);
+}
+
+.movie-site.universe-marvel .brand span,
+.movie-site.universe-marvel .feature-play,
+.movie-site.universe-marvel .list-actions .list-trailer,
+.movie-site.universe-marvel .card-actions .trailer-chip {
+  border: 1px solid color-mix(in srgb, var(--palette-highlight) 52%, transparent);
+  box-shadow: 0 12px 30px color-mix(in srgb, var(--classic-crimson) 36%, transparent), inset 0 1px 0 color-mix(in srgb, var(--palette-highlight) 46%, transparent);
+}
+
+.movie-site.universe-marvel .eyebrow,
+.movie-site.universe-marvel .feature-kicker span + span::before,
+.movie-site.universe-marvel .rating-pill,
+.movie-site.universe-marvel .rating-marvel-pill,
+.movie-site.universe-marvel .stat-card strong {
+  color: var(--palette-highlight) !important;
+}
+
+.movie-site.universe-marvel .list-title-line > span,
+.movie-site.universe-marvel .tab-badge,
+.movie-site.universe-marvel .profile-tab.active::after {
+  background: linear-gradient(135deg, var(--palette-highlight), color-mix(in srgb, var(--palette-highlight) 68%, var(--classic-crimson)));
+  color: var(--onyx);
+  border-color: color-mix(in srgb, var(--palette-highlight) 60%, transparent);
+}
+
+.movie-site .header-search,
+.movie-site .status-trigger,
+.movie-site .list-actions > button,
+.movie-site .pagination button,
+.movie-site .universe-tabs button:not(.active) {
+  background: color-mix(in srgb, var(--palette-bg-raised) 88%, transparent);
+  border: 1px solid color-mix(in srgb, var(--palette-border) 80%, transparent);
+}
+
+.movie-site .status-dropdown {
+  z-index: 10050;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--palette-surface-strong) 96%, #000), color-mix(in srgb, var(--palette-bg-raised) 98%, #000));
+  border-color: color-mix(in srgb, var(--palette-primary) 48%, rgba(255,255,255,.12));
+  box-shadow: 0 24px 64px rgba(0,0,0,.78), 0 0 0 1px color-mix(in srgb, var(--palette-primary) 24%, transparent);
+}
+
+.movie-card:has(.status-select.open),
+.list-row:has(.status-select.open),
+.profile-rail .movie-card:has(.status-select.open) {
+  z-index: 10040;
+}
+
+.movie-site .status-select.open {
+  z-index: 10045;
+}

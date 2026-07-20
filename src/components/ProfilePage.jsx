@@ -367,7 +367,7 @@ function StatusSelect({ item, setStatus, compact = false }) {
   }, []);
 
   return (
-    <div className={`status-select ${item.userStatus} ${compact ? 'compact' : ''}`} ref={ref}>
+    <div className={`status-select ${item.userStatus} ${compact ? 'compact' : ''} ${open ? 'open' : ''}`} ref={ref}>
       <button
         className="status-trigger"
         onClick={() => setOpen(!open)}
