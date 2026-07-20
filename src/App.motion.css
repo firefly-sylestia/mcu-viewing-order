@@ -70,8 +70,9 @@
 }
 
 @media (max-width: 640px) {
-  .motion-section { transform: translate3d(0, 10px, 0); transition-duration: 320ms; }
-  .motion-section.in-view .phase-header-card { transform: translate3d(0, calc(var(--section-progress) * -4px), 0); }
+  .motion-section { transform: none; transition: none; will-change: auto; opacity: 1; }
+  .motion-section.in-view .phase-header-card { transform: none; transition: none; }
+  .motion-section, .motion-pop, .phase-rows-full .phase-row-virtualized { transition: none !important; }
 }
 
 @media (prefers-reduced-motion: reduce) {
