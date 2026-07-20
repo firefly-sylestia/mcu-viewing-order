@@ -22,7 +22,8 @@ const parseHash = () => {
 
 const STATUS = ['unwatched', 'watching', 'watched', 'dropped'];
 const STATUS_LABELS = { unwatched: 'Unwatched', watching: 'Watching', watched: 'Watched', dropped: 'Dropped' };
-const palette = ['#9a4a4a', '#8a1238', '#315f42', '#1f4977', '#6b3bc8', '#b36a17'];
+const marvelPalette = ['#641220', '#85182a', '#a11d33', '#b21e35', '#bd1f36', '#da1e37'];
+const dcPalette = ['#061226', '#08204a', '#0b3a78', '#0d4f9c', '#1367c8', '#2f80ed'];
 
 const runtimeLabel = (minutes = 0, type = 'film') => {
   if (!minutes) return type === 'series' ? 'Series' : 'TBA';
@@ -82,7 +83,7 @@ const enhance = (item, universe) => ({
   rating: Number((6.7 + ((item.id * 17) % 25) / 10).toFixed(1)),
   genres: item.type === 'series' ? ['Series', 'Action', 'Drama'] : ['Action', item.phase >= 4 ? 'Adventure' : 'Sci-fi', item.essential ? 'Essential' : 'Canon'],
   poster: localPoster(item),
-  accent: universe === 'dc' ? '#1677d2' : (item.id >= 5000 ? '#334155' : palette[item.phase % palette.length]),
+  accent: universe === 'dc' ? dcPalette[(item.phase - 1) % dcPalette.length] : marvelPalette[(item.phase - 1) % marvelPalette.length],
 });
 
 export default function App() {
@@ -229,10 +230,10 @@ export default function App() {
   };
 
   const universeName = universe === 'marvel' ? 'MCU' : 'DC';
-  const universeAccent = universe === 'marvel' ? '#9a4a4a' : '#1677d2';
+  const universeAccent = universe === 'marvel' ? '#da1e37' : '#2f80ed';
 
   return (
-    <main className={`movie-site universe-${universe}`} style={{ '--brand-accent': universeAccent }}>
+    <main className={`movie-site universe-${universe}`} style={{ '--brand-accent': universeAccent, '--accent': universeAccent, '--theme-accent': universeAccent }}>
       <div className="site-glow" />
       <header className="site-header">
         <button className="brand" onClick={() => { setQuery(''); setSection('home'); setWatchItem(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }} aria-label={`Go to ${universeName} Viewing Order home`}><span>{universeName}</span><b>{universeName} Viewing Order</b></button>

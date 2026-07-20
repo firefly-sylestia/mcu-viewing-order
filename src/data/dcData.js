@@ -1,9 +1,9 @@
 export const DC_PHASES = [
-  { id: 1, label: 'Era 1', name: 'DCEU Foundations', color: '#2b6fff' },
-  { id: 2, label: 'Era 2', name: 'DCEU Expansion', color: '#4c8dff' },
-  { id: 3, label: 'Era 3', name: 'DCEU Finale', color: '#7ab2ff' },
-  { id: 4, label: 'Elseworlds', name: 'Standalone DC Stories', color: '#8b5cf6' },
-  { id: 5, label: 'DCU', name: 'Gods and Monsters', color: '#22a4ff' },
+  { id: 1, label: 'Era 1', name: 'DCEU Foundations', color: '#08204a' },
+  { id: 2, label: 'Era 2', name: 'DCEU Expansion', color: '#0b3a78' },
+  { id: 3, label: 'Era 3', name: 'DCEU Finale', color: '#0d4f9c' },
+  { id: 4, label: 'Elseworlds', name: 'Standalone DC Stories', color: '#1367c8' },
+  { id: 5, label: 'DCU', name: 'Gods and Monsters', color: '#2f80ed' },
 ];
 
 export const DC_RAW = [

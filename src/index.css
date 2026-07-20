@@ -23,11 +23,11 @@
   --elevation-surface-3: 0 28px 72px rgba(0, 0, 0, 0.40);
 
   /* Premium semantic roles */
-  --color-bg-base: #171A1F;
-  --color-bg-elevated: rgba(44, 50, 60, 0.94);
-  --color-text-primary: #F2F4F7;
-  --color-text-secondary: #C7CCD4;
-  --color-accent: #7cffda;
+  --color-bg-base: #0b090a;
+  --color-bg-elevated: rgba(22, 26, 29, 0.94);
+  --color-text-primary: #f5f3f4;
+  --color-text-secondary: #d3d3d3;
+  --color-accent: #da1e37;
   --color-border-subtle: rgba(255, 255, 255, 0.06);
 
 
@@ -59,32 +59,59 @@
   --z-modal: 240;
 
   /* Primary MCU Accent Palette */
-  --accent: #7cffda;
-  --accent-2: #9a86ff;
-  --accent-glow: rgba(124, 255, 218, 0.35);
-  --accent-glow-2: rgba(154, 134, 255, 0.30);
+  --night-bordeaux: #641220ff;
+  --burgundy: #6e1423ff;
+  --burgundy-2: #85182aff;
+  --ruby-red: #a11d33ff;
+  --ruby-red-2: #a71e34ff;
+  --carmine: #b21e35ff;
+  --carmine-2: #bd1f36ff;
+  --intense-cherry: #c71f37ff;
+  --classic-crimson: #da1e37ff;
+  --scarlet-rush: #e01e37ff;
+  --onyx: #0b090aff;
+  --carbon-black: #161a1dff;
+  --dark-garnet: #660708ff;
+  --mahogany-red: #a4161aff;
+  --mahogany-red-2: #ba181bff;
+  --strawberry-red: #e5383bff;
+  --silver: #b1a7a6ff;
+  --dust-grey: #d3d3d3ff;
+  --white-smoke: #f5f3f4ff;
+  --white: #ffffffff;
+  --dc-midnight: #061226ff;
+  --dc-navy: #08204aff;
+  --dc-deep-blue: #0b3a78ff;
+  --dc-hero-blue: #0d4f9cff;
+  --dc-bright-blue: #1367c8ff;
+  --dc-sky-blue: #2f80edff;
+
+  --accent: var(--classic-crimson);
+  --accent-2: var(--ruby-red);
+  --accent-glow: rgba(218, 30, 55, 0.35);
+  --accent-glow-2: rgba(161, 29, 51, 0.30);
   
   /* Surface Colors */
-  --bg: #171A1F;
-  --bg-elevated: rgba(49, 56, 68, 0.92);
-  --bg-card: rgba(35, 40, 48, 0.9);
-  --bg-glass: rgba(39, 45, 54, 0.76);
+  --bg: var(--onyx);
+  --bg-elevated: rgba(22, 26, 29, 0.92);
+  --bg-card: rgba(100, 18, 32, 0.30);
+  --bg-glass: rgba(22, 26, 29, 0.76);
   
   /* Text Colors */
-  --text: #F2F4F7;
-  --text-h: #F2F4F7;
-  --text-dim: #C7CCD4;
-  --text-muted: #98A1AE;
-  --text-disabled: #6E7682;
+  --text: var(--white-smoke);
+  --text-h: var(--white);
+  --text-dim: var(--dust-grey);
+  --text-muted: var(--silver);
+  --text-disabled: #7f7777;
 
   /* Layered surface depth */
-  --surface-1: color-mix(in srgb, #21262f 86%, transparent);
-  --surface-2: color-mix(in srgb, #2a313b 90%, transparent);
-  --surface-3: color-mix(in srgb, #343d49 94%, transparent);
-  --ambient-glow: rgba(124, 255, 218, 0.08);
-  --edge-highlight: rgba(242, 244, 247, 0.12);
-  --row-top-tint: color-mix(in srgb, var(--theme-accent, #7cffda) 26%, transparent);
-  --row-top-tint-soft: color-mix(in srgb, var(--theme-accent-alt, #9a86ff) 12%, transparent);
+  --surface-1: color-mix(in srgb, var(--carbon-black) 86%, transparent);
+  --surface-2: color-mix(in srgb, var(--night-bordeaux) 52%, var(--carbon-black));
+  --surface-3: color-mix(in srgb, var(--burgundy) 48%, var(--carbon-black));
+  --ambient-glow: rgba(218, 30, 55, 0.09);
+  --edge-highlight: rgba(245, 243, 244, 0.12);
+  --row-top-tint: color-mix(in srgb, var(--theme-accent, var(--classic-crimson)) 26%, transparent);
+  --row-top-tint-soft: color-mix(in srgb, var(--theme-accent-alt, var(--ruby-red)) 12%, transparent);
   
   /* Borders & Surfaces */
   --border: rgba(255, 255, 255, 0.06);
@@ -147,36 +174,59 @@
 
 :root[data-theme="light"] {
   color-scheme: light;
-  --color-bg-base: #f3f6fb;
+  --color-bg-base: var(--white-smoke);
   --color-bg-elevated: rgba(255, 255, 255, 0.94);
-  --color-text-primary: #0f172a;
-  --color-text-secondary: #334155;
-  --color-accent: #2563eb;
-  --color-border-subtle: rgba(15, 23, 42, 0.12);
-  --accent: #2563eb;
-  --accent-2: #7c3aed;
-  --accent-glow: rgba(37, 99, 235, 0.22);
-  --accent-glow-2: rgba(124, 58, 237, 0.2);
-  --bg: #f3f6fb;
+  --color-text-primary: var(--carbon-black);
+  --color-text-secondary: #3f3738;
+  --color-accent: var(--classic-crimson);
+  --color-border-subtle: rgba(100, 18, 32, 0.14);
+  --accent: var(--classic-crimson);
+  --accent-2: var(--ruby-red);
+  --accent-glow: rgba(218, 30, 55, 0.22);
+  --accent-glow-2: rgba(161, 29, 51, 0.18);
+  --bg: var(--white-smoke);
   --bg-elevated: rgba(255, 255, 255, 0.96);
   --bg-card: rgba(255, 255, 255, 0.92);
-  --bg-glass: rgba(255, 255, 255, 0.86);
-  --text: #0f172a;
-  --text-h: #020617;
-  --text-dim: #334155;
-  --text-muted: #64748b;
-  --text-disabled: #94a3b8;
-  --surface-1: rgba(255, 255, 255, 0.82);
-  --surface-2: rgba(255, 255, 255, 0.92);
-  --surface-3: rgba(255, 255, 255, 0.98);
-  --ambient-glow: rgba(37, 99, 235, 0.06);
-  --edge-highlight: rgba(37, 99, 235, 0.2);
+  --bg-glass: rgba(245, 243, 244, 0.86);
+  --text: var(--carbon-black);
+  --text-h: var(--onyx);
+  --text-dim: #3f3738;
+  --text-muted: #6f6666;
+  --text-disabled: #8f8585;
+  --surface-1: rgba(255, 255, 255, 0.84);
+  --surface-2: color-mix(in srgb, var(--white-smoke) 90%, var(--silver));
+  --surface-3: #ffffff;
+  --ambient-glow: rgba(218, 30, 55, 0.06);
+  --edge-highlight: rgba(218, 30, 55, 0.2);
   --border: rgba(15, 23, 42, 0.12);
   --border-hover: rgba(15, 23, 42, 0.2);
   --border-active: rgba(37, 99, 235, 0.34);
   --shadow-sm: 0 6px 18px rgba(15, 23, 42, 0.08);
   --shadow-md: 0 14px 34px rgba(15, 23, 42, 0.12);
   --shadow-lg: 0 26px 64px rgba(15, 23, 42, 0.16);
+}
+
+.movie-site.universe-dc {
+  --accent: var(--dc-sky-blue);
+  --accent-2: var(--dc-hero-blue);
+  --theme-accent: var(--dc-sky-blue);
+  --theme-accent-alt: var(--dc-hero-blue);
+  --accent-glow: rgba(47, 128, 237, 0.34);
+  --accent-glow-2: rgba(13, 79, 156, 0.28);
+  --bg-card: rgba(6, 18, 38, 0.34);
+  --surface-2: color-mix(in srgb, var(--dc-navy) 56%, var(--carbon-black));
+  --surface-3: color-mix(in srgb, var(--dc-deep-blue) 48%, var(--carbon-black));
+  --ambient-glow: rgba(47, 128, 237, 0.09);
+  --row-top-tint: color-mix(in srgb, var(--dc-sky-blue) 25%, transparent);
+  --row-top-tint-soft: color-mix(in srgb, var(--dc-hero-blue) 12%, transparent);
+}
+
+:root[data-theme="light"] .movie-site.universe-dc {
+  --accent-glow: rgba(47, 128, 237, 0.22);
+  --accent-glow-2: rgba(13, 79, 156, 0.18);
+  --surface-2: color-mix(in srgb, #ffffff 88%, var(--dc-sky-blue));
+  --surface-3: #ffffff;
+  --ambient-glow: rgba(47, 128, 237, 0.06);
 }
 
 /* Text safety utilities */
