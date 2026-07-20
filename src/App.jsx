@@ -735,7 +735,9 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
   }, [currentItem.tmdbId, currentItem.season, currentItem.epStart, currentItem.epEnd, isSeries]);
 
   const videasyUrl = useMemo(() => {
-    const base = tmdbId ? `https://player.videasy.net/${mediaType}/${tmdbId}` : `https://player.videasy.net/movie/${encodeURIComponent(item.title)}`;
+    const effectiveTmdbId = currentItem.tmdbId || tmdbId;
+    const effectiveMediaType = currentItem.type === 'series' ? 'tv' : 'movie';
+    const base = effectiveTmdbId ? `https://player.videasy.net/${effectiveMediaType}/${effectiveTmdbId}` : `https://player.videasy.net/${effectiveMediaType}/${encodeURIComponent(item.title)}`;
     const params = new URLSearchParams();
     params.set('autoplay', '1');
     const startSec = Math.floor((currentItem.watchedDuration || 0) / 1000);
@@ -745,7 +747,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
       params.set('episode', String(selectedEpisode));
     }
     return `${base}?${params.toString()}`;
-  }, [tmdbId, mediaType, item.title, currentItem.watchedDuration, currentItem.season, isSeries, selectedEpisode]);
+  }, [tmdbId, item.title, currentItem.tmdbId, currentItem.type, currentItem.watchedDuration, currentItem.season, isSeries, selectedEpisode]);
   const upNext = activeItems
     .filter(i => i.id !== item.id && i.userStatus !== 'watched' && i.userStatus !== 'dropped')
     .slice(0, 12);
