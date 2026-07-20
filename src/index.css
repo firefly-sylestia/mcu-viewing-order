@@ -2641,3 +2641,31 @@ button { border: 0; color: inherit; cursor: pointer; }
     contain-intrinsic-size: 210px 260px;
   }
 }
+
+/* Follow-up: no poster text overlays, no content-visibility flashes, desktop density works. */
+.movie-card .poster-title-overlay {
+  display: none !important;
+}
+
+.movie-grid.grid-2:not(.rail-scroll),
+.web-grid.grid-2:not(.rail-scroll),
+.list-card-grid.grid-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+.movie-grid.grid-3:not(.rail-scroll),
+.web-grid.grid-3:not(.rail-scroll),
+.list-card-grid.grid-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+.web-rail .movie-card {
+  content-visibility: visible !important;
+  contain: none !important;
+  contain-intrinsic-size: auto !important;
+}
+
+.rail-scroll,
+.upnext-grid.rail-scroll {
+  contain: none !important;
+}
