@@ -825,8 +825,14 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
         <div className="watch-header-spacer" />
       </header>
       {toast && <div className="watch-toast">{toast}</div>}
-      <div className="watch-player">
-        <iframe key={isSeries ? `ep-${currentItem.tmdbId}-${currentItem.season || 1}-${selectedEpisode}` : currentItem.tmdbId || item.id} src={videasyUrl} title={`Watch ${item.title}`} allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope; clipboard-write; web-share" allowFullScreen referrerPolicy="no-referrer" style={{ width: '100%', height: '100%', border: 'none' }} />
+      <div className="watch-player" onMouseDown={(e) => {
+        if (e.button === 1 || e.ctrlKey || e.metaKey) {
+          e.preventDefault();
+          setToast('⚠️ External links blocked. Tap play to continue watching.');
+          setTimeout(() => setToast(''), 3000);
+        }
+      }}>
+        <iframe key={isSeries ? `ep-${currentItem.tmdbId}-${currentItem.season || 1}-${selectedEpisode}` : currentItem.tmdbId || item.id} src={videasyUrl} title={`Watch ${item.title}`} allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope; clipboard-write; web-share" allowFullScreen sandbox="allow-same-origin allow-scripts allow-presentation allow-forms" referrerPolicy="no-referrer" style={{ width: '100%', height: '100%', border: 'none', pointerEvents: 'auto' }} />
       </div>
       <div className="watch-progress-bar"><span style={{ width: `${progress}%` }} /></div>
       {isSeries && episodes.length > 0 && (
