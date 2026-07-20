@@ -167,8 +167,10 @@ export default function App() {
     return sorted;
   }, [actions, allItems, universe, query, genre, posterMap, rating, ageRatingFilter, sortBy]);
 
+  const failedRef = useRef(new Set());
+
   useEffect(() => {
-    const missing = activeItems.filter(item => !item.poster && !posterMap[item.id]).slice(0, 6);
+    const missing = activeItems.filter(item => !item.poster && !posterMap[item.id] && !failedRef.current.has(item.id)).slice(0, 6);
     if (!missing.length) return;
     let cancelled = false;
     const batchSize = 3;
@@ -182,9 +184,17 @@ export default function App() {
       }));
       if (!cancelled) {
         const updates = {};
+        const failed = [];
         results.forEach((result, i) => {
-          if (result.status === 'fulfilled' && result.value?.poster) updates[batch[i].id] = result.value.poster;
+          if (result.status === 'fulfilled') {
+            if (result.value?.poster) {
+              updates[batch[i].id] = result.value.poster;
+            } else {
+              failed.push(batch[i].id);
+            }
+          }
         });
+        failed.forEach(id => failedRef.current.add(id));
         if (Object.keys(updates).length) setPosterMap(prev => ({ ...prev, ...updates }));
         fetchBatch(startIndex + batchSize);
       }
