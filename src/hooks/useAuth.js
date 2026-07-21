@@ -9,8 +9,7 @@ import {
   GoogleAuthProvider,
   signOut,
   onAuthStateChanged,
-  setPersistence,
-  browserLocalPersistence,
+  sendPasswordResetEmail,
 } from 'firebase/auth';
 import { auth, configured } from '../firebase';
 
@@ -77,5 +76,10 @@ export function useAuth() {
     await signOut(auth);
   }, []);
 
-  return { user, loading, login, signup, googleSignIn, anonymousSignIn, logout, configured };
+  const resetPassword = useCallback(async (email) => {
+    if (!configured) throw new Error('Firebase not configured');
+    await sendPasswordResetEmail(auth, email);
+  }, []);
+
+  return { user, loading, login, signup, googleSignIn, anonymousSignIn, logout, resetPassword, configured };
 }

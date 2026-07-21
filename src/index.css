@@ -1770,6 +1770,7 @@ button { border: 0; color: inherit; cursor: pointer; }
 }
 .auth-form input:focus { border-color: var(--accent, var(--brand-accent,#9a4a4a)); }
 .auth-error { color: #ff4444; font-size: 13px; margin: 0; }
+.auth-success { color: #44dd44; font-size: 13px; margin: 0; }
 .auth-submit {
   height: 48px;
   border-radius: 14px;

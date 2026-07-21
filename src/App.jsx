@@ -113,7 +113,7 @@ export default function App() {
   const [watchItem, setWatchItem] = useState(saved.watchItem || null);
   const [profileName, setProfileName] = useState(saved.profileName || '');
   const [authOpen, setAuthOpen] = useState(false);
-  const { user, login, signup, googleSignIn, anonymousSignIn, logout: authLogout, configured } = useAuth();
+  const { user, login, signup, googleSignIn, anonymousSignIn, logout: authLogout, resetPassword, configured } = useAuth();
   const { pushToCloud, pushBeforeLogout, lastSynced, syncing, conflict, resolveUseRemote, resolveKeepLocal, toast } = useCloudSync(user, actions, profileName, setActions, setProfileName, watchItem, setWatchItem);
 
   // Guard against stale watchItem from a different universe on reload
@@ -361,7 +361,7 @@ export default function App() {
       {selectedItem && <DetailView item={selectedItem} onClose={() => selectItem(null)} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={handleStartWatch} activeItems={unfilteredItems} />}
       {trailer && <TrailerModal trailer={trailer} onClose={() => setTrailer(null)} />}
       {filtersOpen && <Filters genre={genre} setGenre={setGenre} rating={rating} setRating={setRating} ageRatingFilter={ageRatingFilter} setAgeRatingFilter={setAgeRatingFilter} sortBy={sortBy} setSortBy={setSortBy} genres={genres} count={activeItems.length} onClose={() => setFiltersOpen(false)} />}
-      {authOpen && <AuthModal onClose={() => setAuthOpen(false)} onLogin={login} onSignup={signup} onGoogleSignIn={googleSignIn} onAnonymousSignIn={anonymousSignIn} />}
+      {authOpen && <AuthModal onClose={() => setAuthOpen(false)} onLogin={login} onSignup={signup} onGoogleSignIn={googleSignIn} onAnonymousSignIn={anonymousSignIn} onResetPassword={resetPassword} />}
     </main>
   );
 }
@@ -990,7 +990,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
       </header>
       {toast && <div className="watch-toast">{toast}</div>}
       <div className="watch-player">
-        <iframe key={isSeries ? `ep-${currentItem.tmdbId}-${currentItem.season || 1}-${selectedEpisode}` : currentItem.tmdbId || item.id} src={videasyUrl} title={`Watch ${item.title}`} allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope; clipboard-write; web-share" allowFullScreen referrerPolicy="no-referrer" />
+        <iframe key={isSeries ? `ep-${currentItem.tmdbId}-${currentItem.season || 1}-${selectedEpisode}` : currentItem.tmdbId || item.id} src={videasyUrl} title={`Watch ${item.title}`} frameBorder="0" allowFullScreen allow="encrypted-media" />
       </div>
       <div className="watch-progress-bar"><span style={{ width: `${progress}%` }} /></div>
       {isSeries && episodes.length > 0 && (
