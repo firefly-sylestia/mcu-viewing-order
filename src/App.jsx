@@ -289,8 +289,12 @@ export default function App() {
     setTrailer({ title: item.title, url });
   };
   const resetFilters = () => { setQuery(''); setGenre('All'); setRating(0); setAgeRatingFilter('All'); setSortBy('order'); };
-  const handleStartWatch = (item, tmdbId, mediaType) => {
-    setWatchItem({ item, tmdbId, mediaType });
+  const handleStartWatch = (item, tmdbId, mediaType, platform = 'videasy') => {
+    if (platform === 'onlyflix') {
+      setWatchItem({ item, tmdbId, mediaType, platform: 'onlyflix' });
+    } else {
+      setWatchItem({ item, tmdbId, mediaType });
+    }
     setStatus(item, 'watching');
     updateAction(item, { watchStartedAt: Date.now() });
     setSelected(null);
@@ -590,6 +594,25 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, ac
       setWatchLoading(false);
     }
   };
+
+  const handleWatchOnOnlyflix = async (item) => {
+    if (watchLoading) return;
+    setWatchLoading(true);
+    try {
+      const params = new URLSearchParams({ title: item.title, year: String(item.year || '') });
+      if (item.tmdbId) params.set('tmdbId', String(item.tmdbId));
+      const res = await fetch(`/api/tmdb/poster?${params.toString()}`);
+      if (!res.ok) throw new Error('TMDB lookup failed');
+      const data = await res.json();
+      if (!data.tmdbId) throw new Error('No TMDB ID found');
+      const mediaType = data.mediaType === 'tv' ? 'tv' : 'movie';
+      onStartWatch(item, data.tmdbId, mediaType, 'onlyflix');
+    } catch {
+      onStartWatch(item, item.tmdbId || null, item.type === 'series' ? 'tv' : 'movie', 'onlyflix');
+    } finally {
+      setWatchLoading(false);
+    }
+  };
   const modalRef = React.useRef(null);
   React.useEffect(() => {
     if (isTrailerExpanded && modalRef.current) modalRef.current.scrollTo({ top: 0, behavior: 'smooth' });
@@ -639,7 +662,7 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, ac
           <div className="detail-chips"><span className="detail-rating"><Star size={15} fill="currentColor" /> {item.rating.toFixed ? item.rating.toFixed(1) : item.rating}</span>{item.genres.slice(0,3).map(g => <span key={g}>{g}</span>)}</div>
           <p className="detail-description">{item.desc || `Follow ${item.title} in the complete ${item.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} viewing order.`}</p>
           <div className="detail-facts"><div><Calendar size={18} /><span>Release year</span><strong>{item.year}</strong></div><div><Timer size={18} /><span>Runtime</span><strong>{runtimeLabel(item.runtime, item.type)}</strong></div><div><Sparkles size={18} /><span>Format</span><strong>{item.type}</strong></div>{item.userStatus === 'watching' && item.watchedDuration > 30000 && <div><Clock size={18} /><span>Watched</span><strong>{watchTimeLabel(item)}</strong></div>}</div>
-          <div className="detail-progress-actions"><StatusSelect item={item} setStatus={setStatus} /><button className={`detail-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={19} fill={item.bookmarked ? 'currentColor' : 'none'} /></button><button className="detail-videasy" onClick={() => handleWatchOnVideasy(item)} disabled={watchLoading} aria-label={`Watch ${item.title} on Videasy`}><Play size={18} fill="currentColor" /><span>{watchLoading ? 'Loading...' : 'Watch Now'}</span></button><div className="detail-download-wrap" ref={downloadRef}><button className="detail-download" onClick={searchTorrents} aria-label={`Download ${item.title}`}><Download size={18} /><span>Download</span></button>{downloadOpen && <div className="download-dropdown">{torrents === null ? <span className="download-loading">Searching...</span> : torrents.length === 0 ? <span className="download-empty">No torrents found</span> : torrents.map((t, i) => <a key={i} className="download-option" href={t.magnet} target="_blank" rel="noopener noreferrer" onClick={() => setDownloadOpen(false)}><span className="download-quality">{t.quality}</span><span className="download-size">{t.size}</span><span className="download-seeds">{t.seeds} seeds</span></a>)}</div>}</div></div>
+          <div className="detail-progress-actions"><StatusSelect item={item} setStatus={setStatus} /><button className={`detail-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={19} fill={item.bookmarked ? 'currentColor' : 'none'} /></button><button className="detail-videasy" onClick={() => handleWatchOnVideasy(item)} disabled={watchLoading} aria-label={`Watch ${item.title} on Videasy`}><Play size={18} fill="currentColor" /><span>{watchLoading ? 'Loading...' : 'Videasy'}</span></button><button className="detail-onlyflix" onClick={() => handleWatchOnOnlyflix(item)} disabled={watchLoading} aria-label={`Watch ${item.title} on Onlyflix`}><Play size={18} fill="currentColor" /><span>{watchLoading ? 'Loading...' : 'Onlyflix'}</span></button><div className="detail-download-wrap" ref={downloadRef}><button className="detail-download" onClick={searchTorrents} aria-label={`Download ${item.title}`}><Download size={18} /><span>Download</span></button>{downloadOpen && <div className="download-dropdown">{torrents === null ? <span className="download-loading">Searching...</span> : torrents.length === 0 ? <span className="download-empty">No torrents found</span> : torrents.map((t, i) => <a key={i} className="download-option" href={t.magnet} target="_blank" rel="noopener noreferrer" onClick={() => setDownloadOpen(false)}><span className="download-quality">{t.quality}</span><span className="download-size">{t.size}</span><span className="download-seeds">{t.seeds} seeds</span></a>)}</div>}</div></div>
           {itemRoadmap && (
             <div className="detail-roadmap">
               <div className="section-title"><h2>Viewing Roadmap</h2><button>{itemRoadmap.siblings.length} Parts</button></div>
@@ -809,7 +832,7 @@ function WatchBrowse({ activeItems, onStartWatch, setSelected, setStatus, toggle
 }
 
 function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, onStartWatch, updateAction }) {
-  const { item, tmdbId, mediaType } = watchItem;
+  const { item, tmdbId, mediaType, platform = 'videasy' } = watchItem;
   const [switching, setSwitching] = useState(false);
   const [toast, setToast] = useState('');
   const currentItem = activeItems.find(i => i.id === item.id) || item;
@@ -819,10 +842,25 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
   const [episodeLoading, setEpisodeLoading] = useState(false);
   const watchedEpisodes = currentItem.watchedEpisodes || [];
 
+  // Helper: get episode number from old or new format
+  const getEpisodeNum = (ep) => typeof ep === 'object' ? ep.episode : ep;
+  
+  // Helper: check if episode is watched
+  const isEpisodeWatched = (epNum) => watchedEpisodes.some(e => getEpisodeNum(e) === epNum);
+  
+  // Helper: get episode progress duration
+  const getEpisodeDuration = (epNum) => {
+    const ep = watchedEpisodes.find(e => getEpisodeNum(e) === epNum);
+    return typeof ep === 'object' ? ep.duration : 0;
+  };
+
   const toggleEpisode = (epNum) => {
-    const next = watchedEpisodes.includes(epNum)
-      ? watchedEpisodes.filter(e => e !== epNum)
-      : [...watchedEpisodes, epNum].sort((a, b) => a - b);
+    const isWatched = isEpisodeWatched(epNum);
+    let next = watchedEpisodes.filter(e => getEpisodeNum(e) !== epNum);
+    if (!isWatched) {
+      next.push({ episode: epNum, duration: 0 });
+      next.sort((a, b) => getEpisodeNum(a) - getEpisodeNum(b));
+    }
     updateAction(currentItem, { watchedEpisodes: next });
   };
 
@@ -864,10 +902,31 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
       : `https://player.videasy.net/${effectiveMediaType}/${encodeURIComponent(item.title)}`;
     const params = new URLSearchParams();
     params.set('autoplay', '1');
-    const startSec = Math.floor((currentItem.watchedDuration || 0) / 1000);
+    // For series: use per-episode progress; for movies: use global progress
+    const episodeDuration = isSeries && selectedEpisode ? getEpisodeDuration(selectedEpisode) : (currentItem.watchedDuration || 0);
+    const startSec = Math.floor(episodeDuration / 1000);
     if (startSec > 5) params.set('progress', String(startSec));
     return `${base}?${params.toString()}`;
-  }, [tmdbId, item.title, currentItem.tmdbId, currentItem.type, currentItem.season, isSeries, selectedEpisode]);
+  }, [tmdbId, item.title, currentItem.tmdbId, currentItem.type, currentItem.season, isSeries, selectedEpisode, watchedEpisodes]);
+
+  const onlyflixUrl = useMemo(() => {
+    const effectiveTmdbId = currentItem.tmdbId || tmdbId;
+    const effectiveMediaType = currentItem.type === 'series' ? 'tv' : 'movie';
+    const season = currentItem.season || 1;
+    let base = effectiveTmdbId
+      ? (isSeries && selectedEpisode
+        ? `https://onlyflix.to/${effectiveMediaType}/${effectiveTmdbId}/${season}/${selectedEpisode}`
+        : `https://onlyflix.to/${effectiveMediaType}/${effectiveTmdbId}`)
+      : `https://onlyflix.to/search?q=${encodeURIComponent(item.title)}`;
+    const params = new URLSearchParams();
+    params.set('autoplay', '1');
+    // For series: use per-episode progress; for movies: use global progress
+    const episodeDuration = isSeries && selectedEpisode ? getEpisodeDuration(selectedEpisode) : (currentItem.watchedDuration || 0);
+    const startSec = Math.floor(episodeDuration / 1000);
+    if (startSec > 5) params.set('progress', String(startSec));
+    return `${base}?${params.toString()}`;
+  }, [tmdbId, item.title, currentItem.tmdbId, currentItem.type, currentItem.season, isSeries, selectedEpisode, watchedEpisodes]);
+
   const roadmapInfo = useMemo(() => {
     if (!currentItem.tmdbId || currentItem.type !== 'series') return null;
     const siblings = activeItems
@@ -927,9 +986,22 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
   useEffect(() => { setStatusRef.current = setStatus; }, [setStatus]);
 
   const handleBack = useCallback(() => {
-    updateActionRef.current(itemRef.current, { watchedDuration: elapsedRef.current, watchStartedAt: null });
+    if (isSeries && selectedEpisode) {
+      // Save per-episode progress
+      const finalEpisodes = watchedEpisodes.map(e => 
+        getEpisodeNum(e) === selectedEpisode 
+          ? { episode: selectedEpisode, duration: elapsedRef.current }
+          : e
+      );
+      if (!watchedEpisodes.find(e => getEpisodeNum(e) === selectedEpisode) && elapsedRef.current > 0) {
+        finalEpisodes.push({ episode: selectedEpisode, duration: elapsedRef.current });
+      }
+      updateActionRef.current(itemRef.current, { watchedEpisodes: finalEpisodes, watchStartedAt: null });
+    } else {
+      updateActionRef.current(itemRef.current, { watchedDuration: elapsedRef.current, watchStartedAt: null });
+    }
     onBack();
-  }, [onBack]);
+  }, [onBack, isSeries, selectedEpisode, watchedEpisodes]);
 
   useEffect(() => { elapsedRef.current = elapsed; }, [elapsed]);
 
@@ -947,13 +1019,40 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
 
   useEffect(() => {
     const save = setInterval(() => {
-      updateActionRef.current(itemRef.current, { watchedDuration: elapsedRef.current });
+      if (isSeries && selectedEpisode) {
+        // Save per-episode progress
+        const updatedEpisodes = watchedEpisodes.map(e => 
+          getEpisodeNum(e) === selectedEpisode 
+            ? { episode: selectedEpisode, duration: elapsedRef.current }
+            : e
+        ).filter(e => getEpisodeNum(e) !== selectedEpisode || elapsedRef.current > 0);
+        
+        // If episode not in list yet, add it
+        if (!watchedEpisodes.find(e => getEpisodeNum(e) === selectedEpisode)) {
+          updatedEpisodes.push({ episode: selectedEpisode, duration: elapsedRef.current });
+        }
+        updateActionRef.current(itemRef.current, { watchedEpisodes: updatedEpisodes });
+      } else {
+        updateActionRef.current(itemRef.current, { watchedDuration: elapsedRef.current });
+      }
     }, 15000);
     return () => {
       clearInterval(save);
-      updateActionRef.current(itemRef.current, { watchedDuration: elapsedRef.current, watchStartedAt: null });
+      if (isSeries && selectedEpisode) {
+        const finalEpisodes = watchedEpisodes.map(e => 
+          getEpisodeNum(e) === selectedEpisode 
+            ? { episode: selectedEpisode, duration: elapsedRef.current }
+            : e
+        );
+        if (!watchedEpisodes.find(e => getEpisodeNum(e) === selectedEpisode)) {
+          finalEpisodes.push({ episode: selectedEpisode, duration: elapsedRef.current });
+        }
+        updateActionRef.current(itemRef.current, { watchedEpisodes: finalEpisodes, watchStartedAt: null });
+      } else {
+        updateActionRef.current(itemRef.current, { watchedDuration: elapsedRef.current, watchStartedAt: null });
+      }
     };
-  }, []);
+  }, [isSeries, selectedEpisode, watchedEpisodes]);
 
   useEffect(() => {
     if (isComplete && currentItem.userStatus === 'watching') {
@@ -998,15 +1097,15 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
       </header>
       {toast && <div className="watch-toast">{toast}</div>}
       <div className="watch-player">
-        <iframe key={isSeries ? `ep-${currentItem.tmdbId}-${currentItem.season || 1}-${selectedEpisode}` : currentItem.tmdbId || item.id} src={videasyUrl} title={`Watch ${item.title}`} frameBorder="0" allowFullScreen allow="encrypted-media" />
+        <iframe key={isSeries ? `${platform}-ep-${currentItem.tmdbId}-${currentItem.season || 1}-${selectedEpisode}` : `${platform}-${currentItem.tmdbId || item.id}`} src={platform === 'onlyflix' ? onlyflixUrl : videasyUrl} title={`Watch ${item.title}`} frameBorder="0" allowFullScreen allow="encrypted-media" />
       </div>
       <div className="watch-progress-bar"><span style={{ width: `${progress}%` }} /></div>
       {isSeries && episodes.length > 0 && (
         <div className="watch-episode-picker">
-          <span className="watch-episode-label">{episodeLoading ? 'Loading...' : `${watchedEpisodes.length}/${episodeRangeTotal} watched`}</span>
+          <span className="watch-episode-label">{episodeLoading ? 'Loading...' : `${watchedEpisodes.filter(e => getEpisodeNum(e) !== selectedEpisode || isEpisodeWatched(getEpisodeNum(e))).length}/${episodeRangeTotal} watched`}</span>
           <div className="watch-episode-list">
             {episodes.map(ep => {
-              const isWatched = watchedEpisodes.includes(ep.episode);
+              const isWatched = isEpisodeWatched(ep.episode);
               const isSelected = selectedEpisode === ep.episode;
               return <button
                 key={ep.episode}
