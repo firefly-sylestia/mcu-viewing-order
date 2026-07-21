@@ -353,7 +353,7 @@ export default function App() {
         <button className={section === 'profile' ? 'active' : ''} onClick={() => { setQuery(''); setSection('profile'); }}><UserRound size={22} /><span>Profile</span></button>
       </nav>
 
-      {selectedItem && <DetailView item={selectedItem} onClose={() => selectItem(null)} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={handleStartWatch} />}
+      {selectedItem && <DetailView item={selectedItem} onClose={() => selectItem(null)} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={handleStartWatch} activeItems={unfilteredItems} />}
       {trailer && <TrailerModal trailer={trailer} onClose={() => setTrailer(null)} />}
       {filtersOpen && <Filters genre={genre} setGenre={setGenre} rating={rating} setRating={setRating} ageRatingFilter={ageRatingFilter} setAgeRatingFilter={setAgeRatingFilter} sortBy={sortBy} setSortBy={setSortBy} genres={genres} count={activeItems.length} onClose={() => setFiltersOpen(false)} />}
       {authOpen && <AuthModal onClose={() => setAuthOpen(false)} onLogin={login} onSignup={signup} onGoogleSignIn={googleSignIn} onAnonymousSignIn={anonymousSignIn} />}
@@ -527,7 +527,7 @@ function AnalyticsPanel({ stats, large = false }) {
   return <section className={`analytics-panel ${large ? 'large' : ''}`}><div><p className="eyebrow">Analytics</p><h2>{stats.percent}% complete</h2><div className="progress"><span style={{ width: `${stats.percent}%` }} /></div></div><div className="stat-grid"><div><b>{stats.total}</b><span>Total</span></div><div><b>{stats.watched}</b><span>Watched</span></div><div><b>{stats.watching}</b><span>Watching</span></div><div><b>{stats.dropped}</b><span>Dropped</span></div><div><b>{stats.bookmarked}</b><span>Saved</span></div><div><b>{stats.watchedTime}</b><span>Watch Time</span></div></div></section>;
 }
 
-function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch }) {
+function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, activeItems }) {
   const [inlineTrailer, setInlineTrailer] = useState(null);
   const [isTrailerExpanded, setIsTrailerExpanded] = useState(false);
   const showTrailer = () => {
@@ -589,6 +589,31 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch }) 
   React.useEffect(() => {
     if (isTrailerExpanded && modalRef.current) modalRef.current.scrollTo({ top: 0, behavior: 'smooth' });
   }, [isTrailerExpanded]);
+
+  // Compute roadmap for multi-part series
+  const itemRoadmap = useMemo(() => {
+    if (!activeItems || !item.tmdbId || item.type !== 'series') return null;
+    const siblings = activeItems
+      .filter(i => i.tmdbId === item.tmdbId && i.type === 'series')
+      .sort((a, b) => a.order - b.order);
+    if (siblings.length < 2) return null;
+    const segments = [];
+    for (let i = 0; i < siblings.length; i++) {
+      const part = siblings[i];
+      segments.push({ type: 'part', item: part, isActive: part.id === item.id });
+      if (i < siblings.length - 1) {
+        const nextPart = siblings[i + 1];
+        const interstitials = activeItems
+          .filter(x => x.order > part.order && x.order < nextPart.order)
+          .sort((a, b) => a.order - b.order);
+        if (interstitials.length > 0) {
+          segments.push({ type: 'interstitials', items: interstitials });
+        }
+      }
+    }
+    return { segments, siblings };
+  }, [activeItems, item]);
+
   return <div className="detail-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
     <article className="detail-modal" role="dialog" aria-modal="true" aria-labelledby="detail-title" style={{ '--accent': item.accent }}>
       {item.poster && <div className="detail-bg" aria-hidden="true"><img className="detail-backdrop" src={item.poster} alt="" /><div className="detail-backdrop-shade" /></div>}
@@ -610,13 +635,57 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch }) 
           <p className="detail-description">{item.desc || `Follow ${item.title} in the complete ${item.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} viewing order.`}</p>
           <div className="detail-facts"><div><Calendar size={18} /><span>Release year</span><strong>{item.year}</strong></div><div><Timer size={18} /><span>Runtime</span><strong>{runtimeLabel(item.runtime, item.type)}</strong></div><div><Sparkles size={18} /><span>Format</span><strong>{item.type}</strong></div>{item.userStatus === 'watching' && item.watchedDuration > 30000 && <div><Clock size={18} /><span>Watched</span><strong>{watchTimeLabel(item)}</strong></div>}</div>
           <div className="detail-progress-actions"><StatusSelect item={item} setStatus={setStatus} /><button className={`detail-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={19} fill={item.bookmarked ? 'currentColor' : 'none'} /></button><button className="detail-videasy" onClick={() => handleWatchOnVideasy(item)} disabled={watchLoading} aria-label={`Watch ${item.title} on Videasy`}><Play size={18} fill="currentColor" /><span>{watchLoading ? 'Loading...' : 'Watch Now'}</span></button><div className="detail-download-wrap" ref={downloadRef}><button className="detail-download" onClick={searchTorrents} aria-label={`Download ${item.title}`}><Download size={18} /><span>Download</span></button>{downloadOpen && <div className="download-dropdown">{torrents === null ? <span className="download-loading">Searching...</span> : torrents.length === 0 ? <span className="download-empty">No torrents found</span> : torrents.map((t, i) => <a key={i} className="download-option" href={t.magnet} target="_blank" rel="noopener noreferrer" onClick={() => setDownloadOpen(false)}><span className="download-quality">{t.quality}</span><span className="download-size">{t.size}</span><span className="download-seeds">{t.seeds} seeds</span></a>)}</div>}</div></div>
+          {itemRoadmap && (
+            <div className="detail-roadmap">
+              <div className="section-title"><h2>Viewing Roadmap</h2><button>{itemRoadmap.siblings.length} Parts</button></div>
+              <div className="roadmap-timeline">
+                {itemRoadmap.segments.map((seg, idx) => {
+                  if (seg.type === 'part') {
+                    const partNum = itemRoadmap.segments.filter((s, i) => s.type === 'part' && i <= idx).length;
+                    return (
+                      <div key={seg.item.id} className={`roadmap-part ${seg.isActive ? 'active' : ''}`} style={{ '--accent': seg.item.accent, cursor: 'default' }}>
+                        <span className="roadmap-part-dot" />
+                        <div className="roadmap-part-poster">
+                          {seg.item.poster ? <img src={seg.item.poster} alt={seg.item.title} loading="lazy" /> : <FallbackPoster item={seg.item} />}
+                        </div>
+                        <div className="roadmap-part-info">
+                          <span className="roadmap-part-badge">{seg.isActive && '● '}Part {partNum}{seg.item.season ? ` S${seg.item.season}` : ''}</span>
+                          <span className="roadmap-part-name">{seg.item.title.replace(/^Agents of SHIELD S\d+ /, '')}</span>
+                          <span className="roadmap-part-meta">{seg.item.year} · {runtimeLabel(seg.item.runtime, seg.item.type)}</span>
+                        </div>
+                      </div>
+                    );
+                  } else {
+                    return (
+                      <div key={`int-${idx}`} className="roadmap-interstitial">
+                        <div className="roadmap-inter-header">
+                          <ChevronRight size={14} className="chevron" />
+                          <span>watch between</span>
+                          <ChevronRight size={14} className="chevron" />
+                        </div>
+                        <div className="roadmap-inter-items">
+                          {seg.items.map(intItem => (
+                            <div key={intItem.id} className="roadmap-inter-card" style={{ '--accent': intItem.accent, cursor: 'default' }}>
+                              <div className="roadmap-inter-poster">
+                                {intItem.poster ? <img src={intItem.poster} alt={intItem.title} loading="lazy" /> : <FallbackPoster item={intItem} />}
+                              </div>
+                              <span className="roadmap-inter-title">{intItem.title}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  }
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
       </div>
     </article>
   </div>;
 }
-
 function TrailerModal({ trailer, onClose }) {
   return <aside className="trailer-modal"><div><button className="trailer-close" onClick={onClose}><X /></button><h2>{trailer.title} trailer</h2><iframe src={trailer.url} title={`${trailer.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /></div></aside>;
 }
@@ -940,48 +1009,53 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
         </div>
       )}
       {roadmapInfo && (
-        <section className="watch-roadmap rail-card web-rail">
+        <section className="watch-roadmap">
           <div className="section-title"><h2>Viewing Roadmap</h2><button>{roadmapInfo.siblings.length} Parts</button></div>
-          <div className="movie-grid web-grid rail-scroll" style={{ gridTemplateColumns: `repeat(${Math.min(roadmapInfo.segments.length * 2, 8)}, minmax(120px, 1fr))`, alignItems: 'start' }}>
+          <div className="roadmap-timeline">
             {roadmapInfo.segments.map((seg, idx) => {
               if (seg.type === 'part') {
                 const partNum = roadmapInfo.segments.filter((s, i) => s.type === 'part' && i <= idx).length;
                 return (
                   <button
                     key={seg.item.id}
-                    className={`movie-card roadmap-part-card ${seg.isActive ? 'roadmap-active' : ''}`}
+                    className={`roadmap-part ${seg.isActive ? 'active' : ''}`}
                     onClick={() => handleSwitchItem(seg.item)}
-                    style={{ '--accent': seg.item.accent, flexShrink: 0, border: seg.isActive ? '2px solid var(--accent)' : '2px solid transparent', borderRadius: '12px', padding: '8px' }}
+                    style={{ '--accent': seg.item.accent }}
                   >
-                    <div className="poster-button" style={{ pointerEvents: 'none' }}>
-                      {seg.item.poster ? <img src={seg.item.poster} alt={seg.item.title} width="200" height="284" loading="lazy" style={{ borderRadius: '8px', width: '100%', height: 'auto', aspectRatio: '2/3', objectFit: 'cover' }} /> : <FallbackPoster item={seg.item} />}
+                    <span className="roadmap-part-dot" />
+                    <div className="roadmap-part-poster">
+                      {seg.item.poster ? <img src={seg.item.poster} alt={seg.item.title} loading="lazy" /> : <FallbackPoster item={seg.item} />}
                     </div>
-                    <div style={{ marginTop: '8px', textAlign: 'center', fontWeight: seg.isActive ? 700 : 400, fontSize: '0.82rem' }}>{seg.isActive && '● '}Part {partNum}{seg.item.season ? ` S${seg.item.season}` : ''}</div>
-                    <small style={{ display: 'block', textAlign: 'center', opacity: 0.7, fontSize: '0.7rem' }}>{seg.item.title.replace(/^Agents of SHIELD S\d+ /, '')}</small>
+                    <div className="roadmap-part-info">
+                      <span className="roadmap-part-badge">{seg.isActive && '● '}Part {partNum}{seg.item.season ? ` S${seg.item.season}` : ''}</span>
+                      <span className="roadmap-part-name">{seg.item.title.replace(/^Agents of SHIELD S\d+ /, '')}</span>
+                      <span className="roadmap-part-meta">{seg.item.year} · {runtimeLabel(seg.item.runtime, seg.item.type)}</span>
+                    </div>
                   </button>
                 );
               } else {
                 return (
-                  <div key={`int-${idx}`} className="roadmap-interstitials" style={{ display: 'flex', flexDirection: 'column', gap: '4px', flexShrink: 0, minWidth: '80px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', padding: '8px 0' }}>
-                      <ChevronRight size={16} opacity={0.4} />
-                      <span style={{ fontSize: '0.65rem', opacity: 0.5, whiteSpace: 'nowrap' }}>watch between</span>
-                      <ChevronRight size={16} opacity={0.4} />
+                  <div key={`int-${idx}`} className="roadmap-interstitial">
+                    <div className="roadmap-inter-header">
+                      <ChevronRight size={14} className="chevron" />
+                      <span>watch between</span>
+                      <ChevronRight size={14} className="chevron" />
                     </div>
-                    {seg.items.map(intItem => (
-                      <button
-                        key={intItem.id}
-                        className="movie-card roadmap-inter-card"
-                        onClick={() => handleSwitchItem(intItem)}
-                        title={intItem.title}
-                        style={{ '--accent': intItem.accent, flexShrink: 0, padding: '4px', borderRadius: '8px', border: '1px solid transparent' }}
-                      >
-                        <div className="poster-button" style={{ pointerEvents: 'none' }}>
-                          {intItem.poster ? <img src={intItem.poster} alt={intItem.title} width="100" height="142" loading="lazy" style={{ borderRadius: '4px', width: '100%', height: 'auto', aspectRatio: '2/3', objectFit: 'cover' }} /> : <FallbackPoster item={intItem} />}
-                        </div>
-                        <span style={{ display: 'block', fontSize: '0.65rem', marginTop: '4px', textAlign: 'center', lineHeight: '1.2', fontWeight: 500 }}>{intItem.title.length > 28 ? intItem.title.slice(0, 25) + '…' : intItem.title}</span>
-                      </button>
-                    ))}
+                    <div className="roadmap-inter-items">
+                      {seg.items.map(intItem => (
+                        <button
+                          key={intItem.id}
+                          className="roadmap-inter-card"
+                          onClick={() => handleSwitchItem(intItem)}
+                          style={{ '--accent': intItem.accent }}
+                        >
+                          <div className="roadmap-inter-poster">
+                            {intItem.poster ? <img src={intItem.poster} alt={intItem.title} loading="lazy" /> : <FallbackPoster item={intItem} />}
+                          </div>
+                          <span className="roadmap-inter-title">{intItem.title}</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 );
               }

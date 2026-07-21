@@ -2962,3 +2962,347 @@ button { border: 0; color: inherit; cursor: pointer; }
 .watch-browse-card .card-body .title-button {
   display: -webkit-box !important;
 }
+
+/* ── Viewing Roadmap — Timeline Layout ─────────────────────────────────────── */
+.watch-roadmap {
+  max-width: 1100px;
+  margin: 18px auto;
+  padding: 24px clamp(12px,3vw,28px);
+}
+
+.watch-roadmap .section-title {
+  margin-bottom: 22px;
+}
+
+.watch-roadmap .section-title h2 {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
+.watch-roadmap .section-title button {
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.1);
+  color: #94a3b8;
+  border-radius: 999px;
+  padding: 6px 16px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* Vertical timeline with connecting line */
+.roadmap-timeline {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding-left: 28px;
+}
+
+.roadmap-timeline::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  background: linear-gradient(to bottom,
+    rgba(255,255,255,.12) 0%,
+    rgba(255,255,255,.06) 50%,
+    rgba(255,255,255,.12) 100%
+  );
+  border-radius: 1px;
+}
+
+/* ── Roadmap Part Card ─────────────────────────────────────────────────────── */
+.roadmap-part {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 0;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  text-align: left;
+  color: inherit;
+  transition: transform .15s ease, opacity .15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.roadmap-part:hover {
+  transform: translateX(4px);
+}
+
+.roadmap-part:active {
+  transform: translateX(0) scale(.98);
+}
+
+.roadmap-part:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* Suppress hover transforms for read-only roadmap in DetailView */
+.detail-roadmap .roadmap-part:hover {
+  transform: none;
+}
+
+.detail-roadmap .roadmap-part:active {
+  transform: none;
+}
+
+/* Timeline dot */
+.roadmap-part-dot {
+  position: absolute;
+  left: -28px;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #1a1a1e;
+  border: 2px solid rgba(255,255,255,.15);
+  z-index: 1;
+  transition: all .2s ease;
+  flex-shrink: 0;
+}
+
+.roadmap-part.active .roadmap-part-dot {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 12px var(--accent-glow), 0 0 24px var(--accent-glow-2);
+  width: 18px;
+  height: 18px;
+}
+
+.roadmap-part-poster {
+  width: 56px;
+  height: 78px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--accent);
+  flex-shrink: 0;
+  box-shadow: 0 4px 16px rgba(0,0,0,.4);
+  transition: box-shadow .2s ease;
+}
+
+.roadmap-part.active .roadmap-part-poster {
+  box-shadow: 0 4px 20px var(--accent-glow), 0 0 32px var(--accent-glow-2);
+}
+
+.roadmap-part-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.roadmap-part-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.roadmap-part-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: #94a3b8;
+}
+
+.roadmap-part.active .roadmap-part-badge {
+  color: var(--accent);
+}
+
+.roadmap-part-name {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #ccc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.roadmap-part.active .roadmap-part-name {
+  color: #fff;
+  font-weight: 800;
+}
+
+.roadmap-part-meta {
+  font-size: 11px;
+  color: #666;
+}
+
+.roadmap-part.active .roadmap-part-meta {
+  color: #888;
+}
+
+/* ──  Interstitial "Watch Between" Section ─────────────────────────────────── */
+.roadmap-interstitial {
+  position: relative;
+  padding: 6px 0 10px;
+}
+
+.roadmap-inter-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0 8px;
+  margin-bottom: 2px;
+}
+
+.roadmap-inter-header .chevron {
+  color: rgba(255,255,255,.2);
+  flex-shrink: 0;
+}
+
+.roadmap-inter-header span {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: rgba(255,255,255,.3);
+  white-space: nowrap;
+}
+
+.roadmap-inter-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.roadmap-inter-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px 6px 6px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.06);
+  cursor: pointer;
+  color: inherit;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all .15s ease;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.roadmap-inter-card:hover {
+  background: rgba(255,255,255,.07);
+  border-color: rgba(255,255,255,.14);
+  transform: translateY(-1px);
+}
+
+.roadmap-inter-card:active {
+  transform: translateY(0) scale(.97);
+}
+
+.roadmap-inter-poster {
+  width: 32px;
+  height: 44px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+.roadmap-inter-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.roadmap-inter-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #aaa;
+}
+
+.roadmap-inter-card:hover .roadmap-inter-title {
+  color: #ddd;
+}
+
+/* ── Roadmap in DetailView ─────────────────────────────────────────────────── */
+.detail-roadmap {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255,255,255,.06);
+}
+
+.detail-roadmap .roadmap-timeline {
+  padding-left: 24px;
+}
+
+.detail-roadmap .roadmap-timeline::before {
+  left: 5px;
+}
+
+.detail-roadmap .roadmap-part-dot {
+  width: 12px;
+  height: 12px;
+  left: -24px;
+}
+
+.detail-roadmap .roadmap-part.active .roadmap-part-dot {
+  width: 16px;
+  height: 16px;
+}
+
+/* ── Responsive — Roadmap ──────────────────────────────────────────────────── */
+@media (max-width: 860px) {
+  .roadmap-timeline {
+    padding-left: 22px;
+  }
+
+  .roadmap-timeline::before {
+    left: 5px;
+  }
+
+  .roadmap-part-dot {
+    width: 12px;
+    height: 12px;
+    left: -22px;
+  }
+
+  .roadmap-part.active .roadmap-part-dot {
+    width: 16px;
+    height: 16px;
+  }
+
+  .roadmap-part-poster {
+    width: 44px;
+    height: 62px;
+    border-radius: 8px;
+  }
+
+  .roadmap-part-name {
+    font-size: 13px;
+  }
+
+  .roadmap-inter-items {
+    gap: 6px;
+  }
+
+  .roadmap-inter-card {
+    font-size: 11px;
+    padding: 5px 8px 5px 5px;
+  }
+
+  .roadmap-inter-poster {
+    width: 26px;
+    height: 36px;
+  }
+
+  .detail-roadmap .roadmap-timeline {
+    padding-left: 20px;
+  }
+}
