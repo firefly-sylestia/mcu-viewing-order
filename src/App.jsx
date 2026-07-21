@@ -935,7 +935,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
     setElapsed(Math.min(currentItem.watchedDuration || 0, totalMs));
     const interval = setInterval(() => setElapsed(prev => prev + 1000), 1000);
     return () => clearInterval(interval);
-  }, [item.id]);
+  }, [currentItem.id, totalMs]);
 
   useEffect(() => {
     const save = setInterval(() => {
@@ -945,19 +945,19 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
       clearInterval(save);
       updateAction(item, { watchedDuration: elapsedRef.current, watchStartedAt: null });
     };
-  }, [item.id]);
+  }, [item, updateAction]);
 
   useEffect(() => {
     if (isComplete && currentItem.userStatus === 'watching') {
       setStatus(currentItem, 'watched');
     }
-  }, [isComplete, currentItem.userStatus, currentItem.id, setStatus]);
+  }, [isComplete, currentItem, setStatus]);
 
   useEffect(() => {
     if (isSeries && allEpisodesWatched && currentItem.userStatus === 'watching') {
       setStatus(currentItem, 'watched');
     }
-  }, [isSeries, allEpisodesWatched, currentItem.userStatus, currentItem.id, setStatus]);
+  }, [isSeries, allEpisodesWatched, currentItem, setStatus]);
 
   const handleSwitchItem = async (rec) => {
     if (switching) return;
