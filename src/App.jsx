@@ -549,11 +549,26 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, ac
   const [watchLoading, setWatchLoading] = useState(false);
   const [downloadOpen, setDownloadOpen] = useState(false);
   const [torrents, setTorrents] = useState(null);
+  const [selectedDownloadServer, setSelectedDownloadServer] = useState('torrent');
   const downloadRef = useRef(null);
 
   useEffect(() => { setTorrents(null); setDownloadOpen(false); }, [item.id]);
 
-  const searchTorrents = async () => {
+  const handleDownloadClick = async () => {
+    if (selectedDownloadServer === 'moviepire') {
+      // Direct link to Moviepire download page
+      const effectiveTmdbId = item.tmdbId;
+      if (!effectiveTmdbId) return;
+      const mediaType = item.type === 'series' ? 'tv' : 'movie';
+      const season = item.season || 1;
+      const url = item.type === 'series' 
+        ? `https://video.moviepire.co/download/${mediaType}/${effectiveTmdbId}/${season}`
+        : `https://video.moviepire.co/download/${mediaType}/${effectiveTmdbId}`;
+      window.open(url, '_blank');
+      return;
+    }
+    
+    // Torrent download (existing logic)
     if (torrents) { setDownloadOpen(!downloadOpen); return; }
     setDownloadOpen(true);
     try {
@@ -639,7 +654,7 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, ac
           <div className="detail-chips"><span className="detail-rating"><Star size={15} fill="currentColor" /> {item.rating.toFixed ? item.rating.toFixed(1) : item.rating}</span>{item.genres.slice(0,3).map(g => <span key={g}>{g}</span>)}</div>
           <p className="detail-description">{item.desc || `Follow ${item.title} in the complete ${item.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} viewing order.`}</p>
           <div className="detail-facts"><div><Calendar size={18} /><span>Release year</span><strong>{item.year}</strong></div><div><Timer size={18} /><span>Runtime</span><strong>{runtimeLabel(item.runtime, item.type)}</strong></div><div><Sparkles size={18} /><span>Format</span><strong>{item.type}</strong></div>{item.userStatus === 'watching' && item.watchedDuration > 30000 && <div><Clock size={18} /><span>Watched</span><strong>{watchTimeLabel(item)}</strong></div>}</div>
-          <div className="detail-progress-actions"><StatusSelect item={item} setStatus={setStatus} /><button className={`detail-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={19} fill={item.bookmarked ? 'currentColor' : 'none'} /></button><button className="detail-videasy" onClick={() => handleWatchOnVideasy(item)} disabled={watchLoading} aria-label={`Watch ${item.title} on Videasy`}><Play size={18} fill="currentColor" /><span>{watchLoading ? 'Loading...' : 'Watch Now'}</span></button><div className="detail-download-wrap" ref={downloadRef}><button className="detail-download" onClick={searchTorrents} aria-label={`Download ${item.title}`}><Download size={18} /><span>Download</span></button>{downloadOpen && <div className="download-dropdown">{torrents === null ? <span className="download-loading">Searching...</span> : torrents.length === 0 ? <span className="download-empty">No torrents found</span> : torrents.map((t, i) => <a key={i} className="download-option" href={t.magnet} target="_blank" rel="noopener noreferrer" onClick={() => setDownloadOpen(false)}><span className="download-quality">{t.quality}</span><span className="download-size">{t.size}</span><span className="download-seeds">{t.seeds} seeds</span></a>)}</div>}</div></div>
+          <div className="detail-progress-actions"><StatusSelect item={item} setStatus={setStatus} /><button className={`detail-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={19} fill={item.bookmarked ? 'currentColor' : 'none'} /></button><button className="detail-videasy" onClick={() => handleWatchOnVideasy(item)} disabled={watchLoading} aria-label={`Watch ${item.title} on Videasy`}><Play size={18} fill="currentColor" /><span>{watchLoading ? 'Loading...' : 'Watch Now'}</span></button><div className="detail-download-wrap" ref={downloadRef}><div className="download-server-toggle"><button className={selectedDownloadServer === 'torrent' ? 'active' : ''} onClick={() => setSelectedDownloadServer('torrent')} title="Download via torrent">Torrent</button><button className={selectedDownloadServer === 'moviepire' ? 'active' : ''} onClick={() => setSelectedDownloadServer('moviepire')} title="Download via Moviepire">Moviepire</button></div><button className="detail-download" onClick={handleDownloadClick} aria-label={`Download ${item.title}`}><Download size={18} /><span>Download</span></button>{downloadOpen && selectedDownloadServer === 'torrent' && <div className="download-dropdown">{torrents === null ? <span className="download-loading">Searching...</span> : torrents.length === 0 ? <span className="download-empty">No torrents found</span> : torrents.map((t, i) => <a key={i} className="download-option" href={t.magnet} target="_blank" rel="noopener noreferrer" onClick={() => setDownloadOpen(false)}><span className="download-quality">{t.quality}</span><span className="download-size">{t.size}</span><span className="download-seeds">{t.seeds} seeds</span></a>)}</div>}</div></div>
           {itemRoadmap && (
             <div className="detail-roadmap">
               <div className="section-title"><h2>Viewing Roadmap</h2><button>{itemRoadmap.siblings.length} Parts</button></div>
@@ -812,6 +827,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
   const { item, tmdbId, mediaType } = watchItem;
   const [switching, setSwitching] = useState(false);
   const [toast, setToast] = useState('');
+  const [selectedServer, setSelectedServer] = useState('videasy'); // 'videasy' or 'moviepire'
   const currentItem = activeItems.find(i => i.id === item.id) || item;
   const isSeries = currentItem.type === 'series' && currentItem.tmdbId;
   const [episodes, setEpisodes] = useState([]);
@@ -857,17 +873,29 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
     const effectiveTmdbId = currentItem.tmdbId || tmdbId;
     const effectiveMediaType = currentItem.type === 'series' ? 'tv' : 'movie';
     const season = currentItem.season || 1;
-    let base = effectiveTmdbId
-      ? (isSeries && selectedEpisode
-        ? `https://player.videasy.net/${effectiveMediaType}/${effectiveTmdbId}/${season}/${selectedEpisode}`
-        : `https://player.videasy.net/${effectiveMediaType}/${effectiveTmdbId}`)
-      : `https://player.videasy.net/${effectiveMediaType}/${encodeURIComponent(item.title)}`;
+    let base, url;
+    
+    if (selectedServer === 'moviepire') {
+      base = effectiveTmdbId
+        ? (isSeries && selectedEpisode
+          ? `https://video.moviepire.co/embed/tv/${effectiveTmdbId}/${season}/${selectedEpisode}`
+          : `https://video.moviepire.co/embed/${effectiveMediaType}/${effectiveTmdbId}`)
+        : `https://video.moviepire.co/embed/${effectiveMediaType}/${encodeURIComponent(item.title)}`;
+    } else {
+      base = effectiveTmdbId
+        ? (isSeries && selectedEpisode
+          ? `https://player.videasy.net/${effectiveMediaType}/${effectiveTmdbId}/${season}/${selectedEpisode}`
+          : `https://player.videasy.net/${effectiveMediaType}/${effectiveTmdbId}`)
+        : `https://player.videasy.net/${effectiveMediaType}/${encodeURIComponent(item.title)}`;
+    }
+    
     const params = new URLSearchParams();
     params.set('autoplay', '1');
     const startSec = Math.floor((currentItem.watchedDuration || 0) / 1000);
     if (startSec > 5) params.set('progress', String(startSec));
-    return `${base}?${params.toString()}`;
-  }, [tmdbId, item.title, currentItem.tmdbId, currentItem.type, currentItem.season, isSeries, selectedEpisode]);
+    url = `${base}?${params.toString()}`;
+    return url;
+  }, [tmdbId, item.title, currentItem.tmdbId, currentItem.type, currentItem.season, isSeries, selectedEpisode, selectedServer]);
   const roadmapInfo = useMemo(() => {
     if (!currentItem.tmdbId || currentItem.type !== 'series') return null;
     const siblings = activeItems
@@ -995,10 +1023,16 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
           <h1>{currentItem.title}</h1>
         </div>
         <div className="watch-header-spacer" />
+        <div className="watch-server-select">
+          <select value={selectedServer} onChange={(e) => setSelectedServer(e.target.value)} aria-label="Choose video server">
+            <option value="videasy">Videasy</option>
+            <option value="moviepire">Moviepire</option>
+          </select>
+        </div>
       </header>
       {toast && <div className="watch-toast">{toast}</div>}
       <div className="watch-player">
-        <iframe key={isSeries ? `ep-${currentItem.tmdbId}-${currentItem.season || 1}-${selectedEpisode}` : currentItem.tmdbId || item.id} src={videasyUrl} title={`Watch ${item.title}`} frameBorder="0" allowFullScreen allow="encrypted-media" />
+        <iframe key={`${selectedServer}-${isSeries ? `ep-${currentItem.tmdbId}-${currentItem.season || 1}-${selectedEpisode}` : currentItem.tmdbId || item.id}`} src={videasyUrl} title={`Watch ${item.title}`} frameBorder="0" allowFullScreen allow="encrypted-media" />
       </div>
       <div className="watch-progress-bar"><span style={{ width: `${progress}%` }} /></div>
       {isSeries && episodes.length > 0 && (
