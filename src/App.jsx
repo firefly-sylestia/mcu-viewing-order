@@ -9,6 +9,7 @@ import AuthModal from './components/AuthModal';
 import { useAuth } from './hooks/useAuth';
 import { useCloudSync } from './hooks/useCloudSync';
 import { configured as firebaseReady } from './firebase';
+import { getFromCache, setCache, clearExpiredCache } from './utils/mediaCache';
 import './index.css';
 
 const STORAGE_KEY = 'cinematic-viewing-ui-state-v2';
@@ -177,16 +178,41 @@ export default function App() {
   }, []);
 
   // Shared enrichment: adds user state from actions to any item
-  const enrichItem = useCallback((item) => ({
-    ...item,
-    poster: item.poster || posterMap[item.id] || posterMap[String(item.id)] || posterMap[slugifyPosterName(item.title)] || '',
-    userStatus: actions[item.id]?.status || 'unwatched',
-    bookmarked: Boolean(actions[item.id]?.bookmarked),
-    watchStartedAt: actions[item.id]?.watchStartedAt || null,
-    watchedDuration: actions[item.id]?.watchedDuration || 0,
-    watchedEpisodes: actions[item.id]?.watchedEpisodes || [],
-    rating: posterMap[`rating_${item.id}`] || item.rating,
-  }), [actions, posterMap]);
+  const enrichItem = useCallback((item) => {
+    // Check cache first, then posterMap, then local poster
+    let poster = item.poster;
+    let rating = item.rating;
+    
+    // Try cache
+    if (!poster && item.tmdbId) {
+      const cached = getFromCache(item.tmdbId);
+      if (cached?.poster) {
+        poster = cached.poster;
+        if (cached.rating) rating = cached.rating;
+      }
+    }
+    
+    // Fall back to posterMap
+    if (!poster) {
+      poster = posterMap[item.id] || posterMap[String(item.id)] || posterMap[slugifyPosterName(item.title)] || '';
+    }
+    
+    if (!rating || rating === item.rating) {
+      const mapRating = posterMap[`rating_${item.id}`];
+      if (mapRating) rating = mapRating;
+    }
+    
+    return {
+      ...item,
+      poster,
+      userStatus: actions[item.id]?.status || 'unwatched',
+      bookmarked: Boolean(actions[item.id]?.bookmarked),
+      watchStartedAt: actions[item.id]?.watchStartedAt || null,
+      watchedDuration: actions[item.id]?.watchedDuration || 0,
+      watchedEpisodes: actions[item.id]?.watchedEpisodes || [],
+      rating,
+    };
+  }, [actions, posterMap]);
 
   const activeItems = useMemo(() => {
     const sorted = allItems
@@ -240,38 +266,85 @@ export default function App() {
     performExternalSearch();
   }, [query, activeItems.length]);
 
+  // Clear expired cache entries and failed items on mount to retry posters
   useEffect(() => {
-    const missing = activeItems.filter(item => !item.poster && !posterMap[item.id] && !failedRef.current.has(item.id)).slice(0, 6);
+    clearExpiredCache();
+    failedRef.current.clear(); // Retry failed items on remount
+  }, []);
+
+  useEffect(() => {
+    const missing = activeItems.filter(item => {
+      const cached = item.tmdbId ? getFromCache(item.tmdbId) : null;
+      return !item.poster && !cached && !posterMap[item.id] && !failedRef.current.has(item.id);
+    }).slice(0, 6);
+    
     if (!missing.length) return;
     let cancelled = false;
-    const batchSize = 3;
+    const batchSize = 4;
+    
     const fetchBatch = async (startIndex) => {
       if (cancelled || startIndex >= missing.length) return;
       const batch = missing.slice(startIndex, startIndex + batchSize);
+      
       const results = await Promise.allSettled(batch.map(item => {
+        // Prefer description endpoint for comprehensive metadata
         const params = new URLSearchParams({ title: item.title, year: String(item.year || '') });
         if (item.tmdbId) params.set('tmdbId', String(item.tmdbId));
-        return fetch(`/api/tmdb/poster?${params.toString()}`, { cache: 'force-cache' })
-          .then(response => response.ok ? response.json() : null);
+        params.set('mediaType', item.type === 'series' ? 'tv' : 'movie');
+        
+        return fetch(`/api/tmdb/description?${params.toString()}`)
+          .then(response => {
+            if (!response.ok) {
+              console.error(`[v0] Poster fetch failed for ${item.title}: ${response.status}`);
+              return null;
+            }
+            return response.json();
+          })
+          .catch(err => {
+            console.error(`[v0] Poster fetch error for ${item.title}:`, err.message);
+            return null;
+          });
       }));
+      
       if (!cancelled) {
         const updates = {};
         const failed = [];
+        
         results.forEach((result, i) => {
-          if (result.status === 'fulfilled') {
-            if (result.value?.poster) {
-              updates[batch[i].id] = result.value.poster;
-              if (result.value.rating) updates[`rating_${batch[i].id}`] = Number(result.value.rating);
+          const item = batch[i];
+          if (result.status === 'fulfilled' && result.value && !result.value.error) {
+            const data = result.value;
+            if (data.success && data.poster) {
+              updates[item.id] = data.poster;
+              if (data.rating) updates[`rating_${item.id}`] = Number(data.rating);
+              
+              // Cache the metadata
+              if (item.tmdbId) {
+                setCache(item.tmdbId, {
+                  poster: data.poster,
+                  backdrop: data.backdrop,
+                  overview: data.overview,
+                  rating: data.rating,
+                  releaseDate: data.releaseDate,
+                });
+              }
+              console.log(`[v0] Successfully fetched poster for ${item.title}`);
             } else {
-              failed.push(batch[i].id);
+              console.warn(`[v0] No poster found for ${item.title} (error: ${data.error || 'no poster_path'})`);
+              failed.push(item.id);
             }
+          } else {
+            console.warn(`[v0] Poster fetch failed for ${item.title} (status: ${result.status})`);
+            failed.push(item.id);
           }
         });
+        
         failed.forEach(id => failedRef.current.add(id));
         if (Object.keys(updates).length) setPosterMap(prev => ({ ...prev, ...updates }));
         fetchBatch(startIndex + batchSize);
       }
     };
+    
     fetchBatch(0);
     return () => { cancelled = true; };
   }, [activeItems, posterMap]);
@@ -653,14 +726,16 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, ac
     try {
       const params = new URLSearchParams({ title: item.title, year: String(item.year || '') });
       if (item.tmdbId) params.set('tmdbId', String(item.tmdbId));
-      const res = await fetch(`/api/tmdb/poster?${params.toString()}`);
+      params.set('mediaType', item.type === 'series' ? 'tv' : 'movie');
+      const res = await fetch(`/api/tmdb/description?${params.toString()}`);
       if (!res.ok) throw new Error('TMDB lookup failed');
       const data = await res.json();
-      if (!data.tmdbId) throw new Error('No TMDB ID found');
-      const mediaType = data.mediaType === 'tv' ? 'tv' : 'movie';
+      if (!data.success || !data.tmdbId) throw new Error('No TMDB ID found');
+      const mediaType = data.mediaType;
       onStartWatch(item, data.tmdbId, mediaType);
     } catch {
-      // fallback: try with title as ID (some Videasy instances support this)        onStartWatch(item, item.tmdbId || null, item.type === 'series' ? 'tv' : 'movie');
+      // fallback: use item's tmdbId and type
+      onStartWatch(item, item.tmdbId || null, item.type === 'series' ? 'tv' : 'movie');
     } finally {
       setWatchLoading(false);
     }
@@ -670,13 +745,28 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, ac
     if (isTrailerExpanded && modalRef.current) modalRef.current.scrollTo({ top: 0, behavior: 'smooth' });
   }, [isTrailerExpanded]);
 
-  // Compute roadmap for multi-part series
+  // Compute roadmap for multi-part series or seriesGroup franchises
   const itemRoadmap = useMemo(() => {
-    if (!activeItems || !item.tmdbId || item.type !== 'series') return null;
-    const siblings = activeItems
-      .filter(i => i.tmdbId === item.tmdbId && i.type === 'series')
-      .sort((a, b) => a.order - b.order);
+    if (!activeItems) return null;
+    
+    let siblings = [];
+    
+    // First try to match by seriesGroup (films/series franchises)
+    if (item.seriesGroup) {
+      siblings = activeItems
+        .filter(i => i.seriesGroup === item.seriesGroup)
+        .sort((a, b) => a.order - b.order);
+    }
+    
+    // If no seriesGroup match, try matching by tmdbId for multi-season series
+    if (siblings.length === 0 && item.tmdbId && item.type === 'series') {
+      siblings = activeItems
+        .filter(i => i.tmdbId === item.tmdbId && i.type === 'series')
+        .sort((a, b) => a.order - b.order);
+    }
+    
     if (siblings.length < 2) return null;
+    
     const segments = [];
     for (let i = 0; i < siblings.length; i++) {
       const part = siblings[i];
@@ -1090,10 +1180,26 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
         </div>
         <div className="watch-header-spacer" />
         <div className="watch-server-select">
-          <select value={selectedServer} onChange={(e) => setSelectedServer(e.target.value)} aria-label="Choose video server">
-            <option value="videasy">Videasy</option>
-            <option value="moviepire">Moviepire</option>
-          </select>
+          <div className="server-selector">
+            <button
+              className={`server-option ${selectedServer === 'videasy' ? 'active' : ''}`}
+              onClick={() => setSelectedServer('videasy')}
+              aria-label="Switch to Videasy server"
+              title="Videasy"
+            >
+              <Cloud size={16} />
+              <span>Videasy</span>
+            </button>
+            <button
+              className={`server-option ${selectedServer === 'moviepire' ? 'active' : ''}`}
+              onClick={() => setSelectedServer('moviepire')}
+              aria-label="Switch to MoviePire server"
+              title="MoviePire"
+            >
+              <Cloud size={16} />
+              <span>MoviePire</span>
+            </button>
+          </div>
         </div>
       </header>
       {toast && <div className="watch-toast">{toast}</div>}
