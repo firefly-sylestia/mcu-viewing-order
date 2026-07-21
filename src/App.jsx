@@ -286,24 +286,57 @@ export default function App() {
       if (cancelled || startIndex >= missing.length) return;
       const batch = missing.slice(startIndex, startIndex + batchSize);
       
-      const results = await Promise.allSettled(batch.map(item => {
+      const results = await Promise.allSettled(batch.map(async (item) => {
         // Prefer description endpoint for comprehensive metadata
         const params = new URLSearchParams({ title: item.title, year: String(item.year || '') });
         if (item.tmdbId) params.set('tmdbId', String(item.tmdbId));
         params.set('mediaType', item.type === 'series' ? 'tv' : 'movie');
         
-        return fetch(`/api/tmdb/description?${params.toString()}`)
-          .then(response => {
-            if (!response.ok) {
-              console.error(`[v0] Poster fetch failed for ${item.title}: ${response.status}`);
-              return null;
-            }
-            return response.json();
-          })
-          .catch(err => {
-            console.error(`[v0] Poster fetch error for ${item.title}:`, err.message);
+        try {
+          const response = await fetch(`/api/tmdb/description?${params.toString()}`);
+          if (!response.ok) {
+            console.warn(`[v0] Description endpoint failed for ${item.title}: ${response.status}`);
             return null;
-          });
+          }
+          
+          const data = await response.json();
+          // If description finds a result with poster, return it
+          if (data.success && data.poster) {
+            return data;
+          }
+          
+          // Fallback: search directly using search/multi endpoint which is great for TV series
+          console.log(`[v0] Fallback search for ${item.title} (no poster from description)`);
+          const searchParams = new URLSearchParams({ q: item.title });
+          const searchResponse = await fetch(`/api/tmdb/search?${searchParams.toString()}`);
+          
+          if (!searchResponse.ok) {
+            console.warn(`[v0] Search fallback failed for ${item.title}`);
+            return null;
+          }
+          
+          const searchData = await searchResponse.json();
+          const results = searchData.results || [];
+          
+          if (results.length > 0) {
+            const result = results[0]; // Take first result (already sorted by relevance)
+            console.log(`[v0] Found poster via search fallback for ${item.title}`);
+            return {
+              success: true,
+              poster: result.poster,
+              backdrop: result.backdrop,
+              overview: result.overview,
+              rating: result.rating,
+              releaseDate: result.year,
+              mediaType: result.type,
+            };
+          }
+          
+          return null;
+        } catch (err) {
+          console.error(`[v0] Poster fetch error for ${item.title}:`, err.message);
+          return null;
+        }
       }));
       
       if (!cancelled) {
@@ -318,14 +351,16 @@ export default function App() {
               updates[item.id] = data.poster;
               if (data.rating) updates[`rating_${item.id}`] = Number(data.rating);
               
-              // Cache the metadata
-              if (item.tmdbId) {
-                setCache(item.tmdbId, {
+              // Cache the metadata - use provided tmdbId or item's tmdbId
+              const cacheKey = data.tmdbId || item.tmdbId;
+              if (cacheKey) {
+                setCache(cacheKey, {
                   poster: data.poster,
                   backdrop: data.backdrop,
                   overview: data.overview,
                   rating: data.rating,
                   releaseDate: data.releaseDate,
+                  mediaType: data.mediaType,
                 });
               }
               console.log(`[v0] Successfully fetched poster for ${item.title}`);
