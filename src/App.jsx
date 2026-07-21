@@ -652,18 +652,18 @@ function ListSection({ items, externalResults = [], externalLoading = false, que
     </article>)}</div>}
     {pageCount > 1 && <nav className="pagination" aria-label="Viewing list pages"><button onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} aria-label="Previous page"><ChevronLeft size={18} /></button>{Array.from({ length: pageCount }, (_, index) => index + 1).map(pageNumber => <button key={pageNumber} className={currentPage === pageNumber ? 'active' : ''} aria-current={currentPage === pageNumber ? 'page' : undefined} onClick={() => goToPage(pageNumber)}>{pageNumber}</button>)}<button onClick={() => goToPage(currentPage + 1)} disabled={currentPage === pageCount} aria-label="Next page"><ChevronRight size={18} /></button></nav>}
     
-    {items.length === 0 && externalResults.length > 0 && (
+    {externalResults.length > 0 && (
       <div className="external-results">
         <div className="external-header">
-          <h3>Search Results</h3>
-          <p className="external-subtitle">Not in database - Play directly</p>
+          <h3>{items.length > 0 ? 'Also Found' : 'Search Results'}</h3>
+          <p className="external-subtitle">{items.length > 0 ? 'Other matches in TMDB' : 'Not in database - Play directly'}</p>
         </div>
         <div className="external-grid">
           {externalResults.map(result => (
             <div key={result.id} className="external-result-card" onClick={() => onPlayExternal(result)}>
               <div className="external-poster">
                 <img src={result.poster} alt={result.title} loading="lazy" />
-                <div className="external-badge">New</div>
+                <div className="external-badge">{items.length > 0 ? 'TMDB' : 'New'}</div>
                 <button className="external-play-btn" onClick={(e) => { e.stopPropagation(); onPlayExternal(result); }} aria-label={`Play ${result.title}`}>
                   <Play size={24} fill="white" />
                 </button>
