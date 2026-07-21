@@ -3,6 +3,8 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signInAnonymously,
   GoogleAuthProvider,
   signOut,
@@ -16,6 +18,10 @@ export function useAuth() {
 
   useEffect(() => {
     if (!configured) { setLoading(false); return; }
+    // Consume any pending redirect sign-in result on mount (fallback for popup-blocked browsers)
+    getRedirectResult(auth).catch((err) => {
+      console.warn('Redirect sign-in result error:', err.code);
+    });
     const unsub = onAuthStateChanged(auth, (u) => {
       setUser(u ? { uid: u.uid, email: u.email } : null);
       setLoading(false);
@@ -37,7 +43,17 @@ export function useAuth() {
     if (!configured || !auth) throw new Error('Firebase not configured');
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
-    await signInWithPopup(auth, provider);
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (err) {
+      // Fall back to redirect-based sign-in when the popup is blocked
+      if (err.code === 'auth/popup-blocked') {
+        await signInWithRedirect(auth, provider);
+        // Page will navigate away — no need to throw or handle further
+        return;
+      }
+      throw err;
+    }
   }, []);
 
   const anonymousSignIn = useCallback(async () => {
