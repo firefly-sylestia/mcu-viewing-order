@@ -867,7 +867,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
     const startSec = Math.floor((currentItem.watchedDuration || 0) / 1000);
     if (startSec > 5) params.set('progress', String(startSec));
     return `${base}?${params.toString()}`;
-  }, [tmdbId, item.title, currentItem.tmdbId, currentItem.type, currentItem.watchedDuration, currentItem.season, isSeries, selectedEpisode]);
+  }, [tmdbId, item.title, currentItem.tmdbId, currentItem.type, currentItem.season, isSeries, selectedEpisode]);
   const roadmapInfo = useMemo(() => {
     if (!currentItem.tmdbId || currentItem.type !== 'series') return null;
     const siblings = activeItems
