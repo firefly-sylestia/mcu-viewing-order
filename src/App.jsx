@@ -918,10 +918,18 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
   const progress = Math.min((elapsed / totalMs) * 100, 100);
   const isComplete = progress >= 90;
 
+  const itemRef = useRef(item);
+  const updateActionRef = useRef(updateAction);
+  const setStatusRef = useRef(setStatus);
+
+  useEffect(() => { itemRef.current = item; }, [item]);
+  useEffect(() => { updateActionRef.current = updateAction; }, [updateAction]);
+  useEffect(() => { setStatusRef.current = setStatus; }, [setStatus]);
+
   const handleBack = useCallback(() => {
-    updateAction(item, { watchedDuration: elapsedRef.current, watchStartedAt: null });
+    updateActionRef.current(itemRef.current, { watchedDuration: elapsedRef.current, watchStartedAt: null });
     onBack();
-  }, [item, updateAction, onBack]);
+  }, [onBack]);
 
   useEffect(() => { elapsedRef.current = elapsed; }, [elapsed]);
 
@@ -939,25 +947,25 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
 
   useEffect(() => {
     const save = setInterval(() => {
-      updateAction(item, { watchedDuration: elapsedRef.current });
+      updateActionRef.current(itemRef.current, { watchedDuration: elapsedRef.current });
     }, 15000);
     return () => {
       clearInterval(save);
-      updateAction(item, { watchedDuration: elapsedRef.current, watchStartedAt: null });
+      updateActionRef.current(itemRef.current, { watchedDuration: elapsedRef.current, watchStartedAt: null });
     };
-  }, [item, updateAction]);
+  }, []);
 
   useEffect(() => {
     if (isComplete && currentItem.userStatus === 'watching') {
-      setStatus(currentItem, 'watched');
+      setStatusRef.current(currentItem, 'watched');
     }
-  }, [isComplete, currentItem, setStatus]);
+  }, [isComplete, currentItem.userStatus, currentItem.id]);
 
   useEffect(() => {
     if (isSeries && allEpisodesWatched && currentItem.userStatus === 'watching') {
-      setStatus(currentItem, 'watched');
+      setStatusRef.current(currentItem, 'watched');
     }
-  }, [isSeries, allEpisodesWatched, currentItem, setStatus]);
+  }, [isSeries, allEpisodesWatched, currentItem.userStatus, currentItem.id]);
 
   const handleSwitchItem = async (rec) => {
     if (switching) return;
