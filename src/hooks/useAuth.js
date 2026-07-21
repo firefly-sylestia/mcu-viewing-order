@@ -3,6 +3,8 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signInAnonymously,
   GoogleAuthProvider,
   signOut,
@@ -17,6 +19,14 @@ export function useAuth() {
 
   useEffect(() => {
     if (!configured) { setLoading(false); return; }
+    // Enable persistent auth so the user stays logged in across reloads and redirects
+    setPersistence(auth, browserLocalPersistence).catch((err) => {
+      console.warn('Failed to set auth persistence:', err.code);
+    });
+    // Consume any pending redirect sign-in result on mount (fallback for popup-blocked browsers)
+    getRedirectResult(auth).catch((err) => {
+      console.warn('Redirect sign-in result error:', err.code);
+    });
     const unsub = onAuthStateChanged(auth, (u) => {
       setUser(u ? { uid: u.uid, email: u.email } : null);
       setLoading(false);
@@ -35,9 +45,25 @@ export function useAuth() {
   }, []);
 
   const googleSignIn = useCallback(async () => {
-    if (!configured) throw new Error('Firebase not configured');
+    if (!configured || !auth) throw new Error('Firebase not configured');
     const provider = new GoogleAuthProvider();
-    await signInWithPopup(auth, provider);
+    provider.setCustomParameters({ prompt: 'select_account' });
+    // On mobile, skip popup entirely — redirects are more reliable
+    const isMobile = /Android|iPhone|iPad|iPod|webOS/i.test(navigator.userAgent);
+    if (isMobile) {
+      await signInWithRedirect(auth, provider);
+      return; // page navigates away
+    }
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (err) {
+      // Fall back to redirect-based sign-in when the popup is blocked
+      if (err.code === 'auth/popup-blocked') {
+        await signInWithRedirect(auth, provider);
+        return; // page navigates away
+      }
+      throw err;
+    }
   }, []);
 
   const anonymousSignIn = useCallback(async () => {

@@ -26,7 +26,21 @@ export default async function handler(req, res) {
     if (!r.ok) return res.status(r.status).json({ error: 'TMDB request failed' });
     const data = await r.json();
     const results = (data.results || []).filter(i => i.poster_path);
-    best = results.find(i => i.media_type === requestedMediaType) || results[0];
+    // Prefer exact year match, then media_type match, then first result
+    if (year) {
+      const yearMatches = results.filter(i => {
+        const date = i.release_date || i.first_air_date || '';
+        return date.startsWith(year);
+      });
+      if (yearMatches.length > 0) {
+        const exactType = yearMatches.find(i => i.media_type === requestedMediaType);
+        best = exactType || yearMatches.find(i => i.media_type !== 'person') || yearMatches[0];
+      } else {
+        best = results.find(i => i.media_type === requestedMediaType) || results.find(i => i.media_type !== 'person') || results[0];
+      }
+    } else {
+      best = results.find(i => i.media_type === requestedMediaType) || results.find(i => i.media_type !== 'person') || results[0];
+    }
   }
   if (!best?.poster_path) return res.status(404).json({ poster: null });
 
@@ -58,6 +72,9 @@ export default async function handler(req, res) {
     source: 'tmdb',
     tmdbId: best.id,
     mediaType: best.media_type || requestedMediaType,
+    rating: best.vote_average ? Number(best.vote_average).toFixed(1) : null,
+    releaseDate: best.release_date || best.first_air_date || null,
+    overview: best.overview || null,
     details,
   });
 }

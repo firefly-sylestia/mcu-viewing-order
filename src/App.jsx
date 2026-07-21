@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Search, SlidersHorizontal, Home, Bookmark, Play, UserRound, X, ArrowLeft, Star, BarChart3, Check, Clock, ListFilter, RotateCcw, ChevronLeft, ChevronRight, Calendar, Timer, Sparkles, LogIn, LogOut, Cloud, Download } from 'lucide-react';
 import { RAW } from './data/mcuData';
 import { DC_RAW } from './data/dcData';
+import { XMEN_RAW } from './data/xmenData';
 import { getTrailerByTitle, trailerEmbedUrl } from './data/trailerData';
 import ProfilePage from './components/ProfilePage';
 import AuthModal from './components/AuthModal';
@@ -11,19 +12,25 @@ import { configured as firebaseReady } from './firebase';
 import './index.css';
 
 const STORAGE_KEY = 'cinematic-viewing-ui-state-v2';
-const VALID_HASHES = ['home', 'list', 'analytics', 'watch', 'profile'];
+const VALID_HASHES = ['home', 'list', 'analytics', 'watch', 'profile', 'detail'];
 const parseHash = () => {
   const raw = window.location.hash.replace('#', '');
   const slash = raw.indexOf('/');
   const section = slash > -1 ? raw.slice(0, slash) : raw;
-  const slug = slash > -1 ? raw.slice(slash + 1) : null;
-  return { section: VALID_HASHES.includes(section) ? section : null, slug };
+  // Handle search query: #list?q=thor
+  const qMark = section.indexOf('?');
+  const cleanSection = qMark > -1 ? section.slice(0, qMark) : section;
+  const searchQuery = qMark > -1 ? new URLSearchParams(section.slice(qMark)).get('q') || '' : '';
+  const rawSlug = slash > -1 ? raw.slice(slash + 1) : null;
+  const slug = rawSlug ? rawSlug.split('?')[0] : null;
+  return { section: VALID_HASHES.includes(cleanSection) ? cleanSection : null, slug, searchQuery };
 };
 
 const STATUS = ['unwatched', 'watching', 'watched', 'dropped'];
 const STATUS_LABELS = { unwatched: 'Unwatched', watching: 'Watching', watched: 'Watched', dropped: 'Dropped' };
 const marvelPalette = ['#641220', '#85182a', '#a11d33', '#b21e35', '#bd1f36', '#da1e37'];
 const dcPalette = ['#061226', '#08204a', '#0b3a78', '#0d4f9c', '#1367c8', '#2f80ed'];
+const xmenPalette = ['#1a3a5c', '#1e5080', '#2566a0', '#2f80c8', '#4a90d9', '#6baae6'];
 
 const runtimeLabel = (minutes = 0, type = 'film') => {
   if (!minutes) return type === 'series' ? 'Series' : 'TBA';
@@ -61,7 +68,9 @@ const localPoster = (item) => {
   if (item.id >= 5000) return '';
   const explicit = {
     12: '/posters/012-i-am-groot-s1-and-s2.jpg',
+    203: '/posters/012-i-am-groot-s1-and-s2.jpg',
     30: '/posters/030-guardians-holiday-special.jpg',
+    155: '/posters/058-werewolf-by-night.jpg',
     103: '/posters/009-A-Funny-Thing-Happened-on-the-Way-to-Thors-Hammer.jpg',
     151: '/posters/151-agents-of-shield-s6-and-s7.jpg',
   }[item.id];
@@ -83,7 +92,7 @@ const enhance = (item, universe) => ({
   rating: Number((6.7 + ((item.id * 17) % 25) / 10).toFixed(1)),
   genres: item.type === 'series' ? ['Series', 'Action', 'Drama'] : ['Action', item.phase >= 4 ? 'Adventure' : 'Sci-fi', item.essential ? 'Essential' : 'Canon'],
   poster: localPoster(item),
-  accent: universe === 'dc' ? dcPalette[(item.phase - 1) % dcPalette.length] : marvelPalette[(item.phase - 1) % marvelPalette.length],
+  accent: universe === 'dc' ? dcPalette[(item.phase - 1) % dcPalette.length] : universe === 'xmen' ? xmenPalette[(item.phase - 1) % xmenPalette.length] : marvelPalette[(item.phase - 1) % marvelPalette.length],
 });
 
 export default function App() {
@@ -96,7 +105,7 @@ export default function App() {
   const [rating, setRating] = useState(saved.rating || 0);
   const [ageRatingFilter, setAgeRatingFilter] = useState(saved.ageRatingFilter || 'All');
   const [sortBy, setSortBy] = useState(saved.sortBy || 'order');
-  const [heroIndex, setHeroIndex] = useState(0);
+  const [heroIndex, setHeroIndex] = useState(saved.heroIndex || 0);
   const [section, setSection] = useState(parseHash().section || saved.section || 'home');
   const [actions, setActions] = useState(saved.actions || {});
   const [posterMap, setPosterMap] = useState({});
@@ -112,18 +121,23 @@ export default function App() {
 
   // Auto-start watching from item-level deep link (e.g. #watch/iron-man) on mount
   useEffect(() => {
-    const { section: s, slug } = parseHash();
+    const { section: s, slug, searchQuery: sq } = parseHash();
+    if (sq) setQuery(sq);
     if (s === 'watch' && slug && allItems.length && !watchItem) {
       const found = allItems.find(i => slugifyPosterName(i.title) === slug);
       if (found) handleStartWatch(found, found.tmdbId || null, found.type === 'series' ? 'tv' : 'movie');
     }
+    if (s === 'detail' && slug && allItems.length) {
+      const found = allItems.find(i => slugifyPosterName(i.title) === slug);
+      if (found) setSelected(found);
+    }
   }, []);
 
-  const allItems = useMemo(() => [...RAW.map(item => enhance(item, 'marvel')), ...DC_RAW.map(item => enhance(item, 'dc'))], []);
+  const allItems = useMemo(() => [...RAW.map(item => enhance(item, 'marvel')), ...DC_RAW.map(item => enhance(item, 'dc')), ...XMEN_RAW.map(item => enhance(item, 'xmen'))], []);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ universe, query, genre, rating, ageRatingFilter, sortBy, actions, section, watchItem, profileName }));
-  }, [universe, query, genre, rating, ageRatingFilter, sortBy, actions, section, watchItem, profileName]);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ universe, query, genre, rating, ageRatingFilter, sortBy, actions, section, watchItem, profileName, heroIndex }));
+  }, [universe, query, genre, rating, ageRatingFilter, sortBy, actions, section, watchItem, profileName, heroIndex]);
 
   useEffect(() => {
     const hashed = parseHash().section;
@@ -137,11 +151,16 @@ export default function App() {
 
   useEffect(() => {
     const onHashChange = () => {
-      const { section: s, slug } = parseHash();
+      const { section: s, slug, searchQuery: sq } = parseHash();
       if (s) setSection(s);
+      if (sq) setQuery(sq);
       if (s === 'watch' && slug && allItems.length) {
         const found = allItems.find(i => slugifyPosterName(i.title) === slug);
         if (found) handleStartWatch(found, found.tmdbId || null, found.type === 'series' ? 'tv' : 'movie');
+      }
+      if (s === 'detail' && slug && allItems.length) {
+        const found = allItems.find(i => slugifyPosterName(i.title) === slug);
+        if (found) setSelected(found);
       }
     };
     window.addEventListener('hashchange', onHashChange);
@@ -155,6 +174,18 @@ export default function App() {
       .catch(() => setPosterMap({}));
   }, []);
 
+  // Shared enrichment: adds user state from actions to any item
+  const enrichItem = useCallback((item) => ({
+    ...item,
+    poster: item.poster || posterMap[item.id] || posterMap[String(item.id)] || posterMap[slugifyPosterName(item.title)] || '',
+    userStatus: actions[item.id]?.status || 'unwatched',
+    bookmarked: Boolean(actions[item.id]?.bookmarked),
+    watchStartedAt: actions[item.id]?.watchStartedAt || null,
+    watchedDuration: actions[item.id]?.watchedDuration || 0,
+    watchedEpisodes: actions[item.id]?.watchedEpisodes || [],
+    rating: posterMap[`rating_${item.id}`] || item.rating,
+  }), [actions, posterMap]);
+
   const activeItems = useMemo(() => {
     const sorted = allItems
       .filter(item => item.universe === universe)
@@ -162,10 +193,19 @@ export default function App() {
       .filter(item => genre === 'All' || item.genres.includes(genre) || item.type === genre.toLowerCase())
       .filter(item => Number(item.rating) >= rating)
       .filter(item => ageRatingFilter === 'All' || (item.ageRating || (item.type === 'series' ? 'TV-14' : 'PG-13')) === ageRatingFilter)
-      .map(item => ({ ...item, poster: item.poster || posterMap[item.id] || posterMap[String(item.id)] || posterMap[slugifyPosterName(item.title)] || '', userStatus: actions[item.id]?.status || 'unwatched', bookmarked: Boolean(actions[item.id]?.bookmarked), watchStartedAt: actions[item.id]?.watchStartedAt || null, watchedDuration: actions[item.id]?.watchedDuration || 0, watchedEpisodes: actions[item.id]?.watchedEpisodes || [] }));
+      .map(enrichItem);
     sorted.sort((a, b) => sortBy === 'year' ? a.year - b.year : sortBy === 'title' ? a.title.localeCompare(b.title) : a.order - b.order);
     return sorted;
-  }, [actions, allItems, universe, query, genre, posterMap, rating, ageRatingFilter, sortBy]);
+  }, [allItems, universe, query, genre, rating, ageRatingFilter, sortBy, enrichItem]);
+
+  // Unfiltered items (no search/filter) for WatchPage/WatchBrowse suggestions
+  const unfilteredItems = useMemo(() => {
+    const sorted = allItems
+      .filter(item => item.universe === universe)
+      .map(enrichItem);
+    sorted.sort((a, b) => a.order - b.order);
+    return sorted;
+  }, [allItems, universe, enrichItem]);
 
   const failedRef = useRef(new Set());
 
@@ -179,6 +219,7 @@ export default function App() {
       const batch = missing.slice(startIndex, startIndex + batchSize);
       const results = await Promise.allSettled(batch.map(item => {
         const params = new URLSearchParams({ title: item.title, year: String(item.year || '') });
+        if (item.tmdbId) params.set('tmdbId', String(item.tmdbId));
         return fetch(`/api/tmdb/poster?${params.toString()}`, { cache: 'force-cache' })
           .then(response => response.ok ? response.json() : null);
       }));
@@ -189,6 +230,7 @@ export default function App() {
           if (result.status === 'fulfilled') {
             if (result.value?.poster) {
               updates[batch[i].id] = result.value.poster;
+              if (result.value.rating) updates[`rating_${batch[i].id}`] = Number(result.value.rating);
             } else {
               failed.push(batch[i].id);
             }
@@ -233,6 +275,11 @@ export default function App() {
   const setStatus = (item, status) => updateAction(item, { status });
   const toggleWatched = (item) => setStatus(item, item.userStatus === 'watched' ? 'unwatched' : 'watched');
   const toggleBookmark = (item) => updateAction(item, { bookmarked: !actions[item.id]?.bookmarked });
+  const selectItem = (item) => {
+    setSelected(item);
+    if (item) window.history.replaceState(null, '', `#detail/${slugifyPosterName(item.title)}`);
+    else window.history.replaceState(null, '', `#${section}`);
+  };
   const selectedItem = selected ? activeItems.find(item => item.id === selected.id) || selected : null;
   const nextUp = activeItems.find(item => item.userStatus !== 'watched' && item.userStatus !== 'dropped') || activeItems[0];
   const playTrailer = (item) => {
@@ -251,9 +298,9 @@ export default function App() {
     window.history.replaceState(null, '', `#watch/${slugifyPosterName(item.title)}`);
   };
 
-  const universeName = universe === 'marvel' ? 'MCU' : 'DC';
-  const universeAccent = universe === 'marvel' ? '#da1e37' : '#2f80ed';
-  const profileInitial = (profileName?.trim()?.[0] || (universe === 'marvel' ? 'M' : 'D')).toUpperCase();
+  const universeName = universe === 'marvel' ? 'MCU' : universe === 'xmen' ? 'X-Men' : 'DC';
+  const universeAccent = universe === 'marvel' ? '#da1e37' : universe === 'xmen' ? '#2f80c8' : '#2f80ed';
+  const profileInitial = (profileName?.trim()?.[0] || (universe === 'marvel' ? 'M' : universe === 'xmen' ? 'X' : 'D')).toUpperCase();
 
   return (
     <main className={`movie-site universe-${universe}`} style={{ '--brand-accent': universeAccent, '--accent': universeAccent, '--theme-accent': universeAccent }}>
@@ -263,10 +310,11 @@ export default function App() {
         <div className="universe-tabs" role="tablist" aria-label="Universe">
           <button className={universe === 'marvel' ? 'active' : ''} onClick={() => { setUniverse('marvel'); setHeroIndex(0); }}>Marvel</button>
           <button className={universe === 'dc' ? 'active' : ''} onClick={() => { setUniverse('dc'); setHeroIndex(0); }}>DC</button>
+          <button className={universe === 'xmen' ? 'active' : ''} onClick={() => { setUniverse('xmen'); setHeroIndex(0); }}>X-Men</button>
         </div>
         <div className="header-search">
           <Search size={18} />
-          <input value={query} onChange={e => { setQuery(e.target.value); if (section !== 'watch') setSection('list'); }} placeholder={`Search ${universe === 'marvel' ? 'Marvel' : 'DC'} titles…`} />
+          <input value={query} onChange={e => { setQuery(e.target.value); if (section !== 'watch') setSection('list'); }} placeholder={`Search ${universe === 'marvel' ? 'Marvel' : universe === 'xmen' ? 'X-Men' : 'DC'} titles…`} />
           {query && <button className="search-clear" onClick={() => setQuery('')}><X size={16} /></button>}
           <button className="header-filter-btn" onClick={() => setFiltersOpen(true)} aria-label="Open filters"><SlidersHorizontal size={18} /></button>
         </div>
@@ -287,20 +335,20 @@ export default function App() {
 
       {section === 'home' && <>
         <section className="hero-layout">
-          <TopCarousel items={heroItems} featured={featured} heroIndex={heroIndex} setHeroIndex={setHeroIndex} setSelected={setSelected} />
+          <TopCarousel items={heroItems} featured={featured} heroIndex={heroIndex} setHeroIndex={setHeroIndex} setSelected={selectItem} />
         </section>
-        <SuggestionStrip nextUp={nextUp} stats={stats} setSelected={setSelected} playTrailer={playTrailer} />
-        <MovieRail title="Up next" items={activeItems.filter(i => i.userStatus === 'unwatched').slice(0, 10)} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} scrollable variant="upnext" />
-        <MovieRail title="Essential picks" items={activeItems.filter(i => i.essential)} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} paginated gridControls />
-        <MovieRail title="Recently watched" items={activeItems.filter(i => i.userStatus === 'watched').slice(-24).reverse()} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} empty="Mark titles as watched to see them here." scrollable />
-        {activeItems.filter(i => i.userStatus === 'watching').length > 0 && <ContinueWatching items={activeItems.filter(i => i.userStatus === 'watching')} setSelected={setSelected} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} onResume={handleStartWatch} />}
+        <SuggestionStrip nextUp={nextUp} stats={stats} setSelected={selectItem} playTrailer={playTrailer} />
+        <MovieRail title="Up next" items={activeItems.filter(i => i.userStatus === 'unwatched').slice(0, 10)} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} scrollable variant="upnext" />
+        <MovieRail title="Essential picks" items={activeItems.filter(i => i.essential)} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} paginated gridControls />
+        <MovieRail title="Recently watched" items={activeItems.filter(i => i.userStatus === 'watched').slice(-24).reverse()} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} empty="Mark titles as watched to see them here." scrollable />
+        {activeItems.filter(i => i.userStatus === 'watching').length > 0 && <ContinueWatching items={activeItems.filter(i => i.userStatus === 'watching')} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} onResume={handleStartWatch} />}
       </>}
 
-      {section === 'list' && <ListSection items={activeItems} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />}
-      {section === 'analytics' && <><AnalyticsPanel stats={stats} large /><MovieRail title="In progress" items={activeItems.filter(i => i.userStatus === 'watching')} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} /></>}
-            {section === 'profile' && <ProfilePage stats={stats} activeItems={activeItems} universe={universe} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} conflict={conflict} onResolveRemote={resolveUseRemote} onResolveLocal={resolveKeepLocal} syncToast={toast} />}
-      {section === 'watch' && safeWatchItem && <WatchPage watchItem={safeWatchItem} activeItems={activeItems} onBack={() => { setWatchItem(null); window.history.replaceState(null, '', '#watch'); }} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={handleStartWatch} updateAction={updateAction} />}
-      {section === 'watch' && !safeWatchItem && <WatchBrowse activeItems={activeItems} onStartWatch={handleStartWatch} setSelected={setSelected} setStatus={setStatus} toggleBookmark={toggleBookmark} setSection={setSection} />}
+      {section === 'list' && <ListSection items={activeItems} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />}
+      {section === 'analytics' && <><AnalyticsPanel stats={stats} large /><MovieRail title="In progress" items={activeItems.filter(i => i.userStatus === 'watching')} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} /></>}
+            {section === 'profile' && <ProfilePage stats={stats} activeItems={activeItems} universe={universe} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} conflict={conflict} onResolveRemote={resolveUseRemote} onResolveLocal={resolveKeepLocal} syncToast={toast} />}
+      {section === 'watch' && safeWatchItem && <WatchPage watchItem={safeWatchItem} activeItems={unfilteredItems} onBack={() => { setWatchItem(null); window.history.replaceState(null, '', '#watch'); }} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={handleStartWatch} updateAction={updateAction} />}
+      {section === 'watch' && !safeWatchItem && <WatchBrowse activeItems={activeItems} onStartWatch={handleStartWatch} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} setSection={setSection} setQuery={setQuery} />}
 
       <nav className="bottom-nav" aria-label="Primary">
         <button className={section === 'home' ? 'active' : ''} onClick={() => { setQuery(''); setSection('home'); setWatchItem(null); }}><Home size={22} /><span>Home</span></button>
@@ -310,7 +358,7 @@ export default function App() {
         <button className={section === 'profile' ? 'active' : ''} onClick={() => { setQuery(''); setSection('profile'); }}><UserRound size={22} /><span>Profile</span></button>
       </nav>
 
-      {selectedItem && <DetailView item={selectedItem} onClose={() => setSelected(null)} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={handleStartWatch} />}
+      {selectedItem && <DetailView item={selectedItem} onClose={() => selectItem(null)} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={handleStartWatch} activeItems={unfilteredItems} />}
       {trailer && <TrailerModal trailer={trailer} onClose={() => setTrailer(null)} />}
       {filtersOpen && <Filters genre={genre} setGenre={setGenre} rating={rating} setRating={setRating} ageRatingFilter={ageRatingFilter} setAgeRatingFilter={setAgeRatingFilter} sortBy={sortBy} setSortBy={setSortBy} genres={genres} count={activeItems.length} onClose={() => setFiltersOpen(false)} />}
       {authOpen && <AuthModal onClose={() => setAuthOpen(false)} onLogin={login} onSignup={signup} onGoogleSignIn={googleSignIn} onAnonymousSignIn={anonymousSignIn} onResetPassword={resetPassword} />}
@@ -357,7 +405,7 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
   return <section className="top-carousel" style={{ '--accent': featured?.accent || '#9a4a4a' }} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocusCapture={() => setPaused(true)} onBlurCapture={() => setPaused(false)} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
     {featured?.poster && <img key={featured.id} className="carousel-backdrop" src={featured.poster} alt="" aria-hidden="true" width="300" height="450" referrerPolicy="no-referrer" />}
     <div className="carousel-backdrop-shade" aria-hidden="true" />
-    <div className="feature-heading"><div><p className="eyebrow">{featured?.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} · Featured</p><h2>Top movies</h2></div><button className="feature-detail" onClick={() => setSelected(featured)}>View details</button></div>
+    <div className="feature-heading"><div><p className="eyebrow">{featured?.universe === 'marvel' ? 'Marvel Cinematic Universe' : featured?.universe === 'xmen' ? 'X-Men Universe' : 'DC Universe'} · Featured</p><h2>Top movies</h2></div><button className="feature-detail" onClick={() => setSelected(featured)}>View details</button></div>
     <div className="feature-stage">
       <div className="poster-stack smooth-stack">
         {inlineTrailer ? <div className="inline-trailer"><iframe src={inlineTrailer} title={`${featured.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={() => setInlineTrailer(null)} aria-label="Close trailer"><X size={20} /></button></div> : items.map((item, rawIndex) => { const offset = (rawIndex - heroIndex + items.length) % items.length; if (offset > 2) return null; return <button key={item.id} aria-label={offset ? `Show ${item.title}` : `View ${item.title} details`} className={`stack-poster poster-${offset}`} onClick={() => selectPoster(item, rawIndex, offset)} style={{ '--accent': item.accent }}><PosterArt item={item} loading="eager" fetchPriority={offset === 0 ? 'high' : 'auto'} /></button>; })}
@@ -484,7 +532,7 @@ function AnalyticsPanel({ stats, large = false }) {
   return <section className={`analytics-panel ${large ? 'large' : ''}`}><div><p className="eyebrow">Analytics</p><h2>{stats.percent}% complete</h2><div className="progress"><span style={{ width: `${stats.percent}%` }} /></div></div><div className="stat-grid"><div><b>{stats.total}</b><span>Total</span></div><div><b>{stats.watched}</b><span>Watched</span></div><div><b>{stats.watching}</b><span>Watching</span></div><div><b>{stats.dropped}</b><span>Dropped</span></div><div><b>{stats.bookmarked}</b><span>Saved</span></div><div><b>{stats.watchedTime}</b><span>Watch Time</span></div></div></section>;
 }
 
-function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch }) {
+function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, activeItems }) {
   const [inlineTrailer, setInlineTrailer] = useState(null);
   const [isTrailerExpanded, setIsTrailerExpanded] = useState(false);
   const showTrailer = () => {
@@ -529,6 +577,7 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch }) 
     setWatchLoading(true);
     try {
       const params = new URLSearchParams({ title: item.title, year: String(item.year || '') });
+      if (item.tmdbId) params.set('tmdbId', String(item.tmdbId));
       const res = await fetch(`/api/tmdb/poster?${params.toString()}`);
       if (!res.ok) throw new Error('TMDB lookup failed');
       const data = await res.json();
@@ -545,6 +594,31 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch }) 
   React.useEffect(() => {
     if (isTrailerExpanded && modalRef.current) modalRef.current.scrollTo({ top: 0, behavior: 'smooth' });
   }, [isTrailerExpanded]);
+
+  // Compute roadmap for multi-part series
+  const itemRoadmap = useMemo(() => {
+    if (!activeItems || !item.tmdbId || item.type !== 'series') return null;
+    const siblings = activeItems
+      .filter(i => i.tmdbId === item.tmdbId && i.type === 'series')
+      .sort((a, b) => a.order - b.order);
+    if (siblings.length < 2) return null;
+    const segments = [];
+    for (let i = 0; i < siblings.length; i++) {
+      const part = siblings[i];
+      segments.push({ type: 'part', item: part, isActive: part.id === item.id });
+      if (i < siblings.length - 1) {
+        const nextPart = siblings[i + 1];
+        const interstitials = activeItems
+          .filter(x => x.order > part.order && x.order < nextPart.order)
+          .sort((a, b) => a.order - b.order);
+        if (interstitials.length > 0) {
+          segments.push({ type: 'interstitials', items: interstitials });
+        }
+      }
+    }
+    return { segments, siblings };
+  }, [activeItems, item]);
+
   return <div className="detail-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
     <article className="detail-modal" role="dialog" aria-modal="true" aria-labelledby="detail-title" style={{ '--accent': item.accent }}>
       {item.poster && <div className="detail-bg" aria-hidden="true"><img className="detail-backdrop" src={item.poster} alt="" /><div className="detail-backdrop-shade" /></div>}
@@ -560,19 +634,63 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch }) 
           {!isTrailerExpanded && <button className="detail-trailer" onClick={showTrailer}><Play size={18} fill="currentColor" /> Watch trailer</button>}
         </div>
         <div className="detail-content">
-          <div className="detail-kicker"><span>{item.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'}</span><span>#{String(item.order || item.id).padStart(2, '0')}</span></div>
+          <div className="detail-kicker"><span>{item.universe === 'marvel' ? 'Marvel Cinematic Universe' : item.universe === 'xmen' ? 'X-Men Universe' : 'DC Universe'}</span><span>#{String(item.order || item.id).padStart(2, '0')}</span></div>
           <h1 id="detail-title">{item.title}</h1>
           <div className="detail-chips"><span className="detail-rating"><Star size={15} fill="currentColor" /> {item.rating.toFixed ? item.rating.toFixed(1) : item.rating}</span>{item.genres.slice(0,3).map(g => <span key={g}>{g}</span>)}</div>
           <p className="detail-description">{item.desc || `Follow ${item.title} in the complete ${item.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} viewing order.`}</p>
           <div className="detail-facts"><div><Calendar size={18} /><span>Release year</span><strong>{item.year}</strong></div><div><Timer size={18} /><span>Runtime</span><strong>{runtimeLabel(item.runtime, item.type)}</strong></div><div><Sparkles size={18} /><span>Format</span><strong>{item.type}</strong></div>{item.userStatus === 'watching' && item.watchedDuration > 30000 && <div><Clock size={18} /><span>Watched</span><strong>{watchTimeLabel(item)}</strong></div>}</div>
           <div className="detail-progress-actions"><StatusSelect item={item} setStatus={setStatus} /><button className={`detail-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={19} fill={item.bookmarked ? 'currentColor' : 'none'} /></button><button className="detail-videasy" onClick={() => handleWatchOnVideasy(item)} disabled={watchLoading} aria-label={`Watch ${item.title} on Videasy`}><Play size={18} fill="currentColor" /><span>{watchLoading ? 'Loading...' : 'Watch Now'}</span></button><div className="detail-download-wrap" ref={downloadRef}><button className="detail-download" onClick={searchTorrents} aria-label={`Download ${item.title}`}><Download size={18} /><span>Download</span></button>{downloadOpen && <div className="download-dropdown">{torrents === null ? <span className="download-loading">Searching...</span> : torrents.length === 0 ? <span className="download-empty">No torrents found</span> : torrents.map((t, i) => <a key={i} className="download-option" href={t.magnet} target="_blank" rel="noopener noreferrer" onClick={() => setDownloadOpen(false)}><span className="download-quality">{t.quality}</span><span className="download-size">{t.size}</span><span className="download-seeds">{t.seeds} seeds</span></a>)}</div>}</div></div>
+          {itemRoadmap && (
+            <div className="detail-roadmap">
+              <div className="section-title"><h2>Viewing Roadmap</h2><button>{itemRoadmap.siblings.length} Parts</button></div>
+              <div className="roadmap-timeline">
+                {itemRoadmap.segments.map((seg, idx) => {
+                  if (seg.type === 'part') {
+                    const partNum = itemRoadmap.segments.filter((s, i) => s.type === 'part' && i <= idx).length;
+                    return (
+                      <div key={seg.item.id} className={`roadmap-part ${seg.isActive ? 'active' : ''}`} style={{ '--accent': seg.item.accent, cursor: 'default' }}>
+                        <span className="roadmap-part-dot" />
+                        <div className="roadmap-part-poster">
+                          {seg.item.poster ? <img src={seg.item.poster} alt={seg.item.title} loading="lazy" /> : <FallbackPoster item={seg.item} />}
+                        </div>
+                        <div className="roadmap-part-info">
+                          <span className="roadmap-part-badge">{seg.isActive && '● '}Part {partNum}{seg.item.season ? ` S${seg.item.season}` : ''}</span>
+                          <span className="roadmap-part-name">{seg.item.title.replace(/^Agents of SHIELD S\d+ /, '')}</span>
+                          <span className="roadmap-part-meta">{seg.item.year} · {runtimeLabel(seg.item.runtime, seg.item.type)}</span>
+                        </div>
+                      </div>
+                    );
+                  } else {
+                    return (
+                      <div key={`int-${idx}`} className="roadmap-interstitial">
+                        <div className="roadmap-inter-header">
+                          <ChevronRight size={14} className="chevron" />
+                          <span>watch between</span>
+                          <ChevronRight size={14} className="chevron" />
+                        </div>
+                        <div className="roadmap-inter-items">
+                          {seg.items.map(intItem => (
+                            <div key={intItem.id} className="roadmap-inter-card" style={{ '--accent': intItem.accent, cursor: 'default' }}>
+                              <div className="roadmap-inter-poster">
+                                {intItem.poster ? <img src={intItem.poster} alt={intItem.title} loading="lazy" /> : <FallbackPoster item={intItem} />}
+                              </div>
+                              <span className="roadmap-inter-title">{intItem.title}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  }
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
       </div>
     </article>
   </div>;
 }
-
 function TrailerModal({ trailer, onClose }) {
   return <aside className="trailer-modal"><div><button className="trailer-close" onClick={onClose}><X /></button><h2>{trailer.title} trailer</h2><iframe src={trailer.url} title={`${trailer.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /></div></aside>;
 }
@@ -580,6 +698,7 @@ function TrailerModal({ trailer, onClose }) {
 function ContinueWatching({ items, setSelected, setStatus, toggleBookmark, playTrailer, onResume }) {
   const handleResume = async (item) => {
     const params = new URLSearchParams({ title: item.title, year: String(item.year || '') });
+    if (item.tmdbId) params.set('tmdbId', String(item.tmdbId));
     const res = await fetch(`/api/tmdb/poster?${params.toString()}`);
     if (res.ok) {
       const data = await res.json();
@@ -613,7 +732,7 @@ function ContinueWatching({ items, setSelected, setStatus, toggleBookmark, playT
   );
 }
 
-function WatchBrowse({ activeItems, onStartWatch, setSelected, setStatus, toggleBookmark, setSection }) {
+function WatchBrowse({ activeItems, onStartWatch, setSelected, setStatus, toggleBookmark, setSection, setQuery }) {
   const pageSize = 12;
   const [upNextPage, setUpNextPage] = useState(1);
   const inProgress = activeItems.filter(i => i.userStatus === 'watching');
@@ -624,6 +743,7 @@ function WatchBrowse({ activeItems, onStartWatch, setSelected, setStatus, toggle
   useEffect(() => { setUpNextPage(1); }, [allUpNext.length]);
   const handleResume = async (item) => {
     const params = new URLSearchParams({ title: item.title, year: String(item.year || '') });
+    if (item.tmdbId) params.set('tmdbId', String(item.tmdbId));
     const res = await fetch(`/api/tmdb/poster?${params.toString()}`);
     if (res.ok) {
       const data = await res.json();
@@ -748,9 +868,49 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
     if (startSec > 5) params.set('progress', String(startSec));
     return `${base}?${params.toString()}`;
   }, [tmdbId, item.title, currentItem.tmdbId, currentItem.type, currentItem.watchedDuration, currentItem.season, isSeries, selectedEpisode]);
-  const upNext = activeItems
-    .filter(i => i.id !== item.id && i.userStatus !== 'watched' && i.userStatus !== 'dropped')
-    .slice(0, 12);
+  const roadmapInfo = useMemo(() => {
+    if (!currentItem.tmdbId || currentItem.type !== 'series') return null;
+    const siblings = activeItems
+      .filter(i => i.tmdbId === currentItem.tmdbId && i.type === 'series')
+      .sort((a, b) => a.order - b.order);
+    if (siblings.length < 2) return null;
+    const segments = [];
+    const seqItems = [];
+    for (let i = 0; i < siblings.length; i++) {
+      const part = siblings[i];
+      segments.push({ type: 'part', item: part, isActive: part.id === currentItem.id });
+      seqItems.push(part);
+      if (i < siblings.length - 1) {
+        const nextPart = siblings[i + 1];
+        const interstitials = activeItems
+          .filter(x => x.order > part.order && x.order < nextPart.order)
+          .sort((a, b) => a.order - b.order);
+        if (interstitials.length > 0) {
+          segments.push({ type: 'interstitials', items: interstitials });
+          seqItems.push(...interstitials);
+        }
+      }
+    }
+    const currentIndex = seqItems.findIndex(i => i.id === currentItem.id);
+    const nextInSequence = seqItems
+      .slice(currentIndex + 1)
+      .filter(i => i.userStatus !== 'watched' && i.userStatus !== 'dropped');
+    return { segments, nextInSequence, siblings };
+  }, [activeItems, currentItem]);
+
+  const upNext = roadmapInfo 
+    ? roadmapInfo.nextInSequence.slice(0, 12)
+    : (() => {
+        // Smart suggestions: items after current in timeline order first, then upcoming
+        const after = activeItems.filter(i => i.order > currentItem.order && i.id !== currentItem.id && i.userStatus !== 'watched' && i.userStatus !== 'dropped');
+        const upcoming = activeItems.filter(i => i.id !== currentItem.id && i.userStatus !== 'watched' && i.userStatus !== 'dropped');
+        // Deduplicate: prefer items after current, fill with upcoming
+        const seen = new Set();
+        const result = [];
+        for (const i of after) { if (!seen.has(i.id) && i.userStatus !== 'dropped') { seen.add(i.id); result.push(i); } }
+        for (const i of upcoming) { if (!seen.has(i.id)) { seen.add(i.id); result.push(i); } }
+        return result.slice(0, 12);
+      })();
   const totalMs = (item.runtime || 120) * 60 * 1000;
   const initialElapsed = Math.min(currentItem.watchedDuration || 0, totalMs);
   const [elapsed, setElapsed] = useState(initialElapsed);
@@ -802,6 +962,10 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
   const handleSwitchItem = async (rec) => {
     if (switching) return;
     updateAction(item, { watchedDuration: elapsedRef.current, watchStartedAt: null });
+    if (rec.tmdbId) {
+      onStartWatch(rec, rec.tmdbId, rec.type === 'series' ? 'tv' : 'movie');
+      return;
+    }
     setSwitching(true);
     try {
       const params = new URLSearchParams({ title: rec.title, year: String(rec.year || '') });
@@ -848,6 +1012,61 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
             })}
           </div>
         </div>
+      )}
+      {roadmapInfo && (
+        <section className="watch-roadmap">
+          <div className="section-title"><h2>Viewing Roadmap</h2><button>{roadmapInfo.siblings.length} Parts</button></div>
+          <div className="roadmap-timeline">
+            {roadmapInfo.segments.map((seg, idx) => {
+              if (seg.type === 'part') {
+                const partNum = roadmapInfo.segments.filter((s, i) => s.type === 'part' && i <= idx).length;
+                return (
+                  <button
+                    key={seg.item.id}
+                    className={`roadmap-part ${seg.isActive ? 'active' : ''}`}
+                    onClick={() => handleSwitchItem(seg.item)}
+                    style={{ '--accent': seg.item.accent }}
+                  >
+                    <span className="roadmap-part-dot" />
+                    <div className="roadmap-part-poster">
+                      {seg.item.poster ? <img src={seg.item.poster} alt={seg.item.title} loading="lazy" /> : <FallbackPoster item={seg.item} />}
+                    </div>
+                    <div className="roadmap-part-info">
+                      <span className="roadmap-part-badge">{seg.isActive && '● '}Part {partNum}{seg.item.season ? ` S${seg.item.season}` : ''}</span>
+                      <span className="roadmap-part-name">{seg.item.title.replace(/^Agents of SHIELD S\d+ /, '')}</span>
+                      <span className="roadmap-part-meta">{seg.item.year} · {runtimeLabel(seg.item.runtime, seg.item.type)}</span>
+                    </div>
+                  </button>
+                );
+              } else {
+                return (
+                  <div key={`int-${idx}`} className="roadmap-interstitial">
+                    <div className="roadmap-inter-header">
+                      <ChevronRight size={14} className="chevron" />
+                      <span>watch between</span>
+                      <ChevronRight size={14} className="chevron" />
+                    </div>
+                    <div className="roadmap-inter-items">
+                      {seg.items.map(intItem => (
+                        <button
+                          key={intItem.id}
+                          className="roadmap-inter-card"
+                          onClick={() => handleSwitchItem(intItem)}
+                          style={{ '--accent': intItem.accent }}
+                        >
+                          <div className="roadmap-inter-poster">
+                            {intItem.poster ? <img src={intItem.poster} alt={intItem.title} loading="lazy" /> : <FallbackPoster item={intItem} />}
+                          </div>
+                          <span className="roadmap-inter-title">{intItem.title}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              }
+            })}
+          </div>
+        </section>
       )}
       <div className="watch-info">
         <div className="watch-meta">

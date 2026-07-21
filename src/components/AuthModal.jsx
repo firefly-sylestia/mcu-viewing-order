@@ -29,7 +29,27 @@ export default function AuthModal({ onClose, onLogin, onSignup, onGoogleSignIn, 
         onClose();
       }
     } catch (err) {
-      setError(err.message?.replace('Firebase: ', '') || 'Something went wrong');
+      setError(err.message?.replace('Firebase: ', '').replace('Error ', '') || 'Something went wrong');
+    }
+    setBusy(false);
+  };
+
+  const handleProviderSignIn = async (fn) => {
+    if (!configured) { setError('Firebase not configured. Add VITE_FIREBASE_* env vars.'); return; }
+    setError('');
+    setBusy(true);
+    try {
+      await fn();
+      onClose();
+    } catch (err) {
+      const msg = (err.message || '').replace('Firebase: ', '').replace('Error ', '').replace(/^\(auth\//, '').replace(/[.)]+$/, '');
+      if (msg.includes('popup-closed-by-user') || msg.includes('cancelled-popup-request') || msg.includes('popup')) {
+        setError('Sign-in popup was closed. Please try again or use email instead.');
+      } else if (msg.includes('unauthorized-domain')) {
+        setError('This domain is not authorized for Google sign-in. Contact the site owner.');
+      } else {
+        setError(msg || 'Sign-in failed. Please try again.');
+      }
     }
     setBusy(false);
   };
