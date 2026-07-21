@@ -237,11 +237,11 @@ export default function App() {
 
   const failedRef = useRef(new Set());
 
-  // Fetch external search results when query has no local matches
+  // Fetch external search results whenever user searches (always show at end)
   useEffect(() => {
     const performExternalSearch = async () => {
-      // Only search if query is not empty and no local results match
-      if (!query || query.length < 2 || activeItems.length > 0) {
+      // Only search if query is not empty and has minimum length
+      if (!query || query.length < 2) {
         setExternalSearchResults([]);
         return;
       }
@@ -264,7 +264,7 @@ export default function App() {
     };
 
     performExternalSearch();
-  }, [query, activeItems.length]);
+  }, [query]);
 
   // Clear expired cache entries and failed items on mount to retry posters
   useEffect(() => {
