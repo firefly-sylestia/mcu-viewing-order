@@ -172,6 +172,17 @@ export default function App() {
       .catch(() => setPosterMap({}));
   }, []);
 
+  // Shared enrichment: adds user state from actions to any item
+  const enrichItem = useCallback((item) => ({
+    ...item,
+    poster: item.poster || posterMap[item.id] || posterMap[String(item.id)] || posterMap[slugifyPosterName(item.title)] || '',
+    userStatus: actions[item.id]?.status || 'unwatched',
+    bookmarked: Boolean(actions[item.id]?.bookmarked),
+    watchStartedAt: actions[item.id]?.watchStartedAt || null,
+    watchedDuration: actions[item.id]?.watchedDuration || 0,
+    watchedEpisodes: actions[item.id]?.watchedEpisodes || [],
+  }), [actions, posterMap]);
+
   const activeItems = useMemo(() => {
     const sorted = allItems
       .filter(item => item.universe === universe)
@@ -179,10 +190,19 @@ export default function App() {
       .filter(item => genre === 'All' || item.genres.includes(genre) || item.type === genre.toLowerCase())
       .filter(item => Number(item.rating) >= rating)
       .filter(item => ageRatingFilter === 'All' || (item.ageRating || (item.type === 'series' ? 'TV-14' : 'PG-13')) === ageRatingFilter)
-      .map(item => ({ ...item, poster: item.poster || posterMap[item.id] || posterMap[String(item.id)] || posterMap[slugifyPosterName(item.title)] || '', userStatus: actions[item.id]?.status || 'unwatched', bookmarked: Boolean(actions[item.id]?.bookmarked), watchStartedAt: actions[item.id]?.watchStartedAt || null, watchedDuration: actions[item.id]?.watchedDuration || 0, watchedEpisodes: actions[item.id]?.watchedEpisodes || [] }));
+      .map(enrichItem);
     sorted.sort((a, b) => sortBy === 'year' ? a.year - b.year : sortBy === 'title' ? a.title.localeCompare(b.title) : a.order - b.order);
     return sorted;
-  }, [actions, allItems, universe, query, genre, posterMap, rating, ageRatingFilter, sortBy]);
+  }, [allItems, universe, query, genre, rating, ageRatingFilter, sortBy, enrichItem]);
+
+  // Unfiltered items (no search/filter) for WatchPage/WatchBrowse suggestions
+  const unfilteredItems = useMemo(() => {
+    const sorted = allItems
+      .filter(item => item.universe === universe)
+      .map(enrichItem);
+    sorted.sort((a, b) => a.order - b.order);
+    return sorted;
+  }, [allItems, universe, enrichItem]);
 
   const failedRef = useRef(new Set());
 
@@ -322,8 +342,8 @@ export default function App() {
       {section === 'list' && <ListSection items={activeItems} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />}
       {section === 'analytics' && <><AnalyticsPanel stats={stats} large /><MovieRail title="In progress" items={activeItems.filter(i => i.userStatus === 'watching')} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} /></>}
             {section === 'profile' && <ProfilePage stats={stats} activeItems={activeItems} universe={universe} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} conflict={conflict} onResolveRemote={resolveUseRemote} onResolveLocal={resolveKeepLocal} syncToast={toast} />}
-      {section === 'watch' && safeWatchItem && <WatchPage watchItem={safeWatchItem} activeItems={activeItems} onBack={() => { setWatchItem(null); window.history.replaceState(null, '', '#watch'); }} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={handleStartWatch} updateAction={updateAction} />}
-      {section === 'watch' && !safeWatchItem && <WatchBrowse activeItems={activeItems} onStartWatch={handleStartWatch} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} setSection={setSection} />}
+      {section === 'watch' && safeWatchItem && <WatchPage watchItem={safeWatchItem} activeItems={unfilteredItems} onBack={() => { setWatchItem(null); window.history.replaceState(null, '', '#watch'); }} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={handleStartWatch} updateAction={updateAction} />}
+      {section === 'watch' && !safeWatchItem && <WatchBrowse activeItems={unfilteredItems} onStartWatch={handleStartWatch} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} setSection={setSection} setQuery={setQuery} />}
 
       <nav className="bottom-nav" aria-label="Primary">
         <button className={section === 'home' ? 'active' : ''} onClick={() => { setQuery(''); setSection('home'); setWatchItem(null); }}><Home size={22} /><span>Home</span></button>
@@ -638,7 +658,7 @@ function ContinueWatching({ items, setSelected, setStatus, toggleBookmark, playT
   );
 }
 
-function WatchBrowse({ activeItems, onStartWatch, setSelected, setStatus, toggleBookmark, setSection }) {
+function WatchBrowse({ activeItems, onStartWatch, setSelected, setStatus, toggleBookmark, setSection, setQuery }) {
   const pageSize = 12;
   const [upNextPage, setUpNextPage] = useState(1);
   const inProgress = activeItems.filter(i => i.userStatus === 'watching');
@@ -806,9 +826,17 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
 
   const upNext = roadmapInfo 
     ? roadmapInfo.nextInSequence.slice(0, 12)
-    : activeItems
-        .filter(i => i.id !== item.id && i.userStatus !== 'watched' && i.userStatus !== 'dropped')
-        .slice(0, 12);
+    : (() => {
+        // Smart suggestions: items after current in timeline order first, then upcoming
+        const after = activeItems.filter(i => i.order > currentItem.order && i.id !== currentItem.id && i.userStatus !== 'watched' && i.userStatus !== 'dropped');
+        const upcoming = activeItems.filter(i => i.id !== currentItem.id && i.userStatus !== 'watched' && i.userStatus !== 'dropped');
+        // Deduplicate: prefer items after current, fill with upcoming
+        const seen = new Set();
+        const result = [];
+        for (const i of after) { if (!seen.has(i.id) && i.userStatus !== 'dropped') { seen.add(i.id); result.push(i); } }
+        for (const i of upcoming) { if (!seen.has(i.id)) { seen.add(i.id); result.push(i); } }
+        return result.slice(0, 12);
+      })();
   const totalMs = (item.runtime || 120) * 60 * 1000;
   const initialElapsed = Math.min(currentItem.watchedDuration || 0, totalMs);
   const [elapsed, setElapsed] = useState(initialElapsed);
