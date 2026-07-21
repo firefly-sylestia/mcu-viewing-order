@@ -10,6 +10,8 @@ import {
   signOut,
   onAuthStateChanged,
   sendPasswordResetEmail,
+  setPersistence,
+  browserLocalPersistence,
 } from 'firebase/auth';
 import { auth, configured } from '../firebase';
 
