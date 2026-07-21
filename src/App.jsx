@@ -1088,12 +1088,12 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
   return (
     <section className="watch-page" style={{ '--accent': currentItem.accent }}>
       <header className="watch-header">
-        <button onClick={handleBack} aria-label="Back to browsing"><ChevronLeft size={22} /> <span>Back</span></button>
-        <div>
-          <span className="watch-kicker">{currentItem.universe === 'marvel' ? 'MCU' : 'DC'} · #{String(currentItem.order || currentItem.id).padStart(2, '0')}</span>
-          <h1>{currentItem.title}</h1>
+        <button className="watch-back" onClick={handleBack} aria-label="Go back"><ChevronLeft size={24} /></button>
+        <h1 className="watch-title">{item.title}{isSeries && currentItem.season && ` - S${String(currentItem.season).padStart(2, '0')}`}</h1>
+        <div className="watch-platform-switcher">
+          <button className={`watch-platform-btn ${platform === 'videasy' ? 'active' : ''}`} onClick={() => setWatchItem({...watchItem, platform: 'videasy'})} title="Switch to Videasy">Videasy</button>
+          <button className={`watch-platform-btn ${platform === 'onlyflix' ? 'active' : ''}`} onClick={() => setWatchItem({...watchItem, platform: 'onlyflix'})} title="Switch to Onlyflix">Onlyflix</button>
         </div>
-        <div className="watch-header-spacer" />
       </header>
       {toast && <div className="watch-toast">{toast}</div>}
       <div className="watch-player">
