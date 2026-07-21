@@ -1,12 +1,14 @@
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
   
-  const token = process.env.TMDB_READ_ACCESS_TOKEN || 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI2NWVkYTQ4Y2Y1ODAzZjIyMzA0ZmQyMWY0ZjA2YTM1ZSIsIm5iZiI6MTc3ODY4NTg2My42ODcsInN1YiI6IjZhMDQ5N2E3N2IyZDk3NzQ2MDM3N2E1OSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.XTD8e-B7awrTVIJd5WtD3vZ5FnWjE8sWkSjgYIeauAA';
+  const token = process.env.TMDB_READ_ACCESS_TOKEN;
+  if (!token) return res.status(503).json({ error: 'TMDB is not configured' });
 
   const title = (req.query.title || '').toString().trim();
   const year = (req.query.year || '').toString().trim();
   const tmdbId = (req.query.tmdbId || '').toString().trim();
   const requestedMediaType = (req.query.mediaType || '').toString().trim() === 'tv' ? 'tv' : 'movie';
+  const season = Number(req.query.season || 0);
 
   if (!title && !tmdbId) {
     return res.status(400).json({ error: 'Missing title or tmdbId' });
@@ -27,8 +29,12 @@ export default async function handler(req, res) {
       best = { ...detail, id: detail.id, media_type: requestedMediaType };
     } else {
       // Search by title and year using multi-search (works better for TV shows like Luke Cage, Jessica Jones)
+      const cleanTitle = title
+        .replace(/\s+S\d+(?:\s+Eps?\s+\d+(?:[–-]\d+)?)?.*$/i, '')
+        .replace(/\s+Season\s+\d+.*$/i, '')
+        .trim();
       const params = new URLSearchParams({
-        query: title,
+        query: cleanTitle,
         include_adult: 'false',
         language: 'en-US',
         page: '1',
@@ -71,8 +77,15 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: 'No results found' });
     }
 
-    // Extract poster - prefer poster_path, fallback to still_path for TV
-    const posterPath = best.poster_path || best.still_path;
+    let seasonDetail = null;
+    if (best.media_type === 'tv' && season > 0) {
+      const seasonRes = await fetch(`https://api.themoviedb.org/3/tv/${best.id}/season/${season}?language=en-US`, {
+        headers: { Authorization: `Bearer ${token}`, accept: 'application/json' },
+      });
+      if (seasonRes.ok) seasonDetail = await seasonRes.json();
+    }
+
+    const posterPath = seasonDetail?.poster_path || best.poster_path || best.still_path;
     const poster = posterPath ? `https://image.tmdb.org/t/p/w500${posterPath}` : null;
     const backdrop = best.backdrop_path ? `https://image.tmdb.org/t/p/w780${best.backdrop_path}` : null;
 

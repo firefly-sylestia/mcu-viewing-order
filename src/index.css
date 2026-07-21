@@ -1342,13 +1342,9 @@ button { border: 0; color: inherit; cursor: pointer; }
 }
 @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(-10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
 @keyframes watchFadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-.watch-header-spacer { flex: 1; }
-.watch-server-select { display: flex; align-items: center; gap: 8px; }
-.server-selector { display: flex; gap: 6px; background: rgba(255,255,255,.06); padding: 6px; border-radius: 20px; border: 1px solid rgba(255,255,255,.08); }
-.server-option { display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 16px; background: transparent; border: none; color: #9ca3af; font-weight: 600; font-size: 12px; cursor: pointer; transition: all .2s ease; text-transform: uppercase; letter-spacing: .03em; }
-.server-option:hover { background: rgba(255,255,255,.08); color: #fff; }
-.server-option.active { background: rgba(255,255,255,.14); color: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.1); }
-.server-option svg { width: 14px; height: 14px; flex-shrink: 0; }
+.watch-server-select { display: flex; align-items: center; gap: 7px; flex: 0 0 auto; min-width: 0; padding: 7px 8px 7px 10px; border: 1px solid rgba(255,255,255,.1); border-radius: 10px; background: #111217; color: #9ca3af; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
+.watch-server-select svg { flex: 0 0 auto; color: var(--accent); }
+.watch-server-select select { min-width: 0; max-width: 112px; border: 0; outline: 0; background: #111217; color: #f4f4f5; font: inherit; text-transform: none; letter-spacing: 0; cursor: pointer; }
 .watch-player { position: relative; width: 100%; max-width: 1100px; margin: 0 auto; aspect-ratio: 16/9; background: #000; border-left: 1px solid rgba(255,255,255,.06); border-right: 1px solid rgba(255,255,255,.06); box-shadow: 0 8px 40px rgba(0,0,0,.4); }
 .watch-progress-bar { max-width: 1100px; margin: 0 auto; height: 3px; background: rgba(255,255,255,.1); }
 .watch-progress-bar span { display: block; height: 100%; background: linear-gradient(90deg, #2a2a30, #3a3a42); transition: width 1s linear; }
@@ -3019,15 +3015,19 @@ button { border: 0; color: inherit; cursor: pointer; }
   letter-spacing: 0.05em;
 }
 
-.watch-roadmap .section-title button {
-  background: rgba(255,255,255,.06);
+.roadmap-summary {
+  flex: 0 0 auto;
   border: 1px solid rgba(255,255,255,.1);
-  color: #94a3b8;
   border-radius: 999px;
-  padding: 6px 16px;
+  padding: 6px 12px;
+  background: #111217;
+  color: #94a3b8;
   font-size: 12px;
   font-weight: 700;
 }
+
+.roadmap-part.watched .roadmap-part-dot { background: #257953; border-color: #257953; }
+.roadmap-part.watched:not(.active) { opacity: .72; }
 
 /* Vertical timeline with connecting line */
 .roadmap-timeline {
@@ -3366,6 +3366,24 @@ button { border: 0; color: inherit; cursor: pointer; }
   .detail-roadmap .roadmap-timeline {
     padding-left: 20px;
   }
+
+  .watch-page { overflow-x: clip; }
+  .watch-header { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 10px; padding: 10px 12px; }
+  .watch-header > button { align-self: center; padding: 9px; }
+  .watch-header > button span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .watch-header h1 { font-size: 15px; }
+  .watch-server-select { grid-column: 1 / -1; width: 100%; justify-content: space-between; }
+  .watch-server-select select { flex: 1; max-width: none; text-align: right; }
+  .watch-player { border: 0; }
+  .watch-episode-picker { padding: 0 12px; }
+  .watch-roadmap { margin-top: 12px; padding: 18px 12px; }
+  .watch-roadmap .section-title { align-items: flex-end; gap: 10px; }
+  .roadmap-summary { padding: 5px 9px; font-size: 10px; }
+  .roadmap-part { width: 100%; min-width: 0; }
+  .roadmap-part-info { flex: 1; }
+  .roadmap-part-name { white-space: normal; overflow-wrap: anywhere; }
+  .roadmap-inter-items { flex-direction: column; align-items: stretch; }
+  .roadmap-inter-card { width: 100%; white-space: normal; }
 }
 
 /* External Search Results */
@@ -3385,5 +3403,9 @@ button { border: 0; color: inherit; cursor: pointer; }
 .external-info h4 { font-size: 13px; font-weight: 800; margin: 0; color: #fff; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .external-meta { font-size: 12px; color: #888; margin: 0; }
 .external-rating { font-size: 12px; color: #daa520; margin: 0; display: flex; align-items: center; gap: 4px; }
+.external-overview { margin: 2px 0; color: #a1a1aa; font-size: 12px; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.detail-download-episode select { height: 46px; max-width: 118px; border: 1px solid rgba(255,255,255,.1); border-radius: 10px; padding: 0 10px; background: #1b1f25; color: #ddd; font-weight: 700; }
+.detail-download:disabled { cursor: not-allowed; opacity: .45; }
 .no-results { text-align: center; padding: 60px 20px; color: #888; }
+
 .no-results p { font-size: 16px; margin: 0; }
