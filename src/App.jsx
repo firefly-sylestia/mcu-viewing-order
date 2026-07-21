@@ -867,7 +867,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
     const startSec = Math.floor((currentItem.watchedDuration || 0) / 1000);
     if (startSec > 5) params.set('progress', String(startSec));
     return `${base}?${params.toString()}`;
-  }, [tmdbId, item.title, currentItem.tmdbId, currentItem.type, currentItem.watchedDuration, currentItem.season, isSeries, selectedEpisode]);
+  }, [tmdbId, item.title, currentItem.tmdbId, currentItem.type, currentItem.season, isSeries, selectedEpisode]);
   const roadmapInfo = useMemo(() => {
     if (!currentItem.tmdbId || currentItem.type !== 'series') return null;
     const siblings = activeItems
@@ -918,10 +918,18 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
   const progress = Math.min((elapsed / totalMs) * 100, 100);
   const isComplete = progress >= 90;
 
+  const itemRef = useRef(item);
+  const updateActionRef = useRef(updateAction);
+  const setStatusRef = useRef(setStatus);
+
+  useEffect(() => { itemRef.current = item; }, [item]);
+  useEffect(() => { updateActionRef.current = updateAction; }, [updateAction]);
+  useEffect(() => { setStatusRef.current = setStatus; }, [setStatus]);
+
   const handleBack = useCallback(() => {
-    updateAction(item, { watchedDuration: elapsedRef.current, watchStartedAt: null });
+    updateActionRef.current(itemRef.current, { watchedDuration: elapsedRef.current, watchStartedAt: null });
     onBack();
-  }, [item, updateAction, onBack]);
+  }, [onBack]);
 
   useEffect(() => { elapsedRef.current = elapsed; }, [elapsed]);
 
@@ -935,29 +943,29 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
     setElapsed(Math.min(currentItem.watchedDuration || 0, totalMs));
     const interval = setInterval(() => setElapsed(prev => prev + 1000), 1000);
     return () => clearInterval(interval);
-  }, [item.id]);
+  }, [currentItem.id, totalMs]);
 
   useEffect(() => {
     const save = setInterval(() => {
-      updateAction(item, { watchedDuration: elapsedRef.current });
+      updateActionRef.current(itemRef.current, { watchedDuration: elapsedRef.current });
     }, 15000);
     return () => {
       clearInterval(save);
-      updateAction(item, { watchedDuration: elapsedRef.current, watchStartedAt: null });
+      updateActionRef.current(itemRef.current, { watchedDuration: elapsedRef.current, watchStartedAt: null });
     };
-  }, [item.id]);
+  }, []);
 
   useEffect(() => {
     if (isComplete && currentItem.userStatus === 'watching') {
-      setStatus(currentItem, 'watched');
+      setStatusRef.current(currentItem, 'watched');
     }
-  }, [isComplete, currentItem.userStatus, currentItem.id, setStatus]);
+  }, [isComplete, currentItem.userStatus, currentItem.id]);
 
   useEffect(() => {
     if (isSeries && allEpisodesWatched && currentItem.userStatus === 'watching') {
-      setStatus(currentItem, 'watched');
+      setStatusRef.current(currentItem, 'watched');
     }
-  }, [isSeries, allEpisodesWatched, currentItem.userStatus, currentItem.id, setStatus]);
+  }, [isSeries, allEpisodesWatched, currentItem.userStatus, currentItem.id]);
 
   const handleSwitchItem = async (rec) => {
     if (switching) return;
