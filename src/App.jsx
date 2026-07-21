@@ -99,6 +99,8 @@ export default function App() {
   const saved = useMemo(readSavedState, []);
   const [universe, setUniverse] = useState(saved.universe || 'marvel');
   const [query, setQuery] = useState(saved.query || '');
+  const [externalSearchResults, setExternalSearchResults] = useState([]);
+  const [externalSearchLoading, setExternalSearchLoading] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [selected, setSelected] = useState(null);
   const [genre, setGenre] = useState(saved.genre || 'All');
@@ -209,6 +211,35 @@ export default function App() {
 
   const failedRef = useRef(new Set());
 
+  // Fetch external search results when query has no local matches
+  useEffect(() => {
+    const performExternalSearch = async () => {
+      // Only search if query is not empty and no local results match
+      if (!query || query.length < 2 || activeItems.length > 0) {
+        setExternalSearchResults([]);
+        return;
+      }
+
+      setExternalSearchLoading(true);
+      try {
+        const response = await fetch(`/api/tmdb/search?q=${encodeURIComponent(query)}`);
+        if (response.ok) {
+          const data = await response.json();
+          setExternalSearchResults(data.results || []);
+        } else {
+          setExternalSearchResults([]);
+        }
+      } catch (error) {
+        console.error('External search error:', error);
+        setExternalSearchResults([]);
+      } finally {
+        setExternalSearchLoading(false);
+      }
+    };
+
+    performExternalSearch();
+  }, [query, activeItems.length]);
+
   useEffect(() => {
     const missing = activeItems.filter(item => !item.poster && !posterMap[item.id] && !failedRef.current.has(item.id)).slice(0, 6);
     if (!missing.length) return;
@@ -298,6 +329,31 @@ export default function App() {
     window.history.replaceState(null, '', `#watch/${slugifyPosterName(item.title)}`);
   };
 
+  // Handle playing external search results (not in database)
+  const onPlayExternal = (externalResult) => {
+    // Create a temporary item object for external results
+    const tempItem = {
+      id: -externalResult.id, // Negative ID to distinguish from database items
+      title: externalResult.title,
+      type: externalResult.type === 'tv' ? 'series' : 'movie',
+      poster: externalResult.poster,
+      backdrop: externalResult.backdrop,
+      year: externalResult.year,
+      rating: externalResult.rating,
+      overview: externalResult.overview,
+      tmdbId: externalResult.id,
+      mediaType: externalResult.type,
+      universe: universe, // Assign to current universe for context
+      bookmarked: false,
+      userStatus: 'unwatched',
+    };
+    
+    setWatchItem({ item: tempItem, tmdbId: externalResult.id, mediaType: externalResult.type });
+    setSelected(null);
+    setSection('watch');
+    window.history.replaceState(null, '', `#watch/${slugifyPosterName(externalResult.title)}`);
+  };
+
   const universeName = universe === 'marvel' ? 'MCU' : universe === 'xmen' ? 'X-Men' : 'DC';
   const universeAccent = universe === 'marvel' ? '#da1e37' : universe === 'xmen' ? '#2f80c8' : '#2f80ed';
   const profileInitial = (profileName?.trim()?.[0] || (universe === 'marvel' ? 'M' : universe === 'xmen' ? 'X' : 'D')).toUpperCase();
@@ -344,7 +400,7 @@ export default function App() {
         {activeItems.filter(i => i.userStatus === 'watching').length > 0 && <ContinueWatching items={activeItems.filter(i => i.userStatus === 'watching')} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} onResume={handleStartWatch} />}
       </>}
 
-      {section === 'list' && <ListSection items={activeItems} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />}
+      {section === 'list' && <ListSection items={activeItems} externalResults={externalSearchResults} externalLoading={externalSearchLoading} query={query} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} onPlayExternal={onPlayExternal} />}
       {section === 'analytics' && <><AnalyticsPanel stats={stats} large /><MovieRail title="In progress" items={activeItems.filter(i => i.userStatus === 'watching')} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} /></>}
             {section === 'profile' && <ProfilePage stats={stats} activeItems={activeItems} universe={universe} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} conflict={conflict} onResolveRemote={resolveUseRemote} onResolveLocal={resolveKeepLocal} syncToast={toast} />}
       {section === 'watch' && safeWatchItem && <WatchPage watchItem={safeWatchItem} activeItems={unfilteredItems} onBack={() => { setWatchItem(null); window.history.replaceState(null, '', '#watch'); }} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={handleStartWatch} updateAction={updateAction} />}
@@ -463,7 +519,7 @@ function MovieCard({ item, setSelected, cycleStatus, setStatus, toggleBookmark, 
   </article>;
 }
 
-function ListSection({ items, setSelected, setStatus, toggleBookmark, playTrailer }) {
+function ListSection({ items, externalResults = [], externalLoading = false, query = '', setSelected, setStatus, toggleBookmark, playTrailer, onPlayExternal }) {
   const pageSize = 12;
   const [page, setPage] = useState(1);
   const [viewMode, setViewMode] = useState('list');
@@ -487,6 +543,38 @@ function ListSection({ items, setSelected, setStatus, toggleBookmark, playTraile
       <div className="list-actions" onClick={e => e.stopPropagation()}><button className="list-trailer" onClick={() => playTrailer(item)} aria-label={`Play ${item.title} trailer`}><Play size={16} fill="currentColor" /><span>Trailer</span></button><StatusSelect item={item} setStatus={setStatus} /><button className={`list-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Bookmark title'}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button></div>
     </article>)}</div>}
     {pageCount > 1 && <nav className="pagination" aria-label="Viewing list pages"><button onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} aria-label="Previous page"><ChevronLeft size={18} /></button>{Array.from({ length: pageCount }, (_, index) => index + 1).map(pageNumber => <button key={pageNumber} className={currentPage === pageNumber ? 'active' : ''} aria-current={currentPage === pageNumber ? 'page' : undefined} onClick={() => goToPage(pageNumber)}>{pageNumber}</button>)}<button onClick={() => goToPage(currentPage + 1)} disabled={currentPage === pageCount} aria-label="Next page"><ChevronRight size={18} /></button></nav>}
+    
+    {items.length === 0 && externalResults.length > 0 && (
+      <div className="external-results">
+        <div className="external-header">
+          <h3>Search Results</h3>
+          <p className="external-subtitle">Not in database - Play directly</p>
+        </div>
+        <div className="external-grid">
+          {externalResults.map(result => (
+            <div key={result.id} className="external-result-card" onClick={() => onPlayExternal(result)}>
+              <div className="external-poster">
+                <img src={result.poster} alt={result.title} loading="lazy" />
+                <div className="external-badge">New</div>
+                <button className="external-play-btn" onClick={(e) => { e.stopPropagation(); onPlayExternal(result); }} aria-label={`Play ${result.title}`}>
+                  <Play size={24} fill="white" />
+                </button>
+              </div>
+              <div className="external-info">
+                <h4>{result.title}</h4>
+                <p className="external-meta">{result.year} · {result.type === 'tv' ? 'Series' : 'Movie'}</p>
+                {result.rating && <p className="external-rating"><Star size={14} fill="currentColor" /> {result.rating}</p>}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+    {items.length === 0 && externalResults.length === 0 && query && !externalLoading && (
+      <div className="no-results">
+        <p>No results found for "{query}"</p>
+      </div>
+    )}
   </section>;
 }
 
