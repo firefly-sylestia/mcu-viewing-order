@@ -26,7 +26,7 @@ export default async function handler(req, res) {
       const detail = await detailRes.json();
       best = { ...detail, id: detail.id, media_type: requestedMediaType };
     } else {
-      // Search by title and year
+      // Search by title and year using multi-search (works better for TV shows like Luke Cage, Jessica Jones)
       const params = new URLSearchParams({
         query: title,
         include_adult: 'false',
@@ -42,21 +42,28 @@ export default async function handler(req, res) {
         return res.status(searchRes.status).json({ error: 'TMDB request failed' });
       }
       const data = await searchRes.json();
-      const results = (data.results || []).filter(i => i.poster_path || i.still_path);
+      // Filter for media with posters, exclude people
+      let results = (data.results || [])
+        .filter(i => (i.media_type === 'movie' || i.media_type === 'tv') && (i.poster_path || i.still_path))
+        .sort((a, b) => (b.popularity || 0) - (a.popularity || 0)); // Sort by popularity for better matches
 
       if (year) {
+        // First try exact year match with correct media type
         const yearMatches = results.filter(i => {
           const date = i.release_date || i.first_air_date || '';
           return date.startsWith(year);
         });
+        
         if (yearMatches.length > 0) {
           const exactType = yearMatches.find(i => i.media_type === requestedMediaType);
-          best = exactType || yearMatches.find(i => i.media_type !== 'person') || yearMatches[0];
+          best = exactType || yearMatches[0];
         } else {
-          best = results.find(i => i.media_type === requestedMediaType) || results.find(i => i.media_type !== 'person') || results[0];
+          // If no year match, try by media type at least
+          best = results.find(i => i.media_type === requestedMediaType) || results[0];
         }
       } else {
-        best = results.find(i => i.media_type === requestedMediaType) || results.find(i => i.media_type !== 'person') || results[0];
+        // No year specified - prioritize correct media type, then popularity
+        best = results.find(i => i.media_type === requestedMediaType) || results[0];
       }
     }
 

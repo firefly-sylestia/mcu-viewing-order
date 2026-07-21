@@ -237,11 +237,11 @@ export default function App() {
 
   const failedRef = useRef(new Set());
 
-  // Fetch external search results when query has no local matches
+  // Fetch external search results whenever user searches (always show at end)
   useEffect(() => {
     const performExternalSearch = async () => {
-      // Only search if query is not empty and no local results match
-      if (!query || query.length < 2 || activeItems.length > 0) {
+      // Only search if query is not empty and has minimum length
+      if (!query || query.length < 2) {
         setExternalSearchResults([]);
         return;
       }
@@ -264,7 +264,7 @@ export default function App() {
     };
 
     performExternalSearch();
-  }, [query, activeItems.length]);
+  }, [query]);
 
   // Clear expired cache entries and failed items on mount to retry posters
   useEffect(() => {
@@ -286,24 +286,57 @@ export default function App() {
       if (cancelled || startIndex >= missing.length) return;
       const batch = missing.slice(startIndex, startIndex + batchSize);
       
-      const results = await Promise.allSettled(batch.map(item => {
+      const results = await Promise.allSettled(batch.map(async (item) => {
         // Prefer description endpoint for comprehensive metadata
         const params = new URLSearchParams({ title: item.title, year: String(item.year || '') });
         if (item.tmdbId) params.set('tmdbId', String(item.tmdbId));
         params.set('mediaType', item.type === 'series' ? 'tv' : 'movie');
         
-        return fetch(`/api/tmdb/description?${params.toString()}`)
-          .then(response => {
-            if (!response.ok) {
-              console.error(`[v0] Poster fetch failed for ${item.title}: ${response.status}`);
-              return null;
-            }
-            return response.json();
-          })
-          .catch(err => {
-            console.error(`[v0] Poster fetch error for ${item.title}:`, err.message);
+        try {
+          const response = await fetch(`/api/tmdb/description?${params.toString()}`);
+          if (!response.ok) {
+            console.warn(`[v0] Description endpoint failed for ${item.title}: ${response.status}`);
             return null;
-          });
+          }
+          
+          const data = await response.json();
+          // If description finds a result with poster, return it
+          if (data.success && data.poster) {
+            return data;
+          }
+          
+          // Fallback: search directly using search/multi endpoint which is great for TV series
+          console.log(`[v0] Fallback search for ${item.title} (no poster from description)`);
+          const searchParams = new URLSearchParams({ q: item.title });
+          const searchResponse = await fetch(`/api/tmdb/search?${searchParams.toString()}`);
+          
+          if (!searchResponse.ok) {
+            console.warn(`[v0] Search fallback failed for ${item.title}`);
+            return null;
+          }
+          
+          const searchData = await searchResponse.json();
+          const results = searchData.results || [];
+          
+          if (results.length > 0) {
+            const result = results[0]; // Take first result (already sorted by relevance)
+            console.log(`[v0] Found poster via search fallback for ${item.title}`);
+            return {
+              success: true,
+              poster: result.poster,
+              backdrop: result.backdrop,
+              overview: result.overview,
+              rating: result.rating,
+              releaseDate: result.year,
+              mediaType: result.type,
+            };
+          }
+          
+          return null;
+        } catch (err) {
+          console.error(`[v0] Poster fetch error for ${item.title}:`, err.message);
+          return null;
+        }
       }));
       
       if (!cancelled) {
@@ -318,14 +351,16 @@ export default function App() {
               updates[item.id] = data.poster;
               if (data.rating) updates[`rating_${item.id}`] = Number(data.rating);
               
-              // Cache the metadata
-              if (item.tmdbId) {
-                setCache(item.tmdbId, {
+              // Cache the metadata - use provided tmdbId or item's tmdbId
+              const cacheKey = data.tmdbId || item.tmdbId;
+              if (cacheKey) {
+                setCache(cacheKey, {
                   poster: data.poster,
                   backdrop: data.backdrop,
                   overview: data.overview,
                   rating: data.rating,
                   releaseDate: data.releaseDate,
+                  mediaType: data.mediaType,
                 });
               }
               console.log(`[v0] Successfully fetched poster for ${item.title}`);
@@ -617,18 +652,18 @@ function ListSection({ items, externalResults = [], externalLoading = false, que
     </article>)}</div>}
     {pageCount > 1 && <nav className="pagination" aria-label="Viewing list pages"><button onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} aria-label="Previous page"><ChevronLeft size={18} /></button>{Array.from({ length: pageCount }, (_, index) => index + 1).map(pageNumber => <button key={pageNumber} className={currentPage === pageNumber ? 'active' : ''} aria-current={currentPage === pageNumber ? 'page' : undefined} onClick={() => goToPage(pageNumber)}>{pageNumber}</button>)}<button onClick={() => goToPage(currentPage + 1)} disabled={currentPage === pageCount} aria-label="Next page"><ChevronRight size={18} /></button></nav>}
     
-    {items.length === 0 && externalResults.length > 0 && (
+    {externalResults.length > 0 && (
       <div className="external-results">
         <div className="external-header">
-          <h3>Search Results</h3>
-          <p className="external-subtitle">Not in database - Play directly</p>
+          <h3>{items.length > 0 ? 'Also Found' : 'Search Results'}</h3>
+          <p className="external-subtitle">{items.length > 0 ? 'Other matches in TMDB' : 'Not in database - Play directly'}</p>
         </div>
         <div className="external-grid">
           {externalResults.map(result => (
             <div key={result.id} className="external-result-card" onClick={() => onPlayExternal(result)}>
               <div className="external-poster">
                 <img src={result.poster} alt={result.title} loading="lazy" />
-                <div className="external-badge">New</div>
+                <div className="external-badge">{items.length > 0 ? 'TMDB' : 'New'}</div>
                 <button className="external-play-btn" onClick={(e) => { e.stopPropagation(); onPlayExternal(result); }} aria-label={`Play ${result.title}`}>
                   <Play size={24} fill="white" />
                 </button>
