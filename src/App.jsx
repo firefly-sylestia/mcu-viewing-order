@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Search, SlidersHorizontal, Home, Bookmark, Play, UserRound, X, ArrowLeft, Star, BarChart3, Check, Clock, ListFilter, RotateCcw, ChevronLeft, ChevronRight, Calendar, Timer, Sparkles, LogIn, LogOut, Cloud, Download } from 'lucide-react';
 import { RAW } from './data/mcuData';
 import { DC_RAW } from './data/dcData';
+import { XMEN_RAW } from './data/xmenData';
 import { getTrailerByTitle, trailerEmbedUrl } from './data/trailerData';
 import ProfilePage from './components/ProfilePage';
 import AuthModal from './components/AuthModal';
@@ -29,6 +30,7 @@ const STATUS = ['unwatched', 'watching', 'watched', 'dropped'];
 const STATUS_LABELS = { unwatched: 'Unwatched', watching: 'Watching', watched: 'Watched', dropped: 'Dropped' };
 const marvelPalette = ['#641220', '#85182a', '#a11d33', '#b21e35', '#bd1f36', '#da1e37'];
 const dcPalette = ['#061226', '#08204a', '#0b3a78', '#0d4f9c', '#1367c8', '#2f80ed'];
+const xmenPalette = ['#1a3a5c', '#1e5080', '#2566a0', '#2f80c8', '#4a90d9', '#6baae6'];
 
 const runtimeLabel = (minutes = 0, type = 'film') => {
   if (!minutes) return type === 'series' ? 'Series' : 'TBA';
@@ -90,7 +92,7 @@ const enhance = (item, universe) => ({
   rating: Number((6.7 + ((item.id * 17) % 25) / 10).toFixed(1)),
   genres: item.type === 'series' ? ['Series', 'Action', 'Drama'] : ['Action', item.phase >= 4 ? 'Adventure' : 'Sci-fi', item.essential ? 'Essential' : 'Canon'],
   poster: localPoster(item),
-  accent: universe === 'dc' ? dcPalette[(item.phase - 1) % dcPalette.length] : marvelPalette[(item.phase - 1) % marvelPalette.length],
+  accent: universe === 'dc' ? dcPalette[(item.phase - 1) % dcPalette.length] : universe === 'xmen' ? xmenPalette[(item.phase - 1) % xmenPalette.length] : marvelPalette[(item.phase - 1) % marvelPalette.length],
 });
 
 export default function App() {
@@ -131,7 +133,7 @@ export default function App() {
     }
   }, []);
 
-  const allItems = useMemo(() => [...RAW.map(item => enhance(item, 'marvel')), ...DC_RAW.map(item => enhance(item, 'dc'))], []);
+  const allItems = useMemo(() => [...RAW.map(item => enhance(item, 'marvel')), ...DC_RAW.map(item => enhance(item, 'dc')), ...XMEN_RAW.map(item => enhance(item, 'xmen'))], []);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ universe, query, genre, rating, ageRatingFilter, sortBy, actions, section, watchItem, profileName, heroIndex }));
@@ -181,6 +183,7 @@ export default function App() {
     watchStartedAt: actions[item.id]?.watchStartedAt || null,
     watchedDuration: actions[item.id]?.watchedDuration || 0,
     watchedEpisodes: actions[item.id]?.watchedEpisodes || [],
+    rating: posterMap[`rating_${item.id}`] || item.rating,
   }), [actions, posterMap]);
 
   const activeItems = useMemo(() => {
@@ -227,6 +230,7 @@ export default function App() {
           if (result.status === 'fulfilled') {
             if (result.value?.poster) {
               updates[batch[i].id] = result.value.poster;
+              if (result.value.rating) updates[`rating_${batch[i].id}`] = Number(result.value.rating);
             } else {
               failed.push(batch[i].id);
             }
@@ -294,9 +298,9 @@ export default function App() {
     window.history.replaceState(null, '', `#watch/${slugifyPosterName(item.title)}`);
   };
 
-  const universeName = universe === 'marvel' ? 'MCU' : 'DC';
-  const universeAccent = universe === 'marvel' ? '#da1e37' : '#2f80ed';
-  const profileInitial = (profileName?.trim()?.[0] || (universe === 'marvel' ? 'M' : 'D')).toUpperCase();
+  const universeName = universe === 'marvel' ? 'MCU' : universe === 'xmen' ? 'X-Men' : 'DC';
+  const universeAccent = universe === 'marvel' ? '#da1e37' : universe === 'xmen' ? '#2f80c8' : '#2f80ed';
+  const profileInitial = (profileName?.trim()?.[0] || (universe === 'marvel' ? 'M' : universe === 'xmen' ? 'X' : 'D')).toUpperCase();
 
   return (
     <main className={`movie-site universe-${universe}`} style={{ '--brand-accent': universeAccent, '--accent': universeAccent, '--theme-accent': universeAccent }}>
@@ -306,10 +310,11 @@ export default function App() {
         <div className="universe-tabs" role="tablist" aria-label="Universe">
           <button className={universe === 'marvel' ? 'active' : ''} onClick={() => { setUniverse('marvel'); setHeroIndex(0); }}>Marvel</button>
           <button className={universe === 'dc' ? 'active' : ''} onClick={() => { setUniverse('dc'); setHeroIndex(0); }}>DC</button>
+          <button className={universe === 'xmen' ? 'active' : ''} onClick={() => { setUniverse('xmen'); setHeroIndex(0); }}>X-Men</button>
         </div>
         <div className="header-search">
           <Search size={18} />
-          <input value={query} onChange={e => { setQuery(e.target.value); if (section !== 'watch') setSection('list'); }} placeholder={`Search ${universe === 'marvel' ? 'Marvel' : 'DC'} titles…`} />
+          <input value={query} onChange={e => { setQuery(e.target.value); if (section !== 'watch') setSection('list'); }} placeholder={`Search ${universe === 'marvel' ? 'Marvel' : universe === 'xmen' ? 'X-Men' : 'DC'} titles…`} />
           {query && <button className="search-clear" onClick={() => setQuery('')}><X size={16} /></button>}
           <button className="header-filter-btn" onClick={() => setFiltersOpen(true)} aria-label="Open filters"><SlidersHorizontal size={18} /></button>
         </div>
@@ -400,7 +405,7 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
   return <section className="top-carousel" style={{ '--accent': featured?.accent || '#9a4a4a' }} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocusCapture={() => setPaused(true)} onBlurCapture={() => setPaused(false)} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
     {featured?.poster && <img key={featured.id} className="carousel-backdrop" src={featured.poster} alt="" aria-hidden="true" width="300" height="450" referrerPolicy="no-referrer" />}
     <div className="carousel-backdrop-shade" aria-hidden="true" />
-    <div className="feature-heading"><div><p className="eyebrow">{featured?.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} · Featured</p><h2>Top movies</h2></div><button className="feature-detail" onClick={() => setSelected(featured)}>View details</button></div>
+    <div className="feature-heading"><div><p className="eyebrow">{featured?.universe === 'marvel' ? 'Marvel Cinematic Universe' : featured?.universe === 'xmen' ? 'X-Men Universe' : 'DC Universe'} · Featured</p><h2>Top movies</h2></div><button className="feature-detail" onClick={() => setSelected(featured)}>View details</button></div>
     <div className="feature-stage">
       <div className="poster-stack smooth-stack">
         {inlineTrailer ? <div className="inline-trailer"><iframe src={inlineTrailer} title={`${featured.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={() => setInlineTrailer(null)} aria-label="Close trailer"><X size={20} /></button></div> : items.map((item, rawIndex) => { const offset = (rawIndex - heroIndex + items.length) % items.length; if (offset > 2) return null; return <button key={item.id} aria-label={offset ? `Show ${item.title}` : `View ${item.title} details`} className={`stack-poster poster-${offset}`} onClick={() => selectPoster(item, rawIndex, offset)} style={{ '--accent': item.accent }}><PosterArt item={item} loading="eager" fetchPriority={offset === 0 ? 'high' : 'auto'} /></button>; })}
@@ -629,7 +634,7 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, ac
           {!isTrailerExpanded && <button className="detail-trailer" onClick={showTrailer}><Play size={18} fill="currentColor" /> Watch trailer</button>}
         </div>
         <div className="detail-content">
-          <div className="detail-kicker"><span>{item.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'}</span><span>#{String(item.order || item.id).padStart(2, '0')}</span></div>
+          <div className="detail-kicker"><span>{item.universe === 'marvel' ? 'Marvel Cinematic Universe' : item.universe === 'xmen' ? 'X-Men Universe' : 'DC Universe'}</span><span>#{String(item.order || item.id).padStart(2, '0')}</span></div>
           <h1 id="detail-title">{item.title}</h1>
           <div className="detail-chips"><span className="detail-rating"><Star size={15} fill="currentColor" /> {item.rating.toFixed ? item.rating.toFixed(1) : item.rating}</span>{item.genres.slice(0,3).map(g => <span key={g}>{g}</span>)}</div>
           <p className="detail-description">{item.desc || `Follow ${item.title} in the complete ${item.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} viewing order.`}</p>

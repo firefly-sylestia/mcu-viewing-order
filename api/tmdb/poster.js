@@ -72,6 +72,9 @@ export default async function handler(req, res) {
     source: 'tmdb',
     tmdbId: best.id,
     mediaType: best.media_type || requestedMediaType,
+    rating: best.vote_average ? Number(best.vote_average).toFixed(1) : null,
+    releaseDate: best.release_date || best.first_air_date || null,
+    overview: best.overview || null,
     details,
   });
 }
