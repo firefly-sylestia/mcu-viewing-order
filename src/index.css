@@ -1409,7 +1409,9 @@ button { border: 0; color: inherit; cursor: pointer; }
   flex-direction: column;
   gap: 16px;
   min-width: 0;
-  max-height: 90vh;
+  /* Allow content to grow, but parent container handles scroll */
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
   padding-right: 8px;
@@ -1430,6 +1432,11 @@ button { border: 0; color: inherit; cursor: pointer; }
 
 .detail-content::-webkit-scrollbar-thumb:hover {
   background: rgba(255,255,255,0.3);
+}
+
+/* Prevent sections from shrinking below their content size */
+.detail-content > * {
+  flex-shrink: 0;
 }
 .detail-kicker { display: flex; justify-content: space-between; gap: 18px; color: color-mix(in srgb, var(--brand-accent) 72%, #ffffff); font-size: 11px; font-weight: 900; letter-spacing: .11em; text-transform: uppercase; }
 .detail-content h1 { margin: 14px 0 16px; font-size: clamp(38px,6vw,72px); line-height: .96; letter-spacing: -.05em; text-wrap: balance; }
@@ -3269,7 +3276,7 @@ button { border: 0; color: inherit; cursor: pointer; }
   padding-top: 20px;
   border-top: 1px solid rgba(255,255,255,.06);
   flex-shrink: 0;
-  max-height: 500px;
+  max-height: 380px;
   overflow-y: auto;
   overflow-x: hidden;
   padding-right: 8px;
