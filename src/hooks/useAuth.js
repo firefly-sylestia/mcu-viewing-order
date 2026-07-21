@@ -43,14 +43,19 @@ export function useAuth() {
     if (!configured || !auth) throw new Error('Firebase not configured');
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
+    // On mobile, skip popup entirely — redirects are more reliable
+    const isMobile = /Android|iPhone|iPad|iPod|webOS/i.test(navigator.userAgent);
+    if (isMobile) {
+      await signInWithRedirect(auth, provider);
+      return; // page navigates away
+    }
     try {
       await signInWithPopup(auth, provider);
     } catch (err) {
       // Fall back to redirect-based sign-in when the popup is blocked
       if (err.code === 'auth/popup-blocked') {
         await signInWithRedirect(auth, provider);
-        // Page will navigate away — no need to throw or handle further
-        return;
+        return; // page navigates away
       }
       throw err;
     }
