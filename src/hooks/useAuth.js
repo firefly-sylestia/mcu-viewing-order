@@ -34,8 +34,9 @@ export function useAuth() {
   }, []);
 
   const googleSignIn = useCallback(async () => {
-    if (!configured) throw new Error('Firebase not configured');
+    if (!configured || !auth) throw new Error('Firebase not configured');
     const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
     await signInWithPopup(auth, provider);
   }, []);
 
