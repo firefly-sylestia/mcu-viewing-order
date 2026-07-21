@@ -266,9 +266,10 @@ export default function App() {
     performExternalSearch();
   }, [query, activeItems.length]);
 
-  // Clear expired cache entries on mount
+  // Clear expired cache entries and failed items on mount to retry posters
   useEffect(() => {
     clearExpiredCache();
+    failedRef.current.clear(); // Retry failed items on remount
   }, []);
 
   useEffect(() => {
@@ -291,8 +292,18 @@ export default function App() {
         if (item.tmdbId) params.set('tmdbId', String(item.tmdbId));
         params.set('mediaType', item.type === 'series' ? 'tv' : 'movie');
         
-        return fetch(`/api/tmdb/description?${params.toString()}`, { cache: 'force-cache' })
-          .then(response => response.ok ? response.json() : null);
+        return fetch(`/api/tmdb/description?${params.toString()}`)
+          .then(response => {
+            if (!response.ok) {
+              console.error(`[v0] Poster fetch failed for ${item.title}: ${response.status}`);
+              return null;
+            }
+            return response.json();
+          })
+          .catch(err => {
+            console.error(`[v0] Poster fetch error for ${item.title}:`, err.message);
+            return null;
+          });
       }));
       
       if (!cancelled) {
@@ -301,9 +312,9 @@ export default function App() {
         
         results.forEach((result, i) => {
           const item = batch[i];
-          if (result.status === 'fulfilled' && result.value?.success) {
+          if (result.status === 'fulfilled' && result.value && !result.value.error) {
             const data = result.value;
-            if (data.poster) {
+            if (data.success && data.poster) {
               updates[item.id] = data.poster;
               if (data.rating) updates[`rating_${item.id}`] = Number(data.rating);
               
@@ -317,10 +328,13 @@ export default function App() {
                   releaseDate: data.releaseDate,
                 });
               }
+              console.log(`[v0] Successfully fetched poster for ${item.title}`);
             } else {
+              console.warn(`[v0] No poster found for ${item.title} (error: ${data.error || 'no poster_path'})`);
               failed.push(item.id);
             }
           } else {
+            console.warn(`[v0] Poster fetch failed for ${item.title} (status: ${result.status})`);
             failed.push(item.id);
           }
         });
