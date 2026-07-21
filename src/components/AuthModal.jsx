@@ -33,12 +33,8 @@ export default function AuthModal({ onClose, onLogin, onSignup, onGoogleSignIn, 
       onClose();
     } catch (err) {
       const msg = (err.message || '').replace('Firebase: ', '').replace('Error ', '').replace(/^\(auth\//, '').replace(/[.)]+$/, '');
-      if (msg.includes('popup-closed-by-user')) {
-        setError('Sign-in popup was closed. Please try again.');
-      } else if (msg.includes('popup-blocked')) {
-        setError('Pop-up blocked. Please allow pop-ups for this site.');
-      } else if (msg.includes('cancelled-popup-request') || msg.includes('popup')) {
-        setError('Sign-in window was closed. Try again or use email instead.');
+      if (msg.includes('popup-closed-by-user') || msg.includes('cancelled-popup-request') || msg.includes('popup')) {
+        setError('Sign-in popup was closed. Please try again or use email instead.');
       } else if (msg.includes('unauthorized-domain')) {
         setError('This domain is not authorized for Google sign-in. Contact the site owner.');
       } else {
