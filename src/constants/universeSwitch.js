@@ -15,4 +15,12 @@ export const UNIVERSE_META = {
     switchLabel: 'Switch to MCU Universe',
     accent: '#1f6feb',
   },
+  xmen: {
+    id: 'xmen',
+    title: 'X-MEN',
+    subtitle: 'Uncanny',
+    heroLabel: 'Featured X-Men titles',
+    switchLabel: 'Switch to MCU Universe',
+    accent: '#a0a0ac',
+  },
 };
