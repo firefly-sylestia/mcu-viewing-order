@@ -1810,10 +1810,33 @@ function WatchBrowse({ activeItems, externalResults = [], externalLoading = fals
 
 function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, onStartWatch, updateAction, nativePlayer }) {
   const { item, tmdbId, mediaType } = watchItem;
+const readServerCache = () => {
+  try { return JSON.parse(localStorage.getItem('server-prefs') || '{}'); } catch { return {}; }
+};
+
+const saveServerPref = (tmdbId, server) => {
+  if (!tmdbId) return;
+  try {
+    const cache = readServerCache();
+    cache[tmdbId] = server;
+    localStorage.setItem('server-prefs', JSON.stringify(cache));
+  } catch {}
+};
+
   const [switching, setSwitching] = useState(false);
   const [toast, setToast] = useState('');
   const [contextExpanded, setContextExpanded] = useState(false);
-  const [selectedServer, setSelectedServer] = useState('videasy');
+  const [selectedServer, setSelectedServerRaw] = useState(() => {
+    const cached = readServerCache();
+    const pref = item.tmdbId ? cached[item.tmdbId] : null;
+    return pref || 'videasy';
+  });
+
+  // Auto-save server preference per title
+  const setSelectedServer = (server) => {
+    setSelectedServerRaw(server);
+    if (currentItem?.tmdbId) saveServerPref(currentItem.tmdbId, server);
+  };
 
   const currentItem = activeItems.find(i => i.id === item.id) || item;
   const isSeries = currentItem.type === 'series' && currentItem.tmdbId;
@@ -2025,7 +2048,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
             }}>Switch back to embedded player</button>
           </div>
         ) : (
-          <iframe key={iframeKey} src={playerUrl} title={`Watch ${item.title}`} frameBorder="0" allowFullScreen allow="encrypted-media" loading="eager" onLoad={() => { clearTimeout(loadTimeoutRef.current); setToast(''); }} />
+          <iframe key={iframeKey} src={playerUrl} title={`Watch ${item.title}`} frameBorder="0" allowFullScreen allow="encrypted-media" loading="eager" onLoad={() => { clearTimeout(loadTimeoutRef.current); setToast(''); saveServerPref(currentItem.tmdbId, selectedServer); }} />
         )}
       </div>
       <div className="watch-progress-bar"><span style={{ width: `${progress}%` }} /></div>
