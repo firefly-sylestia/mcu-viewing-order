@@ -4,6 +4,7 @@ import { RAW } from './data/mcuData';
 import { DC_RAW } from './data/dcData';
 import { XMEN_RAW } from './data/xmenData';
 import { getTrailerByTitle, trailerEmbedUrl } from './data/trailerData';
+import { fetchTrailerFromApi } from './utils/trailerCache';
 import ProfilePage from './components/ProfilePage';
 import AuthModal from './components/AuthModal';
 import { useAuth } from './hooks/useAuth';
@@ -483,15 +484,28 @@ export default function App() {
   };
   const selectedItem = selected ? activeItems.find(item => item.id === selected.id) || selected : null;
   const nextUp = activeItems.find(item => item.userStatus !== 'watched' && item.userStatus !== 'dropped') || activeItems[0];
-  const playTrailer = (item) => {
+  const playTrailer = async (item) => {
+    // 1. Check hardcoded trailer data first (fastest)
     const match = getTrailerByTitle(item.title);
     const youtubeId = match?.primary?.youtubeId || match?.youtubeId;
-    if (!youtubeId) {
-      window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(`${item.title} official trailer`)}`, '_blank', 'noopener');
+    if (youtubeId) {
+      const url = trailerEmbedUrl(youtubeId);
+      setTrailer({ title: item.title, url, options: match?.options });
       return;
     }
-    const url = trailerEmbedUrl(youtubeId);
-    setTrailer({ title: item.title, url, options: match?.options });
+
+    // 2. Try Kinocheck API with client-side cache
+    try {
+      const kinocheck = await fetchTrailerFromApi(item.title, item.year, item.tmdbId);
+      if (kinocheck?.youtubeId) {
+        const url = trailerEmbedUrl(kinocheck.youtubeId);
+        setTrailer({ title: item.title, url, options: kinocheck.options });
+        return;
+      }
+    } catch { /* fall through to search */ }
+
+    // 3. Fallback: YouTube search in new tab
+    window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(`${item.title} official trailer`)}`, '_blank', 'noopener');
   };
   const resetFilters = () => { setQuery(''); setGenre('All'); setRating(0); setAgeRatingFilter('All'); setSortBy('order'); };
   const handleStartWatch = (item, tmdbId, mediaType) => {
@@ -693,11 +707,25 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
     return () => window.clearTimeout(timer);
   }, [heroIndex, inlineTrailer, items.length, paused, setHeroIndex]);
 
-  const showTrailer = () => {
+  const showTrailer = async () => {
+    // Check hardcoded data first
     const match = getTrailerByTitle(featured.title);
     const youtubeId = match?.primary?.youtubeId || match?.youtubeId;
-    const baseUrl = youtubeId ? trailerEmbedUrl(youtubeId) : `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(`${featured.title} trailer`)}`;
-    setInlineTrailer(`${baseUrl}${baseUrl.includes('?') ? '&' : '?'}autoplay=1`);
+    let id = youtubeId;
+
+    // Try Kinocheck if no hardcoded match
+    if (!id) {
+      try {
+        const kc = await fetchTrailerFromApi(featured.title, featured.year, featured.tmdbId);
+        if (kc?.youtubeId) id = kc.youtubeId;
+      } catch {}
+    }
+
+    if (id) {
+      setInlineTrailer(`${trailerEmbedUrl(id)}&autoplay=1`);
+    } else {
+      window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(`${featured.title} official trailer`)}`, '_blank', 'noopener');
+    }
   };
 
   return <section className="top-carousel" style={{ '--accent': featured?.accent || '#9a4a4a' }} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocusCapture={() => setPaused(true)} onBlurCapture={() => setPaused(false)} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
@@ -866,12 +894,24 @@ function AnalyticsPanel({ stats, large = false }) {
 function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, activeItems }) {
   const [inlineTrailer, setInlineTrailer] = useState(null);
   const [isTrailerExpanded, setIsTrailerExpanded] = useState(false);
-  const showTrailer = () => {
+  const showTrailer = async () => {
     const match = getTrailerByTitle(item.title);
     const youtubeId = match?.primary?.youtubeId || match?.youtubeId;
-    const baseUrl = youtubeId ? trailerEmbedUrl(youtubeId) : `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(`${item.title} trailer`)}`;
-    setInlineTrailer(`${baseUrl}${baseUrl.includes('?') ? '&' : '?'}autoplay=1`);
-    setIsTrailerExpanded(true);
+    let id = youtubeId;
+
+    if (!id) {
+      try {
+        const kc = await fetchTrailerFromApi(item.title, item.year, item.tmdbId);
+        if (kc?.youtubeId) id = kc.youtubeId;
+      } catch {}
+    }
+
+    if (id) {
+      setInlineTrailer(`${trailerEmbedUrl(id)}&autoplay=1`);
+      setIsTrailerExpanded(true);
+    } else {
+      window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(`${item.title} official trailer`)}`, '_blank', 'noopener');
+    }
   };
   const closeTrailer = () => {
     setIsTrailerExpanded(false);
