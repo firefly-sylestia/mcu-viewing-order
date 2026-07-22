@@ -571,7 +571,7 @@ export default function App() {
         <SuggestionStrip nextUp={nextUp} stats={stats} setSelected={selectItem} playTrailer={playTrailer} />
         <MovieRail title="Up next" items={activeItems.filter(i => i.userStatus === 'unwatched').slice(0, 10)} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} scrollable variant="upnext" />
         <MovieRail title="Essential picks" items={activeItems.filter(i => i.essential)} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} paginated gridControls />
-        <MovieRail title="Recently watched" items={activeItems.filter(i => i.userStatus === 'watched').slice(-24).reverse()} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} empty="Mark titles as watched to see them here." scrollable />
+        <MovieRail title="Recently watched" items={activeItems.filter(i => i.userStatus === 'watched').slice(-24).reverse()} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} empty="Mark titles as watched to see them here." scrollable variant="upnext" />
         {activeItems.filter(i => i.userStatus === 'watching').length > 0 && <ContinueWatching items={activeItems.filter(i => i.userStatus === 'watching')} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} onResume={handleStartWatch} />}
       </>}
 
@@ -952,9 +952,9 @@ function ContinueWatching({ items, setSelected, setStatus, toggleBookmark, playT
     onResume(item, item.tmdbId || null, item.type === 'series' ? 'tv' : 'movie');
   };
   return (
-    <section className="continue-watching rail-card web-rail">
+    <section className="rail-card web-rail upnext-rail-card">
       <div className="section-title"><h2>Continue Watching</h2><button>{items.length} in progress</button></div>
-      <div className="movie-grid web-grid rail-scroll">
+      <div className="movie-grid web-grid rail-scroll upnext-grid">
         {items.map(item => (
           <article key={item.id} className="movie-card continue-card" style={{ '--accent': item.accent }}>
             <button className="poster-button" onClick={() => handleResume(item)}>
@@ -1004,11 +1004,11 @@ function WatchBrowse({ activeItems, onStartWatch, setSelected, setStatus, toggle
         <p>Pick up where you left off or discover something new to start watching.</p>
       </div>
       {inProgress.length > 0 && (
-        <section className="watch-browse-section">
+        <section className="rail-card web-rail upnext-rail-card">
           <div className="section-title"><h2>Continue Watching</h2><button>{inProgress.length} in progress</button></div>
-          <div className="watch-browse-grid">
+          <div className="movie-grid web-grid rail-scroll upnext-grid">
             {inProgress.map(item => (
-              <article key={item.id} className="movie-card watch-browse-card in-progress-card" style={{ '--accent': item.accent }}>
+              <article key={item.id} className="movie-card continue-card" style={{ '--accent': item.accent }}>
                 <button className="poster-button" onClick={() => handleResume(item)}>
                   <PosterArt item={item} />
                   <div className="continue-overlay"><Play size={28} fill="currentColor" /></div>
@@ -1025,14 +1025,14 @@ function WatchBrowse({ activeItems, onStartWatch, setSelected, setStatus, toggle
         </section>
       )}
       {upNext.length > 0 && (
-        <section className="watch-browse-section">
+        <section className="rail-card web-rail upnext-rail-card">
           <div className="section-title"><h2>Start Watching</h2><button>{allUpNext.length} available</button></div>
-          <div className="watch-browse-grid">
+          <div className="movie-grid web-grid rail-scroll upnext-grid">
             {upNext.map(item => (
-              <article key={item.id} className="movie-card watch-browse-card start-card" style={{ '--accent': item.accent }}>
+              <article key={item.id} className="movie-card" style={{ '--accent': item.accent }}>
                 <button className="poster-button" onClick={() => setSelected(item)}><PosterArt item={item} /></button>
                 <div className="card-body"><button className="title-button" onClick={() => setSelected(item)}>{item.title}</button><span>{item.year} · {runtimeLabel(item.runtime, item.type)}</span></div>
-                <div className="card-actions watch-start-actions">
+                <div className="card-actions">
                   <button onClick={() => handleResume(item)} className="trailer-chip watch-primary-action"><Play size={16} fill="currentColor" /><span>Watch</span></button>
                   <button onClick={() => toggleBookmark(item)} className={`bookmark-chip watch-bookmark-action ${item.bookmarked ? 'saved' : ''}`}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /><span>{item.bookmarked ? 'Saved' : 'Save'}</span></button>
                 </div>
