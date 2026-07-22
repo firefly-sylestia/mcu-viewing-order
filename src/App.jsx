@@ -178,15 +178,30 @@ export default function App() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ universe, query, genre, rating, ageRatingFilter, sortBy, actions, section, watchItem, profileName, heroIndex }));
   }, [universe, query, genre, rating, ageRatingFilter, sortBy, actions, section, watchItem, profileName, heroIndex]);
 
+  const initialRender = useRef(true);
   useEffect(() => {
     const hashed = parseHash().section;
     if (hashed !== section) {
       const target = section === 'watch' && safeWatchItem
         ? `#watch/${slugifyPosterName(safeWatchItem.item.title)}`
         : `#${section}`;
-      window.history.replaceState(null, '', target);
+      if (initialRender.current) {
+        window.history.replaceState(null, '', target);
+        initialRender.current = false;
+      } else {
+        window.history.pushState(null, '', target);
+      }
     }
   }, [section, safeWatchItem]);
+
+  // Sync search query into URL silently (no history entry per keystroke)
+  useEffect(() => {
+    if (section === 'list' && !initialRender.current) {
+      const q = query ? `?q=${encodeURIComponent(query)}` : '';
+      const currentHash = window.location.hash.replace(/\?.*/, '');
+      window.history.replaceState(null, '', `${currentHash}${q}`);
+    }
+  }, [query, section]);
 
   useEffect(() => {
     const onHashChange = () => {
@@ -656,11 +671,11 @@ export default function App() {
       {section === 'watch' && !safeWatchItem && <WatchBrowse activeItems={activeItems} externalResults={externalSearchResults} externalLoading={externalSearchLoading} actions={actions} onStartWatch={handleStartWatch} onPlayExternal={onPlayExternal} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} setSection={setSection} setQuery={setQuery} />}
 
       <nav className="bottom-nav" aria-label="Primary">
-        <button className={section === 'home' ? 'active' : ''} onClick={() => { setQuery(''); setSection('home'); setWatchItem(null); }}><Home size={22} /><span>Home</span></button>
-        <button className={section === 'list' ? 'active' : ''} onClick={() => { setQuery(''); setSection('list'); }}><ListFilter size={22} /><span>List</span></button>
-        <button className={section === 'analytics' ? 'active' : ''} onClick={() => { setQuery(''); setSection('analytics'); }}><BarChart3 size={22} /><span>Stats</span></button>
-        <button className={section === 'watch' ? 'active' : ''} onClick={() => { setQuery(''); setSection('watch'); }}><Play size={22} /><span>Watch</span></button>
-        <button className={section === 'profile' ? 'active' : ''} onClick={() => { setQuery(''); setSection('profile'); }}><UserRound size={22} /><span>Profile</span></button>
+        <button className={section === 'home' ? 'active' : ''} onClick={() => { setSection('home'); setWatchItem(null); }}><Home size={22} /><span>Home</span></button>
+        <button className={section === 'list' ? 'active' : ''} onClick={() => { setSection('list'); }}><ListFilter size={22} /><span>List</span></button>
+        <button className={section === 'analytics' ? 'active' : ''} onClick={() => { setSection('analytics'); }}><BarChart3 size={22} /><span>Stats</span></button>
+        <button className={section === 'watch' ? 'active' : ''} onClick={() => { setSection('watch'); }}><Play size={22} /><span>Watch</span></button>
+        <button className={section === 'profile' ? 'active' : ''} onClick={() => { setSection('profile'); }}><UserRound size={22} /><span>Profile</span></button>
       </nav>
 
       {selectedItem && <DetailView item={selectedItem} onClose={() => selectItem(null)} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={handleStartWatch} activeItems={roadmapItems} />}
@@ -668,6 +683,7 @@ export default function App() {
       {filtersOpen && <Filters genre={genre} setGenre={setGenre} rating={rating} setRating={setRating} ageRatingFilter={ageRatingFilter} setAgeRatingFilter={setAgeRatingFilter} sortBy={sortBy} setSortBy={setSortBy} genres={genres} count={activeItems.length} onClose={() => setFiltersOpen(false)} />}
       {authOpen && <AuthModal onClose={() => setAuthOpen(false)} onLogin={login} onSignup={signup} onGoogleSignIn={googleSignIn} onAnonymousSignIn={anonymousSignIn} onResetPassword={resetPassword} />}
     </main>
+    <Footer />
   );
 }
 
