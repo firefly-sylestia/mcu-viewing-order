@@ -9,6 +9,8 @@ import AuthModal from './components/AuthModal';
 import { useAuth } from './hooks/useAuth';
 import { useCloudSync } from './hooks/useCloudSync';
 import { configured as firebaseReady } from './firebase';
+import { getFromCache, setCache, clearExpiredCache } from './utils/mediaCache';
+import { buildDownloadUrl, buildPlayerUrl } from './utils/mediaProviders';
 import './index.css';
 
 const STORAGE_KEY = 'cinematic-viewing-ui-state-v2';
@@ -64,17 +66,51 @@ const slugifyPosterName = (value) => String(value || '')
   .replace(/[^a-z0-9]+/g, '-')
   .replace(/^-+|-+$/g, '');
 
-const localPoster = (item) => {
-  if (item.id >= 5000) return '';
-  const explicit = {
-    12: '/posters/012-i-am-groot-s1-and-s2.jpg',
-    203: '/posters/012-i-am-groot-s1-and-s2.jpg',
-    30: '/posters/030-guardians-holiday-special.jpg',
-    155: '/posters/058-werewolf-by-night.jpg',
-    103: '/posters/009-A-Funny-Thing-Happened-on-the-Way-to-Thors-Hammer.jpg',
-    151: '/posters/151-agents-of-shield-s6-and-s7.jpg',
-  }[item.id];
-  return explicit || `/posters/${String(item.id).padStart(3, '0')}-${slugifyPosterName(item.title)}.jpg`;
+const metadataCacheKey = (item) => item?.tmdbId ? `${item.tmdbId}:${item.season || 0}` : null;
+
+const mediaKey = (item) => item?.external
+  ? `tmdb:${item.mediaType || (item.type === 'series' ? 'tv' : 'movie')}:${item.tmdbId}`
+  : String(item?.id);
+
+const isShieldRoadmapPart = (item) => item?.tmdbId === 1403 && item?.type === 'series';
+const isCatalogVisible = (item) => !isShieldRoadmapPart(item) || item.id === 106;
+
+const posterFromManifest = (item, manifest) => {
+  const value = manifest?.byId?.[String(item.id)] || manifest?.byTitle?.[item.title];
+  if (!value) return '';
+  return value.startsWith('http') ? value : `/posters/${value}`;
+};
+
+const getRoadmap = (item, items) => {
+  if (!item || !items?.length) return null;
+  const siblings = items
+    .filter(candidate => item.seriesGroup
+      ? candidate.seriesGroup === item.seriesGroup
+      : item.tmdbId && item.type === 'series' && candidate.tmdbId === item.tmdbId && candidate.type === 'series')
+    .sort((a, b) => a.order - b.order);
+  if (siblings.length < 2) return null;
+  const segments = [];
+  const sequence = [];
+  siblings.forEach((part, index) => {
+    segments.push({ type: 'part', item: part, isActive: part.id === item.id });
+    sequence.push(part);
+    const next = siblings[index + 1];
+    if (!next) return;
+    const interstitials = items
+      .filter(candidate => !siblings.some(sibling => sibling.id === candidate.id) && candidate.order > part.order && candidate.order < next.order)
+      .sort((a, b) => a.order - b.order);
+    if (interstitials.length) {
+      segments.push({ type: 'interstitials', items: interstitials });
+      sequence.push(...interstitials);
+    }
+  });
+  const currentIndex = sequence.findIndex(candidate => candidate.id === item.id);
+  return {
+    segments,
+    siblings,
+    complete: siblings.filter(part => part.userStatus === 'watched').length,
+    nextInSequence: sequence.slice(Math.max(currentIndex + 1, 0)).filter(candidate => candidate.userStatus !== 'watched' && candidate.userStatus !== 'dropped'),
+  };
 };
 
 const readSavedState = () => {
@@ -91,7 +127,7 @@ const enhance = (item, universe) => ({
   runtime: item.runtime || (item.type === 'series' ? (item.episodes || 6) * 42 : 125 + (item.id % 42)),
   rating: Number((6.7 + ((item.id * 17) % 25) / 10).toFixed(1)),
   genres: item.type === 'series' ? ['Series', 'Action', 'Drama'] : ['Action', item.phase >= 4 ? 'Adventure' : 'Sci-fi', item.essential ? 'Essential' : 'Canon'],
-  poster: localPoster(item),
+  poster: item.poster || '',
   accent: universe === 'dc' ? dcPalette[(item.phase - 1) % dcPalette.length] : universe === 'xmen' ? xmenPalette[(item.phase - 1) % xmenPalette.length] : marvelPalette[(item.phase - 1) % marvelPalette.length],
 });
 
@@ -99,6 +135,8 @@ export default function App() {
   const saved = useMemo(readSavedState, []);
   const [universe, setUniverse] = useState(saved.universe || 'marvel');
   const [query, setQuery] = useState(saved.query || '');
+  const [externalSearchResults, setExternalSearchResults] = useState([]);
+  const [externalSearchLoading, setExternalSearchLoading] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [selected, setSelected] = useState(null);
   const [genre, setGenre] = useState(saved.genre || 'All');
@@ -175,20 +213,43 @@ export default function App() {
   }, []);
 
   // Shared enrichment: adds user state from actions to any item
-  const enrichItem = useCallback((item) => ({
-    ...item,
-    poster: item.poster || posterMap[item.id] || posterMap[String(item.id)] || posterMap[slugifyPosterName(item.title)] || '',
-    userStatus: actions[item.id]?.status || 'unwatched',
-    bookmarked: Boolean(actions[item.id]?.bookmarked),
-    watchStartedAt: actions[item.id]?.watchStartedAt || null,
-    watchedDuration: actions[item.id]?.watchedDuration || 0,
-    watchedEpisodes: actions[item.id]?.watchedEpisodes || [],
-    rating: posterMap[`rating_${item.id}`] || item.rating,
-  }), [actions, posterMap]);
+  const enrichItem = useCallback((item) => {
+    // Check cache first, then posterMap, then local poster
+    let poster = item.poster;
+    let rating = item.rating;
+    
+    // Try cache
+    if (!poster && item.tmdbId) {
+      const cached = getFromCache(metadataCacheKey(item));
+      if (cached?.poster) {
+        poster = cached.poster;
+        if (cached.rating) rating = cached.rating;
+      }
+    }
+    
+    if (!poster) poster = posterFromManifest(item, posterMap);
+
+    const key = mediaKey(item);
+    const action = actions[key] || actions[item.id] || {};
+    const mapRating = posterMap?.ratings?.[String(item.id)];
+    if (mapRating) rating = mapRating;
+
+    return {
+      ...item,
+      poster,
+      userStatus: action.status || 'unwatched',
+      bookmarked: Boolean(action.bookmarked),
+      watchStartedAt: action.watchStartedAt || null,
+      watchedDuration: action.watchedDuration || 0,
+      watchedEpisodes: action.watchedEpisodes || [],
+      rating,
+    };
+  }, [actions, posterMap]);
 
   const activeItems = useMemo(() => {
     const sorted = allItems
       .filter(item => item.universe === universe)
+      .filter(isCatalogVisible)
       .filter(item => item.title.toLowerCase().includes(query.toLowerCase()))
       .filter(item => genre === 'All' || item.genres.includes(genre) || item.type === genre.toLowerCase())
       .filter(item => Number(item.rating) >= rating)
@@ -199,48 +260,163 @@ export default function App() {
   }, [allItems, universe, query, genre, rating, ageRatingFilter, sortBy, enrichItem]);
 
   // Unfiltered items (no search/filter) for WatchPage/WatchBrowse suggestions
-  const unfilteredItems = useMemo(() => {
-    const sorted = allItems
-      .filter(item => item.universe === universe)
-      .map(enrichItem);
+  const roadmapItems = useMemo(() => {
+    const sorted = allItems.filter(item => item.universe === universe).map(enrichItem);
     sorted.sort((a, b) => a.order - b.order);
     return sorted;
   }, [allItems, universe, enrichItem]);
 
+  const unfilteredItems = useMemo(
+    () => roadmapItems.filter(isCatalogVisible),
+    [roadmapItems],
+  );
+
   const failedRef = useRef(new Set());
 
+  // Fetch external search results whenever user searches (always show at end)
   useEffect(() => {
-    const missing = activeItems.filter(item => !item.poster && !posterMap[item.id] && !failedRef.current.has(item.id)).slice(0, 6);
+    const performExternalSearch = async () => {
+      // Only search if query is not empty and has minimum length
+      if (!query || query.length < 2) {
+        setExternalSearchResults([]);
+        return;
+      }
+
+      setExternalSearchLoading(true);
+      try {
+        const response = await fetch(`/api/tmdb/search?q=${encodeURIComponent(query)}`);
+        if (response.ok) {
+          const data = await response.json();
+          setExternalSearchResults(data.results || []);
+        } else {
+          setExternalSearchResults([]);
+        }
+      } catch (error) {
+        console.error('External search error:', error);
+        setExternalSearchResults([]);
+      } finally {
+        setExternalSearchLoading(false);
+      }
+    };
+
+    performExternalSearch();
+  }, [query]);
+
+  // Clear expired cache entries and failed items on mount to retry posters
+  useEffect(() => {
+    clearExpiredCache();
+    failedRef.current.clear(); // Retry failed items on remount
+  }, []);
+
+  useEffect(() => {
+    const missing = activeItems.filter(item => {
+      const cached = item.tmdbId ? getFromCache(metadataCacheKey(item)) : null;
+      return !item.poster && !cached && !posterFromManifest(item, posterMap) && !failedRef.current.has(item.id);
+    }).slice(0, 6);
+    
     if (!missing.length) return;
     let cancelled = false;
-    const batchSize = 3;
+    const batchSize = 4;
+    
     const fetchBatch = async (startIndex) => {
       if (cancelled || startIndex >= missing.length) return;
       const batch = missing.slice(startIndex, startIndex + batchSize);
-      const results = await Promise.allSettled(batch.map(item => {
+      
+      const results = await Promise.allSettled(batch.map(async (item) => {
+        // Prefer description endpoint for comprehensive metadata
         const params = new URLSearchParams({ title: item.title, year: String(item.year || '') });
         if (item.tmdbId) params.set('tmdbId', String(item.tmdbId));
-        return fetch(`/api/tmdb/poster?${params.toString()}`, { cache: 'force-cache' })
-          .then(response => response.ok ? response.json() : null);
+        params.set('mediaType', item.type === 'series' ? 'tv' : 'movie');
+        if (item.season) params.set('season', String(item.season));
+        
+        try {
+          const response = await fetch(`/api/tmdb/description?${params.toString()}`);
+          if (!response.ok) {
+            console.warn(`[v0] Description endpoint failed for ${item.title}: ${response.status}`);
+            return null;
+          }
+          
+          const data = await response.json();
+          // If description finds a result with poster, return it
+          if (data.success && data.poster) {
+            return data;
+          }
+          
+          // Fallback: search directly using search/multi endpoint which is great for TV series
+          console.log(`[v0] Fallback search for ${item.title} (no poster from description)`);
+          const searchParams = new URLSearchParams({ q: item.title });
+          const searchResponse = await fetch(`/api/tmdb/search?${searchParams.toString()}`);
+          
+          if (!searchResponse.ok) {
+            console.warn(`[v0] Search fallback failed for ${item.title}`);
+            return null;
+          }
+          
+          const searchData = await searchResponse.json();
+          const results = searchData.results || [];
+          
+          if (results.length > 0) {
+            const result = results[0]; // Take first result (already sorted by relevance)
+            console.log(`[v0] Found poster via search fallback for ${item.title}`);
+            return {
+              success: true,
+              poster: result.poster,
+              backdrop: result.backdrop,
+              overview: result.overview,
+              rating: result.rating,
+              releaseDate: result.year,
+              mediaType: result.type,
+            };
+          }
+          
+          return null;
+        } catch (err) {
+          console.error(`[v0] Poster fetch error for ${item.title}:`, err.message);
+          return null;
+        }
       }));
+      
       if (!cancelled) {
         const updates = {};
         const failed = [];
+        
         results.forEach((result, i) => {
-          if (result.status === 'fulfilled') {
-            if (result.value?.poster) {
-              updates[batch[i].id] = result.value.poster;
-              if (result.value.rating) updates[`rating_${batch[i].id}`] = Number(result.value.rating);
+          const item = batch[i];
+          if (result.status === 'fulfilled' && result.value && !result.value.error) {
+            const data = result.value;
+            if (data.success && data.poster) {
+              updates[item.id] = data.poster;
+              if (data.rating) updates[`rating_${item.id}`] = Number(data.rating);
+              
+              // Cache the metadata - use provided tmdbId or item's tmdbId
+              const cacheKey = metadataCacheKey({ tmdbId: data.tmdbId || item.tmdbId, season: item.season });
+              if (cacheKey) {
+                setCache(cacheKey, {
+                  poster: data.poster,
+                  backdrop: data.backdrop,
+                  overview: data.overview,
+                  rating: data.rating,
+                  releaseDate: data.releaseDate,
+                  mediaType: data.mediaType,
+                });
+              }
+              console.log(`[v0] Successfully fetched poster for ${item.title}`);
             } else {
-              failed.push(batch[i].id);
+              console.warn(`[v0] No poster found for ${item.title} (error: ${data.error || 'no poster_path'})`);
+              failed.push(item.id);
             }
+          } else {
+            console.warn(`[v0] Poster fetch failed for ${item.title} (status: ${result.status})`);
+            failed.push(item.id);
           }
         });
+        
         failed.forEach(id => failedRef.current.add(id));
         if (Object.keys(updates).length) setPosterMap(prev => ({ ...prev, ...updates }));
         fetchBatch(startIndex + batchSize);
       }
     };
+    
     fetchBatch(0);
     return () => { cancelled = true; };
   }, [activeItems, posterMap]);
@@ -248,13 +424,18 @@ export default function App() {
   const heroItems = activeItems.slice(0, 6);
   const featured = heroItems[heroIndex % Math.max(heroItems.length, 1)] || activeItems[0];
   const genres = ['All', 'Action', 'Adventure', 'Drama', 'Sci-fi', 'Essential', 'Series'];
+  const externalTrackedItems = useMemo(() => Object.entries(actions)
+    .filter(([key, action]) => key.startsWith('tmdb:') && action.media)
+    .map(([, action]) => enrichItem({ ...action.media, external: true })), [actions, enrichItem]);
+  const analyticsItems = useMemo(() => [...activeItems, ...externalTrackedItems], [activeItems, externalTrackedItems]);
+
   const stats = useMemo(() => {
-    const total = activeItems.length || 1;
-    const watched = activeItems.filter(item => item.userStatus === 'watched').length;
-    const watching = activeItems.filter(item => item.userStatus === 'watching').length;
-    const dropped = activeItems.filter(item => item.userStatus === 'dropped').length;
-    const bookmarked = activeItems.filter(item => item.bookmarked).length;
-    const watchedMinutes = activeItems.filter(item => item.userStatus === 'watched').reduce((sum, i) => sum + (i.runtime || 0), 0);
+    const total = analyticsItems.length || 1;
+    const watched = analyticsItems.filter(item => item.userStatus === 'watched').length;
+    const watching = analyticsItems.filter(item => item.userStatus === 'watching').length;
+    const dropped = analyticsItems.filter(item => item.userStatus === 'dropped').length;
+    const bookmarked = analyticsItems.filter(item => item.bookmarked).length;
+    const watchedMinutes = analyticsItems.filter(item => item.userStatus === 'watched').reduce((sum, i) => sum + (i.runtime || 0), 0);
     const watchedHours = Math.floor(watchedMinutes / 60);
     const watchedTime = watchedHours >= 1 ? `${watchedHours}h ${watchedMinutes % 60}m` : `${watchedMinutes}m`;
     const watchedByOrder = activeItems.filter(item => item.userStatus === 'watched').map(i => i.order).sort((a, b) => a - b);
@@ -265,16 +446,36 @@ export default function App() {
       if (streak > best) best = streak;
     }
     return { total, watched, watching, dropped, bookmarked, percent: Math.round((watched / total) * 100), watchedMinutes, watchedTime, streak: best };
-  }, [activeItems]);
+  }, [activeItems, analyticsItems]);
 
-  const updateAction = (item, patch) => setActions(prev => ({ ...prev, [item.id]: { ...(prev[item.id] || {}), ...patch } }));
+  const updateAction = (item, patch) => setActions(prev => {
+    const key = mediaKey(item);
+    const media = item.external ? {
+      id: item.id,
+      external: true,
+      title: item.title,
+      type: item.type,
+      mediaType: item.mediaType,
+      tmdbId: item.tmdbId,
+      poster: item.poster,
+      backdrop: item.backdrop,
+      year: item.year,
+      rating: item.rating,
+      runtime: item.runtime,
+      genres: item.genres || [],
+      desc: item.desc || item.overview,
+      universe: item.universe,
+      accent: item.accent,
+    } : prev[key]?.media;
+    return { ...prev, [key]: { ...(prev[key] || prev[item.id] || {}), ...(media ? { media } : {}), ...patch } };
+  });
   const cycleStatus = (item) => {
-    const current = actions[item.id]?.status || 'unwatched';
+    const current = actions[mediaKey(item)]?.status || actions[item.id]?.status || 'unwatched';
     updateAction(item, { status: STATUS[(STATUS.indexOf(current) + 1) % STATUS.length] });
   };
   const setStatus = (item, status) => updateAction(item, { status });
   const toggleWatched = (item) => setStatus(item, item.userStatus === 'watched' ? 'unwatched' : 'watched');
-  const toggleBookmark = (item) => updateAction(item, { bookmarked: !actions[item.id]?.bookmarked });
+  const toggleBookmark = (item) => updateAction(item, { bookmarked: !(actions[mediaKey(item)]?.bookmarked || actions[item.id]?.bookmarked) });
   const selectItem = (item) => {
     setSelected(item);
     if (item) window.history.replaceState(null, '', `#detail/${slugifyPosterName(item.title)}`);
@@ -296,6 +497,36 @@ export default function App() {
     setSelected(null);
     setSection('watch');
     window.history.replaceState(null, '', `#watch/${slugifyPosterName(item.title)}`);
+  };
+
+  // Handle playing external search results (not in database)
+  const onPlayExternal = (externalResult) => {
+    // Create a temporary item object for external results
+    const tempItem = {
+      id: `tmdb-${externalResult.type}-${externalResult.id}`,
+      external: true,
+      title: externalResult.title,
+      type: externalResult.type === 'tv' ? 'series' : 'film',
+      poster: externalResult.poster,
+      backdrop: externalResult.backdrop,
+      year: externalResult.year,
+      rating: externalResult.rating,
+      overview: externalResult.overview,
+      desc: externalResult.overview,
+      genres: externalResult.genres || [],
+      runtime: externalResult.runtime || (externalResult.type === 'tv' ? 45 : 120),
+      tmdbId: externalResult.id,
+      mediaType: externalResult.type,
+      universe: universe, // Assign to current universe for context
+      bookmarked: false,
+      userStatus: 'unwatched',
+    };
+    
+    updateAction(tempItem, { status: 'watching', watchStartedAt: Date.now() });
+    setWatchItem({ item: tempItem, tmdbId: externalResult.id, mediaType: externalResult.type });
+    setSelected(null);
+    setSection('watch');
+    window.history.replaceState(null, '', `#watch/${slugifyPosterName(externalResult.title)}`);
   };
 
   const universeName = universe === 'marvel' ? 'MCU' : universe === 'xmen' ? 'X-Men' : 'DC';
@@ -344,10 +575,10 @@ export default function App() {
         {activeItems.filter(i => i.userStatus === 'watching').length > 0 && <ContinueWatching items={activeItems.filter(i => i.userStatus === 'watching')} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} onResume={handleStartWatch} />}
       </>}
 
-      {section === 'list' && <ListSection items={activeItems} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />}
+      {section === 'list' && <ListSection items={activeItems} externalResults={externalSearchResults} externalLoading={externalSearchLoading} query={query} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} onPlayExternal={onPlayExternal} />}
       {section === 'analytics' && <><AnalyticsPanel stats={stats} large /><MovieRail title="In progress" items={activeItems.filter(i => i.userStatus === 'watching')} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} /></>}
             {section === 'profile' && <ProfilePage stats={stats} activeItems={activeItems} universe={universe} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} conflict={conflict} onResolveRemote={resolveUseRemote} onResolveLocal={resolveKeepLocal} syncToast={toast} />}
-      {section === 'watch' && safeWatchItem && <WatchPage watchItem={safeWatchItem} activeItems={unfilteredItems} onBack={() => { setWatchItem(null); window.history.replaceState(null, '', '#watch'); }} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={handleStartWatch} updateAction={updateAction} />}
+      {section === 'watch' && safeWatchItem && <WatchPage watchItem={safeWatchItem} activeItems={roadmapItems} onBack={() => { setWatchItem(null); window.history.replaceState(null, '', '#watch'); }} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={handleStartWatch} updateAction={updateAction} />}
       {section === 'watch' && !safeWatchItem && <WatchBrowse activeItems={activeItems} onStartWatch={handleStartWatch} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} setSection={setSection} setQuery={setQuery} />}
 
       <nav className="bottom-nav" aria-label="Primary">
@@ -358,7 +589,7 @@ export default function App() {
         <button className={section === 'profile' ? 'active' : ''} onClick={() => { setQuery(''); setSection('profile'); }}><UserRound size={22} /><span>Profile</span></button>
       </nav>
 
-      {selectedItem && <DetailView item={selectedItem} onClose={() => selectItem(null)} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={handleStartWatch} activeItems={unfilteredItems} />}
+      {selectedItem && <DetailView item={selectedItem} onClose={() => selectItem(null)} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={handleStartWatch} activeItems={roadmapItems} />}
       {trailer && <TrailerModal trailer={trailer} onClose={() => setTrailer(null)} />}
       {filtersOpen && <Filters genre={genre} setGenre={setGenre} rating={rating} setRating={setRating} ageRatingFilter={ageRatingFilter} setAgeRatingFilter={setAgeRatingFilter} sortBy={sortBy} setSortBy={setSortBy} genres={genres} count={activeItems.length} onClose={() => setFiltersOpen(false)} />}
       {authOpen && <AuthModal onClose={() => setAuthOpen(false)} onLogin={login} onSignup={signup} onGoogleSignIn={googleSignIn} onAnonymousSignIn={anonymousSignIn} onResetPassword={resetPassword} />}
@@ -463,7 +694,7 @@ function MovieCard({ item, setSelected, cycleStatus, setStatus, toggleBookmark, 
   </article>;
 }
 
-function ListSection({ items, setSelected, setStatus, toggleBookmark, playTrailer }) {
+function ListSection({ items, externalResults = [], externalLoading = false, query = '', setSelected, setStatus, toggleBookmark, playTrailer, onPlayExternal }) {
   const pageSize = 12;
   const [page, setPage] = useState(1);
   const [viewMode, setViewMode] = useState('list');
@@ -483,10 +714,43 @@ function ListSection({ items, setSelected, setStatus, toggleBookmark, playTraile
     {viewMode === 'grid' ? <div className="movie-grid web-grid list-card-grid">{visibleItems.map(item => <MovieCard key={item.id} item={item} setSelected={setSelected} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />)}</div> : <div className="list-grid">{visibleItems.map((item, index) => <article className="list-row" key={item.id} style={{ '--accent': item.accent }} onClick={() => setSelected(item)} role="button" tabIndex={0} aria-label={`View ${item.title} details`} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(item); } }}>
       <span className="list-index">{String(firstItem + index + 1).padStart(2, '0')}</span>
       <div className="list-poster"><img src={item.poster} alt={`${item.title} poster`} width="82" height="108" loading="lazy" /></div>
-      <div className="list-copy"><div className="list-title-line"><strong>{item.title}</strong>{item.essential && <span>Essential</span>}</div><span>{item.year} · {item.type} · {runtimeLabel(item.runtime, item.type)}</span><p>{item.desc || `${item.title} in the complete ${item.universe === 'marvel' ? 'MCU' : 'DC'} story timeline.`}</p><div className="list-tags">{item.genres.slice(0,3).map(g => <span key={g}>{g}</span>)}</div></div>
+      <div className="list-copy"><div className="list-title-line"><strong>{item.title}</strong>{item.essential && <span>Essential</span>}</div><span>{item.year} · {item.type} · {runtimeLabel(item.runtime, item.type)}</span><p>{item.desc || `${item.title} in the complete ${item.universe === 'marvel' ? 'MCU' : 'DC'} story timeline.`}</p><div className="list-tags">{(item.genres || []).slice(0,3).map(g => <span key={g}>{g}</span>)}</div></div>
       <div className="list-actions" onClick={e => e.stopPropagation()}><button className="list-trailer" onClick={() => playTrailer(item)} aria-label={`Play ${item.title} trailer`}><Play size={16} fill="currentColor" /><span>Trailer</span></button><StatusSelect item={item} setStatus={setStatus} /><button className={`list-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Bookmark title'}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button></div>
     </article>)}</div>}
     {pageCount > 1 && <nav className="pagination" aria-label="Viewing list pages"><button onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} aria-label="Previous page"><ChevronLeft size={18} /></button>{Array.from({ length: pageCount }, (_, index) => index + 1).map(pageNumber => <button key={pageNumber} className={currentPage === pageNumber ? 'active' : ''} aria-current={currentPage === pageNumber ? 'page' : undefined} onClick={() => goToPage(pageNumber)}>{pageNumber}</button>)}<button onClick={() => goToPage(currentPage + 1)} disabled={currentPage === pageCount} aria-label="Next page"><ChevronRight size={18} /></button></nav>}
+    
+    {externalResults.length > 0 && (
+      <div className="external-results">
+        <div className="external-header">
+          <h3>{items.length > 0 ? 'Also Found' : 'Search Results'}</h3>
+          <p className="external-subtitle">{items.length > 0 ? 'Other matches in TMDB' : 'Not in database - Play directly'}</p>
+        </div>
+        <div className="external-grid">
+          {externalResults.map(result => (
+            <div key={result.id} className="external-result-card" onClick={() => onPlayExternal(result)}>
+              <div className="external-poster">
+                <img src={result.poster} alt={result.title} loading="lazy" />
+                <div className="external-badge">{items.length > 0 ? 'TMDB' : 'New'}</div>
+                <button className="external-play-btn" onClick={(e) => { e.stopPropagation(); onPlayExternal(result); }} aria-label={`Play ${result.title}`}>
+                  <Play size={24} fill="white" />
+                </button>
+              </div>
+              <div className="external-info">
+                <h4>{result.title}</h4>
+                <p className="external-meta">{result.year || 'Date TBA'} · {result.type === 'tv' ? 'Series' : 'Movie'}{result.runtime ? ` · ${runtimeLabel(result.runtime, result.type === 'tv' ? 'series' : 'film')}` : ''}</p>
+                {result.overview && <p className="external-overview">{result.overview}</p>}
+                {result.rating && <p className="external-rating"><Star size={14} fill="currentColor" /> {result.rating}{result.voteCount ? ` · ${result.voteCount.toLocaleString()} ratings` : ''}</p>}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+    {items.length === 0 && externalResults.length === 0 && query && !externalLoading && (
+      <div className="no-results">
+        <p>No results found for "{query}"</p>
+      </div>
+    )}
   </section>;
 }
 
@@ -547,30 +811,31 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, ac
     setTimeout(() => setInlineTrailer(null), 400);
   };
   const [watchLoading, setWatchLoading] = useState(false);
-  const [downloadOpen, setDownloadOpen] = useState(false);
-  const [torrents, setTorrents] = useState(null);
-  const downloadRef = useRef(null);
-
-  useEffect(() => { setTorrents(null); setDownloadOpen(false); }, [item.id]);
-
-  const searchTorrents = async () => {
-    if (torrents) { setDownloadOpen(!downloadOpen); return; }
-    setDownloadOpen(true);
-    try {
-      const params = new URLSearchParams({ title: item.title, year: String(item.year || '') });
-      const res = await fetch(`/api/torrent/search?${params.toString()}`);
-      if (res.ok) {
-        const data = await res.json();
-        setTorrents(data.torrents || []);
-      }
-    } catch { setTorrents([]); }
-  };
+  const [downloadEpisodes, setDownloadEpisodes] = useState([]);
+  const [downloadEpisode, setDownloadEpisode] = useState(item.epStart || 1);
 
   useEffect(() => {
-    const close = (e) => { if (downloadRef.current && !downloadRef.current.contains(e.target)) setDownloadOpen(false); };
-    document.addEventListener('mousedown', close);
-    return () => document.removeEventListener('mousedown', close);
-  }, []);
+    if (item.type !== 'series' || !item.tmdbId) return;
+    const season = item.season || 1;
+    fetch(`/api/tmdb/episodes?tmdbId=${item.tmdbId}&season=${season}`, { cache: 'force-cache' })
+      .then(response => response.ok ? response.json() : null)
+      .then(data => {
+        const available = (data?.episodes || []).filter(episode => !item.epStart || (episode.episode >= item.epStart && episode.episode <= (item.epEnd || Infinity)));
+        setDownloadEpisodes(available);
+        if (available.length) setDownloadEpisode(available[0].episode);
+      })
+      .catch(() => setDownloadEpisodes([]));
+  }, [item.tmdbId, item.type, item.season, item.epStart, item.epEnd]);
+
+  const handleDownloadClick = () => {
+    const url = buildDownloadUrl({
+      mediaType: item.type === 'series' ? 'tv' : 'movie',
+      tmdbId: item.tmdbId,
+      season: item.season || 1,
+      episode: item.type === 'series' ? downloadEpisode : undefined,
+    });
+    if (url) window.open(url, '_blank', 'noopener,noreferrer');
+  };
 
   const handleWatchOnVideasy = async (item) => {
     if (watchLoading) return;
@@ -578,14 +843,16 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, ac
     try {
       const params = new URLSearchParams({ title: item.title, year: String(item.year || '') });
       if (item.tmdbId) params.set('tmdbId', String(item.tmdbId));
-      const res = await fetch(`/api/tmdb/poster?${params.toString()}`);
+      params.set('mediaType', item.type === 'series' ? 'tv' : 'movie');
+      const res = await fetch(`/api/tmdb/description?${params.toString()}`);
       if (!res.ok) throw new Error('TMDB lookup failed');
       const data = await res.json();
-      if (!data.tmdbId) throw new Error('No TMDB ID found');
-      const mediaType = data.mediaType === 'tv' ? 'tv' : 'movie';
+      if (!data.success || !data.tmdbId) throw new Error('No TMDB ID found');
+      const mediaType = data.mediaType;
       onStartWatch(item, data.tmdbId, mediaType);
     } catch {
-      // fallback: try with title as ID (some Videasy instances support this)        onStartWatch(item, item.tmdbId || null, item.type === 'series' ? 'tv' : 'movie');
+      // fallback: use item's tmdbId and type
+      onStartWatch(item, item.tmdbId || null, item.type === 'series' ? 'tv' : 'movie');
     } finally {
       setWatchLoading(false);
     }
@@ -595,29 +862,7 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, ac
     if (isTrailerExpanded && modalRef.current) modalRef.current.scrollTo({ top: 0, behavior: 'smooth' });
   }, [isTrailerExpanded]);
 
-  // Compute roadmap for multi-part series
-  const itemRoadmap = useMemo(() => {
-    if (!activeItems || !item.tmdbId || item.type !== 'series') return null;
-    const siblings = activeItems
-      .filter(i => i.tmdbId === item.tmdbId && i.type === 'series')
-      .sort((a, b) => a.order - b.order);
-    if (siblings.length < 2) return null;
-    const segments = [];
-    for (let i = 0; i < siblings.length; i++) {
-      const part = siblings[i];
-      segments.push({ type: 'part', item: part, isActive: part.id === item.id });
-      if (i < siblings.length - 1) {
-        const nextPart = siblings[i + 1];
-        const interstitials = activeItems
-          .filter(x => x.order > part.order && x.order < nextPart.order)
-          .sort((a, b) => a.order - b.order);
-        if (interstitials.length > 0) {
-          segments.push({ type: 'interstitials', items: interstitials });
-        }
-      }
-    }
-    return { segments, siblings };
-  }, [activeItems, item]);
+  const itemRoadmap = useMemo(() => getRoadmap(item, activeItems), [activeItems, item]);
 
   return <div className="detail-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
     <article className="detail-modal" role="dialog" aria-modal="true" aria-labelledby="detail-title" style={{ '--accent': item.accent }}>
@@ -636,10 +881,10 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, ac
         <div className="detail-content">
           <div className="detail-kicker"><span>{item.universe === 'marvel' ? 'Marvel Cinematic Universe' : item.universe === 'xmen' ? 'X-Men Universe' : 'DC Universe'}</span><span>#{String(item.order || item.id).padStart(2, '0')}</span></div>
           <h1 id="detail-title">{item.title}</h1>
-          <div className="detail-chips"><span className="detail-rating"><Star size={15} fill="currentColor" /> {item.rating.toFixed ? item.rating.toFixed(1) : item.rating}</span>{item.genres.slice(0,3).map(g => <span key={g}>{g}</span>)}</div>
+          <div className="detail-chips"><span className="detail-rating"><Star size={15} fill="currentColor" /> {item.rating.toFixed ? item.rating.toFixed(1) : item.rating}</span>{(item.genres || []).slice(0,3).map(g => <span key={g}>{g}</span>)}</div>
           <p className="detail-description">{item.desc || `Follow ${item.title} in the complete ${item.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} viewing order.`}</p>
           <div className="detail-facts"><div><Calendar size={18} /><span>Release year</span><strong>{item.year}</strong></div><div><Timer size={18} /><span>Runtime</span><strong>{runtimeLabel(item.runtime, item.type)}</strong></div><div><Sparkles size={18} /><span>Format</span><strong>{item.type}</strong></div>{item.userStatus === 'watching' && item.watchedDuration > 30000 && <div><Clock size={18} /><span>Watched</span><strong>{watchTimeLabel(item)}</strong></div>}</div>
-          <div className="detail-progress-actions"><StatusSelect item={item} setStatus={setStatus} /><button className={`detail-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={19} fill={item.bookmarked ? 'currentColor' : 'none'} /></button><button className="detail-videasy" onClick={() => handleWatchOnVideasy(item)} disabled={watchLoading} aria-label={`Watch ${item.title} on Videasy`}><Play size={18} fill="currentColor" /><span>{watchLoading ? 'Loading...' : 'Watch Now'}</span></button><div className="detail-download-wrap" ref={downloadRef}><button className="detail-download" onClick={searchTorrents} aria-label={`Download ${item.title}`}><Download size={18} /><span>Download</span></button>{downloadOpen && <div className="download-dropdown">{torrents === null ? <span className="download-loading">Searching...</span> : torrents.length === 0 ? <span className="download-empty">No torrents found</span> : torrents.map((t, i) => <a key={i} className="download-option" href={t.magnet} target="_blank" rel="noopener noreferrer" onClick={() => setDownloadOpen(false)}><span className="download-quality">{t.quality}</span><span className="download-size">{t.size}</span><span className="download-seeds">{t.seeds} seeds</span></a>)}</div>}</div></div>
+          <div className="detail-progress-actions"><StatusSelect item={item} setStatus={setStatus} /><button className={`detail-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={19} fill={item.bookmarked ? 'currentColor' : 'none'} /></button><button className="detail-videasy" onClick={() => handleWatchOnVideasy(item)} disabled={watchLoading} aria-label={`Watch ${item.title} on Videasy`}><Play size={18} fill="currentColor" /><span>{watchLoading ? 'Loading...' : 'Watch Now'}</span></button>{item.type === 'series' && <label className="detail-download-episode"><span className="sr-only">Episode to download</span><select value={downloadEpisode} onChange={event => setDownloadEpisode(Number(event.target.value))} disabled={!downloadEpisodes.length}>{downloadEpisodes.length ? downloadEpisodes.map(episode => <option key={episode.episode} value={episode.episode}>S{item.season || 1} E{episode.episode}</option>) : <option>Episodes unavailable</option>}</select></label>}<button className="detail-download" onClick={handleDownloadClick} disabled={!item.tmdbId || (item.type === 'series' && !downloadEpisodes.length)} aria-label={`Download ${item.title}${item.type === 'series' ? ` episode ${downloadEpisode}` : ''}`}><Download size={18} /><span>Download</span></button></div>
           {itemRoadmap && (
             <div className="detail-roadmap">
               <div className="section-title"><h2>Viewing Roadmap</h2><button>{itemRoadmap.siblings.length} Parts</button></div>
@@ -648,13 +893,13 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, ac
                   if (seg.type === 'part') {
                     const partNum = itemRoadmap.segments.filter((s, i) => s.type === 'part' && i <= idx).length;
                     return (
-                      <div key={seg.item.id} className={`roadmap-part ${seg.isActive ? 'active' : ''}`} style={{ '--accent': seg.item.accent, cursor: 'default' }}>
+                      <div key={seg.item.id} className={`roadmap-part ${seg.isActive ? 'active' : ''} ${seg.item.userStatus === 'watched' ? 'watched' : ''}`} style={{ '--accent': seg.item.accent, cursor: 'default' }}>
                         <span className="roadmap-part-dot" />
                         <div className="roadmap-part-poster">
                           {seg.item.poster ? <img src={seg.item.poster} alt={seg.item.title} loading="lazy" /> : <FallbackPoster item={seg.item} />}
                         </div>
                         <div className="roadmap-part-info">
-                          <span className="roadmap-part-badge">{seg.isActive && '● '}Part {partNum}{seg.item.season ? ` S${seg.item.season}` : ''}</span>
+                          <span className="roadmap-part-badge">{seg.item.userStatus === 'watched' ? 'Watched' : seg.isActive ? 'Now playing' : `Part ${partNum}`}{seg.item.season ? ` · Season ${seg.item.season}` : ''}</span>
                           <span className="roadmap-part-name">{seg.item.title.replace(/^Agents of SHIELD S\d+ /, '')}</span>
                           <span className="roadmap-part-meta">{seg.item.year} · {runtimeLabel(seg.item.runtime, seg.item.type)}</span>
                         </div>
@@ -812,6 +1057,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
   const { item, tmdbId, mediaType } = watchItem;
   const [switching, setSwitching] = useState(false);
   const [toast, setToast] = useState('');
+  const [selectedServer, setSelectedServer] = useState('videasy'); // 'videasy' or 'moviepire'
   const currentItem = activeItems.find(i => i.id === item.id) || item;
   const isSeries = currentItem.type === 'series' && currentItem.tmdbId;
   const [episodes, setEpisodes] = useState([]);
@@ -827,7 +1073,8 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
   };
 
   const episodeRangeTotal = currentItem.epEnd ? (currentItem.epEnd - (currentItem.epStart || 1) + 1) : episodes.length;
-  const allEpisodesWatched = episodeRangeTotal > 0 && watchedEpisodes.length >= episodeRangeTotal;
+  const watchedInRange = watchedEpisodes.filter(episode => episode >= (currentItem.epStart || 1) && episode <= (currentItem.epEnd || Infinity));
+  const allEpisodesWatched = episodeRangeTotal > 0 && watchedInRange.length >= episodeRangeTotal;
 
   useEffect(() => { setSelectedEpisode(currentItem.epStart || 1); }, [currentItem.id, currentItem.epStart]);
 
@@ -853,50 +1100,16 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
     return () => { cancelled = true; };
   }, [currentItem.tmdbId, currentItem.season, currentItem.epStart, currentItem.epEnd, isSeries]);
 
-  const videasyUrl = useMemo(() => {
-    const effectiveTmdbId = currentItem.tmdbId || tmdbId;
-    const effectiveMediaType = currentItem.type === 'series' ? 'tv' : 'movie';
-    const season = currentItem.season || 1;
-    let base = effectiveTmdbId
-      ? (isSeries && selectedEpisode
-        ? `https://player.videasy.net/${effectiveMediaType}/${effectiveTmdbId}/${season}/${selectedEpisode}`
-        : `https://player.videasy.net/${effectiveMediaType}/${effectiveTmdbId}`)
-      : `https://player.videasy.net/${effectiveMediaType}/${encodeURIComponent(item.title)}`;
-    const params = new URLSearchParams();
-    params.set('autoplay', '1');
-    const startSec = Math.floor((currentItem.watchedDuration || 0) / 1000);
-    if (startSec > 5) params.set('progress', String(startSec));
-    return `${base}?${params.toString()}`;
-  }, [tmdbId, item.title, currentItem.tmdbId, currentItem.type, currentItem.season, isSeries, selectedEpisode]);
-  const roadmapInfo = useMemo(() => {
-    if (!currentItem.tmdbId || currentItem.type !== 'series') return null;
-    const siblings = activeItems
-      .filter(i => i.tmdbId === currentItem.tmdbId && i.type === 'series')
-      .sort((a, b) => a.order - b.order);
-    if (siblings.length < 2) return null;
-    const segments = [];
-    const seqItems = [];
-    for (let i = 0; i < siblings.length; i++) {
-      const part = siblings[i];
-      segments.push({ type: 'part', item: part, isActive: part.id === currentItem.id });
-      seqItems.push(part);
-      if (i < siblings.length - 1) {
-        const nextPart = siblings[i + 1];
-        const interstitials = activeItems
-          .filter(x => x.order > part.order && x.order < nextPart.order)
-          .sort((a, b) => a.order - b.order);
-        if (interstitials.length > 0) {
-          segments.push({ type: 'interstitials', items: interstitials });
-          seqItems.push(...interstitials);
-        }
-      }
-    }
-    const currentIndex = seqItems.findIndex(i => i.id === currentItem.id);
-    const nextInSequence = seqItems
-      .slice(currentIndex + 1)
-      .filter(i => i.userStatus !== 'watched' && i.userStatus !== 'dropped');
-    return { segments, nextInSequence, siblings };
-  }, [activeItems, currentItem]);
+  const playerUrl = useMemo(() => buildPlayerUrl({
+    provider: selectedServer,
+    mediaType: currentItem.type === 'series' ? 'tv' : 'movie',
+    tmdbId: currentItem.tmdbId || tmdbId,
+    title: item.title,
+    season: currentItem.season || 1,
+    episode: isSeries ? selectedEpisode : undefined,
+    progressSeconds: Math.floor((currentItem.watchedDuration || 0) / 1000),
+  }), [selectedServer, currentItem.type, currentItem.tmdbId, currentItem.season, currentItem.watchedDuration, tmdbId, item.title, isSeries, selectedEpisode]);
+  const roadmapInfo = useMemo(() => getRoadmap(currentItem, activeItems), [activeItems, currentItem]);
 
   const upNext = roadmapInfo 
     ? roadmapInfo.nextInSequence.slice(0, 12)
@@ -994,16 +1207,23 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
           <span className="watch-kicker">{currentItem.universe === 'marvel' ? 'MCU' : 'DC'} · #{String(currentItem.order || currentItem.id).padStart(2, '0')}</span>
           <h1>{currentItem.title}</h1>
         </div>
-        <div className="watch-header-spacer" />
+        <label className="watch-server-select">
+          <Cloud size={15} aria-hidden="true" />
+          <span>Server</span>
+          <select value={selectedServer} onChange={event => setSelectedServer(event.target.value)} aria-label="Playback server">
+            <option value="videasy">Videasy</option>
+            <option value="moviepire">MoviePire</option>
+          </select>
+        </label>
       </header>
       {toast && <div className="watch-toast">{toast}</div>}
       <div className="watch-player">
-        <iframe key={isSeries ? `ep-${currentItem.tmdbId}-${currentItem.season || 1}-${selectedEpisode}` : currentItem.tmdbId || item.id} src={videasyUrl} title={`Watch ${item.title}`} frameBorder="0" allowFullScreen allow="encrypted-media" />
+        <iframe key={`${selectedServer}-${isSeries ? `ep-${currentItem.tmdbId}-${currentItem.season || 1}-${selectedEpisode}` : currentItem.tmdbId || item.id}`} src={playerUrl} title={`Watch ${item.title}`} frameBorder="0" allowFullScreen allow="encrypted-media" />
       </div>
       <div className="watch-progress-bar"><span style={{ width: `${progress}%` }} /></div>
       {isSeries && episodes.length > 0 && (
         <div className="watch-episode-picker">
-          <span className="watch-episode-label">{episodeLoading ? 'Loading...' : `${watchedEpisodes.length}/${episodeRangeTotal} watched`}</span>
+          <span className="watch-episode-label">{episodeLoading ? 'Loading...' : `${watchedInRange.length}/${episodeRangeTotal} watched`}</span>
           <div className="watch-episode-list">
             {episodes.map(ep => {
               const isWatched = watchedEpisodes.includes(ep.episode);
@@ -1023,7 +1243,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
       )}
       {roadmapInfo && (
         <section className="watch-roadmap">
-          <div className="section-title"><h2>Viewing Roadmap</h2><button>{roadmapInfo.siblings.length} Parts</button></div>
+          <div className="section-title"><div><p className="eyebrow">Recommended sequence</p><h2>Viewing roadmap</h2></div><span className="roadmap-summary">{roadmapInfo.complete}/{roadmapInfo.siblings.length} parts watched</span></div>
           <div className="roadmap-timeline">
             {roadmapInfo.segments.map((seg, idx) => {
               if (seg.type === 'part') {
@@ -1031,7 +1251,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
                 return (
                   <button
                     key={seg.item.id}
-                    className={`roadmap-part ${seg.isActive ? 'active' : ''}`}
+                    className={`roadmap-part ${seg.isActive ? 'active' : ''} ${seg.item.userStatus === 'watched' ? 'watched' : ''}`}
                     onClick={() => handleSwitchItem(seg.item)}
                     style={{ '--accent': seg.item.accent }}
                   >
@@ -1040,7 +1260,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
                       {seg.item.poster ? <img src={seg.item.poster} alt={seg.item.title} loading="lazy" /> : <FallbackPoster item={seg.item} />}
                     </div>
                     <div className="roadmap-part-info">
-                      <span className="roadmap-part-badge">{seg.isActive && '● '}Part {partNum}{seg.item.season ? ` S${seg.item.season}` : ''}</span>
+                      <span className="roadmap-part-badge">{seg.item.userStatus === 'watched' ? 'Watched' : seg.isActive ? 'Now playing' : `Part ${partNum}`}{seg.item.season ? ` · Season ${seg.item.season}` : ''}</span>
                       <span className="roadmap-part-name">{seg.item.title.replace(/^Agents of SHIELD S\d+ /, '')}</span>
                       <span className="roadmap-part-meta">{seg.item.year} · {runtimeLabel(seg.item.runtime, seg.item.type)}</span>
                     </div>

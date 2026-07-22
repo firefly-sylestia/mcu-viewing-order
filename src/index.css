@@ -1342,7 +1342,9 @@ button { border: 0; color: inherit; cursor: pointer; }
 }
 @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(-10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
 @keyframes watchFadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-.watch-header-spacer { flex: 1; }
+.watch-server-select { display: flex; align-items: center; gap: 7px; flex: 0 0 auto; min-width: 0; padding: 7px 8px 7px 10px; border: 1px solid rgba(255,255,255,.1); border-radius: 10px; background: #111217; color: #9ca3af; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
+.watch-server-select svg { flex: 0 0 auto; color: var(--accent); }
+.watch-server-select select { min-width: 0; max-width: 112px; border: 0; outline: 0; background: #111217; color: #f4f4f5; font: inherit; text-transform: none; letter-spacing: 0; cursor: pointer; }
 .watch-player { position: relative; width: 100%; max-width: 1100px; margin: 0 auto; aspect-ratio: 16/9; background: #000; border-left: 1px solid rgba(255,255,255,.06); border-right: 1px solid rgba(255,255,255,.06); box-shadow: 0 8px 40px rgba(0,0,0,.4); }
 .watch-progress-bar { max-width: 1100px; margin: 0 auto; height: 3px; background: rgba(255,255,255,.1); }
 .watch-progress-bar span { display: block; height: 100%; background: linear-gradient(90deg, #2a2a30, #3a3a42); transition: width 1s linear; }
@@ -1398,7 +1400,40 @@ button { border: 0; color: inherit; cursor: pointer; }
 }
 .detail-trailer { height: 50px; display: flex; align-items: center; justify-content: center; gap: 9px; border-radius: 15px; background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%); border: 1px solid color-mix(in srgb, var(--accent) 60%, transparent); color: #fff; font-weight: 850; box-shadow: 0 8px 24px var(--accent-glow); transition: transform .15s ease, box-shadow .15s ease; }
 .detail-trailer:hover { transform: translateY(-1px); box-shadow: 0 12px 32px var(--accent-glow); }
-.detail-content { align-self: center; min-width: 0; }
+.detail-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  /* Allow content to grow, but parent container handles scroll */
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 8px;
+}
+
+.detail-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.detail-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.detail-content::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.2);
+  border-radius: 3px;
+}
+
+.detail-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.3);
+}
+
+/* Prevent sections from shrinking below their content size */
+.detail-content > * {
+  flex-shrink: 0;
+}
 .detail-kicker { display: flex; justify-content: space-between; gap: 18px; color: color-mix(in srgb, var(--brand-accent) 72%, #ffffff); font-size: 11px; font-weight: 900; letter-spacing: .11em; text-transform: uppercase; }
 .detail-content h1 { margin: 14px 0 16px; font-size: clamp(38px,6vw,72px); line-height: .96; letter-spacing: -.05em; text-wrap: balance; }
 .detail-chips { display: flex; flex-wrap: wrap; gap: 7px; }
@@ -2980,15 +3015,19 @@ button { border: 0; color: inherit; cursor: pointer; }
   letter-spacing: 0.05em;
 }
 
-.watch-roadmap .section-title button {
-  background: rgba(255,255,255,.06);
+.roadmap-summary {
+  flex: 0 0 auto;
   border: 1px solid rgba(255,255,255,.1);
-  color: #94a3b8;
   border-radius: 999px;
-  padding: 6px 16px;
+  padding: 6px 12px;
+  background: #111217;
+  color: #94a3b8;
   font-size: 12px;
   font-weight: 700;
 }
+
+.roadmap-part.watched .roadmap-part-dot { background: #257953; border-color: #257953; }
+.roadmap-part.watched:not(.active) { opacity: .72; }
 
 /* Vertical timeline with connecting line */
 .roadmap-timeline {
@@ -3236,6 +3275,28 @@ button { border: 0; color: inherit; cursor: pointer; }
   margin-top: 28px;
   padding-top: 20px;
   border-top: 1px solid rgba(255,255,255,.06);
+  flex-shrink: 0;
+  max-height: 380px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 8px;
+}
+
+.detail-roadmap::-webkit-scrollbar {
+  width: 6px;
+}
+
+.detail-roadmap::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.detail-roadmap::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.2);
+  border-radius: 3px;
+}
+
+.detail-roadmap::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.3);
 }
 
 .detail-roadmap .roadmap-timeline {
@@ -3305,4 +3366,46 @@ button { border: 0; color: inherit; cursor: pointer; }
   .detail-roadmap .roadmap-timeline {
     padding-left: 20px;
   }
+
+  .watch-page { overflow-x: clip; }
+  .watch-header { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 10px; padding: 10px 12px; }
+  .watch-header > button { align-self: center; padding: 9px; }
+  .watch-header > button span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .watch-header h1 { font-size: 15px; }
+  .watch-server-select { grid-column: 1 / -1; width: 100%; justify-content: space-between; }
+  .watch-server-select select { flex: 1; max-width: none; text-align: right; }
+  .watch-player { border: 0; }
+  .watch-episode-picker { padding: 0 12px; }
+  .watch-roadmap { margin-top: 12px; padding: 18px 12px; }
+  .watch-roadmap .section-title { align-items: flex-end; gap: 10px; }
+  .roadmap-summary { padding: 5px 9px; font-size: 10px; }
+  .roadmap-part { width: 100%; min-width: 0; }
+  .roadmap-part-info { flex: 1; }
+  .roadmap-part-name { white-space: normal; overflow-wrap: anywhere; }
+  .roadmap-inter-items { flex-direction: column; align-items: stretch; }
+  .roadmap-inter-card { width: 100%; white-space: normal; }
 }
+
+/* External Search Results */
+.external-results { margin-top: 32px; padding: 24px 0; border-top: 1px solid rgba(255,255,255,.08); }
+.external-header { margin-bottom: 24px; }
+.external-header h3 { font-size: 24px; font-weight: 900; margin: 0 0 8px 0; color: #fff; }
+.external-subtitle { font-size: 13px; color: #999; margin: 0; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+.external-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px; }
+.external-result-card { cursor: pointer; transition: transform 200ms ease, box-shadow 200ms ease; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; }
+.external-result-card:hover { transform: translateY(-4px); }
+.external-poster { position: relative; width: 100%; aspect-ratio: 2/3; background: #1a1a1a; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,.08); }
+.external-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.external-badge { position: absolute; top: 8px; right: 8px; background: linear-gradient(135deg, #ea580c 0%, #f97316 100%); color: #fff; font-size: 11px; font-weight: 800; padding: 4px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: .03em; box-shadow: 0 2px 8px rgba(234, 88, 12, 0.3); }
+.external-play-btn { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 48px; height: 48px; border-radius: 50%; background: rgba(0,0,0,.6); border: 2px solid rgba(255,255,255,.3); display: flex; align-items: center; justify-content: center; color: #fff; cursor: pointer; transition: all 200ms ease; opacity: 0; }
+.external-poster:hover .external-play-btn { opacity: 1; background: rgba(0,0,0,.8); border-color: rgba(255,255,255,.6); transform: translate(-50%, -50%) scale(1.1); }
+.external-info { padding: 12px 0; display: flex; flex-direction: column; gap: 4px; }
+.external-info h4 { font-size: 13px; font-weight: 800; margin: 0; color: #fff; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.external-meta { font-size: 12px; color: #888; margin: 0; }
+.external-rating { font-size: 12px; color: #daa520; margin: 0; display: flex; align-items: center; gap: 4px; }
+.external-overview { margin: 2px 0; color: #a1a1aa; font-size: 12px; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.detail-download-episode select { height: 46px; max-width: 118px; border: 1px solid rgba(255,255,255,.1); border-radius: 10px; padding: 0 10px; background: #1b1f25; color: #ddd; font-weight: 700; }
+.detail-download:disabled { cursor: not-allowed; opacity: .45; }
+.no-results { text-align: center; padding: 60px 20px; color: #888; }
+
+.no-results p { font-size: 16px; margin: 0; }
