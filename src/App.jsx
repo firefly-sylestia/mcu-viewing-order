@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Search, SlidersHorizontal, Home, Bookmark, Play, UserRound, X, ArrowLeft, Star, BarChart3, Check, Clock, ListFilter, RotateCcw, ChevronLeft, ChevronRight, ChevronDown, Calendar, Timer, Sparkles, LogIn, LogOut, Cloud, Download, Camera } from 'lucide-react';
+import { Search, SlidersHorizontal, Home, Bookmark, Play, UserRound, X, ArrowLeft, Star, BarChart3, Check, Clock, ListFilter, RotateCcw, ChevronLeft, ChevronRight, ChevronDown, Calendar, Timer, Sparkles, LogIn, LogOut, Cloud, Download, Camera, Info, ShieldAlert } from 'lucide-react';
 import { RAW } from './data/mcuData';
 import { DC_RAW } from './data/dcData';
 import { XMEN_RAW } from './data/xmenData';
@@ -177,6 +177,9 @@ export default function App() {
   const [watchItem, setWatchItem] = useState(saved.watchItem || null);
   const [profileName, setProfileName] = useState(saved.profileName || '');
   const [authOpen, setAuthOpen] = useState(false);
+  const [adBlockerDismissed, setAdBlockerDismissed] = useState(() => localStorage.getItem('adblocker-dismissed') === '1');
+  const [watchConfirmSkipped, setWatchConfirmSkipped] = useState(() => localStorage.getItem('watch-confirm-skipped') === '1');
+  const [watchConfirmItem, setWatchConfirmItem] = useState(null); // { item, tmdbId, mediaType, onConfirm }
   const { user, login, signup, googleSignIn, anonymousSignIn, logout: authLogout, resetPassword, configured } = useAuth();
   const { pushToCloud, pushBeforeLogout, lastSynced, syncing, conflict, resolveUseRemote, resolveKeepLocal, toast } = useCloudSync(user, actions, profileName, setActions, setProfileName, watchItem, setWatchItem);
 
@@ -639,14 +642,38 @@ export default function App() {
     }
   };
   const resetFilters = () => { setQuery(''); setGenre('All'); setRating(0); setAgeRatingFilter('All'); setTypeFilter('All'); setSortBy('order'); setSortDirection('desc'); };
-  const handleStartWatch = (item, tmdbId, mediaType) => {
+  const handleStartWatch = useCallback((item, tmdbId, mediaType) => {
     setWatchItem({ item, tmdbId, mediaType });
     setStatus(item, 'watching');
     updateAction(item, { watchStartedAt: Date.now() });
     setSelected(null);
     setSection('watch');
     window.history.replaceState(null, '', `#watch/${slugifyPosterName(item.title)}`);
-  };
+  }, []);
+
+  // -- Watch confirmation: intercepts user-triggered play to ask for confirmation --
+  const startWatchWithConfirm = useCallback((item, tmdbId, mediaType) => {
+    if (watchConfirmSkipped) {
+      handleStartWatch(item, tmdbId, mediaType);
+      return;
+    }
+    setWatchConfirmItem({ item, tmdbId, mediaType });
+  }, [watchConfirmSkipped, handleStartWatch]);
+
+  const confirmWatch = useCallback(() => {
+    if (!watchConfirmItem) return;
+    const { item, tmdbId, mediaType } = watchConfirmItem;
+    setWatchConfirmItem(null);
+    handleStartWatch(item, tmdbId, mediaType);
+  }, [watchConfirmItem, handleStartWatch]);
+
+  const dismissWatchConfirm = useCallback((skipFuture = false) => {
+    setWatchConfirmItem(null);
+    if (skipFuture) {
+      setWatchConfirmSkipped(true);
+      localStorage.setItem('watch-confirm-skipped', '1');
+    }
+  }, []);
 
   // Handle playing external search results (not in database)
   const onPlayExternal = (externalResult) => {
@@ -666,16 +693,12 @@ export default function App() {
       runtime: externalResult.runtime || (externalResult.type === 'tv' ? 45 : 120),
       tmdbId: externalResult.id,
       mediaType: externalResult.type,
-      universe: universe, // Assign to current universe for context
+      universe: universe,
       bookmarked: false,
       userStatus: 'unwatched',
     };
     
-    updateAction(tempItem, { status: 'watching', watchStartedAt: Date.now() });
-    setWatchItem({ item: tempItem, tmdbId: externalResult.id, mediaType: externalResult.type });
-    setSelected(null);
-    setSection('watch');
-    window.history.replaceState(null, '', `#watch/${slugifyPosterName(externalResult.title)}`);
+    startWatchWithConfirm(tempItem, externalResult.id, externalResult.type);
   };
 
   const universeName = universe === 'marvel' ? 'MCU' : universe === 'xmen' ? 'X-Men' : 'DC';
@@ -727,7 +750,7 @@ export default function App() {
         <MovieRail title="Up next" items={activeItems.filter(i => i.userStatus === 'unwatched').slice(0, 10)} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} scrollable variant="upnext" />
         <MovieRail title="Essential picks" items={activeItems.filter(i => i.essential)} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} paginated gridControls />
         <MovieRail title="Recently watched" items={activeItems.filter(i => i.userStatus === 'watched').slice(-24).reverse()} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} empty="Mark titles as watched to see them here." paginated gridControls />
-        {activeItems.filter(i => i.userStatus === 'watching').length > 0 && <ContinueWatching items={activeItems.filter(i => i.userStatus === 'watching')} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} onResume={handleStartWatch} />}
+        {activeItems.filter(i => i.userStatus === 'watching').length > 0 &&          <ContinueWatching items={activeItems.filter(i => i.userStatus === 'watching')} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} onResume={startWatchWithConfirm} />}
         {externalTrackedItems.length > 0 && (
           <MovieRail
             title="Your TMDB"
@@ -796,8 +819,8 @@ export default function App() {
       {section === 'list' && <ListSection items={activeItems} sortKey={`${sortBy}-${sortDirection}`} externalResults={externalSearchResults} externalLoading={externalSearchLoading} query={query} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} onPlayExternal={onPlayExternal} />}
       {section === 'analytics' && <><AnalyticsPanel stats={stats} large /><MovieRail title="In progress" items={activeItems.filter(i => i.userStatus === 'watching')} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} /></>}
             {section === 'profile' && <ProfilePage stats={stats} activeItems={activeItems} universe={universe} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} conflict={conflict} onResolveRemote={resolveUseRemote} onResolveLocal={resolveKeepLocal} syncToast={toast} />}
-      {section === 'watch' && safeWatchItem && <WatchPage watchItem={safeWatchItem} activeItems={roadmapItems} onBack={() => { setWatchItem(null); window.history.replaceState(null, '', '#watch'); }} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={handleStartWatch} updateAction={updateAction} />}
-      {section === 'watch' && !safeWatchItem && <WatchBrowse activeItems={activeItems} externalResults={externalSearchResults} externalLoading={externalSearchLoading} actions={actions} query={query} onStartWatch={handleStartWatch} onPlayExternal={onPlayExternal} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} />}
+      {section === 'watch' && safeWatchItem && <WatchPage watchItem={safeWatchItem} activeItems={roadmapItems} onBack={() => { setWatchItem(null); window.history.replaceState(null, '', '#watch'); }} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={startWatchWithConfirm} updateAction={updateAction} />}
+      {section === 'watch' && !safeWatchItem && <WatchBrowse activeItems={activeItems} externalResults={externalSearchResults} externalLoading={externalSearchLoading} actions={actions} query={query} onStartWatch={startWatchWithConfirm} onPlayExternal={onPlayExternal} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} />}
 
       <nav className="bottom-nav" aria-label="Primary">
         <button className={section === 'home' ? 'active' : ''} onClick={() => { setSection('home'); setWatchItem(null); }}><Home size={22} /><span>Home</span></button>
@@ -807,10 +830,12 @@ export default function App() {
         <button className={section === 'profile' ? 'active' : ''} onClick={() => { setSection('profile'); }}><UserRound size={22} /><span>Profile</span></button>
       </nav>
 
-      {selectedItem && <DetailView item={selectedItem} onClose={() => selectItem(null)} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={handleStartWatch} activeItems={roadmapItems} />}
+      {selectedItem && <DetailView item={selectedItem} onClose={() => selectItem(null)} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={startWatchWithConfirm} activeItems={roadmapItems} />}
       {trailer && <TrailerModal trailer={trailer} onClose={() => setTrailer(null)} />}
       {filtersOpen && <Filters genre={genre} setGenre={setGenre} rating={rating} setRating={setRating} ageRatingFilter={ageRatingFilter} setAgeRatingFilter={setAgeRatingFilter} sortBy={sortBy} setSortBy={setSortBy} sortDirection={sortDirection} setSortDirection={setSortDirection} typeFilter={typeFilter} setTypeFilter={setTypeFilter} genres={genres} count={activeItems.length} onClose={() => setFiltersOpen(false)} />}
       {authOpen && <AuthModal onClose={() => setAuthOpen(false)} onLogin={login} onSignup={signup} onGoogleSignIn={googleSignIn} onAnonymousSignIn={anonymousSignIn} onResetPassword={resetPassword} />}
+      {section === 'watch' && !adBlockerDismissed && <AdBlockerDialog onDismiss={() => { setAdBlockerDismissed(true); localStorage.setItem('adblocker-dismissed', '1'); }} />}
+      {watchConfirmItem && <WatchConfirmDialog item={watchConfirmItem.item} onConfirm={confirmWatch} onDismiss={(skipFuture) => dismissWatchConfirm(skipFuture)} />}
       <Footer />
     </main>
   );
@@ -1422,10 +1447,10 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, ac
       const data = await res.json();
       if (!data.success || !data.tmdbId) throw new Error('No TMDB ID found');
       const mediaType = data.mediaType;
-      onStartWatch(item, data.tmdbId, mediaType);
+      startWatchWithConfirm(item, data.tmdbId, mediaType);
     } catch {
       // fallback: use item's tmdbId and type
-      onStartWatch(item, item.tmdbId || null, item.type === 'series' ? 'tv' : 'movie');
+      startWatchWithConfirm(item, item.tmdbId || null, item.type === 'series' ? 'tv' : 'movie');
     } finally {
       setWatchLoading(false);
     }
@@ -2170,6 +2195,47 @@ function Filters({ genre, setGenre, rating, setRating, ageRatingFilter, setAgeRa
       <button className="filter-results-btn" onClick={onClose}>Show {count} results</button>
     </div>
   </aside>;
+}
+
+/* ── Ad‑blocker tip dialog ─────────────────────────────────────────────────── */
+function AdBlockerDialog({ onDismiss }) {
+  return (
+    <div className="confirm-overlay" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) onDismiss(); }}>
+      <div className="confirm-modal adblocker-modal" role="dialog" aria-modal="true" aria-labelledby="adblocker-title">
+        <button className="confirm-close" onClick={onDismiss} aria-label="Close"><X size={18} /></button>
+        <div className="confirm-icon-ring adblocker-icon-ring">
+          <ShieldAlert size={28} />
+        </div>
+        <h2 id="adblocker-title">Use an ad blocker</h2>
+        <p>For the best viewing experience, we recommend using an ad blocker. Streaming sites often have intrusive popups and redirects that an ad blocker prevents.</p>
+        <div className="confirm-actions">
+          <button className="confirm-btn confirm-btn-primary" onClick={onDismiss}>Got it</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Watch confirmation dialog ─────────────────────────────────────────────── */
+function WatchConfirmDialog({ item, onConfirm, onDismiss }) {
+  return (
+    <div className="confirm-overlay" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) onDismiss(); }}>
+      <div className="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="wconfirm-title">
+        <button className="confirm-close" onClick={() => onDismiss(false)} aria-label="Close"><X size={18} /></button>
+        <div className="confirm-icon-ring">
+          <Play size={24} fill="currentColor" />
+        </div>
+        <h2 id="wconfirm-title">Start watching?</h2>
+        <p className="confirm-item-title">{item?.title}</p>
+        <p className="confirm-hint">You will be redirected to the player. An ad blocker is recommended for the best experience.</p>
+        <div className="confirm-actions">
+          <button className="confirm-btn confirm-btn-primary" onClick={onConfirm}>Watch now</button>
+          <button className="confirm-btn confirm-btn-secondary" onClick={() => onDismiss(false)}>Cancel</button>
+        </div>
+        <button className="confirm-skip" onClick={() => onDismiss(true)}>Don't show this again</button>
+      </div>
+    </div>
+  );
 }
 
 /* ── Footer ──────────────────────────────────────────────────────────────────── */
