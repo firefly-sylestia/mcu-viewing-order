@@ -179,6 +179,7 @@ export default function App() {
   const [authOpen, setAuthOpen] = useState(false);
   const [adBlockerDismissed, setAdBlockerDismissed] = useState(() => localStorage.getItem('adblocker-dismissed') === '1');
   const [watchConfirmSkipped, setWatchConfirmSkipped] = useState(() => localStorage.getItem('watch-confirm-skipped') === '1');
+  const [nativePlayer, setNativePlayer] = useState(() => localStorage.getItem('native-player') === '1');
   const [watchConfirmItem, setWatchConfirmItem] = useState(null); // { item, tmdbId, mediaType, onConfirm }
   const { user, login, signup, googleSignIn, anonymousSignIn, logout: authLogout, resetPassword, configured } = useAuth();
   const { pushToCloud, pushBeforeLogout, lastSynced, syncing, conflict, resolveUseRemote, resolveKeepLocal, toast } = useCloudSync(user, actions, profileName, setActions, setProfileName, watchItem, setWatchItem);
@@ -818,8 +819,8 @@ export default function App() {
 
       {section === 'list' && <ListSection items={activeItems} sortKey={`${sortBy}-${sortDirection}`} externalResults={externalSearchResults} externalLoading={externalSearchLoading} query={query} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} onPlayExternal={onPlayExternal} />}
       {section === 'analytics' && <><AnalyticsPanel stats={stats} large /><MovieRail title="In progress" items={activeItems.filter(i => i.userStatus === 'watching')} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} /></>}
-            {section === 'profile' && <ProfilePage stats={stats} activeItems={activeItems} universe={universe} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} conflict={conflict} onResolveRemote={resolveUseRemote} onResolveLocal={resolveKeepLocal} syncToast={toast} />}
-      {section === 'watch' && safeWatchItem && <WatchPage watchItem={safeWatchItem} activeItems={roadmapItems} onBack={() => { setWatchItem(null); window.history.replaceState(null, '', '#watch'); }} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={startWatchWithConfirm} updateAction={updateAction} />}
+            {section === 'profile' && <ProfilePage stats={stats} activeItems={activeItems} universe={universe} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} conflict={conflict} onResolveRemote={resolveUseRemote} onResolveLocal={resolveKeepLocal} syncToast={toast} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} />}
+      {section === 'watch' && safeWatchItem && <WatchPage watchItem={safeWatchItem} activeItems={roadmapItems} onBack={() => { setWatchItem(null); window.history.replaceState(null, '', '#watch'); }} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={startWatchWithConfirm} updateAction={updateAction} nativePlayer={nativePlayer} />}
       {section === 'watch' && !safeWatchItem && <WatchBrowse activeItems={activeItems} externalResults={externalSearchResults} externalLoading={externalSearchLoading} actions={actions} query={query} onStartWatch={startWatchWithConfirm} onPlayExternal={onPlayExternal} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} />}
 
       <nav className="bottom-nav" aria-label="Primary">
@@ -1801,7 +1802,7 @@ function WatchBrowse({ activeItems, externalResults = [], externalLoading = fals
   );
 }
 
-function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, onStartWatch, updateAction }) {
+function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, onStartWatch, updateAction, nativePlayer }) {
   const { item, tmdbId, mediaType } = watchItem;
   const [switching, setSwitching] = useState(false);
   const [toast, setToast] = useState('');
@@ -1976,7 +1977,21 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
       </header>
       {toast && <div className="watch-toast">{toast}</div>}
       <div className="watch-player">
-        <iframe key={`${selectedServer}-${isSeries ? `ep-${currentItem.tmdbId}-${currentItem.season || 1}-${selectedEpisode}` : currentItem.tmdbId || item.id}`} src={playerUrl} title={`Watch ${item.title}`} frameBorder="0" allowFullScreen allow="autoplay; fullscreen; picture-in-picture" loading="eager" />
+        {nativePlayer ? (
+          <div className="watch-native-launch">
+            <div className="watch-native-icon-ring">
+              <Play size={36} fill="currentColor" />
+            </div>
+            <h2>External player</h2>
+            <p>Opens {item.title} in a new tab using the native browser player.</p>
+            <a className="watch-native-btn" href={playerUrl} target="_blank" rel="noopener noreferrer">
+              <Play size={18} fill="currentColor" />
+              <span>Open {item.title}</span>
+            </a>
+          </div>
+        ) : (
+          <iframe key={`${selectedServer}-${isSeries ? `ep-${currentItem.tmdbId}-${currentItem.season || 1}-${selectedEpisode}` : currentItem.tmdbId || item.id}`} src={playerUrl} title={`Watch ${item.title}`} frameBorder="0" allowFullScreen allow="autoplay; fullscreen; picture-in-picture" loading="eager" />
+        )}
       </div>
       <div className="watch-progress-bar"><span style={{ width: `${progress}%` }} /></div>
       {isSeries && episodes.length > 0 && (

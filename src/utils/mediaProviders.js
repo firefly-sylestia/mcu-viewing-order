@@ -4,8 +4,8 @@ export const buildPlayerUrl = ({ provider, mediaType, tmdbId, title, season = 1,
   const params = new URLSearchParams({ autoplay: '1' });
 
   if (provider === 'moviepire') {
-    params.set('download', 'true');
-    params.set('para', 'true');
+    // server=blaze uses MP4 direct links (better A/V sync than HLS)
+    params.set('server', 'blaze');
     const path = type === 'tv' && episode
       ? `tv/${identifier}/${season}/${episode}`
       : `${type}/${identifier}`;

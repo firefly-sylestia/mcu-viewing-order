@@ -141,7 +141,7 @@ function ProfilePage({ stats, activeItems, universe, setSelected, cycleStatus, s
 
         {activeTab === 'settings' && (
           <div id="settings-panel" role="tabpanel" className="profile-panel settings-panel">
-            <SettingsPanel profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={onLogin} onLogout={onLogout} universe={universe} activeItems={activeItems} setStatus={setStatus} toggleBookmark={toggleBookmark} />
+            <SettingsPanel profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={onLogin} onLogout={onLogout} universe={universe} activeItems={activeItems} setStatus={setStatus} toggleBookmark={toggleBookmark} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} />
           </div>
         )}
       </div>
@@ -238,7 +238,7 @@ function ProfileHeader({ universe, stats, profileName, setProfileName, user, con
   );
 }
 
-function SettingsPanel({ profileName, setProfileName, user, configured, onLogin, onLogout, universe, activeItems, setStatus, toggleBookmark }) {
+function SettingsPanel({ profileName, setProfileName, user, configured, onLogin, onLogout, universe, activeItems, setStatus, toggleBookmark, nativePlayer, setNativePlayer }) {
   const { theme, setTheme } = useAppTheme();
   const [mounted, setMounted] = useState(false);
   const [draft, setDraft] = useState(profileName);
@@ -280,6 +280,35 @@ function SettingsPanel({ profileName, setProfileName, user, configured, onLogin,
             <span className={`theme-toggle-track ${theme === 'dark' ? 'dark' : 'light'}`}>
               <span className="theme-toggle-thumb">
                 {theme === 'dark' ? <Moon size={14} /> : <Sun size={14} />}
+              </span>
+            </span>
+          </button>
+        </div>
+      </div>
+
+      {/* Player Mode */}
+      <div className="settings-group">
+        <h3 className="settings-group-title">Playback</h3>
+        <div className="settings-row">
+          <div className="settings-row-label">
+            <span className="settings-row-icon"><Play size={18} /></span>
+            <div>
+              <strong>Native player</strong>
+              <small>{nativePlayer ? 'Opens in a new tab (bypasses iframe)' : 'Embedded player (default)'}</small>
+            </div>
+          </div>
+          <button
+            className="theme-toggle"
+            onClick={() => {
+              const next = !nativePlayer;
+              setNativePlayer(next);
+              localStorage.setItem('native-player', next ? '1' : '0');
+            }}
+            aria-label={`Switch to ${nativePlayer ? 'embedded' : 'native'} player`}
+          >
+            <span className={`theme-toggle-track ${nativePlayer ? 'dark' : 'light'}`}>
+              <span className="theme-toggle-thumb">
+                {nativePlayer ? <Play size={14} /> : <Play size={14} />}
               </span>
             </span>
           </button>
