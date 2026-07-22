@@ -126,7 +126,7 @@ const enhance = (item, universe) => ({
   ...item,
   universe,
   runtime: item.runtime || (item.type === 'series' ? (item.episodes || 6) * 42 : 125 + (item.id % 42)),
-  rating: Number((6.7 + ((item.id * 17) % 25) / 10).toFixed(1)),
+  rating: item.rating || null,
   genres: item.type === 'series' ? ['Series', 'Action', 'Drama'] : ['Action', item.phase >= 4 ? 'Adventure' : 'Sci-fi', item.essential ? 'Essential' : 'Canon'],
   poster: item.poster || '',
   accent: universe === 'dc' ? dcPalette[(item.phase - 1) % dcPalette.length] : universe === 'xmen' ? xmenPalette[(item.phase - 1) % xmenPalette.length] : marvelPalette[(item.phase - 1) % marvelPalette.length],
@@ -234,11 +234,11 @@ export default function App() {
     let poster = item.poster;
     let rating = item.rating;
     
-    // Try cache
-    if (!poster && item.tmdbId) {
+    // Always check cache for rating + poster metadata
+    if (item.tmdbId) {
       const cached = getFromCache(metadataCacheKey(item));
-      if (cached?.poster) {
-        poster = cached.poster;
+      if (cached) {
+        if (!poster && cached.poster) poster = cached.poster;
         if (cached.rating) rating = cached.rating;
       }
     }
@@ -271,7 +271,7 @@ export default function App() {
       .filter(item => Number(item.rating) >= rating)
       .filter(item => ageRatingFilter === 'All' || (item.ageRating || (item.type === 'series' ? 'TV-14' : 'PG-13')) === ageRatingFilter)
       .map(enrichItem);
-    sorted.sort((a, b) => sortBy === 'year' ? a.year - b.year : sortBy === 'title' ? a.title.localeCompare(b.title) : a.order - b.order);
+    sorted.sort((a, b) => sortBy === 'year' ? a.year - b.year : sortBy === 'title' ? a.title.localeCompare(b.title) : sortBy === 'rating-desc' ? (Number(b.rating) || 0) - (Number(a.rating) || 0) : sortBy === 'rating-asc' ? (Number(a.rating) || 0) - (Number(b.rating) || 0) : a.order - b.order);
     return sorted;
   }, [allItems, universe, query, genre, rating, ageRatingFilter, sortBy, enrichItem]);
 
@@ -962,6 +962,17 @@ function EpisodeDropdown({ episodes, selected, onSelect, season }) {
   );
 }
 
+/* ── Rating Chips (DetailView) ──────────────────────────────────────────────── */
+function RatingChips({ item }) {
+  const tmdb = item.rating?.toFixed ? item.rating.toFixed(1) : (item.rating ?? null);
+  return (
+    <>
+      {tmdb && <span className="detail-rating tmdb-rating"><Star size={15} fill="currentColor" /> {tmdb}<small>TMDB</small></span>}
+      {!tmdb && <span className="detail-rating"><Star size={15} fill="currentColor" /> N/A</span>}
+    </>
+  );
+}
+
 function SuggestionStrip({ nextUp, stats, setSelected, playTrailer }) {
   if (!nextUp) return null;
   return <section className="suggestion-strip" style={{ '--accent': nextUp.accent }}>
@@ -1063,7 +1074,7 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, ac
         <div className="detail-content">
           <div className="detail-kicker"><span>{item.universe === 'marvel' ? 'Marvel Cinematic Universe' : item.universe === 'xmen' ? 'X-Men Universe' : 'DC Universe'}</span><span>#{String(item.order || item.id).padStart(2, '0')}</span></div>
           <h1 id="detail-title">{item.title}</h1>
-          <div className="detail-chips"><span className="detail-rating"><Star size={15} fill="currentColor" /> {item.rating?.toFixed ? item.rating.toFixed(1) : (item.rating ?? 'N/A')}</span>{(item.genres || []).slice(0,3).map(g => <span key={g}>{g}</span>)}</div>
+          <div className="detail-chips"><RatingChips item={item} />{(item.genres || []).slice(0,3).map(g => <span key={g}>{g}</span>)}</div>
           <p className="detail-description">{item.desc || `Follow ${item.title} in the complete ${item.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} viewing order.`}</p>
           <div className="detail-facts"><div><Calendar size={18} /><span>Release year</span><strong>{item.year}</strong></div><div><Timer size={18} /><span>Runtime</span><strong>{runtimeLabel(item.runtime, item.type)}</strong></div><div><Sparkles size={18} /><span>Format</span><strong>{item.type}</strong></div>{item.userStatus === 'watching' && item.watchedDuration > 30000 && <div><Clock size={18} /><span>Watched</span><strong>{watchTimeLabel(item)}</strong></div>}</div>
           <div className="detail-progress-actions"><StatusSelect item={item} setStatus={setStatus} /><button className={`detail-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={19} fill={item.bookmarked ? 'currentColor' : 'none'} /></button><button className="detail-videasy" onClick={() => handleWatchOnVideasy(item)} disabled={watchLoading} aria-label={`Watch ${item.title} on Videasy`}><Play size={18} fill="currentColor" /><span>{watchLoading ? 'Loading...' : 'Watch Now'}</span></button>{item.type === 'series' && <EpisodeDropdown episodes={downloadEpisodes} selected={downloadEpisode} onSelect={setDownloadEpisode} season={item.season || 1} />}<button className="detail-download" onClick={handleDownloadClick} disabled={!item.tmdbId || (item.type === 'series' && !downloadEpisodes.length)} aria-label={`Download ${item.title}${item.type === 'series' ? ` episode ${downloadEpisode}` : ''}`}><Download size={18} /><span>Download</span></button></div>
@@ -1593,8 +1604,7 @@ const AGE_RATINGS = ['PG-13', 'R', 'TV-14', 'TV-PG', 'TV-MA', 'Not Rated'];
 function Filters({ genre, setGenre, rating, setRating, ageRatingFilter, setAgeRatingFilter, sortBy, setSortBy, genres, count, onClose }) {
   return <aside className="filter-screen web-filter">
     <div className="filter-head"><button onClick={() => { setGenre('All'); setRating(0); setAgeRatingFilter('All'); setSortBy('order'); }}>Clear All</button><b>Filters</b><button onClick={onClose}><X /></button></div>
-    <label>Sort by</label>
-    <FilterSelect value={sortBy} onChange={setSortBy} options={[{ value: 'order', label: 'Recommended' }, { value: 'year', label: 'Year' }, { value: 'title', label: 'Title' }]} />
+    <label>Sort by</label>     <FilterSelect value={sortBy} onChange={setSortBy} options={[{ value: 'order', label: 'Recommended' }, { value: 'rating-desc', label: 'Highest rated' }, { value: 'rating-asc', label: 'Lowest rated' }, { value: 'year', label: 'Year' }, { value: 'title', label: 'Title' }]} />
     <label>Minimum rating</label>
     <FilterSelect value={rating} onChange={v => setRating(Number(v))} options={[{ value: 0, label: 'Any rating' }, { value: 8, label: '8 & above' }, { value: 7, label: '7 & above' }, { value: 6, label: '6 & above' }]} />
     <label>Age rating</label>
@@ -1602,4 +1612,30 @@ function Filters({ genre, setGenre, rating, setRating, ageRatingFilter, setAgeRa
     <div className="genre-title">Genres <span>{genre === 'All' ? 0 : 1}</span></div><div className="filter-chips">{genres.map(g => <button key={g} className={genre === g ? 'selected' : ''} onClick={() => setGenre(g)}>{g}</button>)}</div>
     <button className="show-results" onClick={onClose}>Show {count} results</button>
   </aside>;
+}
+
+/* ── Footer ──────────────────────────────────────────────────────────────────── */
+function Footer() {
+  return (
+    <footer className="site-footer">
+      <div className="footer-content">
+        <div className="footer-col">
+          <h4>Disclaimer</h4>
+          <p>This website does not host, store, or distribute any video files, media content, or copyrighted material. All content is provided by third-party services and is the property of their respective owners.</p>
+        </div>
+        <div className="footer-col">
+          <h4>Legal</h4>
+          <p>This site operates under the principles of fair use and does not intend to infringe upon any copyrights. If you believe your copyrighted work has been used inappropriately, please contact the respective third-party provider directly. We comply with DMCA and take intellectual property rights seriously.</p>
+        </div>
+        <div className="footer-col">
+          <h4>Data Attribution</h4>
+          <p>Movie and series metadata, including posters, ratings, and descriptions, are sourced from <a href="https://www.themoviedb.org/" target="_blank" rel="noopener noreferrer">TMDB</a>. This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
+        </div>
+      </div>
+      <div className="footer-bottom">
+        <span>&copy; {new Date().getFullYear()} Cinematic Viewing Order. All rights reserved.</span>
+        <span>Not affiliated with Marvel, DC, Disney, Warner Bros., or any film studio.</span>
+      </div>
+    </footer>
+  );
 }

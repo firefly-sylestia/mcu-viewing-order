@@ -4104,3 +4104,22 @@ button { border: 0; color: inherit; cursor: pointer; }
 .no-results { text-align: center; padding: 60px 20px; color: #888; }
 
 .no-results p { font-size: 16px; margin: 0; }
+
+/* ── Footer ──────────────────────────────────────────────────────────────────── */
+.site-footer { max-width: 1180px; margin: 40px auto 24px; padding: 32px 24px 24px; border-top: 1px solid rgba(255,255,255,.06); color: #888; }
+.footer-content { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; margin-bottom: 24px; }
+.footer-col h4 { font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #aaa; margin-bottom: 10px; }
+.footer-col p { font-size: 12px; line-height: 1.7; color: #777; }
+.footer-col a { color: var(--accent); }
+.footer-bottom { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; font-size: 11px; color: #666; padding-top: 16px; border-top: 1px solid rgba(255,255,255,.04); }
+
+/* ── Rating Chips ────────────────────────────────────────────────────────────── */
+.detail-rating { display: inline-flex; align-items: center; gap: 5px; border: 1px solid rgba(255,255,255,.16); background: rgba(255,255,255,.04); border-radius: 999px; padding: 7px 14px; color: rgba(255,255,255,.86); font-weight: 700; font-size: 13px; }
+.detail-rating small { font-size: 10px; font-weight: 600; opacity: .6; margin-left: 2px; text-transform: uppercase; letter-spacing: .04em; }
+.tmdb-rating { color: #fff; background: color-mix(in srgb, #01b4e4 16%, transparent); border-color: rgba(1,180,228,.3); }
+.imdb-rating { color: #ffcf3a; background: color-mix(in srgb, #ffcf3a 12%, transparent); border-color: rgba(255,207,58,.25); }
+
+@media (max-width: 860px) {
+  .footer-content { grid-template-columns: 1fr; gap: 20px; }
+  .footer-bottom { flex-direction: column; }
+}
