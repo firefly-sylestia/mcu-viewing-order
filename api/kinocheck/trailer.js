@@ -82,10 +82,14 @@ export default async function handler(req, res) {
 
       if (trailersRes.ok) {
         const trailersData = await trailersRes.json();
-        if (trailersData?.data?.length) {
+        // Kinocheck /trailers returns numeric-keyed object {"0":{...},"1":{...},"_metadata":{...}}
+        const trailerEntries = Object.entries(trailersData || {})
+          .filter(([key, val]) => /^\d+$/.test(key) && val && typeof val === 'object' && val.youtube_video_id)
+          .map(([, val]) => val);
+        if (trailerEntries.length) {
           // Filter to best matches — prefer exact title match
           const titleLower = title.toLowerCase();
-          const allResults = trailersData.data
+          const allResults = trailerEntries
             .filter(t => t.youtube_video_id)
             .map(t => ({
               youtubeId: t.youtube_video_id,
