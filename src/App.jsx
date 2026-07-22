@@ -1897,6 +1897,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
     return () => { cancelled = true; };
   }, [currentItem.tmdbId, currentItem.season, currentItem.epStart, currentItem.epEnd, isSeries]);
 
+  const initProgressRef = useRef(Math.floor((currentItem.watchedDuration || 0) / 1000));
   const playerUrl = useMemo(() => buildPlayerUrl({
     provider: selectedServer,
     mediaType: currentItem.type === 'series' ? 'tv' : 'movie',
@@ -1904,6 +1905,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
     title: item.title,
     season: currentItem.season || 1,
     episode: isSeries ? selectedEpisode : undefined,
+    progressSeconds: initProgressRef.current,
   }), [selectedServer, currentItem.type, currentItem.tmdbId, currentItem.season, tmdbId, item.title, isSeries, selectedEpisode]);
   const roadmapInfo = useMemo(() => getRoadmap(currentItem, activeItems), [activeItems, currentItem]);
 
@@ -2067,7 +2069,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
             }}>Switch back to embedded player</button>
           </div>
         ) : (
-          <iframe key={iframeKey} src={playerUrl} title={`Watch ${item.title}`} frameBorder="0" allowFullScreen allow="autoplay; fullscreen; picture-in-picture" loading="eager" onLoad={() => { clearTimeout(loadTimeoutRef.current); setToast(''); saveServerPref(currentItem.tmdbId, selectedServer); }} />
+          <iframe key={iframeKey} src={playerUrl} title={`Watch ${item.title}`} frameBorder="0" allowFullScreen allow="encrypted-media" loading="eager" onLoad={() => { clearTimeout(loadTimeoutRef.current); setToast(''); saveServerPref(currentItem.tmdbId, selectedServer); }} />
         )}
       </div>
       <div className="watch-progress-bar"><span style={{ width: `${progress}%` }} /></div>

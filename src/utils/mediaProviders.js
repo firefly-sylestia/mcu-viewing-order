@@ -1,19 +1,19 @@
-export const buildPlayerUrl = ({ provider, mediaType, tmdbId, title, season = 1, episode }) => {
+export const buildPlayerUrl = ({ provider, mediaType, tmdbId, title, season = 1, episode, progressSeconds = 0 }) => {
   const type = mediaType === 'tv' ? 'tv' : 'movie';
   const identifier = tmdbId || encodeURIComponent(title || '');
-  const params = new URLSearchParams({ autoplay: '1' });
+  const params = new URLSearchParams();
 
   if (provider === 'moviepire') {
-    // server=blaze uses MP4 direct links (better A/V sync than HLS)
     params.set('server', 'blaze');
+    params.set('autoplay', '1');
     const path = type === 'tv' && episode
       ? `tv/${identifier}/${season}/${episode}`
       : `${type}/${identifier}`;
     return `https://video.moviepire.co/embed/${path}?${params.toString()}`;
   }
 
-  // NOTE: progress param intentionally omitted — seeking on load causes
-  // audio/video desync in cross-origin iframe players.
+  // Videasy params per their official docs
+  if (progressSeconds > 5) params.set('progress', String(progressSeconds));
   const path = type === 'tv' && episode
     ? `${type}/${identifier}/${season}/${episode}`
     : `${type}/${identifier}`;
