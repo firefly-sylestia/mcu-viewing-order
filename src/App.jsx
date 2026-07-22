@@ -263,16 +263,15 @@ export default function App() {
     let tomatoRating = null;
     let metaRating = null;
     let voteCount = null;
-    if (item.tmdbId) {
-      const cached = getFromCache(metadataCacheKey(item));
-      if (cached) {
-        if (!poster && cached.poster) poster = cached.poster;
-        if (cached.rating) rating = cached.rating;
-        if (cached.imdbRating) imdbRating = cached.imdbRating;
-        if (cached.tomatoRating) tomatoRating = cached.tomatoRating;
-        if (cached.metaRating) metaRating = cached.metaRating;
-        if (cached.voteCount) voteCount = cached.voteCount;
-      }
+    const ck = metadataCacheKey(item) || `omdb:${item.id}`;
+    const cached = getFromCache(ck);
+    if (cached) {
+      if (!poster && cached.poster) poster = cached.poster;
+      if (cached.rating) rating = cached.rating;
+      if (cached.imdbRating) imdbRating = cached.imdbRating;
+      if (cached.tomatoRating) tomatoRating = cached.tomatoRating;
+      if (cached.metaRating) metaRating = cached.metaRating;
+      if (cached.voteCount) voteCount = cached.voteCount;
     }
     
     if (!poster) poster = posterFromManifest(item, posterMap);
@@ -312,15 +311,15 @@ export default function App() {
       const dir = sortDirection === 'asc' ? 1 : -1;
       if (sortBy === 'year') return (a.year - b.year) * (sortDirection === 'asc' ? 1 : -1);
       if (sortBy === 'title') return a.title.localeCompare(b.title) * (sortDirection === 'asc' ? 1 : -1);
-      if (sortBy === 'rating') return ((Number(b.rating) || 0) - (Number(a.rating) || 0)) * dir;
-      if (sortBy === 'imdb') return ((Number(b.imdbRating) || 0) - (Number(a.imdbRating) || 0)) * dir;
-      if (sortBy === 'tomato') return ((parseInt(b.tomatoRating) || 0) - (parseInt(a.tomatoRating) || 0)) * dir;
-      if (sortBy === 'meta') return ((parseInt(b.metaRating) || 0) - (parseInt(a.metaRating) || 0)) * dir;
-      if (sortBy === 'popularity') return ((Number(b.voteCount) || 0) - (Number(a.voteCount) || 0)) * dir;
+      if (sortBy === 'rating') return ((Number(a.rating) || 0) - (Number(b.rating) || 0)) * dir;
+      if (sortBy === 'imdb') return ((Number(a.imdbRating) || 0) - (Number(b.imdbRating) || 0)) * dir;
+      if (sortBy === 'tomato') return ((parseInt(a.tomatoRating) || 0) - (parseInt(b.tomatoRating) || 0)) * dir;
+      if (sortBy === 'meta') return ((parseInt(a.metaRating) || 0) - (parseInt(b.metaRating) || 0)) * dir;
+      if (sortBy === 'popularity') return ((Number(a.voteCount) || 0) - (Number(b.voteCount) || 0)) * dir;
       return a.order - b.order;
     });
     return sorted;
-  }, [allItems, universe, query, genre, rating, ageRatingFilter, sortBy, enrichItem]);
+  }, [allItems, universe, query, genre, rating, ageRatingFilter, sortBy, sortDirection, typeFilter, enrichItem]);
 
   // Unfiltered items (no search/filter) for WatchPage/WatchBrowse suggestions
   const roadmapItems = useMemo(() => {
@@ -520,9 +519,7 @@ export default function App() {
   const omdbFetchedRef = useRef(new Set());
   useEffect(() => {
     const needRatings = activeItems.filter(item => {
-      if (!item.tmdbId) return false;
-      const ck = metadataCacheKey(item);
-      if (!ck) return false;
+      const ck = metadataCacheKey(item) || `omdb:${item.id}`;
       if (omdbFetchedRef.current.has(ck)) return false;
       const cached = getFromCache(ck);
       return !cached || (!cached.imdbRating && !cached.tomatoRating && !cached.metaRating);
@@ -533,7 +530,7 @@ export default function App() {
       if (cancelled || idx >= needRatings.length) return;
       const batch = needRatings.slice(idx, idx + 3);
       await Promise.allSettled(batch.map(async (item) => {
-        const ck = metadataCacheKey(item);
+        const ck = metadataCacheKey(item) || `omdb:${item.id}`;
         omdbFetchedRef.current.add(ck);
         try {
           const r = await fetch(`/api/omdb/rating?title=${encodeURIComponent(item.title)}&year=${item.year}`);
