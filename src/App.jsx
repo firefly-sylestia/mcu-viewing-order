@@ -177,9 +177,9 @@ export default function App() {
   const [watchItem, setWatchItem] = useState(saved.watchItem || null);
   const [profileName, setProfileName] = useState(saved.profileName || '');
   const [authOpen, setAuthOpen] = useState(false);
-  const [adBlockerDismissed, setAdBlockerDismissed] = useState(() => localStorage.getItem('adblocker-dismissed') === '1');
   const [watchConfirmSkipped, setWatchConfirmSkipped] = useState(() => localStorage.getItem('watch-confirm-skipped') === '1');
-  const [nativePlayer, setNativePlayer] = useState(() => localStorage.getItem('native-player') !== '0');
+  const [nativePlayer, setNativePlayer] = useState(() => localStorage.getItem('native-player') === '1');
+  const [adBlockerDismissed, setAdBlockerDismissed] = useState(() => localStorage.getItem('adblocker-dismissed') === '1');
   const [watchConfirmItem, setWatchConfirmItem] = useState(null); // { item, tmdbId, mediaType, onConfirm }
   const { user, login, signup, googleSignIn, anonymousSignIn, logout: authLogout, resetPassword, configured } = useAuth();
   const { pushToCloud, pushBeforeLogout, lastSynced, syncing, conflict, resolveUseRemote, resolveKeepLocal, toast } = useCloudSync(user, actions, profileName, setActions, setProfileName, watchItem, setWatchItem);
@@ -743,6 +743,7 @@ export default function App() {
         </button>
       </header>
 
+      {section === 'home' && !adBlockerDismissed && <AdBlockerDialog onDismiss={() => { setAdBlockerDismissed(true); localStorage.setItem('adblocker-dismissed', '1'); }} />}
       {section === 'home' && <>
         <section className="hero-layout">
           <TopCarousel items={heroItems} featured={featured} heroIndex={heroIndex} setHeroIndex={setHeroIndex} setSelected={selectItem} />
@@ -835,7 +836,6 @@ export default function App() {
       {trailer && <TrailerModal trailer={trailer} onClose={() => setTrailer(null)} />}
       {filtersOpen && <Filters genre={genre} setGenre={setGenre} rating={rating} setRating={setRating} ageRatingFilter={ageRatingFilter} setAgeRatingFilter={setAgeRatingFilter} sortBy={sortBy} setSortBy={setSortBy} sortDirection={sortDirection} setSortDirection={setSortDirection} typeFilter={typeFilter} setTypeFilter={setTypeFilter} genres={genres} count={activeItems.length} onClose={() => setFiltersOpen(false)} />}
       {authOpen && <AuthModal onClose={() => setAuthOpen(false)} onLogin={login} onSignup={signup} onGoogleSignIn={googleSignIn} onAnonymousSignIn={anonymousSignIn} onResetPassword={resetPassword} />}
-      {section === 'home' && !adBlockerDismissed && <AdBlockerDialog onDismiss={() => { setAdBlockerDismissed(true); localStorage.setItem('adblocker-dismissed', '1'); }} />}
       {watchConfirmItem && <WatchConfirmDialog item={watchConfirmItem.item} onConfirm={confirmWatch} onDismiss={(skipFuture) => dismissWatchConfirm(skipFuture)} />}
       <Footer />
     </main>
@@ -1807,9 +1807,13 @@ function WatchBrowse({ activeItems, externalResults = [], externalLoading = fals
 }
 
 /* ── Server preference cache (per-title, persisted to localStorage) ──────────── */
+
+function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, onStartWatch, updateAction, nativePlayer }) {
+  const { item, tmdbId, mediaType } = watchItem;
 const readServerCache = () => {
   try { return JSON.parse(localStorage.getItem('server-prefs') || '{}'); } catch { return {}; }
 };
+
 const saveServerPref = (tmdbId, server) => {
   if (!tmdbId) return;
   try {
@@ -1819,8 +1823,6 @@ const saveServerPref = (tmdbId, server) => {
   } catch {}
 };
 
-function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, onStartWatch, updateAction, nativePlayer }) {
-  const { item, tmdbId, mediaType } = watchItem;
   const [switching, setSwitching] = useState(false);
   const [toast, setToast] = useState('');
   const [contextExpanded, setContextExpanded] = useState(false);
@@ -1830,13 +1832,13 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
     return pref || 'videasy';
   });
 
-  const currentItem = activeItems.find(i => i.id === item.id) || item;
-
-  // Wrap setSelectedServer to auto-save server preference per title
+  // Auto-save server preference per title
   const setSelectedServer = (server) => {
     setSelectedServerRaw(server);
     if (currentItem?.tmdbId) saveServerPref(currentItem.tmdbId, server);
   };
+
+  const currentItem = activeItems.find(i => i.id === item.id) || item;
   const isSeries = currentItem.type === 'series' && currentItem.tmdbId;
   const [episodes, setEpisodes] = useState([]);
   const [selectedEpisode, setSelectedEpisode] = useState(currentItem.epStart || 1);
@@ -1845,7 +1847,6 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
   const loadTimeoutRef = useRef(null);
   const [iframeTimedOut, setIframeTimedOut] = useState(false);
   const [restartCounter, setRestartCounter] = useState(0);
-  const [nativeHintDismissed, setNativeHintDismissed] = useState(false);
   const iframeKey = `${selectedServer}-${isSeries ? `ep-${currentItem.tmdbId}-${currentItem.season || 1}-${selectedEpisode}` : currentItem.tmdbId || item.id}-r${restartCounter}`;
 
   // Detect iframe load failures: start 10s timer on iframe key change, cancel on load
@@ -1856,7 +1857,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
     setIframeTimedOut(false);
     loadTimeoutRef.current = setTimeout(() => {
       const alt = selectedServer === 'videasy' ? 'MoviePire' : 'Videasy';
-      setToast(`Player taking too long to load? Try switching to ${alt}`);
+      setToast(`Player taking longer than expected. Try restarting or switch servers.`);
       setIframeTimedOut(true);
     }, 10000);
     return () => clearTimeout(loadTimeoutRef.current);
@@ -1897,6 +1898,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
     return () => { cancelled = true; };
   }, [currentItem.tmdbId, currentItem.season, currentItem.epStart, currentItem.epEnd, isSeries]);
 
+  const initProgressRef = useRef(Math.floor((currentItem.watchedDuration || 0) / 1000));
   const playerUrl = useMemo(() => buildPlayerUrl({
     provider: selectedServer,
     mediaType: currentItem.type === 'series' ? 'tv' : 'movie',
@@ -1904,6 +1906,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
     title: item.title,
     season: currentItem.season || 1,
     episode: isSeries ? selectedEpisode : undefined,
+    progressSeconds: Math.max(0, initProgressRef.current || 0),
   }), [selectedServer, currentItem.type, currentItem.tmdbId, currentItem.season, tmdbId, item.title, isSeries, selectedEpisode]);
   const roadmapInfo = useMemo(() => getRoadmap(currentItem, activeItems), [activeItems, currentItem]);
 
@@ -2021,32 +2024,9 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
         </div>
       </header>
       {toast && (
-        <div className="watch-toast watch-toast-clickable">
-          {iframeTimedOut ? (
-            <button className="watch-toast-msg" onClick={() => {
-              setSelectedServer(selectedServer === 'videasy' ? 'moviepire' : 'videasy');
-              setToast('');
-              setIframeTimedOut(false);
-            }}>
-              {toast}
-              <span className="watch-toast-action">Switch now</span>
-            </button>
-          ) : (
-            <span className="watch-toast-msg">{toast}</span>
-          )}
+        <div className="watch-toast">
+          <span>{toast}</span>
           <button className="watch-toast-close" onClick={() => { setToast(''); setIframeTimedOut(false); }} aria-label="Dismiss"><X size={14} /></button>
-        </div>
-      )}
-      {!nativePlayer && !nativeHintDismissed && (
-        <div className="watch-native-hint">
-          <span>Audio sync issues? Try native player for better sync</span>
-          <div className="watch-native-hint-actions">
-            <button onClick={() => {
-              setNativePlayer(true);
-              localStorage.setItem('native-player', '1');
-            }}>Switch now</button>
-            <button className="watch-native-hint-close" onClick={() => setNativeHintDismissed(true)} aria-label="Dismiss hint"><X size={14} /></button>
-          </div>
         </div>
       )}
       <div className="watch-player">
@@ -2067,14 +2047,16 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
             }}>Switch back to embedded player</button>
           </div>
         ) : (
-          <iframe key={iframeKey} src={playerUrl} title={`Watch ${item.title}`} frameBorder="0" allowFullScreen allow="autoplay; fullscreen; picture-in-picture" loading="eager" onLoad={() => { clearTimeout(loadTimeoutRef.current); setToast(''); saveServerPref(currentItem.tmdbId, selectedServer); }} />
+          <iframe key={iframeKey} src={playerUrl} title={`Watch ${item.title}`} frameBorder="0" allowFullScreen allow="encrypted-media" loading="eager" onLoad={() => { clearTimeout(loadTimeoutRef.current); setToast(''); saveServerPref(currentItem.tmdbId, selectedServer); }} />
         )}
       </div>
       <div className="watch-progress-bar"><span style={{ width: `${progress}%` }} /></div>
       {!nativePlayer && (
-        <button className="watch-restart-btn" onClick={() => { setRestartCounter(c => c + 1); setToast(''); setIframeTimedOut(false); }} title="Restart from beginning (fixes audio sync)">
-          <RotateCcw size={13} /> Restart
-        </button>
+        <div className="watch-player-controls">
+          <button className="watch-restart-btn" onClick={() => { setRestartCounter(c => c + 1); setToast(''); setIframeTimedOut(false); }} title="Restart from beginning">
+            <RotateCcw size={13} /> Restart
+          </button>
+        </div>
       )}
       {isSeries && episodes.length > 0 && (
         <div className="watch-episode-picker">
@@ -2298,25 +2280,6 @@ function Filters({ genre, setGenre, rating, setRating, ageRatingFilter, setAgeRa
   </aside>;
 }
 
-/* ── Ad‑blocker tip dialog ─────────────────────────────────────────────────── */
-function AdBlockerDialog({ onDismiss }) {
-  return (
-    <div className="confirm-overlay" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) onDismiss(); }}>
-      <div className="confirm-modal adblocker-modal" role="dialog" aria-modal="true" aria-labelledby="adblocker-title">
-        <button className="confirm-close" onClick={onDismiss} aria-label="Close"><X size={18} /></button>
-        <div className="confirm-icon-ring adblocker-icon-ring">
-          <ShieldAlert size={28} />
-        </div>
-        <h2 id="adblocker-title">Use an ad blocker</h2>
-        <p>For the best viewing experience, we recommend using an ad blocker. Streaming sites often have intrusive popups and redirects that an ad blocker prevents.</p>
-        <div className="confirm-actions">
-          <button className="confirm-btn confirm-btn-primary" onClick={onDismiss}>Got it</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 /* ── Watch confirmation dialog ─────────────────────────────────────────────── */
 function WatchConfirmDialog({ item, onConfirm, onDismiss }) {
   return (
@@ -2334,6 +2297,21 @@ function WatchConfirmDialog({ item, onConfirm, onDismiss }) {
           <button className="confirm-btn confirm-btn-secondary" onClick={() => onDismiss(false)}>Cancel</button>
         </div>
         <button className="confirm-skip" onClick={() => onDismiss(true)}>Don't show this again</button>
+      </div>
+    </div>
+  );
+}
+
+function AdBlockerDialog({ onDismiss }) {
+  return (
+    <div className="confirm-overlay" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) onDismiss(); }}>
+      <div className="confirm-modal adblocker-modal" role="dialog" aria-modal="true" aria-labelledby="adblocker-title">
+        <div className="confirm-icon-ring adblocker-icon-ring">
+          <ShieldAlert size={28} />
+        </div>
+        <h2 id="adblocker-title">Use an Ad Blocker</h2>
+        <p>For the best viewing experience, we recommend using an ad blocker to avoid interruptions during playback.</p>
+        <button onClick={onDismiss}>Got it</button>
       </div>
     </div>
   );
