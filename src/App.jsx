@@ -304,15 +304,16 @@ export default function App() {
       .filter(isCatalogVisible)
       .filter(item => item.title.toLowerCase().includes(query.toLowerCase()))
       .filter(item => genre === 'All' || item.genres.includes(genre) || item.type === genre.toLowerCase())
-      .filter(item => Number(item.rating) >= rating)
       .filter(item => ageRatingFilter === 'All' || (item.ageRating || (item.type === 'series' ? 'TV-14' : 'PG-13')) === ageRatingFilter)
       .filter(item => typeFilter === 'All' || (typeFilter === 'Movies' ? item.type === 'film' : item.type === 'series'))
-      .map(enrichItem);
+      .map(enrichItem)
+      .filter(item => effectiveRating(item) >= rating);
+    const effectiveRating = (item) => Number(item.rating) || Number(item.imdbRating) || 0;
     sorted.sort((a, b) => {
       const dir = sortDirection === 'asc' ? 1 : -1;
       if (sortBy === 'year') return (a.year - b.year) * (sortDirection === 'asc' ? 1 : -1);
       if (sortBy === 'title') return a.title.localeCompare(b.title) * (sortDirection === 'asc' ? 1 : -1);
-      if (sortBy === 'rating') return ((Number(a.rating) || 0) - (Number(b.rating) || 0)) * dir;
+      if (sortBy === 'rating') return (effectiveRating(a) - effectiveRating(b)) * dir;
       if (sortBy === 'imdb') return ((Number(a.imdbRating) || 0) - (Number(b.imdbRating) || 0)) * dir;
       if (sortBy === 'tomato') return ((parseInt(a.tomatoRating) || 0) - (parseInt(b.tomatoRating) || 0)) * dir;
       if (sortBy === 'meta') return ((parseInt(a.metaRating) || 0) - (parseInt(b.metaRating) || 0)) * dir;
