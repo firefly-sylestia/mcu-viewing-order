@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Search, SlidersHorizontal, Home, Bookmark, Play, UserRound, X, ArrowLeft, Star, BarChart3, Check, Clock, ListFilter, RotateCcw, ChevronLeft, ChevronRight, ChevronDown, Calendar, Timer, Sparkles, LogIn, LogOut, Cloud, Download, Share2 } from 'lucide-react';
+import { Search, SlidersHorizontal, Home, Bookmark, Play, UserRound, X, ArrowLeft, Star, BarChart3, Check, Clock, ListFilter, RotateCcw, ChevronLeft, ChevronRight, ChevronDown, Calendar, Timer, Sparkles, LogIn, LogOut, Cloud, Download, Camera } from 'lucide-react';
 import { RAW } from './data/mcuData';
 import { DC_RAW } from './data/dcData';
 import { XMEN_RAW } from './data/xmenData';
@@ -1084,42 +1084,148 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, ac
     if (url) window.open(url, '_blank', 'noopener,noreferrer');
   };
 
-  const [exporting, setExporting] = useState(false);
-  const [exportError, setExportError] = useState(null);
-  const handleExportDetail = async () => {
-    if (exporting) return;
-    setExporting(true);
-    setExportError(null);
+  const [snapping, setSnapping] = useState(false);
+  const [snapError, setSnapError] = useState(null);
+  const snapCard = async () => {
+    if (snapping) return;
+    setSnapping(true);
+    setSnapError(null);
     try {
-      const { renderCardToCanvas } = await import('./export/cards/renderCardToCanvas');
-      const result = await renderCardToCanvas({
-        type: 'review',
-        data: {
-          item,
-          rating: item.rating || 0,
-          reviewer: item.universe === 'marvel' ? 'MCU Fan' : item.universe === 'xmen' ? 'X-Men Fan' : 'DC Fan',
-          reviewText: item.desc || `${item.title} — a ${item.type === 'series' ? 'series' : 'film'} from the ${item.universe === 'marvel' ? 'Marvel Cinematic Universe' : item.universe === 'xmen' ? 'X-Men Universe' : 'DC Universe'}.`,
-        },
-        settings: {
-          posterSrc: (it) => it.poster || '',
-        },
-      });
-      if (result?.blob) {
-        const url = URL.createObjectURL(result.blob);
+      const canvas = document.createElement('canvas');
+      const scale = 2;
+      const W = 600, H = 800, P = 32;
+      canvas.width = W * scale;
+      canvas.height = H * scale;
+      const ctx = canvas.getContext('2d');
+      ctx.scale(scale, scale);
+
+      // Background
+      const bg = ctx.createLinearGradient(0, 0, 0, H);
+      bg.addColorStop(0, '#0f1117');
+      bg.addColorStop(0.5, '#141820');
+      bg.addColorStop(1, '#0c0e14');
+      ctx.fillStyle = bg;
+      ctx.beginPath(); ctx.roundRect(0, 0, W, H, 24); ctx.fill();
+
+      // Accent line at top
+      ctx.fillStyle = item.accent || '#da1e37';
+      ctx.beginPath(); ctx.roundRect(P, P, W - P * 2, 4, 2); ctx.fill();
+
+      // Poster
+      if (item.poster) {
+        const img = await new Promise((resolve) => {
+          const i = new Image();
+          i.crossOrigin = 'anonymous';
+          i.onload = () => resolve(i);
+          i.onerror = () => resolve(null);
+          i.src = item.poster;
+        });
+        if (img) {
+          const pw = 180, ph = 270, px = P, py = 56;
+          ctx.save();
+          ctx.beginPath(); ctx.roundRect(px, py, pw, ph, 14); ctx.clip();
+          const iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
+          const s = Math.max(pw / iw, ph / ih);
+          const sw = pw / s, sh = ph / s;
+          ctx.drawImage(img, (iw - sw) / 2, (ih - sh) / 2, sw, sh, px, py, pw, ph);
+          ctx.restore();
+        }
+      }
+
+      const leftCol = item.poster ? 224 : P;
+
+      // Universe badge
+      const uLabel = item.universe === 'marvel' ? 'MARVEL' : item.universe === 'xmen' ? 'X-MEN' : 'DC';
+      ctx.fillStyle = 'rgba(255,255,255,0.08)';
+      ctx.beginPath(); ctx.roundRect(leftCol, 56, ctx.measureText(uLabel).width + 28, 26, 13); ctx.fill();
+      ctx.fillStyle = '#aaa';
+      ctx.font = 'bold 11px Inter, sans-serif';
+      ctx.fillText(uLabel, leftCol + 14, 73);
+
+      // Title
+      ctx.fillStyle = '#fff';
+      ctx.font = '900 28px Inter, sans-serif';
+      const titleWords = (item.title || '').split(' ');
+      let titleLine = '', titleY = 104;
+      for (const w of titleWords) {
+        const test = titleLine ? titleLine + ' ' + w : w;
+        if (ctx.measureText(test).width > W - leftCol - P) {
+          ctx.fillText(titleLine, leftCol, titleY);
+          titleLine = w;
+          titleY += 34;
+          if (titleY > 170) break;
+        } else { titleLine = test; }
+      }
+      if (titleLine && titleY <= 170) ctx.fillText(titleLine, leftCol, titleY);
+
+      // Meta row
+      const metaY = item.poster ? 354 : 170;
+      ctx.fillStyle = '#888';
+      ctx.font = '600 13px Inter, sans-serif';
+      const metaParts = [String(item.year || '—'), item.type === 'series' ? 'Series' : 'Film'];
+      if (item.runtime) metaParts.push(runtimeLabel(item.runtime, item.type));
+      ctx.fillText(metaParts.join('  ·  '), P, metaY);
+
+      // Rating pill
+      if (item.rating) {
+        ctx.fillStyle = 'rgba(255,255,255,0.1)';
+        const rw = 72, rh = 28;
+        ctx.beginPath(); ctx.roundRect(P, metaY + 14, rw, rh, 14); ctx.fill();
+        ctx.fillStyle = '#f2c94c';
+        ctx.font = '900 15px Inter, sans-serif';
+        ctx.fillText('★ ' + Number(item.rating).toFixed(1), P + 10, metaY + 33);
+      }
+
+      // Description
+      const descY = metaY + 64;
+      ctx.fillStyle = '#b0b5c0';
+      ctx.font = '400 13px Inter, sans-serif';
+      const desc = item.desc || `${item.title} in the complete viewing order.`;
+      const descWords = desc.split(' ');
+      let descLine = '', dy = descY;
+      for (const w of descWords) {
+        const test = descLine ? descLine + ' ' + w : w;
+        if (ctx.measureText(test).width > W - P * 2) {
+          ctx.fillText(descLine, P, dy);
+          descLine = w;
+          dy += 20;
+          if (dy > H - 130) break;
+        } else { descLine = test; }
+      }
+      if (descLine && dy <= H - 130) {
+        if (dy + 20 > H - 130) {
+          descLine = descLine.replace(/[\s,.!?]+$/, '') + '…';
+        }
+        ctx.fillText(descLine, P, dy);
+      }
+
+      // Footer
+      const footerY = H - 48;
+      ctx.fillStyle = 'rgba(255,255,255,0.06)';
+      ctx.fillRect(P, footerY - 6, W - P * 2, 1);
+      ctx.fillStyle = '#666';
+      ctx.font = '600 11px Inter, sans-serif';
+      ctx.fillText('MCU Viewing Order', P, footerY + 14);
+      ctx.fillStyle = item.accent || '#da1e37';
+      ctx.beginPath(); ctx.arc(W - P - 10, footerY + 8, 6, 0, Math.PI * 2); ctx.fill();
+
+      const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+      if (blob) {
+        const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = result.filename || `${slugifyPosterName(item.title)}-card.png`;
+        a.download = `${slugifyPosterName(item.title)}-card.png`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
       }
     } catch (err) {
-      console.error('Export failed:', err);
-      setExportError('Export failed — try again');
-      setTimeout(() => setExportError(null), 3000);
+      console.error('Snap failed:', err);
+      setSnapError('Failed');
+      setTimeout(() => setSnapError(null), 2500);
     } finally {
-      setExporting(false);
+      setSnapping(false);
     }
   };
 
@@ -1170,7 +1276,7 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, ac
           <div className="detail-chips"><RatingChips item={item} />{(item.genres || []).slice(0,3).map(g => <span key={g}>{g}</span>)}</div>
           <p className="detail-description">{item.desc || `Follow ${item.title} in the complete ${item.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} viewing order.`}</p>
           <div className="detail-facts"><div><Calendar size={18} /><span>Release year</span><strong>{item.year}</strong></div><div><Timer size={18} /><span>Runtime</span><strong>{runtimeLabel(item.runtime, item.type)}</strong></div><div><Sparkles size={18} /><span>Format</span><strong>{item.type}</strong></div>{item.userStatus === 'watching' && item.watchedDuration > 30000 && <div><Clock size={18} /><span>Watched</span><strong>{watchTimeLabel(item)}</strong></div>}</div>
-          <div className="detail-progress-actions"><StatusSelect item={item} setStatus={setStatus} /><button className={`detail-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={19} fill={item.bookmarked ? 'currentColor' : 'none'} /></button><button className="detail-videasy" onClick={() => handleWatchOnVideasy(item)} disabled={watchLoading} aria-label={`Watch ${item.title} on Videasy`}><Play size={18} fill="currentColor" /><span>{watchLoading ? 'Loading...' : 'Watch Now'}</span></button></div><div className="detail-download-row">{item.type === 'series' && <EpisodeDropdown episodes={downloadEpisodes} selected={downloadEpisode} onSelect={setDownloadEpisode} season={item.season || 1} />}<button className="detail-download" onClick={handleDownloadClick} disabled={!item.tmdbId || (item.type === 'series' && !downloadEpisodes.length)} aria-label={`Download ${item.title}${item.type === 'series' ? ` episode ${downloadEpisode}` : ''}`}><Download size={18} /><span>Download</span></button><button className={`detail-export-card${exportError ? ' export-failed' : ''}`} onClick={handleExportDetail} disabled={exporting} aria-label={`Export ${item.title} as shareable card`}><Share2 size={18} /><span>{exporting ? 'Rendering…' : exportError || 'Export'}</span></button></div>
+          <div className="detail-progress-actions"><StatusSelect item={item} setStatus={setStatus} /><button className={`detail-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={19} fill={item.bookmarked ? 'currentColor' : 'none'} /></button><button className="detail-videasy" onClick={() => handleWatchOnVideasy(item)} disabled={watchLoading} aria-label={`Watch ${item.title} on Videasy`}><Play size={18} fill="currentColor" /><span>{watchLoading ? 'Loading...' : 'Watch Now'}</span></button></div><div className="detail-download-row">{item.type === 'series' && <EpisodeDropdown episodes={downloadEpisodes} selected={downloadEpisode} onSelect={setDownloadEpisode} season={item.season || 1} />}<button className="detail-download" onClick={handleDownloadClick} disabled={!item.tmdbId || (item.type === 'series' && !downloadEpisodes.length)} aria-label={`Download ${item.title}${item.type === 'series' ? ` episode ${downloadEpisode}` : ''}`}><Download size={18} /><span>Download</span></button><button className={`detail-snap${snapError ? ' snap-failed' : ''}`} onClick={snapCard} disabled={snapping} aria-label={`Snapshot ${item.title} as shareable card`}><Camera size={17} /><span>{snapping ? '…' : snapError || 'Snap'}</span></button></div>
           {itemRoadmap && (
             <div className="detail-roadmap">
               <div className="section-title"><h2>Viewing Roadmap</h2><button>{itemRoadmap.siblings.length} Parts</button></div>
