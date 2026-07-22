@@ -4453,3 +4453,22 @@ button { border: 0; color: inherit; cursor: pointer; }
   transition: color .15s;
 }
 .confirm-skip:hover { color: rgba(255,255,255,.6); }
+
+/* ── Server quick-switch button ─────────────────────────────────────────────── */
+.watch-server-switch {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.1);
+  color: rgba(255,255,255,.5);
+  font-size: 11px; font-weight: 600;
+  white-space: nowrap;
+  transition: background .15s, color .15s, border-color .15s;
+  cursor: pointer;
+}
+.watch-server-switch:hover {
+  background: rgba(255,255,255,.12);
+  color: rgba(255,255,255,.8);
+  border-color: rgba(255,255,255,.2);
+}
