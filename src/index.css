@@ -965,7 +965,11 @@ button { border: 0; color: inherit; cursor: pointer; }
 .site-glow { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(circle at 16% 38%, rgba(51,65,85,.16), transparent 28%); filter: blur(12px); }
 .site-header { position: sticky; top: 0; z-index: 15; display: grid; grid-template-columns: auto 1fr auto auto; gap: 14px; align-items: center; padding: 12px 0; background: rgba(8,8,10,.94); }
 .brand { background: transparent; display: flex; align-items: center; gap: 10px; padding: 0; font-size: 16px; font-weight: 900; }.brand span { width: 38px; height: 38px; border-radius: 14px; background: linear-gradient(135deg, #1a1a1e 0%, #2a2a30 50%, #1a1a1e 100%); border: 1px solid rgba(255,255,255,.1); color: #e0e0e0; display: grid; place-items: center; font-size: 12px; box-shadow: 0 8px 24px rgba(51,65,85,.28); }
-.universe-tabs { display: flex; justify-content: center; gap: 6px; }.universe-tabs button { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.08); color: #cfcfcf; border-radius: 999px; padding: 8px 14px; font-weight: 800; font-size: 13px; }.universe-tabs .active { color: white; background: linear-gradient(135deg, #1a1a1e 0%, #2a2a30 50%, #1a1a1e 100%) !important; border: 1px solid rgba(255,255,255,.12) !important; }
+.universe-tabs { display: flex; justify-content: center; gap: 4px; padding: 4px; background: rgba(255,255,255,.04); border-radius: 999px; border: 1px solid rgba(255,255,255,.06); }.universe-tabs button { background: transparent; border: 1px solid transparent; color: rgba(255,255,255,.5); border-radius: 999px; padding: 7px 15px; font-weight: 800; font-size: 13px; cursor: pointer; transition: all .25s cubic-bezier(.2,.8,.2,1); position: relative; }.universe-tabs button:hover { color: rgba(255,255,255,.8); background: rgba(255,255,255,.06); }
+/* ── Universe accent gradients ─────────────────────────────────────────── */
+.movie-site.universe-marvel .universe-tabs .active { color: #fff; background: linear-gradient(135deg, #da1e37 0%, #b81a2e 50%, #9a1626 100%); border-color: rgba(218,30,55,.45); box-shadow: 0 0 18px rgba(218,30,55,.28), inset 0 1px 0 rgba(255,255,255,.1); }
+.movie-site.universe-dc .universe-tabs .active { color: #fff; background: linear-gradient(135deg, #2f80ed 0%, #1a6dd4 50%, #0d4f9c 100%); border-color: rgba(47,128,237,.45); box-shadow: 0 0 18px rgba(47,128,237,.28), inset 0 1px 0 rgba(255,255,255,.1); }
+.movie-site.universe-xmen .universe-tabs .active { color: #fff; background: linear-gradient(135deg, #b0b0ba 0%, #8a8a96 50%, #6e6e7c 100%); border-color: rgba(160,160,172,.45); box-shadow: 0 0 18px rgba(160,160,172,.28), inset 0 1px 0 rgba(255,255,255,.1); }
 .header-search { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.08); border-radius: 14px; padding: 0 14px; height: 42px; transition: border-color .18s ease, background .18s ease; }
 .header-search:focus-within { border-color: rgba(255,255,255,.22); background: rgba(255,255,255,.1); }
 .header-search svg { color: rgba(255,255,255,.45); flex-shrink: 0; }
@@ -2281,9 +2285,9 @@ button { border: 0; color: inherit; cursor: pointer; }
 }
 
 :root[data-theme="light"] .universe-tabs .active {
-  color: rgba(0,0,0,.85) !important;
-  background: rgba(0,0,0,.08) !important;
-  border-color: rgba(0,0,0,.12) !important;
+  color: rgba(0,0,0,.85);
+  background: rgba(0,0,0,.08);
+  border-color: rgba(0,0,0,.12);
 }
 
 :root[data-theme="light"] .header-search {
@@ -3054,7 +3058,6 @@ button { border: 0; color: inherit; cursor: pointer; }
 }
 
 .movie-site .brand span,
-.movie-site .universe-tabs .active,
 .movie-site .bottom-nav button.active,
 .movie-site .feature-play,
 .movie-site .list-actions .list-trailer,
