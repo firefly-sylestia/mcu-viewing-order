@@ -3547,9 +3547,11 @@ button { border: 0; color: inherit; cursor: pointer; }
   filter: brightness(1.05);
 }
 
-.web-rail .poster-button::after,
-.web-rail .movie-card:hover .poster-button::after {
-  opacity: 0 !important;
+.web-rail .poster-button img {
+  transition: transform .4s cubic-bezier(.2,.8,.2,1);
+}
+.web-rail .movie-card:hover .poster-button img {
+  transform: scale(1.05);
 }
 
 .web-rail .rail-scroll {
