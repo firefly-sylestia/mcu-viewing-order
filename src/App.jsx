@@ -817,7 +817,7 @@ function MovieCard({ item, setSelected, cycleStatus, setStatus, toggleBookmark, 
   return <article className="movie-card" style={{ '--accent': item.accent }}>
     <button className="poster-button" onClick={() => setSelected(item)}>
       <PosterArt item={item} />
-      {item.rating && <span className="card-rating"><Star size={11} fill="currentColor" />{Number(item.rating).toFixed(1)}</span>}
+      {(item.rating || item.imdbRating) && <span className="card-rating">{item.rating && <><Star size={11} fill="currentColor" />{Number(item.rating).toFixed(1)}</>}{item.rating && item.imdbRating && <span className="card-rating-sep" />}{item.imdbRating && <span className="card-rating-imdb">★{item.imdbRating}</span>}</span>}
     </button>
     <div className="card-body"><button className="title-button" onClick={() => setSelected(item)}>{item.title}</button><span>{item.year} · {runtimeLabel(item.runtime, item.type)}{item.userStatus === 'watching' && item.watchedDuration > 30000 ? ` · ${watchTimeLabel(item)}` : ''}</span></div>
     <div className="card-actions"><button onClick={() => playTrailer(item)} className="trailer-chip" aria-label={`Play ${item.title} trailer`}><Play size={16} fill="currentColor" /><span>Trailer</span></button><StatusSelect item={item} setStatus={setStatus} compact /><button onClick={() => toggleBookmark(item)} className={`bookmark-chip ${item.bookmarked ? 'saved' : ''}`} aria-label={item.bookmarked ? 'Remove bookmark' : 'Bookmark title'}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button></div>
