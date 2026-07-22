@@ -1816,7 +1816,8 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
   const watchedEpisodes = currentItem.watchedEpisodes || [];
   const loadTimeoutRef = useRef(null);
   const [iframeTimedOut, setIframeTimedOut] = useState(false);
-  const iframeKey = `${selectedServer}-${isSeries ? `ep-${currentItem.tmdbId}-${currentItem.season || 1}-${selectedEpisode}` : currentItem.tmdbId || item.id}`;
+  const [restartCounter, setRestartCounter] = useState(0);
+  const iframeKey = `${selectedServer}-${isSeries ? `ep-${currentItem.tmdbId}-${currentItem.season || 1}-${selectedEpisode}` : currentItem.tmdbId || item.id}-r${restartCounter}`;
 
   // Detect iframe load failures: start 10s timer on iframe key change, cancel on load
   useEffect(() => {
@@ -1867,7 +1868,6 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
     return () => { cancelled = true; };
   }, [currentItem.tmdbId, currentItem.season, currentItem.epStart, currentItem.epEnd, isSeries]);
 
-  const initProgressRef = useRef(Math.floor((currentItem.watchedDuration || 0) / 1000));
   const playerUrl = useMemo(() => buildPlayerUrl({
     provider: selectedServer,
     mediaType: currentItem.type === 'series' ? 'tv' : 'movie',
@@ -1875,7 +1875,6 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
     title: item.title,
     season: currentItem.season || 1,
     episode: isSeries ? selectedEpisode : undefined,
-    progressSeconds: initProgressRef.current,
   }), [selectedServer, currentItem.type, currentItem.tmdbId, currentItem.season, tmdbId, item.title, isSeries, selectedEpisode]);
   const roadmapInfo = useMemo(() => getRoadmap(currentItem, activeItems), [activeItems, currentItem]);
 
@@ -1932,7 +1931,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
     setElapsed(Math.min(currentItem.watchedDuration || 0, totalMs));
     const interval = setInterval(() => setElapsed(prev => prev + 5000), 5000);
     return () => clearInterval(interval);
-  }, [currentItem.id, totalMs]);
+  }, [currentItem.id, totalMs, restartCounter]);
 
   useEffect(() => {
     const save = setInterval(() => {
@@ -2027,6 +2026,11 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
         )}
       </div>
       <div className="watch-progress-bar"><span style={{ width: `${progress}%` }} /></div>
+      {!nativePlayer && (
+        <button className="watch-restart-btn" onClick={() => { setRestartCounter(c => c + 1); setToast(''); setIframeTimedOut(false); }} title="Restart from beginning (fixes audio sync)">
+          <RotateCcw size={13} /> Restart
+        </button>
+      )}
       {isSeries && episodes.length > 0 && (
         <div className="watch-episode-picker">
           <span className="watch-episode-label">{episodeLoading ? 'Loading...' : `${watchedInRange.length}/${episodeRangeTotal} watched`}</span>
