@@ -179,7 +179,7 @@ export default function App() {
   const [authOpen, setAuthOpen] = useState(false);
   const [adBlockerDismissed, setAdBlockerDismissed] = useState(() => localStorage.getItem('adblocker-dismissed') === '1');
   const [watchConfirmSkipped, setWatchConfirmSkipped] = useState(() => localStorage.getItem('watch-confirm-skipped') === '1');
-  const [nativePlayer, setNativePlayer] = useState(() => localStorage.getItem('native-player') === '1');
+  const [nativePlayer, setNativePlayer] = useState(() => localStorage.getItem('native-player') !== '0');
   const [watchConfirmItem, setWatchConfirmItem] = useState(null); // { item, tmdbId, mediaType, onConfirm }
   const { user, login, signup, googleSignIn, anonymousSignIn, logout: authLogout, resetPassword, configured } = useAuth();
   const { pushToCloud, pushBeforeLogout, lastSynced, syncing, conflict, resolveUseRemote, resolveKeepLocal, toast } = useCloudSync(user, actions, profileName, setActions, setProfileName, watchItem, setWatchItem);
@@ -1841,6 +1841,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
   const loadTimeoutRef = useRef(null);
   const [iframeTimedOut, setIframeTimedOut] = useState(false);
   const [restartCounter, setRestartCounter] = useState(0);
+  const [nativeHintDismissed, setNativeHintDismissed] = useState(false);
   const iframeKey = `${selectedServer}-${isSeries ? `ep-${currentItem.tmdbId}-${currentItem.season || 1}-${selectedEpisode}` : currentItem.tmdbId || item.id}-r${restartCounter}`;
 
   // Detect iframe load failures: start 10s timer on iframe key change, cancel on load
@@ -2032,6 +2033,18 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
           <button className="watch-toast-close" onClick={() => { setToast(''); setIframeTimedOut(false); }} aria-label="Dismiss"><X size={14} /></button>
         </div>
       )}
+      {!nativePlayer && !nativeHintDismissed && (
+        <div className="watch-native-hint">
+          <span>Audio sync issues? Try native player for better sync</span>
+          <div className="watch-native-hint-actions">
+            <button onClick={() => {
+              setNativePlayer(true);
+              localStorage.setItem('native-player', '1');
+            }}>Switch now</button>
+            <button className="watch-native-hint-close" onClick={() => setNativeHintDismissed(true)} aria-label="Dismiss hint"><X size={14} /></button>
+          </div>
+        </div>
+      )}
       <div className="watch-player">
         {nativePlayer ? (
           <div className="watch-native-launch">
@@ -2044,6 +2057,10 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
               <Play size={18} fill="currentColor" />
               <span>Open {item.title}</span>
             </a>
+            <button className="watch-native-embed-link" onClick={() => {
+              setNativePlayer(false);
+              localStorage.setItem('native-player', '0');
+            }}>Switch back to embedded player</button>
           </div>
         ) : (
           <iframe key={iframeKey} src={playerUrl} title={`Watch ${item.title}`} frameBorder="0" allowFullScreen allow="autoplay; fullscreen; picture-in-picture" loading="eager" onLoad={() => { clearTimeout(loadTimeoutRef.current); setToast(''); saveServerPref(currentItem.tmdbId, selectedServer); }} />
