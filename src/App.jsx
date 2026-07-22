@@ -1965,11 +1965,14 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
           <span className="watch-kicker">{currentItem.universe === 'marvel' ? 'MCU' : 'DC'} · #{String(currentItem.order || currentItem.id).padStart(2, '0')}</span>
           <h1>{currentItem.title}</h1>
         </div>
-        <label className="watch-server-select">
+        <div className="watch-server-select">
           <Cloud size={15} aria-hidden="true" />
           <span>Server</span>
           <ServerDropdown server={selectedServer} onSelect={setSelectedServer} />
-        </label>
+          <button className="watch-server-switch" onClick={() => setSelectedServer(selectedServer === 'videasy' ? 'moviepire' : 'videasy')} title={`Switch to ${selectedServer === 'videasy' ? 'MoviePire' : 'Videasy'}`}>
+            Try {selectedServer === 'videasy' ? 'MoviePire' : 'Videasy'} <RotateCcw size={12} />
+          </button>
+        </div>
       </header>
       {toast && <div className="watch-toast">{toast}</div>}
       <div className="watch-player">
