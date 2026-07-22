@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Search, SlidersHorizontal, Home, Bookmark, Play, UserRound, X, ArrowLeft, Star, BarChart3, Check, Clock, ListFilter, RotateCcw, ChevronLeft, ChevronRight, ChevronDown, Calendar, Timer, Sparkles, LogIn, LogOut, Cloud, Download, Camera, Info } from 'lucide-react';
+import { Search, SlidersHorizontal, Home, Bookmark, Play, UserRound, X, ArrowLeft, Star, BarChart3, Check, Clock, ListFilter, RotateCcw, ChevronLeft, ChevronRight, ChevronDown, Calendar, Timer, Sparkles, LogIn, LogOut, Cloud, Download, Camera, Info, ShieldAlert } from 'lucide-react';
 import { RAW } from './data/mcuData';
 import { DC_RAW } from './data/dcData';
 import { XMEN_RAW } from './data/xmenData';
@@ -179,6 +179,7 @@ export default function App() {
   const [authOpen, setAuthOpen] = useState(false);
   const [watchConfirmSkipped, setWatchConfirmSkipped] = useState(() => localStorage.getItem('watch-confirm-skipped') === '1');
   const [nativePlayer, setNativePlayer] = useState(() => localStorage.getItem('native-player') === '1');
+  const [adBlockerDismissed, setAdBlockerDismissed] = useState(() => localStorage.getItem('adblocker-dismissed') === '1');
   const [watchConfirmItem, setWatchConfirmItem] = useState(null); // { item, tmdbId, mediaType, onConfirm }
   const { user, login, signup, googleSignIn, anonymousSignIn, logout: authLogout, resetPassword, configured } = useAuth();
   const { pushToCloud, pushBeforeLogout, lastSynced, syncing, conflict, resolveUseRemote, resolveKeepLocal, toast } = useCloudSync(user, actions, profileName, setActions, setProfileName, watchItem, setWatchItem);
@@ -742,6 +743,7 @@ export default function App() {
         </button>
       </header>
 
+      {section === 'home' && !adBlockerDismissed && <AdBlockerDialog onDismiss={() => { setAdBlockerDismissed(true); localStorage.setItem('adblocker-dismissed', '1'); }} />}
       {section === 'home' && <>
         <section className="hero-layout">
           <TopCarousel items={heroItems} featured={featured} heroIndex={heroIndex} setHeroIndex={setHeroIndex} setSelected={selectItem} />
@@ -2281,6 +2283,21 @@ function WatchConfirmDialog({ item, onConfirm, onDismiss }) {
           <button className="confirm-btn confirm-btn-secondary" onClick={() => onDismiss(false)}>Cancel</button>
         </div>
         <button className="confirm-skip" onClick={() => onDismiss(true)}>Don't show this again</button>
+      </div>
+    </div>
+  );
+}
+
+function AdBlockerDialog({ onDismiss }) {
+  return (
+    <div className="confirm-overlay" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) onDismiss(); }}>
+      <div className="confirm-modal adblocker-modal" role="dialog" aria-modal="true" aria-labelledby="adblocker-title">
+        <div className="confirm-icon-ring adblocker-icon-ring">
+          <ShieldAlert size={28} />
+        </div>
+        <h2 id="adblocker-title">Use an Ad Blocker</h2>
+        <p>For the best viewing experience, we recommend using an ad blocker to avoid interruptions during playback.</p>
+        <button onClick={onDismiss}>Got it</button>
       </div>
     </div>
   );
