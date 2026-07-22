@@ -486,8 +486,12 @@ export default function App() {
   const playTrailer = (item) => {
     const match = getTrailerByTitle(item.title);
     const youtubeId = match?.primary?.youtubeId || match?.youtubeId;
-    const url = youtubeId ? trailerEmbedUrl(youtubeId) : `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(`${item.title} trailer`)}`;
-    setTrailer({ title: item.title, url });
+    if (!youtubeId) {
+      window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(`${item.title} official trailer`)}`, '_blank', 'noopener');
+      return;
+    }
+    const url = trailerEmbedUrl(youtubeId);
+    setTrailer({ title: item.title, url, options: match?.options });
   };
   const resetFilters = () => { setQuery(''); setGenre('All'); setRating(0); setAgeRatingFilter('All'); setSortBy('order'); };
   const handleStartWatch = (item, tmdbId, mediaType) => {

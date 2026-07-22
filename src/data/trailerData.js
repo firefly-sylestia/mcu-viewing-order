@@ -35,6 +35,8 @@ export const TRAILER_DATA = {
   'Deadpool & Wolverine': [{ label: 'Official Trailer', youtubeId: '73_1biulkYk', type: 'trailer' }, { label: 'Teaser', youtubeId: 'uJMCNJP2ipI', type: 'teaser' }],
   'Agatha All Along': [{ label: 'Official Trailer', youtubeId: 'R9pXbNz6Vbw', type: 'trailer' }, { label: 'Teaser', youtubeId: 'ARulRbzM7Jw', type: 'teaser' }],
   'Daredevil: Born Again S1': [{ label: 'Official Trailer', youtubeId: '7xALolZzhSM', type: 'trailer' }],
+  'Captain America: Brave New World': [{ label: 'Official Trailer', youtubeId: '1pHDWnXmK7Y', type: 'trailer' }, { label: 'Teaser', youtubeId: 'O_A8Hd43aao', type: 'teaser' }],
+  'Thunderbolts*': [{ label: 'Official Trailer', youtubeId: 'YLVY68mm71U', type: 'trailer' }, { label: 'Teaser', youtubeId: 'U8kDfuAH4tI', type: 'teaser' }],
   'Fantastic Four: First Steps': [{ label: 'Official Teaser', youtubeId: 'pAsmrKyMqaA', type: 'teaser' }],
   'I Am Groot': [{ label: 'Season 2 Trailer', youtubeId: 'D7eFpRf4tac', type: 'trailer' }, { label: 'Season 1 Teaser', youtubeId: 'D_zuPj39C3E', type: 'teaser' }],
   'Loki': [{ label: 'Season 2 Trailer', youtubeId: 'dug56u8NN7g', type: 'trailer' }, { label: 'Season 1 Teaser', youtubeId: 'nW948Va-l10', type: 'teaser' }],

@@ -1,8 +1,9 @@
 export const XMEN_PHASES = [
-  { id: 1, label: 'Era 1', name: 'Original Trilogy', color: '#1a3a5c' },
-  { id: 2, label: 'Era 2', name: 'Prequel Era', color: '#1e5080' },
-  { id: 3, label: 'Era 3', name: 'Post-DOFP & Standalone', color: '#2f80ed' },
-  { id: 4, label: 'TV', name: 'X-Men TV Series', color: '#4a90d9' },
+  { id: 1, label: 'Era 1', name: 'Original Trilogy', color: '#6a6a7a' },
+  { id: 2, label: 'Era 2', name: 'Prequel Era', color: '#828294' },
+  { id: 3, label: 'Era 3', name: 'Post-DOFP & Standalone', color: '#9a9aa8' },
+  { id: 4, label: 'TV', name: 'X-Men TV Series', color: '#b0b0ba' },
+  { id: 5, label: 'Animated', name: 'X-Men Animated Revival', color: '#c4c4cc' },
 ];
 
 export const XMEN_RAW = [
@@ -31,6 +32,10 @@ export const XMEN_RAW = [
   { id: 6016, order: 16, title: 'Legion S3', ageRating: 'TV-MA', year: 2019, phase: 4, type: 'series', essential: false, runtime: 341, releaseDate: '2019-06-24', status: 'unwatched', prereq: 'Legion S2', tmdbId: 67195, seriesGroup: 'legion-cycle', season: 3, epStart: 1, epEnd: 8, desc: 'The final season sees David and the Shadow King travel through time, culminating in a reality-altering confrontation. 8 episodes.' },
   { id: 6017, order: 17, title: 'The Gifted S1', ageRating: 'TV-14', year: 2017, phase: 4, type: 'series', essential: false, runtime: 572, releaseDate: '2017-10-02', status: 'unwatched', prereq: 'X-Men films (optional)', tmdbId: 69629, seriesGroup: 'the-gifted', season: 1, epStart: 1, epEnd: 13, desc: 'A suburban couple discovers their children are mutants and goes on the run, joining an underground network of mutant refugees fighting a government agency. 13 episodes.' },
   { id: 6018, order: 18, title: 'The Gifted S2', ageRating: 'TV-14', year: 2018, phase: 4, type: 'series', essential: false, runtime: 704, releaseDate: '2018-09-25', status: 'unwatched', prereq: 'The Gifted S1', tmdbId: 69629, seriesGroup: 'the-gifted', season: 2, epStart: 1, epEnd: 16, desc: 'The Mutant Underground splinters between idealism and extremism as the Hellfire Club rises. 16 episodes.' },
+
+  // ── Era 5: X-Men '97 / Animated Revival ──
+  { id: 6019, order: 19, title: "X-Men '97 S1", ageRating: 'TV-PG', year: 2024, phase: 5, type: 'series', essential: true, runtime: 300, releaseDate: '2024-03-20', status: 'unwatched', prereq: 'X-Men: The Animated Series (optional)', tmdbId: 226606, season: 1, epStart: 1, epEnd: 10, desc: 'A direct continuation of the beloved 90s X-Men animated series. Cyclops, Wolverine, Storm, Rogue, Gambit, Beast, Jubilee and Morph face a world without Professor X — and a dangerous new threat. 10 episodes.' },
+  { id: 6020, order: 20, title: "X-Men '97 S2", ageRating: 'TV-PG', year: 2026, phase: 5, type: 'series', essential: true, runtime: 300, releaseDate: '2026-01-01', status: 'unwatched', upcoming: true, prereq: "X-Men '97 S1", tmdbId: 226606, season: 2, epStart: 1, epEnd: 10, desc: 'Season 2 picks up after the explosive finale, with the team scattered across time and facing an even greater existential threat to mutantkind. Apocalypse rises. 10 episodes.' },
 ];
 
 export const XMEN_CORE_IDS = new Set(XMEN_RAW.map(item => item.id));
