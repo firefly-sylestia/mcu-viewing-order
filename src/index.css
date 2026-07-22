@@ -4543,3 +4543,22 @@ button { border: 0; color: inherit; cursor: pointer; }
   transition: background .12s, color .12s;
 }
 .watch-toast-close:hover { background: rgba(255,255,255,.12); color: #fff; }
+
+/* ── Restart button (fixes audio sync) ──────────────────────────────────────── */
+.watch-restart-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  margin: 10px 0 0;
+  padding: 6px 14px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.1);
+  color: rgba(255,255,255,.45);
+  font-size: 12px; font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.watch-restart-btn:hover {
+  background: rgba(255,255,255,.12);
+  color: rgba(255,255,255,.75);
+  border-color: rgba(255,255,255,.2);
+}

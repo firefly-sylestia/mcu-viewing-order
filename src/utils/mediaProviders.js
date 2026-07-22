@@ -1,4 +1,4 @@
-export const buildPlayerUrl = ({ provider, mediaType, tmdbId, title, season = 1, episode, progressSeconds = 0 }) => {
+export const buildPlayerUrl = ({ provider, mediaType, tmdbId, title, season = 1, episode }) => {
   const type = mediaType === 'tv' ? 'tv' : 'movie';
   const identifier = tmdbId || encodeURIComponent(title || '');
   const params = new URLSearchParams({ autoplay: '1' });
@@ -12,7 +12,8 @@ export const buildPlayerUrl = ({ provider, mediaType, tmdbId, title, season = 1,
     return `https://video.moviepire.co/embed/${path}?${params.toString()}`;
   }
 
-  if (progressSeconds > 5) params.set('progress', String(progressSeconds));
+  // NOTE: progress param intentionally omitted — seeking on load causes
+  // audio/video desync in cross-origin iframe players.
   const path = type === 'tv' && episode
     ? `${type}/${identifier}/${season}/${episode}`
     : `${type}/${identifier}`;
