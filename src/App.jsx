@@ -1912,7 +1912,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
 
   useEffect(() => {
     setElapsed(Math.min(currentItem.watchedDuration || 0, totalMs));
-    const interval = setInterval(() => setElapsed(prev => prev + 1000), 1000);
+    const interval = setInterval(() => setElapsed(prev => prev + 5000), 5000);
     return () => clearInterval(interval);
   }, [currentItem.id, totalMs]);
 
@@ -1973,7 +1973,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
       </header>
       {toast && <div className="watch-toast">{toast}</div>}
       <div className="watch-player">
-        <iframe key={`${selectedServer}-${isSeries ? `ep-${currentItem.tmdbId}-${currentItem.season || 1}-${selectedEpisode}` : currentItem.tmdbId || item.id}`} src={playerUrl} title={`Watch ${item.title}`} frameBorder="0" allowFullScreen allow="encrypted-media" />
+        <iframe key={`${selectedServer}-${isSeries ? `ep-${currentItem.tmdbId}-${currentItem.season || 1}-${selectedEpisode}` : currentItem.tmdbId || item.id}`} src={playerUrl} title={`Watch ${item.title}`} frameBorder="0" allowFullScreen allow="autoplay; fullscreen; picture-in-picture" loading="eager" />
       </div>
       <div className="watch-progress-bar"><span style={{ width: `${progress}%` }} /></div>
       {isSeries && episodes.length > 0 && (
