@@ -726,7 +726,7 @@ export default function App() {
         <SuggestionStrip nextUp={nextUp} stats={stats} setSelected={selectItem} playTrailer={playTrailer} />
         <MovieRail title="Up next" items={activeItems.filter(i => i.userStatus === 'unwatched').slice(0, 10)} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} scrollable variant="upnext" />
         <MovieRail title="Essential picks" items={activeItems.filter(i => i.essential)} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} paginated gridControls />
-        <MovieRail title="Recently watched" items={activeItems.filter(i => i.userStatus === 'watched').slice(-24).reverse()} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} empty="Mark titles as watched to see them here." scrollable variant="upnext" />
+        <MovieRail title="Recently watched" items={activeItems.filter(i => i.userStatus === 'watched').slice(-24).reverse()} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} empty="Mark titles as watched to see them here." paginated gridControls />
         {activeItems.filter(i => i.userStatus === 'watching').length > 0 && <ContinueWatching items={activeItems.filter(i => i.userStatus === 'watching')} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} onResume={handleStartWatch} />}
         {externalTrackedItems.length > 0 && (
           <MovieRail
@@ -1528,11 +1528,17 @@ function ContinueWatching({ items, setSelected, setStatus, toggleBookmark, playT
     }
     onResume(item, item.tmdbId || null, item.type === 'series' ? 'tv' : 'movie');
   };
+  const pageSize = 12;
+  const [page, setPage] = useState(1);
+  const pageCount = Math.max(1, Math.ceil(items.length / pageSize));
+  const currentPage = Math.min(page, pageCount);
+  const visibleItems = items.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  useEffect(() => { setPage(1); }, [items.length]);
   return (
-    <section className="rail-card web-rail upnext-rail-card">
-      <div className="section-title"><h2>Continue Watching</h2><button>{items.length} in progress</button></div>
-      <div className="movie-grid web-grid rail-scroll upnext-grid">
-        {items.map(item => (
+    <section className="rail-card web-rail">
+      <div className="section-title"><h2>Continue Watching</h2><span>{items.length} in progress</span></div>
+      <div className="movie-grid web-grid">
+        {visibleItems.map(item => (
           <article key={item.id} className="movie-card continue-card" style={{ '--accent': item.accent }}>
             <button className="poster-button" onClick={() => handleResume(item)}>
               <PosterArt item={item} />
@@ -1550,6 +1556,7 @@ function ContinueWatching({ items, setSelected, setStatus, toggleBookmark, playT
           </article>
         ))}
       </div>
+      {pageCount > 1 && <nav className="pagination" aria-label="Continue Watching pages"><button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} aria-label="Previous page"><ChevronLeft size={18} /></button>{Array.from({ length: pageCount }, (_, i) => i + 1).map(n => <button key={n} className={currentPage === n ? 'active' : ''} aria-current={currentPage === n ? 'page' : undefined} onClick={() => setPage(n)}>{n}</button>)}<button onClick={() => setPage(p => Math.min(pageCount, p + 1))} disabled={currentPage === pageCount} aria-label="Next page"><ChevronRight size={18} /></button></nav>}
     </section>
   );
 }
