@@ -1969,6 +1969,304 @@ button { border: 0; color: inherit; cursor: pointer; }
   background: rgba(0,0,0,.1);
 }
 
+/* ── Light mode: Profile page ──────────────────────────── */
+:root[data-theme="light"] .profile-header {
+  background: linear-gradient(145deg, rgba(255,255,255,.92), rgba(248,248,250,.96));
+  border-color: rgba(0,0,0,.08);
+}
+
+:root[data-theme="light"] .profile-avatar {
+  background: linear-gradient(135deg, rgba(0,0,0,.08), rgba(0,0,0,.04));
+  border-color: rgba(0,0,0,.08);
+}
+
+:root[data-theme="light"] .avatar-initials {
+  color: rgba(0,0,0,.55);
+}
+
+:root[data-theme="light"] .profile-title {
+  color: rgba(0,0,0,.85);
+}
+
+:root[data-theme="light"] .profile-subtitle {
+  color: rgba(0,0,0,.45);
+}
+
+:root[data-theme="light"] .profile-tab {
+  color: rgba(0,0,0,.45);
+  background: transparent;
+}
+
+:root[data-theme="light"] .profile-tab:hover {
+  color: rgba(0,0,0,.7);
+  background: rgba(0,0,0,.04);
+}
+
+:root[data-theme="light"] .profile-tab.active {
+  color: rgba(0,0,0,.85);
+  background: rgba(0,0,0,.06);
+}
+
+:root[data-theme="light"] .profile-analytics {
+  background: linear-gradient(145deg, rgba(255,255,255,.92), rgba(248,248,250,.96));
+  border-color: rgba(0,0,0,.08);
+}
+
+:root[data-theme="light"] .stat-grid div {
+  background: rgba(0,0,0,.04);
+}
+
+:root[data-theme="light"] .stat-grid b {
+  color: rgba(0,0,0,.85);
+}
+
+:root[data-theme="light"] .stat-grid span {
+  color: rgba(0,0,0,.45);
+}
+
+:root[data-theme="light"] .profile-rail {
+  background: linear-gradient(145deg, rgba(255,255,255,.92), rgba(248,248,250,.96));
+  border-color: rgba(0,0,0,.08);
+}
+
+:root[data-theme="light"] .profile-auth-btn {
+  background: rgba(0,0,0,.04);
+  border-color: rgba(0,0,0,.08);
+  color: rgba(0,0,0,.6);
+}
+
+:root[data-theme="light"] .profile-auth-btn:hover {
+  background: rgba(0,0,0,.08);
+  color: rgba(0,0,0,.85);
+}
+
+:root[data-theme="light"] .profile-sync-status {
+  color: rgba(0,0,0,.4);
+}
+
+:root[data-theme="light"] .profile-name-edit input {
+  background: rgba(0,0,0,.04);
+  border-color: rgba(0,0,0,.1);
+  color: rgba(0,0,0,.85);
+}
+
+/* ── Light mode: Core UI ────────────────────────────────── */
+:root[data-theme="light"] .site-header {
+  background: rgba(255,255,255,.94);
+}
+
+:root[data-theme="light"] .brand {
+  color: rgba(0,0,0,.85);
+}
+
+:root[data-theme="light"] .brand span {
+  background: linear-gradient(135deg, rgba(0,0,0,.06), rgba(0,0,0,.08));
+  border-color: rgba(0,0,0,.1);
+  color: rgba(0,0,0,.6);
+}
+
+:root[data-theme="light"] .universe-tabs button {
+  color: rgba(0,0,0,.5);
+  background: rgba(0,0,0,.04);
+  border-color: rgba(0,0,0,.06);
+}
+
+:root[data-theme="light"] .universe-tabs .active {
+  color: rgba(0,0,0,.85) !important;
+  background: rgba(0,0,0,.08) !important;
+  border-color: rgba(0,0,0,.12) !important;
+}
+
+:root[data-theme="light"] .header-search {
+  background: rgba(0,0,0,.04);
+  border-color: rgba(0,0,0,.08);
+}
+
+:root[data-theme="light"] .header-search input {
+  color: rgba(0,0,0,.85);
+}
+
+:root[data-theme="light"] .header-search input::placeholder {
+  color: rgba(0,0,0,.35);
+}
+
+:root[data-theme="light"] .header-search svg {
+  color: rgba(0,0,0,.4);
+}
+
+:root[data-theme="light"] .header-search:focus-within {
+  border-color: rgba(0,0,0,.18);
+  background: rgba(0,0,0,.06);
+}
+
+:root[data-theme="light"] .search-clear {
+  background: rgba(0,0,0,.08);
+}
+
+:root[data-theme="light"] .header-auth-btn {
+  color: rgba(0,0,0,.45);
+}
+
+:root[data-theme="light"] .header-auth-btn:hover {
+  color: rgba(0,0,0,.75);
+}
+
+:root[data-theme="light"] .header-signin-badge {
+  background: rgba(0,0,0,.04);
+  border-color: rgba(0,0,0,.08);
+  color: rgba(0,0,0,.55);
+}
+
+:root[data-theme="light"] .header-user-badge {
+  background: rgba(0,0,0,.04);
+  border-color: rgba(0,0,0,.1);
+  color: rgba(0,0,0,.7);
+}
+
+:root[data-theme="light"] .bottom-nav {
+  background: rgba(255,255,255,.96);
+  border-color: rgba(0,0,0,.08);
+}
+
+:root[data-theme="light"] .bottom-nav button {
+  color: rgba(0,0,0,.45);
+}
+
+:root[data-theme="light"] .bottom-nav button:hover {
+  color: rgba(0,0,0,.7);
+  background: rgba(0,0,0,.04);
+}
+
+:root[data-theme="light"] .bottom-nav button.active {
+  color: rgba(0,0,0,.85);
+  background: rgba(0,0,0,.08);
+  border-color: rgba(0,0,0,.1);
+}
+
+:root[data-theme="light"] .bottom-nav button.active svg {
+  color: rgba(0,0,0,.85);
+}
+
+/* ── Light mode: Cards & rails ─────────────────────────── */
+:root[data-theme="light"] .movie-card {
+  background: rgba(255,255,255,.92);
+  border-color: rgba(0,0,0,.06);
+}
+
+:root[data-theme="light"] .web-rail,
+:root[data-theme="light"] .list-section,
+:root[data-theme="light"] .analytics-panel,
+:root[data-theme="light"] .rail-card {
+  background: rgba(255,255,255,.9);
+  border-color: rgba(0,0,0,.08);
+}
+
+:root[data-theme="light"] .section-title h2 {
+  color: rgba(0,0,0,.85);
+}
+
+:root[data-theme="light"] .section-title button {
+  background: rgba(0,0,0,.05);
+  color: rgba(0,0,0,.55);
+}
+
+:root[data-theme="light"] .title-button {
+  color: rgba(0,0,0,.85);
+}
+
+:root[data-theme="light"] .card-body span {
+  color: rgba(0,0,0,.45);
+}
+
+:root[data-theme="light"] .card-actions button {
+  background: rgba(0,0,0,.04);
+}
+
+:root[data-theme="light"] .list-row {
+  background: rgba(0,0,0,.02);
+}
+
+:root[data-theme="light"] .list-row:hover {
+  background: rgba(0,0,0,.04);
+}
+
+:root[data-theme="light"] .list-index {
+  color: var(--accent);
+}
+
+:root[data-theme="light"] .list-copy p {
+  color: rgba(0,0,0,.4);
+}
+
+:root[data-theme="light"] .list-tags span {
+  color: rgba(0,0,0,.45);
+  border-color: rgba(0,0,0,.08);
+}
+
+:root[data-theme="light"] .top-carousel {
+  background: rgba(255,255,255,.9);
+  border-color: rgba(0,0,0,.08);
+}
+
+:root[data-theme="light"] .eyebrow {
+  color: rgba(0,0,0,.45);
+}
+
+:root[data-theme="light"] .movie-site {
+  background: radial-gradient(circle at 70% 0%, rgba(0,0,0,.04), transparent 34%), linear-gradient(125deg, #f8f8fa, #f0f0f4 44%, #fafafa);
+}
+
+:root[data-theme="light"] .empty-state {
+  color: rgba(0,0,0,.35);
+}
+
+:root[data-theme="light"] .pagination button {
+  background: rgba(0,0,0,.04);
+  color: rgba(0,0,0,.5);
+}
+
+:root[data-theme="light"] .pagination button.active {
+  background: rgba(0,0,0,.08);
+  color: rgba(0,0,0,.85);
+}
+
+:root[data-theme="light"] .progress {
+  background: rgba(0,0,0,.06);
+}
+
+:root[data-theme="light"] .progress span {
+  background: linear-gradient(90deg, rgba(0,0,0,.12), rgba(0,0,0,.18));
+}
+
+:root[data-theme="light"] .detail-modal {
+  background: #fff;
+}
+
+:root[data-theme="light"] .detail-actions button {
+  background: rgba(0,0,0,.04);
+}
+
+:root[data-theme="light"] .feature-copy p {
+  color: rgba(0,0,0,.55);
+}
+
+:root[data-theme="light"] .suggestion-strip {
+  background: linear-gradient(120deg, color-mix(in srgb, var(--accent) 18%, #f0f0f4), rgba(0,0,0,.02));
+  border-color: rgba(0,0,0,.08);
+}
+
+:root[data-theme="light"] .suggestion-strip span {
+  color: rgba(0,0,0,.45);
+}
+
+:root[data-theme="light"] .dots button {
+  background: rgba(0,0,0,.15);
+}
+
+:root[data-theme="light"] .dots button.active {
+  background: rgba(0,0,0,.6);
+}
+
 .profile-analytics {
   display: grid;
   grid-template-columns: 1fr 1.4fr;
