@@ -1376,9 +1376,41 @@ button { border: 0; color: inherit; cursor: pointer; }
 }
 @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(-10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
 @keyframes watchFadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-.watch-server-select { display: flex; align-items: center; gap: 7px; flex: 0 0 auto; min-width: 0; padding: 7px 8px 7px 10px; border: 1px solid rgba(255,255,255,.1); border-radius: 10px; background: #111217; color: #9ca3af; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
+.watch-server-select { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; min-width: 0; padding: 6px 6px 6px 12px; border: 1px solid rgba(255,255,255,.1); border-radius: 11px; background: rgba(17,18,23,.8); color: #9ca3af; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
 .watch-server-select svg { flex: 0 0 auto; color: var(--accent); }
-.watch-server-select select { min-width: 0; max-width: 112px; border: 0; outline: 0; background: #111217; color: #f4f4f5; font: inherit; text-transform: none; letter-spacing: 0; cursor: pointer; }
+.watch-server-select > span { white-space: nowrap; }
+
+/* ── Shared Custom Dropdown ─────────────────────────────────────────────────── */
+.custom-dropdown { position: relative; display: inline-flex; flex: 1; min-width: 0; }
+.custom-dropdown-trigger { display: flex; align-items: center; justify-content: space-between; gap: 6px; width: 100%; padding: 8px 12px; border: 0; border-radius: 9px; background: rgba(255,255,255,.05); color: #e4e4e7; font-weight: 700; font-size: 13px; text-align: left; cursor: pointer; transition: background .15s ease; white-space: nowrap; }
+.custom-dropdown-trigger:hover { background: rgba(255,255,255,.1); }
+.custom-dropdown-trigger:disabled { opacity: .4; cursor: not-allowed; }
+.dropdown-chevron { flex-shrink: 0; opacity: .5; transition: transform .2s ease; }
+.custom-dropdown.open .dropdown-chevron { transform: rotate(180deg); opacity: .8; }
+
+.custom-dropdown-menu { position: absolute; z-index: 60; top: calc(100% + 5px); right: 0; min-width: 190px; background: #14181d; border: 1px solid rgba(255,255,255,.12); border-radius: 14px; padding: 6px; box-shadow: 0 16px 42px rgba(0,0,0,.55); animation: dropIn .15s ease; }
+.custom-dropdown-option { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; padding: 10px 14px; border: 0; border-radius: 10px; background: transparent; color: #bbb; font-weight: 600; font-size: 13px; text-align: left; cursor: pointer; transition: all .12s ease; }
+.custom-dropdown-option:hover { background: rgba(255,255,255,.07); color: #fff; }
+.custom-dropdown-option.active { background: color-mix(in srgb, var(--accent, #da1e37) 16%, #14181d); color: #fff; }
+.custom-dropdown-option.active svg { color: var(--accent); }
+
+/* Server dropdown specifics */
+.server-dropdown .custom-dropdown-trigger { min-width: 90px; }
+.server-dropdown .custom-dropdown-menu { min-width: 150px; }
+
+/* Episode dropdown specifics */
+.episode-dropdown .custom-dropdown-trigger { min-width: 80px; }
+.episode-dropdown .custom-dropdown-menu { min-width: 220px; max-height: 240px; overflow-y: auto; }
+.episode-menu .option-label { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.ep-num { font-size: 11px; font-weight: 800; color: #666; }
+.ep-title { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.custom-dropdown-option.active .ep-num { color: var(--accent); }
+
+/* Detail page episode dropdown goes full-width in the actions row */
+.episode-dropdown { flex: 1; }
+.episode-dropdown .custom-dropdown-trigger { height: 46px; border-radius: 10px; background: #1b1f25; border: 1px solid rgba(255,255,255,.1); font-size: 14px; }
+.episode-dropdown .custom-dropdown-trigger:hover { background: #262a32; border-color: rgba(255,255,255,.18); }
+.episode-dropdown.disabled .custom-dropdown-trigger { color: #666; }
 .watch-player { position: relative; width: 100%; max-width: 1100px; margin: 0 auto; aspect-ratio: 16/9; background: #000; border-left: 1px solid rgba(255,255,255,.06); border-right: 1px solid rgba(255,255,255,.06); box-shadow: 0 8px 40px rgba(0,0,0,.4); }
 .watch-progress-bar { max-width: 1100px; margin: 0 auto; height: 3px; background: rgba(255,255,255,.1); }
 .watch-progress-bar span { display: block; height: 100%; background: linear-gradient(90deg, #2a2a30, #3a3a42); transition: width 1s linear; }
@@ -4021,7 +4053,7 @@ button { border: 0; color: inherit; cursor: pointer; }
   .watch-header > button span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .watch-header h1 { font-size: 15px; }
   .watch-server-select { grid-column: 1 / -1; width: 100%; justify-content: space-between; }
-  .watch-server-select select { flex: 1; max-width: none; text-align: right; }
+  .watch-server-select .custom-dropdown { flex: 1; }
   .watch-player { border: 0; }
   .watch-episode-picker { padding: 0 12px; }
   .watch-roadmap { margin-top: 12px; padding: 18px 12px; }
@@ -4052,7 +4084,17 @@ button { border: 0; color: inherit; cursor: pointer; }
 .external-meta { font-size: 12px; color: #888; margin: 0; }
 .external-rating { font-size: 12px; color: #daa520; margin: 0; display: flex; align-items: center; gap: 4px; }
 .external-overview { margin: 2px 0; color: #a1a1aa; font-size: 12px; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-.detail-download-episode select { height: 46px; max-width: 118px; border: 1px solid rgba(255,255,255,.1); border-radius: 10px; padding: 0 10px; background: #1b1f25; color: #ddd; font-weight: 700; }
+/* Light-mode: custom dropdown overrides */
+:root[data-theme="light"] .custom-dropdown-trigger { background: rgba(0,0,0,.04); color: #222; }
+:root[data-theme="light"] .custom-dropdown-trigger:hover { background: rgba(0,0,0,.08); }
+:root[data-theme="light"] .custom-dropdown-menu { background: #fff; border-color: rgba(0,0,0,.12); box-shadow: 0 12px 36px rgba(0,0,0,.15); }
+:root[data-theme="light"] .custom-dropdown-option { color: #555; }
+:root[data-theme="light"] .custom-dropdown-option:hover { background: rgba(0,0,0,.05); color: #111; }
+:root[data-theme="light"] .custom-dropdown-option.active { background: color-mix(in srgb, var(--accent, #da1e37) 10%, #fff); color: var(--accent); }
+:root[data-theme="light"] .watch-server-select { background: rgba(0,0,0,.03); border-color: rgba(0,0,0,.1); color: #555; }
+:root[data-theme="light"] .episode-dropdown .custom-dropdown-trigger { background: rgba(0,0,0,.03); border-color: rgba(0,0,0,.1); color: #333; }
+:root[data-theme="light"] .episode-dropdown .custom-dropdown-trigger:hover { background: rgba(0,0,0,.06); border-color: rgba(0,0,0,.15); }
+:root[data-theme="light"] .ep-num { color: #999; }
 .detail-download:disabled { cursor: not-allowed; opacity: .45; }
 .no-results { text-align: center; padding: 60px 20px; color: #888; }
 

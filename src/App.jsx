@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Search, SlidersHorizontal, Home, Bookmark, Play, UserRound, X, ArrowLeft, Star, BarChart3, Check, Clock, ListFilter, RotateCcw, ChevronLeft, ChevronRight, Calendar, Timer, Sparkles, LogIn, LogOut, Cloud, Download } from 'lucide-react';
+import { Search, SlidersHorizontal, Home, Bookmark, Play, UserRound, X, ArrowLeft, Star, BarChart3, Check, Clock, ListFilter, RotateCcw, ChevronLeft, ChevronRight, ChevronDown, Calendar, Timer, Sparkles, LogIn, LogOut, Cloud, Download } from 'lucide-react';
 import { RAW } from './data/mcuData';
 import { DC_RAW } from './data/dcData';
 import { XMEN_RAW } from './data/xmenData';
@@ -862,6 +862,90 @@ function StatusSelect({ item, setStatus, compact = false }) {
   </div>;
 }
 
+/* ── Server Dropdown ─────────────────────────────────────────────────────────── */
+function ServerDropdown({ server, onSelect }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    const handleClick = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+  const SERVERS = { videasy: 'Videasy', moviepire: 'MoviePire' };
+  return (
+    <div className={`custom-dropdown server-dropdown ${open ? 'open' : ''}`} ref={ref}>
+      <button className="custom-dropdown-trigger" onClick={() => setOpen(!open)} aria-haspopup="listbox" aria-expanded={open}>
+        <span>{SERVERS[server] || server}</span>
+        <ChevronDown size={14} className="dropdown-chevron" />
+      </button>
+      {open && (
+        <div className="custom-dropdown-menu" role="listbox" aria-label="Select server">
+          {Object.entries(SERVERS).map(([key, label]) => (
+            <button
+              key={key}
+              className={`custom-dropdown-option ${server === key ? 'active' : ''}`}
+              role="option"
+              aria-selected={server === key}
+              onClick={() => { onSelect(key); setOpen(false); }}
+            >
+              <span className="option-label">{label}</span>
+              {server === key && <Check size={15} />}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Episode Dropdown ───────────────────────────────────────────────────────── */
+function EpisodeDropdown({ episodes, selected, onSelect, season }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    const handleClick = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+  if (!episodes.length) {
+    return (
+      <div className="custom-dropdown episode-dropdown disabled">
+        <button className="custom-dropdown-trigger" disabled>
+          <span>No episodes</span>
+          <ChevronDown size={14} className="dropdown-chevron" />
+        </button>
+      </div>
+    );
+  }
+  return (
+    <div className={`custom-dropdown episode-dropdown ${open ? 'open' : ''}`} ref={ref}>
+      <button className="custom-dropdown-trigger" onClick={() => setOpen(!open)} aria-haspopup="listbox" aria-expanded={open} aria-label="Select episode to download">
+        <span>S{season} E{selected}</span>
+        <ChevronDown size={14} className="dropdown-chevron" />
+      </button>
+      {open && (
+        <div className="custom-dropdown-menu episode-menu" role="listbox" aria-label="Select episode">
+          {episodes.map(ep => (
+            <button
+              key={ep.episode}
+              className={`custom-dropdown-option ${selected === ep.episode ? 'active' : ''}`}
+              role="option"
+              aria-selected={selected === ep.episode}
+              onClick={() => { onSelect(ep.episode); setOpen(false); }}
+            >
+              <span className="option-label">
+                <span className="ep-num">E{String(ep.episode).padStart(2, '0')}</span>
+                <span className="ep-title">{ep.title || `Episode ${ep.episode}`}</span>
+              </span>
+              {selected === ep.episode && <Check size={15} />}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SuggestionStrip({ nextUp, stats, setSelected, playTrailer }) {
   if (!nextUp) return null;
   return <section className="suggestion-strip" style={{ '--accent': nextUp.accent }}>
@@ -966,7 +1050,7 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, ac
           <div className="detail-chips"><span className="detail-rating"><Star size={15} fill="currentColor" /> {item.rating?.toFixed ? item.rating.toFixed(1) : (item.rating ?? 'N/A')}</span>{(item.genres || []).slice(0,3).map(g => <span key={g}>{g}</span>)}</div>
           <p className="detail-description">{item.desc || `Follow ${item.title} in the complete ${item.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} viewing order.`}</p>
           <div className="detail-facts"><div><Calendar size={18} /><span>Release year</span><strong>{item.year}</strong></div><div><Timer size={18} /><span>Runtime</span><strong>{runtimeLabel(item.runtime, item.type)}</strong></div><div><Sparkles size={18} /><span>Format</span><strong>{item.type}</strong></div>{item.userStatus === 'watching' && item.watchedDuration > 30000 && <div><Clock size={18} /><span>Watched</span><strong>{watchTimeLabel(item)}</strong></div>}</div>
-          <div className="detail-progress-actions"><StatusSelect item={item} setStatus={setStatus} /><button className={`detail-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={19} fill={item.bookmarked ? 'currentColor' : 'none'} /></button><button className="detail-videasy" onClick={() => handleWatchOnVideasy(item)} disabled={watchLoading} aria-label={`Watch ${item.title} on Videasy`}><Play size={18} fill="currentColor" /><span>{watchLoading ? 'Loading...' : 'Watch Now'}</span></button>{item.type === 'series' && <label className="detail-download-episode"><span className="sr-only">Episode to download</span><select value={downloadEpisode} onChange={event => setDownloadEpisode(Number(event.target.value))} disabled={!downloadEpisodes.length}>{downloadEpisodes.length ? downloadEpisodes.map(episode => <option key={episode.episode} value={episode.episode}>S{item.season || 1} E{episode.episode}</option>) : <option>Episodes unavailable</option>}</select></label>}<button className="detail-download" onClick={handleDownloadClick} disabled={!item.tmdbId || (item.type === 'series' && !downloadEpisodes.length)} aria-label={`Download ${item.title}${item.type === 'series' ? ` episode ${downloadEpisode}` : ''}`}><Download size={18} /><span>Download</span></button></div>
+          <div className="detail-progress-actions"><StatusSelect item={item} setStatus={setStatus} /><button className={`detail-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={19} fill={item.bookmarked ? 'currentColor' : 'none'} /></button><button className="detail-videasy" onClick={() => handleWatchOnVideasy(item)} disabled={watchLoading} aria-label={`Watch ${item.title} on Videasy`}><Play size={18} fill="currentColor" /><span>{watchLoading ? 'Loading...' : 'Watch Now'}</span></button>{item.type === 'series' && <EpisodeDropdown episodes={downloadEpisodes} selected={downloadEpisode} onSelect={setDownloadEpisode} season={item.season || 1} />}<button className="detail-download" onClick={handleDownloadClick} disabled={!item.tmdbId || (item.type === 'series' && !downloadEpisodes.length)} aria-label={`Download ${item.title}${item.type === 'series' ? ` episode ${downloadEpisode}` : ''}`}><Download size={18} /><span>Download</span></button></div>
           {itemRoadmap && (
             <div className="detail-roadmap">
               <div className="section-title"><h2>Viewing Roadmap</h2><button>{itemRoadmap.siblings.length} Parts</button></div>
@@ -1346,10 +1430,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
         <label className="watch-server-select">
           <Cloud size={15} aria-hidden="true" />
           <span>Server</span>
-          <select value={selectedServer} onChange={event => setSelectedServer(event.target.value)} aria-label="Playback server">
-            <option value="videasy">Videasy</option>
-            <option value="moviepire">MoviePire</option>
-          </select>
+          <ServerDropdown server={selectedServer} onSelect={setSelectedServer} />
         </label>
       </header>
       {toast && <div className="watch-toast">{toast}</div>}
