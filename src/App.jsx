@@ -4,6 +4,7 @@ import { RAW } from './data/mcuData';
 import { DC_RAW } from './data/dcData';
 import { XMEN_RAW } from './data/xmenData';
 import { getTrailerByTitle, trailerEmbedUrl } from './data/trailerData';
+import { STORY_BRIDGES } from './data/connections';
 import { fetchTrailerFromApi } from './utils/trailerCache';
 import ProfilePage from './components/ProfilePage';
 import AuthModal from './components/AuthModal';
@@ -97,8 +98,16 @@ const getRoadmap = (item, items) => {
     sequence.push(part);
     const next = siblings[index + 1];
     if (!next) return;
+    const bridgeDef = STORY_BRIDGES.find(
+      b => b.sourceId === part.id && b.targetId === next.id
+    );
+    const validBridgeIds = new Set(bridgeDef?.bridges?.map(b => b.id) || []);
     const interstitials = items
-      .filter(candidate => !siblings.some(sibling => sibling.id === candidate.id) && candidate.order > part.order && candidate.order < next.order)
+      .filter(candidate => validBridgeIds.has(candidate.id))
+      .map(candidate => ({
+        ...candidate,
+        connectionNote: bridgeDef.bridges.find(b => b.id === candidate.id)?.note || null
+      }))
       .sort((a, b) => a.order - b.order);
     if (interstitials.length) {
       segments.push({ type: 'interstitials', items: interstitials });
@@ -1103,27 +1112,31 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, ac
                       <div key={`int-${idx}`} className="roadmap-interstitial">
                         <div className="roadmap-inter-header">
                           <ChevronRight size={14} className="chevron" />
-                          <span>watch between</span>
+                          <span>connected stories</span>
                           <ChevronRight size={14} className="chevron" />
                         </div>
                         <div className="roadmap-inter-items">
                           {seg.items.map(intItem => (
                             <div key={intItem.id} className="roadmap-inter-card" style={{ '--accent': intItem.accent, cursor: 'default' }}>
-                              <div className="roadmap-inter-poster">
-                                {intItem.poster ? <img src={intItem.poster} alt={intItem.title} loading="lazy" /> : <FallbackPoster item={intItem} />}
-                              </div>
-                              <span className="roadmap-inter-title">{intItem.title}</span>
+                              <div className="roadmap-inter-poster">                              {intItem.poster ? <img src={intItem.poster} alt={intItem.title} loading="lazy" /> : <FallbackPoster item={intItem} />}
+                            </div>
+                            <span className="roadmap-inter-title">{intItem.title}</span>
+                            {intItem.connectionNote && (
+                              <p className="connection-note"><Sparkles size={11} /><span>{intItem.connectionNote}</span></p>
+                            )}
+                              {intItem.connectionNote && (
+                                <p className="connection-note"><Sparkles size={11} /><span>{intItem.connectionNote}</span></p>
+                              )}
                             </div>
                           ))}
                         </div>
                       </div>
-                    );
-                  }
-                })}
+                    );}
+                  })}
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
       </div>
       </div>
     </article>
@@ -1515,7 +1528,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
                   <div key={`int-${idx}`} className="roadmap-interstitial">
                     <div className="roadmap-inter-header">
                       <ChevronRight size={14} className="chevron" />
-                      <span>watch between</span>
+                      <span>connected stories</span>
                       <ChevronRight size={14} className="chevron" />
                     </div>
                     <div className="roadmap-inter-items">

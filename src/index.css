@@ -3953,6 +3953,30 @@ button { border: 0; color: inherit; cursor: pointer; }
   color: #aaa;
 }
 
+.connection-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  margin-top: 6px;
+  padding: 6px 10px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 8px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: #8e9aab;
+}
+.connection-note svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--accent, #da1e37);
+  opacity: .7;
+}
+.connection-note span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .roadmap-inter-card:hover .roadmap-inter-title {
   color: #ddd;
 }
