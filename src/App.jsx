@@ -172,6 +172,7 @@ export default function App() {
   const [section, setSection] = useState(parseHash().section || saved.section || 'home');
   const [actions, setActions] = useState(saved.actions || {});
   const [posterMap, setPosterMap] = useState({});
+  const [omdbVersion, setOmdbVersion] = useState(0);
   const [trailer, setTrailer] = useState(null);
   const [watchItem, setWatchItem] = useState(saved.watchItem || null);
   const [profileName, setProfileName] = useState(saved.profileName || '');
@@ -295,7 +296,7 @@ export default function App() {
       metaRating,
       voteCount,
     };
-  }, [actions, posterMap]);
+  }, [actions, posterMap, omdbVersion]);
 
   const activeItems = useMemo(() => {
     const sorted = allItems
@@ -490,6 +491,7 @@ export default function App() {
                     if (omdb.rating) {
                       const cur = getFromCache(cacheKey) || {};
                       setCache(cacheKey, { ...cur, imdbRating: omdb.rating, tomatoRating: omdb.tomatoRating || cur.tomatoRating, metaRating: omdb.metaRating || cur.metaRating });
+                    setOmdbVersion(v => v + 1);
                     }
                   })
                   .catch(() => {});
@@ -542,7 +544,7 @@ export default function App() {
           }
         } catch {}
       }));
-      if (!cancelled) setTimeout(() => fetchOmdbBatch(idx + 3), 200);
+      if (!cancelled) { setOmdbVersion(v => v + 1); setTimeout(() => fetchOmdbBatch(idx + 3), 200); }
     };
     fetchOmdbBatch(0);
     return () => { cancelled = true; };
