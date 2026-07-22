@@ -186,7 +186,7 @@ export const STORY_BRIDGES = [
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // BLACK PANTHER — Black Panther → Wakanda Forever
+  // BLACK PANTHER — Black Panther → Wakanda Forever → Ironheart → Eyes of Wakanda
   // ═══════════════════════════════════════════════════════════════════════════
   {
     sourceId: 18, // Black Panther (18)
@@ -194,6 +194,20 @@ export const STORY_BRIDGES = [
     bridges: [
       { id: 22, note: 'Infinity War — T\'Challa is dusted, Wakanda\'s role in the battle for Earth sets up its global position' },
       { id: 24, note: 'Endgame — T\'Challa returns, Wakanda leads the charge — the nation\'s grief in Wakanda Forever echoes real loss' }
+    ]
+  },
+  {
+    sourceId: 40, // Wakanda Forever (40)
+    targetId: 54, // Ironheart S1 (54)
+    bridges: [
+      { id: 53, note: "Captain America: Brave New World — adamantium becomes a global power struggle, echoing Wakanda's vibranium sovereignty and setting the political stage for Ironheart" }
+    ]
+  },
+  {
+    sourceId: 54, // Ironheart S1 (54)
+    targetId: 59, // Eyes of Wakanda S1 (59)
+    bridges: [
+      { id: 56, note: "Fantastic Four: First Steps — Reed Richards' genius mirrors Riri's, while the cosmic scale expands the world Wakanda operates within" }
     ]
   },
 
@@ -212,7 +226,7 @@ export const STORY_BRIDGES = [
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // CAPTAIN MARVEL / MS. MARVEL / THE MARVELS — cosmic team-up trilogy
+  // CAPTAIN MARVEL / MS. MARVEL / THE MARVELS / SECRET INVASION — cosmic & spy saga
   // ═══════════════════════════════════════════════════════════════════════════
   {
     sourceId: 23, // Captain Marvel (23)
@@ -221,6 +235,11 @@ export const STORY_BRIDGES = [
       { id: 25, note: 'WandaVision — introduces adult Monica Rambeau who gains spectrum powers, setting up her role as one of the three Marvels' },
       { id: 47, note: 'Ms. Marvel S1 — introduces Kamala Khan and her bangle, directly connected to the cosmic entanglement in The Marvels' }
     ]
+  },
+  {
+    sourceId: 48, // The Marvels (48)
+    targetId: 49, // Secret Invasion S1 (49)
+    bridges: []
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
