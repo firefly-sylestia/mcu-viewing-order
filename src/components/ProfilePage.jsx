@@ -1,5 +1,25 @@
-import React, { useState, useRef } from 'react';
-import { Play, Bookmark, RotateCcw, Clock, Check, X, Pencil, Trophy, LogIn, LogOut, Cloud, RefreshCw } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Play, Bookmark, RotateCcw, Clock, Check, X, Pencil, Trophy, LogIn, LogOut, Cloud, RefreshCw, Sun, Moon, Settings } from 'lucide-react';
+
+function useAppTheme() {
+  const [theme, setThemeState] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('theme');
+      const resolved = stored || document.documentElement.getAttribute('data-theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', resolved);
+      return resolved;
+    }
+    return 'dark';
+  });
+
+  const setTheme = (newTheme) => {
+    document.documentElement.setAttribute('data-theme', newTheme);
+    try { localStorage.setItem('theme', newTheme); } catch {}
+    setThemeState(newTheme);
+  };
+
+  return { theme, setTheme };
+}
 
 const formatTimeAgo = (timestamp) => {
   if (!timestamp) return '';
@@ -70,6 +90,16 @@ function ProfilePage({ stats, activeItems, universe, setSelected, cycleStatus, s
             Saved
             {savedItems.length > 0 && <span className="tab-badge">{savedItems.length}</span>}
           </button>
+          <button
+            role="tab"
+            aria-selected={activeTab === 'settings'}
+            aria-controls="settings-panel"
+            className={`profile-tab ${activeTab === 'settings' ? 'active' : ''}`}
+            onClick={() => setActiveTab('settings')}
+          >
+            <Settings size={16} />
+            Settings
+          </button>
         </div>
         <div className="profile-tab-indicator" />
       </div>
@@ -108,6 +138,12 @@ function ProfilePage({ stats, activeItems, universe, setSelected, cycleStatus, s
             />
           </div>
         )}
+
+        {activeTab === 'settings' && (
+          <div id="settings-panel" role="tabpanel" className="profile-panel settings-panel">
+            <SettingsPanel profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={onLogin} onLogout={onLogout} />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -118,8 +154,8 @@ function ProfileHeader({ universe, stats, profileName, setProfileName, user, con
   const [draft, setDraft] = useState(profileName);
   const [confirmingLogout, setConfirmingLogout] = useState(false);
   const inputRef = useRef(null);
-  const universeName = universe === 'marvel' ? 'MCU' : 'DC';
-  const universeAccent = universe === 'marvel' ? '#da1e37' : '#2f80ed';
+  const universeName = universe === 'marvel' ? 'MCU' : universe === 'xmen' ? 'X-Men' : 'DC';
+  const universeAccent = universe === 'marvel' ? '#da1e37' : universe === 'xmen' ? '#a0a0ac' : '#2f80ed';
   const displayName = profileName || `${universeName} Viewer`;
   const avatarInitial = (displayName.trim()[0] || universeName[0]).toUpperCase();
 
@@ -196,6 +232,124 @@ function ProfileHeader({ universe, stats, profileName, setProfileName, user, con
               <span>Sign in to sync</span>
             </button>
           )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SettingsPanel({ profileName, setProfileName, user, configured, onLogin, onLogout }) {
+  const { theme, setTheme } = useAppTheme();
+  const [mounted, setMounted] = useState(false);
+  const [draft, setDraft] = useState(profileName);
+  const [editing, setEditing] = useState(false);
+  const inputRef = useRef(null);
+  const [confirmingLogout, setConfirmingLogout] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
+
+  const saveName = () => {
+    const trimmed = draft.trim();
+    if (trimmed) {
+      setProfileName(trimmed);
+      setDraft(trimmed);
+    }
+    setEditing(false);
+  };
+
+  if (!mounted) return null;
+
+  return (
+    <div className="settings-section">
+      {/* Theme Toggle */}
+      <div className="settings-group">
+        <h3 className="settings-group-title">Appearance</h3>
+        <div className="settings-row">
+          <div className="settings-row-label">
+            <span className="settings-row-icon">{theme === 'dark' ? <Moon size={18} /> : <Sun size={18} />}</span>
+            <div>
+              <strong>Theme</strong>
+              <small>{theme === 'dark' ? 'Dark mode' : 'Light mode'}</small>
+            </div>
+          </div>
+          <button
+            className="theme-toggle"
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          >
+            <span className={`theme-toggle-track ${theme === 'dark' ? 'dark' : 'light'}`}>
+              <span className="theme-toggle-thumb">
+                {theme === 'dark' ? <Moon size={14} /> : <Sun size={14} />}
+              </span>
+            </span>
+          </button>
+        </div>
+      </div>
+
+      {/* Profile Name */}
+      <div className="settings-group">
+        <h3 className="settings-group-title">Profile</h3>
+        <div className="settings-row">
+          <div className="settings-row-label">
+            <span className="settings-row-icon"><Pencil size={18} /></span>
+            <div>
+              <strong>Display name</strong>
+              <small>{profileName || 'Not set'}</small>
+            </div>
+          </div>
+          {editing ? (
+            <div className="settings-name-edit">
+              <input
+                ref={inputRef}
+                value={draft}
+                onChange={e => setDraft(e.target.value)}
+                onBlur={saveName}
+                onKeyDown={e => { if (e.key === 'Enter') saveName(); if (e.key === 'Escape') { setDraft(profileName); setEditing(false); } }}
+                placeholder="Your name"
+                maxLength={30}
+                className="settings-input"
+              />
+            </div>
+          ) : (
+            <button className="settings-edit-btn" onClick={() => { setDraft(profileName); setEditing(true); setTimeout(() => inputRef.current?.focus(), 0); }}>
+              Edit
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Account */}
+      {configured && (
+        <div className="settings-group">
+          <h3 className="settings-group-title">Account</h3>
+          <div className="settings-row">
+            <div className="settings-row-label">
+              <span className="settings-row-icon"><Cloud size={18} /></span>
+              <div>
+                <strong>{user ? user.email || 'Signed in' : 'Cloud Sync'}</strong>
+                <small>{user ? 'Your data syncs across devices' : 'Sign in to sync your progress'}</small>
+              </div>
+            </div>
+            {user ? (
+              confirmingLogout ? (
+                <div className="settings-confirm">
+                  <span>Sign out?</span>
+                  <button className="settings-btn danger" onClick={() => { onLogout(); setConfirmingLogout(false); }}>Yes</button>
+                  <button className="settings-btn" onClick={() => setConfirmingLogout(false)}>No</button>
+                </div>
+              ) : (
+                <button className="settings-btn danger" onClick={() => setConfirmingLogout(true)}>
+                  <LogOut size={14} />
+                  Sign out
+                </button>
+              )
+            ) : (
+              <button className="settings-btn primary" onClick={onLogin}>
+                <LogIn size={14} />
+                Sign in
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>

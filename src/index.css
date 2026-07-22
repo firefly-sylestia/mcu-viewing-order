@@ -86,6 +86,17 @@
   --dc-bright-blue: #1367c8ff;
   --dc-sky-blue: #2f80edff;
 
+  /* X-Men Chrome / Metallic Palette */
+  --xm-gunmetal: #121215ff;
+  --xm-dark-steel: #1c1c24ff;
+  --xm-steel: #282834ff;
+  --xm-silver: #7a7a88ff;
+  --xm-chrome: #a0a0acff;
+  --xm-bright-chrome: #c4c4ccff;
+  --xm-polished: #dedee2ff;
+  --xm-accent-blue: #4a72a8ff;
+  --xm-accent-blue-bright: #5c8ac8ff;
+
   --accent: var(--classic-crimson);
   --accent-2: var(--ruby-red);
   --accent-glow: rgba(218, 30, 55, 0.35);
@@ -221,12 +232,35 @@
   --row-top-tint-soft: color-mix(in srgb, var(--dc-hero-blue) 12%, transparent);
 }
 
+.movie-site.universe-xmen {
+  --accent: var(--xm-accent-blue-bright);
+  --accent-2: var(--xm-accent-blue);
+  --theme-accent: var(--xm-chrome);
+  --theme-accent-alt: var(--xm-silver);
+  --accent-glow: rgba(90, 138, 200, 0.30);
+  --accent-glow-2: rgba(160, 160, 172, 0.24);
+  --bg-card: rgba(20, 20, 26, 0.38);
+  --surface-2: color-mix(in srgb, var(--xm-steel) 56%, var(--carbon-black));
+  --surface-3: color-mix(in srgb, var(--xm-dark-steel) 48%, var(--carbon-black));
+  --ambient-glow: rgba(160, 160, 172, 0.08);
+  --row-top-tint: color-mix(in srgb, var(--xm-chrome) 22%, transparent);
+  --row-top-tint-soft: color-mix(in srgb, var(--xm-silver) 10%, transparent);
+}
+
 :root[data-theme="light"] .movie-site.universe-dc {
   --accent-glow: rgba(47, 128, 237, 0.22);
   --accent-glow-2: rgba(13, 79, 156, 0.18);
   --surface-2: color-mix(in srgb, #ffffff 88%, var(--dc-sky-blue));
   --surface-3: #ffffff;
   --ambient-glow: rgba(47, 128, 237, 0.06);
+}
+
+:root[data-theme="light"] .movie-site.universe-xmen {
+  --accent-glow: rgba(90, 138, 200, 0.18);
+  --accent-glow-2: rgba(160, 160, 172, 0.14);
+  --surface-2: color-mix(in srgb, #ffffff 88%, var(--xm-chrome));
+  --surface-3: #ffffff;
+  --ambient-glow: rgba(160, 160, 172, 0.05);
 }
 
 /* Text safety utilities */
@@ -1642,6 +1676,299 @@ button { border: 0; color: inherit; cursor: pointer; }
   animation: fadeIn 200ms ease;
 }
 
+/* ── Settings Panel ─────────────────────────────────────────────────── */
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.settings-group {
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 20px;
+  padding: 20px;
+}
+
+.settings-group-title {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: rgba(255,255,255,.4);
+  margin: 0 0 14px;
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+}
+
+.settings-row + .settings-row {
+  border-top: 1px solid rgba(255,255,255,.04);
+}
+
+.settings-row-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.settings-row-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: rgba(255,255,255,.55);
+}
+
+.settings-row-label strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(255,255,255,.85);
+  line-height: 1.3;
+}
+
+.settings-row-label small {
+  display: block;
+  font-size: 12px;
+  color: rgba(255,255,255,.4);
+  margin-top: 2px;
+}
+
+/* Theme Toggle */
+.theme-toggle {
+  flex-shrink: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.theme-toggle-track {
+  display: block;
+  width: 52px;
+  height: 28px;
+  border-radius: 99px;
+  position: relative;
+  transition: background .25s ease;
+  background: rgba(255,255,255,.12);
+}
+
+.theme-toggle-track.dark {
+  background: linear-gradient(135deg, #2a2a40, #1a1a28);
+}
+
+.theme-toggle-track.light {
+  background: linear-gradient(135deg, #f6c453, #e8a838);
+}
+
+.theme-toggle-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform .25s cubic-bezier(.34,1.56,.64,1);
+  box-shadow: 0 2px 6px rgba(0,0,0,.2);
+}
+
+.theme-toggle-track.dark .theme-toggle-thumb {
+  transform: translateX(24px);
+  color: #2a2a40;
+}
+
+.theme-toggle-track.light .theme-toggle-thumb {
+  color: #f6c453;
+}
+
+/* Settings Buttons */
+.settings-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.1);
+  color: rgba(255,255,255,.7);
+  transition: all .15s ease;
+  flex-shrink: 0;
+}
+
+.settings-btn:hover {
+  background: rgba(255,255,255,.1);
+  border-color: rgba(255,255,255,.18);
+  color: #fff;
+}
+
+.settings-btn.primary {
+  background: linear-gradient(135deg, var(--palette-primary, var(--accent)), var(--palette-secondary, var(--accent-2)));
+  border-color: transparent;
+  color: #fff;
+  font-weight: 800;
+}
+
+.settings-btn.danger {
+  color: rgba(239, 68, 68, .85);
+  border-color: rgba(239, 68, 68, .2);
+}
+
+.settings-btn.danger:hover {
+  background: rgba(239, 68, 68, .12);
+  border-color: rgba(239, 68, 68, .35);
+  color: #f87171;
+}
+
+.settings-edit-btn {
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.1);
+  color: rgba(255,255,255,.55);
+  flex-shrink: 0;
+}
+
+.settings-edit-btn:hover {
+  background: rgba(255,255,255,.1);
+  color: #fff;
+}
+
+.settings-input {
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #fff;
+  width: 140px;
+  outline: 0;
+}
+
+.settings-input:focus {
+  border-color: rgba(255,255,255,.25);
+  background: rgba(255,255,255,.08);
+}
+
+.settings-confirm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: rgba(255,255,255,.5);
+  flex-shrink: 0;
+}
+
+.settings-name-edit {
+  flex-shrink: 0;
+}
+
+/* Settings tab icon fix */
+.profile-tab {
+  gap: 6px;
+}
+
+/* ── Light mode settings overrides ──────────────────────────── */
+:root[data-theme="light"] .settings-group {
+  background: rgba(0,0,0,.03);
+  border-color: rgba(0,0,0,.06);
+}
+
+:root[data-theme="light"] .settings-group-title {
+  color: rgba(0,0,0,.4);
+}
+
+:root[data-theme="light"] .settings-row + .settings-row {
+  border-top-color: rgba(0,0,0,.06);
+}
+
+:root[data-theme="light"] .settings-row-icon {
+  background: rgba(0,0,0,.05);
+  color: rgba(0,0,0,.5);
+}
+
+:root[data-theme="light"] .settings-row-label strong {
+  color: rgba(0,0,0,.8);
+}
+
+:root[data-theme="light"] .settings-row-label small {
+  color: rgba(0,0,0,.45);
+}
+
+:root[data-theme="light"] .settings-btn {
+  background: rgba(0,0,0,.04);
+  border-color: rgba(0,0,0,.1);
+  color: rgba(0,0,0,.6);
+}
+
+:root[data-theme="light"] .settings-btn:hover {
+  background: rgba(0,0,0,.08);
+  border-color: rgba(0,0,0,.18);
+  color: rgba(0,0,0,.85);
+}
+
+:root[data-theme="light"] .settings-btn.primary {
+  color: #fff;
+}
+
+:root[data-theme="light"] .settings-btn.danger {
+  color: rgba(220, 38, 38, .75);
+  border-color: rgba(220, 38, 38, .25);
+}
+
+:root[data-theme="light"] .settings-btn.danger:hover {
+  background: rgba(220, 38, 38, .1);
+  color: #dc2626;
+}
+
+:root[data-theme="light"] .settings-edit-btn {
+  background: rgba(0,0,0,.04);
+  border-color: rgba(0,0,0,.1);
+  color: rgba(0,0,0,.5);
+}
+
+:root[data-theme="light"] .settings-edit-btn:hover {
+  background: rgba(0,0,0,.08);
+  color: rgba(0,0,0,.8);
+}
+
+:root[data-theme="light"] .settings-input {
+  background: rgba(0,0,0,.04);
+  border-color: rgba(0,0,0,.12);
+  color: rgba(0,0,0,.85);
+}
+
+:root[data-theme="light"] .settings-input:focus {
+  border-color: rgba(0,0,0,.22);
+  background: rgba(0,0,0,.06);
+}
+
+:root[data-theme="light"] .settings-confirm {
+  color: rgba(0,0,0,.5);
+}
+
+:root[data-theme="light"] .theme-toggle-track {
+  background: rgba(0,0,0,.1);
+}
+
 .profile-analytics {
   display: grid;
   grid-template-columns: 1fr 1.4fr;
@@ -2195,6 +2522,19 @@ button { border: 0; color: inherit; cursor: pointer; }
   --palette-highlight-soft: rgba(142, 197, 255, .15);
 }
 
+.movie-site.universe-xmen {
+  --palette-bg: var(--xm-gunmetal);
+  --palette-bg-raised: color-mix(in srgb, var(--xm-dark-steel) 58%, var(--carbon-black));
+  --palette-surface: color-mix(in srgb, var(--xm-steel) 54%, var(--carbon-black));
+  --palette-surface-strong: color-mix(in srgb, var(--xm-dark-steel) 52%, var(--carbon-black));
+  --palette-border: color-mix(in srgb, var(--xm-chrome) 34%, rgba(255,255,255,.10));
+  --palette-primary: var(--xm-chrome);
+  --palette-secondary: var(--xm-silver);
+  --palette-muted-accent: var(--xm-dark-steel);
+  --palette-highlight: var(--xm-polished);
+  --palette-highlight-soft: rgba(180, 180, 192, .14);
+}
+
 .movie-site .site-header,
 .movie-site .top-carousel,
 .movie-site .movie-card,
@@ -2508,6 +2848,10 @@ button { border: 0; color: inherit; cursor: pointer; }
   --accent-metal: #8ec5ff;
 }
 
+.movie-site.universe-xmen {
+  --accent-metal: var(--xm-polished);
+}
+
 .movie-site .section-title h2,
 .movie-site .list-heading h2,
 .movie-site .watch-upnext h2 {
@@ -2779,6 +3123,10 @@ button { border: 0; color: inherit; cursor: pointer; }
 .movie-site.universe-marvel,
 .movie-site.universe-dc {
   --palette-border: rgba(255,255,255,.14);
+}
+
+.movie-site.universe-xmen {
+  --palette-border: rgba(200,200,212,.12);
 }
 
 .movie-site .status-select.unwatched .status-trigger {
