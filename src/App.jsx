@@ -1860,13 +1860,13 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
   }), [selectedServer, currentItem.type, currentItem.tmdbId, currentItem.season, currentItem.watchedDuration, tmdbId, item.title, isSeries, selectedEpisode]);
   const roadmapInfo = useMemo(() => getRoadmap(currentItem, activeItems), [activeItems, currentItem]);
 
+  const currentOrder = currentItem.order || currentItem.id;
   const contextItems = useMemo(() => {
-    const currentOrder = currentItem.order || currentItem.id;
     return activeItems.filter(i => {
       if (contextExpanded) return true;
       return Math.abs(i.order - currentOrder) <= 2;
     }).sort((a, b) => a.order - b.order);
-  }, [activeItems, currentItem.order, currentItem.id, contextExpanded]);
+  }, [activeItems, currentOrder, contextExpanded]);
 
   const upNext = roadmapInfo 
     ? roadmapInfo.nextInSequence.slice(0, 12)
