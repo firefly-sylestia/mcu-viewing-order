@@ -3073,6 +3073,11 @@ button { border: 0; color: inherit; cursor: pointer; }
     gap: 7px !important;
   }
 
+  .profile-rail .web-grid,
+  .profile-rail .movie-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
   .rail-scroll {
     display: grid;
     grid-auto-flow: column;
