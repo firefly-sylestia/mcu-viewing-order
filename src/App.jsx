@@ -111,6 +111,11 @@ const getRoadmap = (item, items) => {
     const validBridgeIds = new Set(bridgeDef?.bridges?.map(b => b.id) || []);
     const interstitials = items
       .filter(candidate => validBridgeIds.has(candidate.id))
+      .filter(candidate => {
+        // Don't show bridge items that are already in the natural timeline between
+        // source and target — the user already watches them in chronological order.
+        return !(candidate.order > part.order && candidate.order < next.order);
+      })
       .map(candidate => ({
         ...candidate,
         connectionNote: bridgeDef.bridges.find(b => b.id === candidate.id)?.note || null
@@ -160,6 +165,8 @@ export default function App() {
   const [rating, setRating] = useState(saved.rating || 0);
   const [ageRatingFilter, setAgeRatingFilter] = useState(saved.ageRatingFilter || 'All');
   const [sortBy, setSortBy] = useState(saved.sortBy || 'order');
+  const [sortDirection, setSortDirection] = useState(saved.sortDirection || 'desc');
+  const [typeFilter, setTypeFilter] = useState(saved.typeFilter || 'All');
   const [heroIndex, setHeroIndex] = useState(saved.heroIndex || 0);
   const [section, setSection] = useState(parseHash().section || saved.section || 'home');
   const [actions, setActions] = useState(saved.actions || {});
@@ -191,8 +198,8 @@ export default function App() {
   const allItems = useMemo(() => [...RAW.map(item => enhance(item, 'marvel')), ...DC_RAW.map(item => enhance(item, 'dc')), ...XMEN_RAW.map(item => enhance(item, 'xmen'))], []);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ universe, query, genre, rating, ageRatingFilter, sortBy, actions, section, watchItem, profileName, heroIndex }));
-  }, [universe, query, genre, rating, ageRatingFilter, sortBy, actions, section, watchItem, profileName, heroIndex]);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ universe, query, genre, rating, ageRatingFilter, sortBy, sortDirection, typeFilter, actions, section, watchItem, profileName, heroIndex }));
+  }, [universe, query, genre, rating, ageRatingFilter, sortBy, sortDirection, typeFilter, actions, section, watchItem, profileName, heroIndex]);
 
   const initialRender = useRef(true);
   useEffect(() => {
@@ -298,8 +305,19 @@ export default function App() {
       .filter(item => genre === 'All' || item.genres.includes(genre) || item.type === genre.toLowerCase())
       .filter(item => Number(item.rating) >= rating)
       .filter(item => ageRatingFilter === 'All' || (item.ageRating || (item.type === 'series' ? 'TV-14' : 'PG-13')) === ageRatingFilter)
+      .filter(item => typeFilter === 'All' || (typeFilter === 'Movies' ? item.type === 'film' : item.type === 'series'))
       .map(enrichItem);
-    sorted.sort((a, b) => sortBy === 'year' ? a.year - b.year : sortBy === 'title' ? a.title.localeCompare(b.title) : sortBy === 'rating-desc' ? (Number(b.rating) || 0) - (Number(a.rating) || 0) : sortBy === 'rating-asc' ? (Number(a.rating) || 0) - (Number(b.rating) || 0) : sortBy === 'imdb-desc' ? (Number(b.imdbRating) || 0) - (Number(a.imdbRating) || 0) : sortBy === 'imdb-asc' ? (Number(a.imdbRating) || 0) - (Number(b.imdbRating) || 0) : sortBy === 'tomato-desc' ? (parseInt(b.tomatoRating) || 0) - (parseInt(a.tomatoRating) || 0) : sortBy === 'tomato-asc' ? (parseInt(a.tomatoRating) || 0) - (parseInt(b.tomatoRating) || 0) : sortBy === 'meta-desc' ? (parseInt(b.metaRating) || 0) - (parseInt(a.metaRating) || 0) : sortBy === 'meta-asc' ? (parseInt(a.metaRating) || 0) - (parseInt(b.metaRating) || 0) : sortBy === 'popularity-desc' ? (Number(b.voteCount) || 0) - (Number(a.voteCount) || 0) : a.order - b.order);
+    sorted.sort((a, b) => {
+      const dir = sortDirection === 'asc' ? 1 : -1;
+      if (sortBy === 'year') return (a.year - b.year) * (sortDirection === 'asc' ? 1 : -1);
+      if (sortBy === 'title') return a.title.localeCompare(b.title) * (sortDirection === 'asc' ? 1 : -1);
+      if (sortBy === 'rating') return ((Number(b.rating) || 0) - (Number(a.rating) || 0)) * dir;
+      if (sortBy === 'imdb') return ((Number(b.imdbRating) || 0) - (Number(a.imdbRating) || 0)) * dir;
+      if (sortBy === 'tomato') return ((parseInt(b.tomatoRating) || 0) - (parseInt(a.tomatoRating) || 0)) * dir;
+      if (sortBy === 'meta') return ((parseInt(b.metaRating) || 0) - (parseInt(a.metaRating) || 0)) * dir;
+      if (sortBy === 'popularity') return ((Number(b.voteCount) || 0) - (Number(a.voteCount) || 0)) * dir;
+      return (a.order - b.order) * (sortDirection === 'asc' ? 1 : -1);
+    });
     return sorted;
   }, [allItems, universe, query, genre, rating, ageRatingFilter, sortBy, enrichItem]);
 
@@ -317,21 +335,35 @@ export default function App() {
 
   const failedRef = useRef(new Set());
 
-  // Fetch external search results whenever user searches (always show at end)
+  // Keep a ref of all known titles/TMDB IDs for deduplication
+  const knownItemsRef = useRef({ titles: new Set(), tmdbIds: new Set() });
   useEffect(() => {
-    const performExternalSearch = async () => {
-      // Only search if query is not empty and has minimum length
-      if (!query || query.length < 2) {
-        setExternalSearchResults([]);
-        return;
-      }
+    const titles = new Set(allItems.map(i => i.title.toLowerCase()));
+    const tmdbIds = new Set(allItems.filter(i => i.tmdbId).map(i => i.tmdbId));
+    knownItemsRef.current = { titles, tmdbIds };
+  }, [allItems]);
 
-      setExternalSearchLoading(true);
+  // Fetch external search results with debounce (300ms)
+  useEffect(() => {
+    if (!query || query.length < 2) {
+      setExternalSearchResults([]);
+      setExternalSearchLoading(false);
+      return;
+    }
+
+    setExternalSearchLoading(true);
+    const timer = setTimeout(async () => {
       try {
-        const response = await fetch(`/api/tmdb/search?q=${encodeURIComponent(query + ' ' + (universe === 'marvel' ? 'marvel' : universe === 'xmen' ? 'x-men' : 'dc'))}`);
+        const response = await fetch(`/api/tmdb/search?q=${encodeURIComponent(query)}`);
         if (response.ok) {
           const data = await response.json();
-          setExternalSearchResults(data.results || []);
+          // Filter out results already in our database to avoid duplicates
+          const { titles, tmdbIds } = knownItemsRef.current;
+          const filtered = (data.results || []).filter(r => {
+            const titleMatch = r.title?.toLowerCase();
+            return !titles.has(titleMatch) && !tmdbIds.has(r.id);
+          });
+          setExternalSearchResults(filtered);
         } else {
           setExternalSearchResults([]);
         }
@@ -341,9 +373,9 @@ export default function App() {
       } finally {
         setExternalSearchLoading(false);
       }
-    };
+    }, 300);
 
-    performExternalSearch();
+    return () => clearTimeout(timer);
   }, [query]);
 
   // Clear expired cache entries and failed items on mount to retry posters
@@ -483,6 +515,41 @@ export default function App() {
     return () => { cancelled = true; };
   }, [activeItems, posterMap]);
 
+  // Fetch OMDb ratings (IMDb, Rotten Tomatoes, Metacritic) for ALL items
+  const omdbFetchedRef = useRef(new Set());
+  useEffect(() => {
+    const needRatings = activeItems.filter(item => {
+      if (!item.tmdbId) return false;
+      const ck = metadataCacheKey(item);
+      if (!ck) return false;
+      if (omdbFetchedRef.current.has(ck)) return false;
+      const cached = getFromCache(ck);
+      return !cached || (!cached.imdbRating && !cached.tomatoRating && !cached.metaRating);
+    }).slice(0, 8);
+    if (!needRatings.length) return;
+    let cancelled = false;
+    const fetchOmdbBatch = async (idx) => {
+      if (cancelled || idx >= needRatings.length) return;
+      const batch = needRatings.slice(idx, idx + 3);
+      await Promise.allSettled(batch.map(async (item) => {
+        const ck = metadataCacheKey(item);
+        omdbFetchedRef.current.add(ck);
+        try {
+          const r = await fetch(`/api/omdb/rating?title=${encodeURIComponent(item.title)}&year=${item.year}`);
+          if (!r.ok) return;
+          const omdb = await r.json();
+          if (omdb.rating || omdb.tomatoRating || omdb.metaRating) {
+            const cur = getFromCache(ck) || {};
+            setCache(ck, { ...cur, imdbRating: omdb.rating || cur.imdbRating, tomatoRating: omdb.tomatoRating || cur.tomatoRating, metaRating: omdb.metaRating || cur.metaRating });
+          }
+        } catch {}
+      }));
+      if (!cancelled) setTimeout(() => fetchOmdbBatch(idx + 3), 200);
+    };
+    fetchOmdbBatch(0);
+    return () => { cancelled = true; };
+  }, [activeItems]);
+
   const heroItems = activeItems.slice(0, 6);
   const featured = heroItems[heroIndex % Math.max(heroItems.length, 1)] || activeItems[0];
   const genres = ['All', 'Action', 'Adventure', 'Drama', 'Sci-fi', 'Essential', 'Series'];
@@ -561,7 +628,7 @@ export default function App() {
       window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(`${item.title} official trailer`)}`, '_blank', 'noopener');
     }
   };
-  const resetFilters = () => { setQuery(''); setGenre('All'); setRating(0); setAgeRatingFilter('All'); setSortBy('order'); };
+  const resetFilters = () => { setQuery(''); setGenre('All'); setRating(0); setAgeRatingFilter('All'); setTypeFilter('All'); setSortBy('order'); setSortDirection('desc'); };
   const handleStartWatch = (item, tmdbId, mediaType) => {
     setWatchItem({ item, tmdbId, mediaType });
     setStatus(item, 'watching');
@@ -617,7 +684,7 @@ export default function App() {
         </div>
         <div className="header-search">
           <Search size={18} />
-          <input value={query} onChange={e => { setQuery(e.target.value); if (section !== 'watch') setSection('list'); }} placeholder={`Search ${universe === 'marvel' ? 'Marvel' : universe === 'xmen' ? 'X-Men' : 'DC'} titles…`} />
+          <input value={query} onChange={e => setQuery(e.target.value)} placeholder={`Search ${universe === 'marvel' ? 'Marvel' : universe === 'xmen' ? 'X-Men' : 'DC'} titles & TMDB…`} />
           {query && <button className="search-clear" onClick={() => setQuery('')}><X size={16} /></button>}
           <button className="header-filter-btn" onClick={() => setFiltersOpen(true)} aria-label="Open filters"><SlidersHorizontal size={18} /></button>
         </div>
@@ -714,7 +781,7 @@ export default function App() {
       {section === 'analytics' && <><AnalyticsPanel stats={stats} large /><MovieRail title="In progress" items={activeItems.filter(i => i.userStatus === 'watching')} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} /></>}
             {section === 'profile' && <ProfilePage stats={stats} activeItems={activeItems} universe={universe} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} conflict={conflict} onResolveRemote={resolveUseRemote} onResolveLocal={resolveKeepLocal} syncToast={toast} />}
       {section === 'watch' && safeWatchItem && <WatchPage watchItem={safeWatchItem} activeItems={roadmapItems} onBack={() => { setWatchItem(null); window.history.replaceState(null, '', '#watch'); }} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={handleStartWatch} updateAction={updateAction} />}
-      {section === 'watch' && !safeWatchItem && <WatchBrowse activeItems={activeItems} externalResults={externalSearchResults} externalLoading={externalSearchLoading} actions={actions} onStartWatch={handleStartWatch} onPlayExternal={onPlayExternal} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} setSection={setSection} setQuery={setQuery} />}
+      {section === 'watch' && !safeWatchItem && <WatchBrowse activeItems={activeItems} externalResults={externalSearchResults} externalLoading={externalSearchLoading} actions={actions} query={query} onStartWatch={handleStartWatch} onPlayExternal={onPlayExternal} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} />}
 
       <nav className="bottom-nav" aria-label="Primary">
         <button className={section === 'home' ? 'active' : ''} onClick={() => { setSection('home'); setWatchItem(null); }}><Home size={22} /><span>Home</span></button>
@@ -726,7 +793,7 @@ export default function App() {
 
       {selectedItem && <DetailView item={selectedItem} onClose={() => selectItem(null)} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={handleStartWatch} activeItems={roadmapItems} />}
       {trailer && <TrailerModal trailer={trailer} onClose={() => setTrailer(null)} />}
-      {filtersOpen && <Filters genre={genre} setGenre={setGenre} rating={rating} setRating={setRating} ageRatingFilter={ageRatingFilter} setAgeRatingFilter={setAgeRatingFilter} sortBy={sortBy} setSortBy={setSortBy} genres={genres} count={activeItems.length} onClose={() => setFiltersOpen(false)} />}
+      {filtersOpen && <Filters genre={genre} setGenre={setGenre} rating={rating} setRating={setRating} ageRatingFilter={ageRatingFilter} setAgeRatingFilter={setAgeRatingFilter} sortBy={sortBy} setSortBy={setSortBy} sortDirection={sortDirection} setSortDirection={setSortDirection} typeFilter={typeFilter} setTypeFilter={setTypeFilter} genres={genres} count={activeItems.length} onClose={() => setFiltersOpen(false)} />}
       {authOpen && <AuthModal onClose={() => setAuthOpen(false)} onLogin={login} onSignup={signup} onGoogleSignIn={googleSignIn} onAnonymousSignIn={anonymousSignIn} onResetPassword={resetPassword} />}
       <Footer />
     </main>
@@ -1471,7 +1538,7 @@ function ContinueWatching({ items, setSelected, setStatus, toggleBookmark, playT
   );
 }
 
-function WatchBrowse({ activeItems, externalResults = [], externalLoading = false, actions = {}, onStartWatch, onPlayExternal, setSelected, setStatus, toggleBookmark, setSection, setQuery }) {
+function WatchBrowse({ activeItems, externalResults = [], externalLoading = false, actions = {}, query = '', onStartWatch, onPlayExternal, setSelected, setStatus, toggleBookmark }) {
   const pageSize = 12;
   const [upNextPage, setUpNextPage] = useState(1);
   const inProgress = activeItems.filter(i => i.userStatus === 'watching');
@@ -1479,6 +1546,9 @@ function WatchBrowse({ activeItems, externalResults = [], externalLoading = fals
   const upNextPageCount = Math.max(1, Math.ceil(allUpNext.length / pageSize));
   const currentUpNextPage = Math.min(upNextPage, upNextPageCount);
   const upNext = allUpNext.slice((currentUpNextPage - 1) * pageSize, currentUpNextPage * pageSize);
+  const watched = activeItems.filter(i => i.userStatus === 'watched').length;
+  const total = activeItems.length || 1;
+  const pct = Math.round((watched / total) * 100);
   useEffect(() => { setUpNextPage(1); }, [allUpNext.length]);
   const handleResume = async (item) => {
     const params = new URLSearchParams({ title: item.title, year: String(item.year || '') });
@@ -1490,45 +1560,114 @@ function WatchBrowse({ activeItems, externalResults = [], externalLoading = fals
     }
     onStartWatch(item, item.tmdbId || null, item.type === 'series' ? 'tv' : 'movie');
   };
+
+  const renderRatingBadges = (item) => (
+    <div className="wb-rating-badges">
+      {item.rating && <span className="wb-rating-badge wb-tmdb"><Star size={10} fill="currentColor" />{Number(item.rating).toFixed(1)}</span>}
+      {item.imdbRating && <span className="wb-rating-badge wb-imdb">★{item.imdbRating}</span>}
+      {item.tomatoRating && (() => { const t = getTomatoTier(item.tomatoRating); return <span className={`wb-rating-badge wb-tomato ${t.cls}`}>{t.emoji}{item.tomatoRating}</span>; })()}
+      {item.metaRating && <span className="wb-rating-badge wb-meta">M{item.metaRating}</span>}
+    </div>
+  );
+
   return (
     <section className="watch-browse">
-      <div className="watch-browse-hero">
-        <div className="watch-browse-icon"><Play size={48} fill="currentColor" /></div>
-        <h1>Ready to watch?</h1>
-        <p>Pick up where you left off or discover something new to start watching.</p>
+      <div className="wb-hero">
+        <div className="wb-hero-bg" />
+        <div className="wb-hero-content">
+          <div className="wb-hero-icon-ring">
+            <Play size={36} fill="currentColor" className="wb-hero-play" />
+          </div>
+          <h1>Ready to watch?</h1>
+          <p>Pick up where you left off or discover your next story.</p>
+          <div className="wb-hero-stats">
+            <div className="wb-stat">
+              <span className="wb-stat-value">{watched}</span>
+              <span className="wb-stat-label">Watched</span>
+            </div>
+            <div className="wb-stat-divider" />
+            <div className="wb-stat">
+              <span className="wb-stat-value">{pct}%</span>
+              <span className="wb-stat-label">Complete</span>
+            </div>
+            <div className="wb-stat-divider" />
+            <div className="wb-stat">
+              <span className="wb-stat-value">{allUpNext.length}</span>
+              <span className="wb-stat-label">Remaining</span>
+            </div>
+          </div>
+          {query && (
+            <div className="wb-search-chip">
+              <Search size={14} />
+              <span>"{query}"</span>
+              <span className="wb-search-chip-count">{externalLoading ? 'searching…' : `${activeItems.length + externalResults.length} results`}</span>
+            </div>
+          )}
+        </div>
       </div>
+
       {inProgress.length > 0 && (
-        <section className="rail-card web-rail upnext-rail-card">
-          <div className="section-title"><h2>Continue Watching</h2><button>{inProgress.length} in progress</button></div>
-          <div className="movie-grid web-grid rail-scroll upnext-grid">
+        <section className="wb-section">
+          <div className="wb-section-head">
+            <h2>Continue Watching</h2>
+            <span className="wb-section-count">{inProgress.length} in progress</span>
+          </div>
+          <div className="wb-scroll">
             {inProgress.map(item => (
-              <article key={item.id} className="movie-card continue-card" style={{ '--accent': item.accent }}>
-                <button className="poster-button" onClick={() => handleResume(item)}>
+              <article key={item.id} className="wb-card wb-continue-card" style={{ '--accent': item.accent }}>
+                <button className="wb-card-media" onClick={() => handleResume(item)}>
                   <PosterArt item={item} />
-                  <div className="continue-overlay"><Play size={28} fill="currentColor" /></div>
+                  <div className="wb-continue-overlay">
+                    <div className="wb-progress-ring">
+                      <svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="3" /><circle cx="18" cy="18" r="15" fill="none" stroke="currentColor" strokeWidth="3" strokeDasharray={`${Math.min((parseInt(elapsedPctLabel(item)) || 0), 99) * 0.94} 94`} strokeLinecap="round" transform="rotate(-90 18 18)" /></svg>
+                      <Play size={16} fill="currentColor" />
+                    </div>
+                  </div>
                 </button>
-                <div className="card-body"><button className="title-button" onClick={() => setSelected(item)}>{item.title}</button><span>{elapsedPctLabel(item)} complete</span></div>
-                <div className="card-actions">
-                  <button onClick={() => handleResume(item)} className="trailer-chip"><Play size={16} fill="currentColor" /><span>Resume</span></button>
+                <div className="wb-card-info">
+                  <button className="wb-card-title" onClick={() => setSelected(item)}>{item.title}</button>
+                  <div className="wb-card-meta">
+                    <span>{elapsedPctLabel(item)} complete</span>
+                    {renderRatingBadges(item)}
+                  </div>
+                </div>
+                <div className="wb-card-actions">
+                  <button onClick={() => handleResume(item)} className="wb-action-btn wb-action-primary"><Play size={14} fill="currentColor" /> Resume</button>
                   <StatusSelect item={item} setStatus={setStatus} compact />
-                  <button onClick={() => toggleBookmark(item)} className={`bookmark-chip ${item.bookmarked ? 'saved' : ''}`}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button>
+                  <button onClick={() => toggleBookmark(item)} className={`wb-action-btn wb-action-icon ${item.bookmarked ? 'saved' : ''}`} aria-label={item.bookmarked ? 'Remove bookmark' : 'Bookmark'}><Bookmark size={16} fill={item.bookmarked ? 'currentColor' : 'none'} /></button>
                 </div>
               </article>
             ))}
           </div>
         </section>
       )}
-      {upNext.length > 0 && (
-        <section className="rail-card web-rail upnext-rail-card">
-          <div className="section-title"><h2>Start Watching</h2><button>{allUpNext.length} available</button></div>
-          <div className="movie-grid web-grid rail-scroll upnext-grid">
+
+      {allUpNext.length > 0 && (
+        <section className="wb-section">            <div className="wb-section-head">
+            <h2>Start Watching</h2>
+            <span className="wb-section-count">{allUpNext.length} available</span>
+          </div>
+          <div className="wb-grid">
             {upNext.map(item => (
-              <article key={item.id} className="movie-card" style={{ '--accent': item.accent }}>
-                <button className="poster-button" onClick={() => setSelected(item)}><PosterArt item={item} /></button>
-                <div className="card-body"><button className="title-button" onClick={() => setSelected(item)}>{item.title}</button><span>{item.year} · {runtimeLabel(item.runtime, item.type)}</span></div>
-                <div className="card-actions">
-                  <button onClick={() => handleResume(item)} className="trailer-chip watch-primary-action"><Play size={16} fill="currentColor" /><span>Watch</span></button>
-                  <button onClick={() => toggleBookmark(item)} className={`bookmark-chip watch-bookmark-action ${item.bookmarked ? 'saved' : ''}`}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /><span>{item.bookmarked ? 'Saved' : 'Save'}</span></button>
+              <article key={item.id} className="wb-card" style={{ '--accent': item.accent }}>
+                <button className="wb-card-media" onClick={() => setSelected(item)}>
+                  <PosterArt item={item} />
+                  <div className="wb-card-overlay">
+                    <button className="wb-play-btn" onClick={(e) => { e.stopPropagation(); handleResume(item); }} aria-label={`Watch ${item.title}`}>
+                      <Play size={20} fill="currentColor" />
+                    </button>
+                  </div>
+                </button>
+                <div className="wb-card-info">
+                  <button className="wb-card-title" onClick={() => setSelected(item)}>{item.title}</button>
+                  <div className="wb-card-meta">
+                    <span>{item.year} · {runtimeLabel(item.runtime, item.type)}</span>
+                    {renderRatingBadges(item)}
+                  </div>
+                </div>
+                <div className="wb-card-actions">
+                  <button onClick={() => handleResume(item)} className="wb-action-btn wb-action-primary"><Play size={14} fill="currentColor" /> Watch</button>
+                  <button onClick={() => toggleBookmark(item)} className={`wb-action-btn wb-action-save ${item.bookmarked ? 'saved' : ''}`}><Bookmark size={14} fill={item.bookmarked ? 'currentColor' : 'none'} /> {item.bookmarked ? 'Saved' : 'Save'}</button>
                 </div>
               </article>
             ))}
@@ -1536,10 +1675,14 @@ function WatchBrowse({ activeItems, externalResults = [], externalLoading = fals
           {upNextPageCount > 1 && <nav className="pagination" aria-label="Start watching pages"><button onClick={() => setUpNextPage(p => Math.max(1, p - 1))} disabled={currentUpNextPage === 1} aria-label="Previous page"><ChevronLeft size={18} /></button>{Array.from({ length: upNextPageCount }, (_, i) => i + 1).map(n => <button key={n} className={currentUpNextPage === n ? 'active' : ''} aria-current={currentUpNextPage === n ? 'page' : undefined} onClick={() => setUpNextPage(n)}>{n}</button>)}<button onClick={() => setUpNextPage(p => Math.min(upNextPageCount, p + 1))} disabled={currentUpNextPage === upNextPageCount} aria-label="Next page"><ChevronRight size={18} /></button></nav>}
         </section>
       )}
+
       {externalResults.length > 0 && (
-        <section className="rail-card web-rail upnext-rail-card">
-          <div className="section-title"><h2>TMDB Results</h2><button>{externalResults.length} found</button></div>
-          <div className="movie-grid web-grid rail-scroll upnext-grid">
+        <section className="wb-section">
+          <div className="wb-section-head">
+            <h2>TMDB Results</h2>
+            <span className="wb-section-count">{externalResults.length} found</span>
+          </div>
+          <div className="wb-grid">
             {externalResults.map(result => {
               const actionKey = `tmdb:${result.type}:${result.id}`;
               const action = actions[actionKey] || {};
@@ -1562,22 +1705,29 @@ function WatchBrowse({ activeItems, externalResults = [], externalLoading = fals
                 accent: '#4a5568',
                 userStatus: action.status || 'unwatched',
                 bookmarked: Boolean(action.bookmarked),
-                // Keep raw result for onPlayExternal
                 _raw: result,
               };
               return (
-                <article key={extItem.id} className="movie-card" style={{ '--accent': '#4a5568' }}>
-                  <button className="poster-button" onClick={() => onPlayExternal(result)}>
+                <article key={extItem.id} className="wb-card" style={{ '--accent': '#4a5568' }}>
+                  <button className="wb-card-media" onClick={() => onPlayExternal(result)}>
                     <PosterArt item={extItem} />
+                    <div className="wb-card-overlay">
+                      <button className="wb-play-btn" onClick={(e) => { e.stopPropagation(); onPlayExternal(result); }} aria-label={`Watch ${result.title}`}>
+                        <Play size={20} fill="currentColor" />
+                      </button>
+                    </div>
                   </button>
-                  <div className="card-body">
-                    <button className="title-button" onClick={() => onPlayExternal(result)}>{result.title}</button>
-                    <span>{result.year || 'Date TBA'} · {result.type === 'tv' ? 'Series' : 'Movie'}{result.runtime ? ` · ${runtimeLabel(result.runtime, result.type === 'tv' ? 'series' : 'film')}` : ''}</span>
+                  <div className="wb-card-info">
+                    <button className="wb-card-title" onClick={() => onPlayExternal(result)}>{result.title}</button>
+                    <div className="wb-card-meta">
+                      <span>{result.year || 'Date TBA'} · {result.type === 'tv' ? 'Series' : 'Movie'}</span>
+                      {result.rating && <span className="wb-rating-badge wb-tmdb"><Star size={10} fill="currentColor" />{result.rating}</span>}
+                    </div>
                   </div>
-                  <div className="card-actions">
-                    <button onClick={() => onPlayExternal(result)} className="trailer-chip"><Play size={16} fill="currentColor" /><span>Watch</span></button>
+                  <div className="wb-card-actions">
+                    <button onClick={() => onPlayExternal(result)} className="wb-action-btn wb-action-primary"><Play size={14} fill="currentColor" /> Watch</button>
                     <StatusSelect item={extItem} setStatus={setStatus} compact />
-                    <button onClick={() => toggleBookmark(extItem)} className={`bookmark-chip ${extItem.bookmarked ? 'saved' : ''}`} aria-label={extItem.bookmarked ? 'Remove bookmark' : 'Bookmark title'}><Bookmark size={18} fill={extItem.bookmarked ? 'currentColor' : 'none'} /></button>
+                    <button onClick={() => toggleBookmark(extItem)} className={`wb-action-btn wb-action-icon ${extItem.bookmarked ? 'saved' : ''}`} aria-label={extItem.bookmarked ? 'Remove bookmark' : 'Bookmark title'}><Bookmark size={16} fill={extItem.bookmarked ? 'currentColor' : 'none'} /></button>
                   </div>
                 </article>
               );
@@ -1585,15 +1735,17 @@ function WatchBrowse({ activeItems, externalResults = [], externalLoading = fals
           </div>
         </section>
       )}
+
       {inProgress.length === 0 && allUpNext.length === 0 && externalResults.length === 0 && !externalLoading && (
-        <div className="watch-browse-empty">
+        <div className="wb-empty">
+          <div className="wb-empty-icon"><Play size={32} /></div>
           <h2>Nothing to watch yet</h2>
           <p>Search above to find movies & shows in TMDB.</p>
-          <button onClick={() => { setQuery(''); setSection('list'); }}>Browse titles</button>
         </div>
       )}
       {externalLoading && (
-        <div className="watch-browse-empty">
+        <div className="wb-empty">
+          <div className="wb-empty-icon"><Sparkles size={32} /></div>
           <p>Searching TMDB...</p>
         </div>
       )}
@@ -1786,7 +1938,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
           </div>
         </div>
       )}
-      {roadmapInfo && (
+      {roadmapInfo ? (
         <section className="watch-roadmap">
           <div className="section-title"><div><p className="eyebrow">Recommended sequence</p><h2>Viewing roadmap</h2></div><span className="roadmap-summary">{roadmapInfo.complete}/{roadmapInfo.siblings.length} parts watched</span></div>
           <div className="roadmap-timeline">
@@ -1840,6 +1992,30 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
             })}
           </div>
         </section>
+      ) : (
+        <section className="watch-roadmap">
+          <div className="section-title"><div><p className="eyebrow">Story context</p><h2>Viewing order</h2></div><span className="roadmap-summary">#{String(currentItem.order || currentItem.id).padStart(2, '0')} of {activeItems.length}</span></div>
+          <div className="roadmap-timeline">
+            {activeItems.filter(i => i.order === currentItem.order - 1 || i.order === currentItem.order || i.order === currentItem.order + 1).sort((a, b) => a.order - b.order).map(item => (
+              <button
+                key={item.id}
+                className={`roadmap-part ${item.id === currentItem.id ? 'active' : ''} ${item.userStatus === 'watched' ? 'watched' : ''}`}
+                onClick={() => item.id !== currentItem.id && handleSwitchItem(item)}
+                style={{ '--accent': item.accent, cursor: item.id === currentItem.id ? 'default' : 'pointer' }}
+              >
+                <span className="roadmap-part-dot" />
+                <div className="roadmap-part-poster">
+                  {item.poster ? <img src={item.poster} alt={item.title} loading="lazy" /> : <FallbackPoster item={item} />}
+                </div>
+                <div className="roadmap-part-info">
+                  <span className="roadmap-part-badge">{item.userStatus === 'watched' ? 'Watched' : item.id === currentItem.id ? 'Now playing' : item.order < currentItem.order ? 'Previous' : 'Next'}</span>
+                  <span className="roadmap-part-name">{item.title}</span>
+                  <span className="roadmap-part-meta">{item.year} · {runtimeLabel(item.runtime, item.type)}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </section>
       )}
       <div className="watch-info">
         <div className="watch-meta">
@@ -1877,41 +2053,84 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
   );
 }
 
-function FilterSelect({ label, value, options, onChange }) {
-  const [open, setOpen] = React.useState(false);
-  const ref = useRef(null);
-  React.useEffect(() => {
-    const handleClick = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, []);
-  const activeLabel = options.find(o => o.value === value)?.label || options[0]?.label || '';
-  return <div className="filter-select" ref={ref}>
-    <button className="filter-select-trigger" onClick={() => setOpen(!open)} aria-haspopup="listbox" aria-expanded={open}>
-      <span className="filter-select-label">{activeLabel}</span>
-      <svg className="filter-select-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-    </button>
-    {open && <div className="filter-select-dropdown" role="listbox">
-      {options.map(opt => <button key={opt.value} className={`filter-select-option ${value === opt.value ? 'active' : ''}`} role="option" aria-selected={value === opt.value} onClick={() => { onChange(opt.value); setOpen(false); }}>
-        <span>{opt.label}</span>
-        {value === opt.value && <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 7L5.5 10L11.5 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-      </button>)}
-    </div>}
-  </div>;
-}
-
 const AGE_RATINGS = ['PG-13', 'R', 'TV-14', 'TV-PG', 'TV-MA', 'Not Rated'];
 
-function Filters({ genre, setGenre, rating, setRating, ageRatingFilter, setAgeRatingFilter, sortBy, setSortBy, genres, count, onClose }) {
+function Filters({ genre, setGenre, rating, setRating, ageRatingFilter, setAgeRatingFilter, sortBy, setSortBy, sortDirection, setSortDirection, typeFilter, setTypeFilter, genres, count, onClose }) {
+  const SORT_OPTIONS = [
+    { value: 'order', label: 'Viewing Order' },
+    { value: 'rating', label: 'TMDB Rating' },
+    { value: 'imdb', label: 'IMDb Rating' },
+    { value: 'tomato', label: 'Rotten Tomatoes' },
+    { value: 'meta', label: 'Metacritic' },
+    { value: 'popularity', label: 'Popularity' },
+    { value: 'year', label: 'Release Year' },
+    { value: 'title', label: 'Title A–Z' },
+  ];
+  const TYPE_OPTIONS = ['All', 'Movies', 'Series'];
+  const activeFilters = [genre !== 'All', rating > 0, ageRatingFilter !== 'All', typeFilter !== 'All', sortBy !== 'order'].filter(Boolean).length;
   return <aside className="filter-screen web-filter">
-    <div className="filter-head"><button onClick={() => { setGenre('All'); setRating(0); setAgeRatingFilter('All'); setSortBy('order'); }}>Clear All</button><b>Filters</b><button onClick={onClose}><X /></button></div>
-    <label>Sort by</label>     <FilterSelect value={sortBy} onChange={setSortBy} options={[{ value: 'order', label: 'Recommended' }, { value: 'rating-desc', label: 'Highest rated' }, { value: 'rating-asc', label: 'Lowest rated' }, { value: 'imdb-desc', label: 'Highest IMDb' }, { value: 'imdb-asc', label: 'Lowest IMDb' }, { value: 'tomato-desc', label: 'Highest Tomato' }, { value: 'tomato-asc', label: 'Lowest Tomato' }, { value: 'meta-desc', label: 'Highest Meta' }, { value: 'meta-asc', label: 'Lowest Meta' }, { value: 'popularity-desc', label: 'Most popular' }, { value: 'year', label: 'Year' }, { value: 'title', label: 'Title' }]} />
-    <label>Minimum rating</label>
-    <FilterSelect value={rating} onChange={v => setRating(Number(v))} options={[{ value: 0, label: 'Any rating' }, { value: 8, label: '8 & above' }, { value: 7, label: '7 & above' }, { value: 6, label: '6 & above' }]} />
-    <label>Age rating</label>
-    <FilterSelect value={ageRatingFilter} onChange={setAgeRatingFilter} options={[{ value: 'All', label: 'All ratings' }, ...AGE_RATINGS.map(r => ({ value: r, label: r }))]} />
-    <div className="genre-title">Genres <span>{genre === 'All' ? 0 : 1}</span></div><div className="filter-chips">{genres.map(g => <button key={g} className={genre === g ? 'selected' : ''} onClick={() => setGenre(g)}>{g}</button>)}</div>
-    <button className="show-results" onClick={onClose}>Show {count} results</button>
+    <div className="filter-head">
+      <button className="filter-clear-btn" onClick={() => { setGenre('All'); setRating(0); setAgeRatingFilter('All'); setTypeFilter('All'); setSortBy('order'); setSortDirection('desc'); }} disabled={activeFilters === 0}>Clear All{activeFilters > 0 && <span>{activeFilters}</span>}</button>
+      <div className="filter-head-center"><b>Filters & Sorting</b><span>{count} results</span></div>
+      <button className="filter-close-btn" onClick={onClose} aria-label="Close filters"><X size={20} /></button>
+    </div>
+
+    <div className="filter-body">
+      <section className="filter-section">
+        <div className="filter-section-header"><h3>Sort by</h3><div className="sort-direction-toggle" role="group" aria-label="Sort direction">
+          <button className={sortDirection === 'desc' ? 'active' : ''} onClick={() => setSortDirection('desc')} title="Highest first">↓</button>
+          <button className={sortDirection === 'asc' ? 'active' : ''} onClick={() => setSortDirection('asc')} title="Lowest first">↑</button>
+        </div></div>
+        <div className="filter-sort-grid">
+          {SORT_OPTIONS.map(opt => (
+            <button key={opt.value} className={`filter-sort-chip ${sortBy === opt.value ? 'selected' : ''}`} onClick={() => setSortBy(opt.value)}>
+              {opt.label}
+              {sortBy === opt.value && <Check size={14} />}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="filter-section">
+        <h3>Type</h3>
+        <div className="filter-chip-row">
+          {TYPE_OPTIONS.map(t => (
+            <button key={t} className={`filter-chip ${typeFilter === t ? 'selected' : ''}`} onClick={() => setTypeFilter(t)}>{t}</button>
+          ))}
+        </div>
+      </section>
+
+      <section className="filter-section">
+        <h3>Genre</h3>
+        <div className="filter-chip-row">
+          {genres.map(g => (
+            <button key={g} className={`filter-chip ${genre === g ? 'selected' : ''}`} onClick={() => setGenre(g === genre ? 'All' : g)}>{g}</button>
+          ))}
+        </div>
+      </section>
+
+      <section className="filter-section">
+        <h3>Minimum Rating</h3>
+        <div className="filter-chip-row">
+          {[{ value: 0, label: 'Any' }, { value: 8, label: '8+' }, { value: 7, label: '7+' }, { value: 6, label: '6+' }].map(r => (
+            <button key={r.value} className={`filter-chip ${rating === r.value ? 'selected' : ''}`} onClick={() => setRating(r.value)}>{r.label}</button>
+          ))}
+        </div>
+      </section>
+
+      <section className="filter-section">
+        <h3>Age Rating</h3>
+        <div className="filter-chip-row">
+          {[{ value: 'All', label: 'All' }, ...AGE_RATINGS.map(r => ({ value: r, label: r }))].map(a => (
+            <button key={a.value} className={`filter-chip ${ageRatingFilter === a.value ? 'selected' : ''}`} onClick={() => setAgeRatingFilter(a.value)}>{a.label}</button>
+          ))}
+        </div>
+      </section>
+    </div>
+
+    <div className="filter-footer">
+      <button className="filter-results-btn" onClick={onClose}>Show {count} results</button>
+    </div>
   </aside>;
 }
 
