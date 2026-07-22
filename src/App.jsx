@@ -284,7 +284,7 @@ export default function App() {
 
       setExternalSearchLoading(true);
       try {
-        const response = await fetch(`/api/tmdb/search?q=${encodeURIComponent(query)}`);
+        const response = await fetch(`/api/tmdb/search?q=${encodeURIComponent(query + ' ' + (universe === 'marvel' ? 'marvel' : universe === 'xmen' ? 'x-men' : 'dc'))}`);
         if (response.ok) {
           const data = await response.json();
           setExternalSearchResults(data.results || []);
@@ -425,8 +425,8 @@ export default function App() {
   const featured = heroItems[heroIndex % Math.max(heroItems.length, 1)] || activeItems[0];
   const genres = ['All', 'Action', 'Adventure', 'Drama', 'Sci-fi', 'Essential', 'Series'];
   const externalTrackedItems = useMemo(() => Object.entries(actions)
-    .filter(([key, action]) => key.startsWith('tmdb:') && action.media)
-    .map(([, action]) => enrichItem({ ...action.media, external: true })), [actions, enrichItem]);
+    .filter(([key, action]) => key.startsWith('tmdb:') && action.media && action.media.universe === universe)
+    .map(([, action]) => enrichItem({ ...action.media, external: true })), [actions, enrichItem, universe]);
   const analyticsItems = useMemo(() => [...activeItems, ...externalTrackedItems], [activeItems, externalTrackedItems]);
 
   const stats = useMemo(() => {
@@ -573,6 +573,69 @@ export default function App() {
         <MovieRail title="Essential picks" items={activeItems.filter(i => i.essential)} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} paginated gridControls />
         <MovieRail title="Recently watched" items={activeItems.filter(i => i.userStatus === 'watched').slice(-24).reverse()} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} empty="Mark titles as watched to see them here." scrollable variant="upnext" />
         {activeItems.filter(i => i.userStatus === 'watching').length > 0 && <ContinueWatching items={activeItems.filter(i => i.userStatus === 'watching')} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} onResume={handleStartWatch} />}
+        {externalTrackedItems.length > 0 && (
+          <MovieRail
+            title="Your TMDB"
+            items={externalTrackedItems}
+            setSelected={selectItem}
+            cycleStatus={cycleStatus}
+            setStatus={setStatus}
+            toggleBookmark={toggleBookmark}
+            playTrailer={playTrailer}
+            scrollable
+            variant="upnext"
+          />
+        )}
+        {externalSearchResults.length > 0 && (
+          <section className="rail-card web-rail upnext-rail-card">
+            <div className="section-title"><h2>Also Found</h2><button>{externalSearchResults.length} on TMDB</button></div>
+            <div className="movie-grid web-grid rail-scroll upnext-grid">
+              {externalSearchResults.map(result => {
+                const actionKey = `tmdb:${result.type}:${result.id}`;
+                const action = actions[actionKey] || {};
+                const extItem = {
+                  id: `tmdb-${result.type}-${result.id}`,
+                  external: true,
+                  title: result.title,
+                  type: result.type === 'tv' ? 'series' : 'film',
+                  poster: result.poster,
+                  backdrop: result.backdrop,
+                  year: result.year,
+                  rating: result.rating,
+                  overview: result.overview,
+                  desc: result.overview,
+                  genres: result.genres || [],
+                  runtime: result.runtime || (result.type === 'tv' ? 45 : 120),
+                  tmdbId: result.id,
+                  mediaType: result.type,
+                  universe: 'tmdb',
+                  accent: '#4a5568',
+                  userStatus: action.status || 'unwatched',
+                  bookmarked: Boolean(action.bookmarked),
+                };
+                return (
+                  <article key={extItem.id} className="movie-card" style={{ '--accent': '#4a5568' }}>
+                    <button className="poster-button" onClick={() => onPlayExternal(result)}>
+                      <PosterArt item={extItem} />
+                    </button>
+                    <div className="card-body">
+                      <button className="title-button" onClick={() => onPlayExternal(result)}>{result.title}</button>
+                      <span>{result.year || 'TBA'} · {result.type === 'tv' ? 'Series' : 'Movie'}{result.runtime ? ` · ${runtimeLabel(result.runtime, result.type === 'tv' ? 'series' : 'film')}` : ''}</span>
+                    </div>
+                    <div className="card-actions">
+                      <button onClick={() => onPlayExternal(result)} className="trailer-chip"><Play size={16} fill="currentColor" /><span>Watch</span></button>
+                      <StatusSelect item={extItem} setStatus={setStatus} compact />
+                      <button onClick={() => toggleBookmark(extItem)} className={`bookmark-chip ${extItem.bookmarked ? 'saved' : ''}`}><Bookmark size={18} fill={extItem.bookmarked ? 'currentColor' : 'none'} /></button>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+        )}
+        {externalSearchLoading && (
+          <p className="empty-state">Searching TMDB…</p>
+        )}
       </>}
 
       {section === 'list' && <ListSection items={activeItems} externalResults={externalSearchResults} externalLoading={externalSearchLoading} query={query} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} onPlayExternal={onPlayExternal} />}
