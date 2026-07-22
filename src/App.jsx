@@ -579,7 +579,7 @@ export default function App() {
       {section === 'analytics' && <><AnalyticsPanel stats={stats} large /><MovieRail title="In progress" items={activeItems.filter(i => i.userStatus === 'watching')} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} /></>}
             {section === 'profile' && <ProfilePage stats={stats} activeItems={activeItems} universe={universe} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} conflict={conflict} onResolveRemote={resolveUseRemote} onResolveLocal={resolveKeepLocal} syncToast={toast} />}
       {section === 'watch' && safeWatchItem && <WatchPage watchItem={safeWatchItem} activeItems={roadmapItems} onBack={() => { setWatchItem(null); window.history.replaceState(null, '', '#watch'); }} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={handleStartWatch} updateAction={updateAction} />}
-      {section === 'watch' && !safeWatchItem && <WatchBrowse activeItems={activeItems} onStartWatch={handleStartWatch} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} setSection={setSection} setQuery={setQuery} />}
+      {section === 'watch' && !safeWatchItem && <WatchBrowse activeItems={activeItems} externalResults={externalSearchResults} externalLoading={externalSearchLoading} actions={actions} onStartWatch={handleStartWatch} onPlayExternal={onPlayExternal} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} setSection={setSection} setQuery={setQuery} />}
 
       <nav className="bottom-nav" aria-label="Primary">
         <button className={section === 'home' ? 'active' : ''} onClick={() => { setQuery(''); setSection('home'); setWatchItem(null); }}><Home size={22} /><span>Home</span></button>
@@ -977,7 +977,7 @@ function ContinueWatching({ items, setSelected, setStatus, toggleBookmark, playT
   );
 }
 
-function WatchBrowse({ activeItems, onStartWatch, setSelected, setStatus, toggleBookmark, setSection, setQuery }) {
+function WatchBrowse({ activeItems, externalResults = [], externalLoading = false, actions = {}, onStartWatch, onPlayExternal, setSelected, setStatus, toggleBookmark, setSection, setQuery }) {
   const pageSize = 12;
   const [upNextPage, setUpNextPage] = useState(1);
   const inProgress = activeItems.filter(i => i.userStatus === 'watching');
@@ -1042,11 +1042,65 @@ function WatchBrowse({ activeItems, onStartWatch, setSelected, setStatus, toggle
           {upNextPageCount > 1 && <nav className="pagination" aria-label="Start watching pages"><button onClick={() => setUpNextPage(p => Math.max(1, p - 1))} disabled={currentUpNextPage === 1} aria-label="Previous page"><ChevronLeft size={18} /></button>{Array.from({ length: upNextPageCount }, (_, i) => i + 1).map(n => <button key={n} className={currentUpNextPage === n ? 'active' : ''} aria-current={currentUpNextPage === n ? 'page' : undefined} onClick={() => setUpNextPage(n)}>{n}</button>)}<button onClick={() => setUpNextPage(p => Math.min(upNextPageCount, p + 1))} disabled={currentUpNextPage === upNextPageCount} aria-label="Next page"><ChevronRight size={18} /></button></nav>}
         </section>
       )}
-      {inProgress.length === 0 && allUpNext.length === 0 && (
+      {externalResults.length > 0 && (
+        <section className="rail-card web-rail upnext-rail-card">
+          <div className="section-title"><h2>TMDB Results</h2><button>{externalResults.length} found</button></div>
+          <div className="movie-grid web-grid rail-scroll upnext-grid">
+            {externalResults.map(result => {
+              const actionKey = `tmdb:${result.type}:${result.id}`;
+              const action = actions[actionKey] || {};
+              const extItem = {
+                id: `tmdb-${result.type}-${result.id}`,
+                external: true,
+                title: result.title,
+                type: result.type === 'tv' ? 'series' : 'film',
+                poster: result.poster,
+                backdrop: result.backdrop,
+                year: result.year,
+                rating: result.rating,
+                overview: result.overview,
+                desc: result.overview,
+                genres: result.genres || [],
+                runtime: result.runtime || (result.type === 'tv' ? 45 : 120),
+                tmdbId: result.id,
+                mediaType: result.type,
+                universe: 'tmdb',
+                accent: '#4a5568',
+                userStatus: action.status || 'unwatched',
+                bookmarked: Boolean(action.bookmarked),
+                // Keep raw result for onPlayExternal
+                _raw: result,
+              };
+              return (
+                <article key={extItem.id} className="movie-card" style={{ '--accent': '#4a5568' }}>
+                  <button className="poster-button" onClick={() => onPlayExternal(result)}>
+                    <PosterArt item={extItem} />
+                  </button>
+                  <div className="card-body">
+                    <button className="title-button" onClick={() => onPlayExternal(result)}>{result.title}</button>
+                    <span>{result.year || 'Date TBA'} · {result.type === 'tv' ? 'Series' : 'Movie'}{result.runtime ? ` · ${runtimeLabel(result.runtime, result.type === 'tv' ? 'series' : 'film')}` : ''}</span>
+                  </div>
+                  <div className="card-actions">
+                    <button onClick={() => onPlayExternal(result)} className="trailer-chip"><Play size={16} fill="currentColor" /><span>Watch</span></button>
+                    <StatusSelect item={extItem} setStatus={setStatus} compact />
+                    <button onClick={() => toggleBookmark(extItem)} className={`bookmark-chip ${extItem.bookmarked ? 'saved' : ''}`} aria-label={extItem.bookmarked ? 'Remove bookmark' : 'Bookmark title'}><Bookmark size={18} fill={extItem.bookmarked ? 'currentColor' : 'none'} /></button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+      )}
+      {inProgress.length === 0 && allUpNext.length === 0 && externalResults.length === 0 && !externalLoading && (
         <div className="watch-browse-empty">
           <h2>Nothing to watch yet</h2>
-          <p>Open a movie or show detail and tap "Watch Now" to get started.</p>
+          <p>Search above to find movies & shows in TMDB.</p>
           <button onClick={() => { setQuery(''); setSection('list'); }}>Browse titles</button>
+        </div>
+      )}
+      {externalLoading && (
+        <div className="watch-browse-empty">
+          <p>Searching TMDB...</p>
         </div>
       )}
     </section>
