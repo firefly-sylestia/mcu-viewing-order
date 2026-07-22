@@ -1847,7 +1847,6 @@ const saveServerPref = (tmdbId, server) => {
   const loadTimeoutRef = useRef(null);
   const [iframeTimedOut, setIframeTimedOut] = useState(false);
   const [restartCounter, setRestartCounter] = useState(0);
-  const [audioOffset, setAudioOffset] = useState(0); // seconds, for audio sync adjustment
   const iframeKey = `${selectedServer}-${isSeries ? `ep-${currentItem.tmdbId}-${currentItem.season || 1}-${selectedEpisode}` : currentItem.tmdbId || item.id}-r${restartCounter}`;
 
   // Detect iframe load failures: start 10s timer on iframe key change, cancel on load
@@ -1907,8 +1906,8 @@ const saveServerPref = (tmdbId, server) => {
     title: item.title,
     season: currentItem.season || 1,
     episode: isSeries ? selectedEpisode : undefined,
-    progressSeconds: Math.max(0, (initProgressRef.current || 0) + audioOffset),
-  }), [selectedServer, currentItem.type, currentItem.tmdbId, currentItem.season, tmdbId, item.title, isSeries, selectedEpisode, audioOffset]);
+    progressSeconds: Math.max(0, initProgressRef.current || 0),
+  }), [selectedServer, currentItem.type, currentItem.tmdbId, currentItem.season, tmdbId, item.title, isSeries, selectedEpisode]);
   const roadmapInfo = useMemo(() => getRoadmap(currentItem, activeItems), [activeItems, currentItem]);
 
   const currentOrder = currentItem.order || currentItem.id;
@@ -2057,14 +2056,6 @@ const saveServerPref = (tmdbId, server) => {
           <button className="watch-restart-btn" onClick={() => { setRestartCounter(c => c + 1); setToast(''); setIframeTimedOut(false); }} title="Restart from beginning">
             <RotateCcw size={13} /> Restart
           </button>
-          <div className="watch-audio-sync">
-            <button onClick={() => setAudioOffset(o => o - 0.1)} title="Delay audio (-100ms)">−0.1</button>
-            <span className="watch-audio-sync-val">{audioOffset > 0 ? '+' : ''}{audioOffset.toFixed(1)}s</span>
-            <button onClick={() => setAudioOffset(o => o + 0.1)} title="Advance audio (+100ms)">+0.1</button>
-            {audioOffset !== 0 && (
-              <button className="watch-audio-sync-reset" onClick={() => setAudioOffset(0)} title="Reset sync">Reset</button>
-            )}
-          </div>
         </div>
       )}
       {isSeries && episodes.length > 0 && (
