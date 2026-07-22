@@ -68,6 +68,13 @@ const slugifyPosterName = (value) => String(value || '')
   .replace(/[^a-z0-9]+/g, '-')
   .replace(/^-+|-+$/g, '');
 
+const lightenHex = (hex, ratio) => {
+  const c = hex.replace('#', '');
+  const r = parseInt(c.slice(0, 2), 16), g = parseInt(c.slice(2, 4), 16), b = parseInt(c.slice(4, 6), 16);
+  const mix = (v) => Math.round(v * ratio + 255 * (1 - ratio));
+  return `#${[mix(r), mix(g), mix(b)].map(v => v.toString(16).padStart(2, '0')).join('')}`;
+};
+
 const metadataCacheKey = (item) => item?.tmdbId ? `${item.tmdbId}:${item.season || 0}` : null;
 
 const mediaKey = (item) => item?.external
@@ -1091,123 +1098,203 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, ac
     setSnapping(true);
     setSnapError(null);
     try {
-      const canvas = document.createElement('canvas');
       const scale = 2;
-      const W = 600, H = 800, P = 32;
+      const W = 1040, H = 780, R = 28;
+      const pad = 52, gap = 48, posterW = 300, posterH = 450;
+      const contentX = pad + posterW + gap;
+      const canvas = document.createElement('canvas');
       canvas.width = W * scale;
       canvas.height = H * scale;
       const ctx = canvas.getContext('2d');
       ctx.scale(scale, scale);
 
-      // Background
-      const bg = ctx.createLinearGradient(0, 0, 0, H);
-      bg.addColorStop(0, '#0f1117');
-      bg.addColorStop(0.5, '#141820');
-      bg.addColorStop(1, '#0c0e14');
-      ctx.fillStyle = bg;
-      ctx.beginPath(); ctx.roundRect(0, 0, W, H, 24); ctx.fill();
+      // ── Card background ──
+      ctx.fillStyle = '#111419';
+      ctx.beginPath(); ctx.roundRect(0, 0, W, H, R); ctx.fill();
 
-      // Accent line at top
-      ctx.fillStyle = item.accent || '#da1e37';
-      ctx.beginPath(); ctx.roundRect(P, P, W - P * 2, 4, 2); ctx.fill();
+      // ── Poster backdrop — rich dark gradient only (matching CSS shade)
+      const shade = ctx.createLinearGradient(W * 0.3, 0, W, H);
+      shade.addColorStop(0, 'rgba(10,12,17,0.92)');
+      shade.addColorStop(0.5, 'rgba(10,12,17,0.95)');
+      shade.addColorStop(1, 'rgba(10,12,17,0.98)');
+      ctx.fillStyle = shade;
+      ctx.fillRect(0, 0, W, H);
 
-      // Poster
+      // Load poster for the left panel
+      let bgImg = null;
       if (item.poster) {
-        const img = await new Promise((resolve) => {
-          const i = new Image();
-          i.crossOrigin = 'anonymous';
-          i.onload = () => resolve(i);
-          i.onerror = () => resolve(null);
+        bgImg = await new Promise((resolve) => {
+          const i = new Image(); i.crossOrigin = 'anonymous';
+          i.onload = () => resolve(i); i.onerror = () => resolve(null);
           i.src = item.poster;
         });
-        if (img) {
-          const pw = 180, ph = 270, px = P, py = 56;
-          ctx.save();
-          ctx.beginPath(); ctx.roundRect(px, py, pw, ph, 14); ctx.clip();
-          const iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
-          const s = Math.max(pw / iw, ph / ih);
-          const sw = pw / s, sh = ph / s;
-          ctx.drawImage(img, (iw - sw) / 2, (ih - sh) / 2, sw, sh, px, py, pw, ph);
-          ctx.restore();
-        }
       }
 
-      const leftCol = item.poster ? 224 : P;
+      // ── Poster ──
+      const px = pad, py = pad;
+      // Soft shadow matching CSS box-shadow: 0 24px 60px rgba(0,0,0,.5)
+      [3, 2, 1].forEach(layer => {
+        ctx.fillStyle = `rgba(0,0,0,${0.12 * layer})`;
+        ctx.beginPath(); ctx.roundRect(px + 6 * layer, py + 8 * layer, posterW, posterH, 22); ctx.fill();
+      });
+      if (bgImg) {
+        ctx.save();
+        ctx.beginPath(); ctx.roundRect(px, py, posterW, posterH, 22); ctx.clip();
+        const iw = bgImg.naturalWidth || bgImg.width, ih = bgImg.naturalHeight || bgImg.height;
+        const s = Math.max(posterW / iw, posterH / ih);
+        const sw = posterW / s, sh = posterH / s;
+        ctx.drawImage(bgImg, (iw - sw) / 2, (ih - sh) / 2, sw, sh, px, py, posterW, posterH);
+        ctx.restore();
+      } else {
+        // Fallback poster area
+        ctx.fillStyle = 'rgba(255,255,255,0.04)';
+        ctx.beginPath(); ctx.roundRect(px, py, posterW, posterH, 22); ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+        ctx.beginPath(); ctx.roundRect(px, py, posterW, posterH, 22); ctx.stroke();
+      }
 
-      // Universe badge
-      const uLabel = item.universe === 'marvel' ? 'MARVEL' : item.universe === 'xmen' ? 'X-MEN' : 'DC';
-      ctx.fillStyle = 'rgba(255,255,255,0.08)';
-      ctx.beginPath(); ctx.roundRect(leftCol, 56, ctx.measureText(uLabel).width + 28, 26, 13); ctx.fill();
-      ctx.fillStyle = '#aaa';
-      ctx.font = 'bold 11px Inter, sans-serif';
-      ctx.fillText(uLabel, leftCol + 14, 73);
+      const a = item.accent || '#da1e37';
 
-      // Title
+      // ── Kicker ──
+      const uLabel = (item.universe === 'marvel' ? 'Marvel Cinematic Universe' : item.universe === 'xmen' ? 'X-Men Universe' : 'DC Universe').toUpperCase();
+      const orderLabel = '#' + String(item.order || item.id).padStart(2, '0');
+      ctx.font = '900 11px Inter, sans-serif';
+      // Lighten accent matching CSS color-mix(in srgb, var(--brand-accent) 72%, #ffffff)
+      const kickerAccent = lightenHex(item.accent || '#da1e37', 0.72);
+      ctx.fillStyle = kickerAccent;
+      ctx.fillText(uLabel, contentX, pad + 16);
+      const orderW = ctx.measureText(orderLabel).width;
+      ctx.fillText(orderLabel, W - pad - orderW, pad + 16);
+      ctx.globalAlpha = 1;
+
+      // ── Title ──
       ctx.fillStyle = '#fff';
-      ctx.font = '900 28px Inter, sans-serif';
-      const titleWords = (item.title || '').split(' ');
-      let titleLine = '', titleY = 104;
-      for (const w of titleWords) {
-        const test = titleLine ? titleLine + ' ' + w : w;
-        if (ctx.measureText(test).width > W - leftCol - P) {
-          ctx.fillText(titleLine, leftCol, titleY);
-          titleLine = w;
-          titleY += 34;
-          if (titleY > 170) break;
-        } else { titleLine = test; }
+      const title = item.title || '';
+      let titleSize = 62;
+      while (titleSize > 32) {
+        ctx.font = `900 ${titleSize}px Inter, sans-serif`;
+        if (ctx.measureText(title).width <= (W - contentX - pad)) break;
+        titleSize -= 2;
       }
-      if (titleLine && titleY <= 170) ctx.fillText(titleLine, leftCol, titleY);
-
-      // Meta row
-      const metaY = item.poster ? 354 : 170;
-      ctx.fillStyle = '#888';
-      ctx.font = '600 13px Inter, sans-serif';
-      const metaParts = [String(item.year || '—'), item.type === 'series' ? 'Series' : 'Film'];
-      if (item.runtime) metaParts.push(runtimeLabel(item.runtime, item.type));
-      ctx.fillText(metaParts.join('  ·  '), P, metaY);
-
-      // Rating pill
-      if (item.rating) {
-        ctx.fillStyle = 'rgba(255,255,255,0.1)';
-        const rw = 72, rh = 28;
-        ctx.beginPath(); ctx.roundRect(P, metaY + 14, rw, rh, 14); ctx.fill();
-        ctx.fillStyle = '#f2c94c';
-        ctx.font = '900 15px Inter, sans-serif';
-        ctx.fillText('★ ' + Number(item.rating).toFixed(1), P + 10, metaY + 33);
+      const titleLines = [];
+      let rem = title;
+      while (rem && titleLines.length < 2) {
+        let cut = rem.length;
+        while (cut > 0 && ctx.measureText(rem.slice(0, cut)).width > (W - contentX - pad)) cut--;
+        if (cut === 0) cut = rem.length;
+        titleLines.push(rem.slice(0, cut));
+        rem = rem.slice(cut).trim();
       }
+      titleLines.forEach((line, i) => {
+        ctx.fillText(line, contentX, pad + 54 + i * (titleSize * 0.96));
+      });
 
-      // Description
-      const descY = metaY + 64;
-      ctx.fillStyle = '#b0b5c0';
-      ctx.font = '400 13px Inter, sans-serif';
-      const desc = item.desc || `${item.title} in the complete viewing order.`;
+      // ── Rating chips ──
+      let chipX = contentX, chipY = pad + 54 + titleLines.length * (titleSize * 0.96) + 22;
+      const drawChip = (label, sub, color, emoji = '') => {
+        const text = emoji ? `${emoji} ${label}` : label;
+        ctx.font = 'bold 11px Inter, sans-serif';
+        const tw = ctx.measureText(text).width + 8;
+        ctx.font = '9px Inter, sans-serif';
+        const sw = ctx.measureText(sub).width;
+        const cw = Math.max(tw, sw) + 20, ch = 44;
+        if (chipX + cw > W - pad) { chipX = contentX; chipY += 56; }
+        // Chip bg
+        ctx.fillStyle = 'rgba(255,255,255,0.045)';
+        ctx.beginPath(); ctx.roundRect(chipX, chipY, cw, ch, 16); ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.roundRect(chipX, chipY, cw, ch, 16); ctx.stroke();
+        // Value
+        ctx.fillStyle = color;
+        ctx.font = 'bold 12px Inter, sans-serif';
+        ctx.fillText(text, chipX + 10, chipY + 18);
+        // Sub-label
+        ctx.fillStyle = '#777d86';
+        ctx.font = '9px Inter, sans-serif';
+        ctx.fillText(sub, chipX + 10, chipY + 34);
+        chipX += cw + 7;
+      };
+      const drawGenreChip = (g) => {
+        ctx.font = '11px Inter, sans-serif';
+        const cw = ctx.measureText(g).width + 20, ch = 44;
+        if (chipX + cw > W - pad) { chipX = contentX; chipY += 56; }
+        ctx.fillStyle = 'rgba(255,255,255,0.045)';
+        ctx.beginPath(); ctx.roundRect(chipX, chipY, cw, ch, 16); ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+        ctx.beginPath(); ctx.roundRect(chipX, chipY, cw, ch, 16); ctx.stroke();
+        ctx.fillStyle = '#b4b8bf';
+        ctx.fillText(g, chipX + 10, chipY + 28);
+        chipX += cw + 7;
+      };
+      if (item.rating) drawChip(Number(item.rating).toFixed(1), 'TMDB', '#f2c94c', '★');
+      if (item.imdbRating) drawChip(item.imdbRating, 'IMDb', '#f5c518');
+      if (item.tomatoRating) {
+        const t = getTomatoTier(item.tomatoRating);
+        drawChip(item.tomatoRating, t.label, t.cls === 'certified-fresh' ? '#4ade80' : t.cls === 'fresh' ? '#e74c3c' : '#22c55e', t.emoji);
+      }
+      if (item.metaRating) drawChip(item.metaRating, 'Meta', '#f59e0b', 'M');
+      (item.genres || []).slice(0, 3).forEach(g => drawGenreChip(g));
+
+      // ── Description ──
+      const descY = chipY + 68;
+      ctx.fillStyle = '#a3a8b0';
+      const desc = item.desc || `Follow ${item.title} in the complete ${item.universe === 'marvel' ? 'Marvel Cinematic Universe' : item.universe === 'xmen' ? 'X-Men Universe' : 'DC Universe'} viewing order.`;
+      let descSize = 15;
+      ctx.font = `${descSize}px Inter, sans-serif`;
       const descWords = desc.split(' ');
-      let descLine = '', dy = descY;
+      let descLine = '', dy = descY, maxDescW = W - contentX - pad, lh = Math.round(descSize * 1.65);
+      const descMaxY = H - pad - 130;
       for (const w of descWords) {
         const test = descLine ? descLine + ' ' + w : w;
-        if (ctx.measureText(test).width > W - P * 2) {
-          ctx.fillText(descLine, P, dy);
+        if (ctx.measureText(test).width > maxDescW) {
+          ctx.fillText(descLine, contentX, dy);
           descLine = w;
-          dy += 20;
-          if (dy > H - 130) break;
+          dy += lh;
+          if (dy > descMaxY) break;
         } else { descLine = test; }
       }
-      if (descLine && dy <= H - 130) {
-        if (dy + 20 > H - 130) {
-          descLine = descLine.replace(/[\s,.!?]+$/, '') + '…';
-        }
-        ctx.fillText(descLine, P, dy);
+      if (descLine && dy <= descMaxY) {
+        if (dy + lh > descMaxY) descLine = descLine.replace(/[\s,.!?]+$/, '') + '…';
+        ctx.fillText(descLine, contentX, dy);
       }
 
-      // Footer
-      const footerY = H - 48;
+      let descBottom = dy;
+
+      // ── Facts grid ──
+      const factsY = Math.max(descBottom + 24, posterH + pad + 16);
+      const facts = [
+        { icon: '🗓', label: 'RELEASE YEAR', value: String(item.year) },
+        { icon: '⏱', label: 'RUNTIME', value: runtimeLabel(item.runtime, item.type) },
+        { icon: '✨', label: 'FORMAT', value: item.type === 'series' ? 'Series' : 'Film' },
+      ];
+      const factW = (W - pad * 2 - 16) / 3;
+      facts.forEach((f, i) => {
+        const fx = pad + i * (factW + 8), fy = factsY, fh = 84;
+        ctx.fillStyle = 'rgba(255,255,255,0.045)';
+        ctx.beginPath(); ctx.roundRect(fx, fy, factW, fh, 15); ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+        ctx.beginPath(); ctx.roundRect(fx, fy, factW, fh, 15); ctx.stroke();
+        ctx.fillStyle = a;
+        ctx.font = '18px Inter, sans-serif';
+        ctx.fillText(f.icon, fx + 14, fy + 38);
+        ctx.fillStyle = '#777d86';
+        ctx.font = '10px Inter, sans-serif';
+        ctx.fillText(f.label, fx + 14, fy + 58);
+        ctx.fillStyle = '#f1f2f4';
+        ctx.font = 'bold 13px Inter, sans-serif';
+        ctx.fillText(f.value, fx + 14, fy + 76);
+      });
+
+      // ── Footer ──
+      const footY = H - pad - 20;
       ctx.fillStyle = 'rgba(255,255,255,0.06)';
-      ctx.fillRect(P, footerY - 6, W - P * 2, 1);
-      ctx.fillStyle = '#666';
+      ctx.fillRect(pad, footY - 10, W - pad * 2, 1);
+      ctx.fillStyle = '#555';
       ctx.font = '600 11px Inter, sans-serif';
-      ctx.fillText('MCU Viewing Order', P, footerY + 14);
-      ctx.fillStyle = item.accent || '#da1e37';
-      ctx.beginPath(); ctx.arc(W - P - 10, footerY + 8, 6, 0, Math.PI * 2); ctx.fill();
+      ctx.fillText(`${uLabel.replace(/ .*/, '')} Viewing Order`, pad, footY + 10);
+      ctx.fillStyle = a;
+      ctx.beginPath(); ctx.arc(W - pad - 10, footY + 4, 6, 0, Math.PI * 2); ctx.fill();
 
       const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
       if (blob) {
