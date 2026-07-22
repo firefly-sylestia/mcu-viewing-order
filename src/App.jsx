@@ -244,11 +244,13 @@ export default function App() {
     let rating = item.rating;
     
     // Always check cache for rating + poster metadata
+    let imdbRating = null;
     if (item.tmdbId) {
       const cached = getFromCache(metadataCacheKey(item));
       if (cached) {
         if (!poster && cached.poster) poster = cached.poster;
         if (cached.rating) rating = cached.rating;
+        if (cached.imdbRating) imdbRating = cached.imdbRating;
       }
     }
     
@@ -268,6 +270,7 @@ export default function App() {
       watchedDuration: action.watchedDuration || 0,
       watchedEpisodes: action.watchedEpisodes || [],
       rating,
+      imdbRating,
     };
   }, [actions, posterMap]);
 
@@ -416,7 +419,10 @@ export default function App() {
               // Cache the metadata - use provided tmdbId or item's tmdbId
               const cacheKey = metadataCacheKey({ tmdbId: data.tmdbId || item.tmdbId, season: item.season });
               if (cacheKey) {
+                const existing = getFromCache(cacheKey) || {};
+                const hadImdb = !!existing.imdbRating;
                 setCache(cacheKey, {
+                  ...existing,
                   poster: data.poster,
                   backdrop: data.backdrop,
                   overview: data.overview,
@@ -424,8 +430,22 @@ export default function App() {
                   releaseDate: data.releaseDate,
                   mediaType: data.mediaType,
                 });
-              }
+              
               console.log(`[v0] Successfully fetched poster for ${item.title}`);
+              
+              // Fire-and-forget: fetch IMDb rating from OMDb (only if not already cached)
+              if (!hadImdb) {
+                fetch(`/api/omdb/rating?title=${encodeURIComponent(item.title)}&year=${item.year}`)
+                  .then(r => r.json())
+                  .then(omdb => {
+                    if (omdb.rating) {
+                      const cur = getFromCache(cacheKey) || {};
+                      setCache(cacheKey, { ...cur, imdbRating: omdb.rating });
+                    }
+                  })
+                  .catch(() => {});
+              }
+              }
             } else {
               console.warn(`[v0] No poster found for ${item.title} (error: ${data.error || 'no poster_path'})`);
               failed.push(item.id);
@@ -974,10 +994,12 @@ function EpisodeDropdown({ episodes, selected, onSelect, season }) {
 /* ── Rating Chips (DetailView) ──────────────────────────────────────────────── */
 function RatingChips({ item }) {
   const tmdb = item.rating?.toFixed ? item.rating.toFixed(1) : (item.rating ?? null);
+  const imdb = item.imdbRating;
   return (
     <>
       {tmdb && <span className="detail-rating tmdb-rating"><Star size={15} fill="currentColor" /> {tmdb}<small>TMDB</small></span>}
-      {!tmdb && <span className="detail-rating"><Star size={15} fill="currentColor" /> N/A</span>}
+      {imdb && <span className="detail-rating imdb-rating">{/* ⭐ */}★ {imdb}<small>IMDb</small></span>}
+      {!tmdb && !imdb && <span className="detail-rating"><Star size={15} fill="currentColor" /> N/A</span>}
     </>
   );
 }
