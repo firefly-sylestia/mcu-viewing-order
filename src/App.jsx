@@ -166,7 +166,7 @@ export default function App() {
   const [rating, setRating] = useState(saved.rating || 0);
   const [ageRatingFilter, setAgeRatingFilter] = useState(saved.ageRatingFilter || 'All');
   const [sortBy, setSortBy] = useState(saved.sortBy || 'order');
-  const [sortDirection, setSortDirection] = useState(saved.sortDirection || 'desc');
+  const [sortDirection, setSortDirection] = useState('desc');
   const [typeFilter, setTypeFilter] = useState(saved.typeFilter || 'All');
   const [heroIndex, setHeroIndex] = useState(saved.heroIndex || 0);
   const [section, setSection] = useState(parseHash().section || saved.section || 'home');
