@@ -36,6 +36,7 @@ const marvelPalette = ['#641220', '#85182a', '#a11d33', '#b21e35', '#bd1f36', '#
 const dcPalette = ['#061226', '#08204a', '#0b3a78', '#0d4f9c', '#1367c8', '#2f80ed'];
 const xmenPalette = ['#6a6a7a', '#828294', '#9a9aa8', '#b0b0ba', '#c4c4cc', '#d8d8de'];
 
+const SORT_LABELS = { order: 'Order', rating: 'Rating', imdb: 'IMDb', tomato: 'Tomato', meta: 'Meta', popularity: 'Popular', year: 'Year', title: 'Title' };
 const runtimeLabel = (minutes = 0, type = 'film') => {
   if (!minutes) return type === 'series' ? 'Series' : 'TBA';
   const h = Math.floor(minutes / 60);
@@ -686,6 +687,12 @@ export default function App() {
           <Search size={18} />
           <input value={query} onChange={e => setQuery(e.target.value)} placeholder={`Search ${universe === 'marvel' ? 'Marvel' : universe === 'xmen' ? 'X-Men' : 'DC'} titles & TMDB…`} />
           {query && <button className="search-clear" onClick={() => setQuery('')}><X size={16} /></button>}
+          {sortBy !== 'order' && (
+            <button className="header-sort-chip" onClick={() => setFiltersOpen(true)} title={`Sorted by ${SORT_LABELS[sortBy]} ${sortDirection === 'asc' ? '↑' : '↓'} — tap to change`}>
+              {SORT_LABELS[sortBy]}
+              <span className="header-sort-arrow">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+            </button>
+          )}
           <button className="header-filter-btn" onClick={() => setFiltersOpen(true)} aria-label="Open filters"><SlidersHorizontal size={18} /></button>
         </div>
         <button className="header-auth-btn" onClick={() => { if (user) { setSection('profile'); } else { setAuthOpen(true); } }} title={user ? 'View profile' : 'Sign in'}>
