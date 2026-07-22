@@ -1120,14 +1120,23 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, ac
       ctx.fillStyle = shade;
       ctx.fillRect(0, 0, W, H);
 
-      // Load poster for the left panel
+      // Load poster via fetch+blob to avoid CORS tainting
       let bgImg = null;
       if (item.poster) {
-        bgImg = await new Promise((resolve) => {
-          const i = new Image(); i.crossOrigin = 'anonymous';
-          i.onload = () => resolve(i); i.onerror = () => resolve(null);
-          i.src = item.poster;
-        });
+        try {
+          const resp = await fetch(item.poster);
+          if (resp.ok) {
+            const blob = await resp.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            bgImg = await new Promise((resolve) => {
+              const i = new Image();
+              i.onload = () => resolve(i);
+              i.onerror = () => resolve(null);
+              i.src = blobUrl;
+            });
+            URL.revokeObjectURL(blobUrl);
+          }
+        } catch { /* poster failed silently */ }
       }
 
       // ── Poster ──
@@ -1259,10 +1268,12 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, ac
         ctx.fillText(descLine, contentX, dy);
       }
 
-      let descBottom = dy;
+      // Track actual last rendered line Y (if loop broke, dy was incremented past limit)
+      let descBottom = dy > descMaxY && descLine ? dy - lh : dy;
 
       // ── Facts grid ──
-      const factsY = Math.max(descBottom + 24, posterH + pad + 16);
+      const maxFactsY = H - pad - 120;
+      const factsY = Math.min(Math.max(descBottom + 24, posterH + pad + 16), maxFactsY);
       const facts = [
         { icon: '🗓', label: 'RELEASE YEAR', value: String(item.year) },
         { icon: '⏱', label: 'RUNTIME', value: runtimeLabel(item.runtime, item.type) },
