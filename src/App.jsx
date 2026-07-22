@@ -1814,6 +1814,23 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
   const [selectedEpisode, setSelectedEpisode] = useState(currentItem.epStart || 1);
   const [episodeLoading, setEpisodeLoading] = useState(false);
   const watchedEpisodes = currentItem.watchedEpisodes || [];
+  const loadTimeoutRef = useRef(null);
+  const [iframeTimedOut, setIframeTimedOut] = useState(false);
+  const iframeKey = `${selectedServer}-${isSeries ? `ep-${currentItem.tmdbId}-${currentItem.season || 1}-${selectedEpisode}` : currentItem.tmdbId || item.id}`;
+
+  // Detect iframe load failures: start 10s timer on iframe key change, cancel on load
+  useEffect(() => {
+    if (nativePlayer) return;
+    clearTimeout(loadTimeoutRef.current);
+    setToast('');
+    setIframeTimedOut(false);
+    loadTimeoutRef.current = setTimeout(() => {
+      const alt = selectedServer === 'videasy' ? 'MoviePire' : 'Videasy';
+      setToast(`Player taking too long to load? Try switching to ${alt}`);
+      setIframeTimedOut(true);
+    }, 10000);
+    return () => clearTimeout(loadTimeoutRef.current);
+  }, [iframeKey, nativePlayer]);
 
   const toggleEpisode = (epNum) => {
     const next = watchedEpisodes.includes(epNum)
@@ -1975,7 +1992,23 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
           </button>
         </div>
       </header>
-      {toast && <div className="watch-toast">{toast}</div>}
+      {toast && (
+        <div className="watch-toast watch-toast-clickable">
+          {iframeTimedOut ? (
+            <button className="watch-toast-msg" onClick={() => {
+              setSelectedServer(selectedServer === 'videasy' ? 'moviepire' : 'videasy');
+              setToast('');
+              setIframeTimedOut(false);
+            }}>
+              {toast}
+              <span className="watch-toast-action">Switch now</span>
+            </button>
+          ) : (
+            <span className="watch-toast-msg">{toast}</span>
+          )}
+          <button className="watch-toast-close" onClick={() => { setToast(''); setIframeTimedOut(false); }} aria-label="Dismiss"><X size={14} /></button>
+        </div>
+      )}
       <div className="watch-player">
         {nativePlayer ? (
           <div className="watch-native-launch">
@@ -1990,7 +2023,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
             </a>
           </div>
         ) : (
-          <iframe key={`${selectedServer}-${isSeries ? `ep-${currentItem.tmdbId}-${currentItem.season || 1}-${selectedEpisode}` : currentItem.tmdbId || item.id}`} src={playerUrl} title={`Watch ${item.title}`} frameBorder="0" allowFullScreen allow="autoplay; fullscreen; picture-in-picture" loading="eager" />
+          <iframe key={iframeKey} src={playerUrl} title={`Watch ${item.title}`} frameBorder="0" allowFullScreen allow="autoplay; fullscreen; picture-in-picture" loading="eager" onLoad={() => { clearTimeout(loadTimeoutRef.current); setToast(''); }} />
         )}
       </div>
       <div className="watch-progress-bar"><span style={{ width: `${progress}%` }} /></div>
