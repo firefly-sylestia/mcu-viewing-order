@@ -1447,10 +1447,10 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, ac
       const data = await res.json();
       if (!data.success || !data.tmdbId) throw new Error('No TMDB ID found');
       const mediaType = data.mediaType;
-      startWatchWithConfirm(item, data.tmdbId, mediaType);
+      onStartWatch(item, data.tmdbId, mediaType);
     } catch {
       // fallback: use item's tmdbId and type
-      startWatchWithConfirm(item, item.tmdbId || null, item.type === 'series' ? 'tv' : 'movie');
+      onStartWatch(item, item.tmdbId || null, item.type === 'series' ? 'tv' : 'movie');
     } finally {
       setWatchLoading(false);
     }
@@ -1849,6 +1849,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
     return () => { cancelled = true; };
   }, [currentItem.tmdbId, currentItem.season, currentItem.epStart, currentItem.epEnd, isSeries]);
 
+  const initProgressRef = useRef(Math.floor((currentItem.watchedDuration || 0) / 1000));
   const playerUrl = useMemo(() => buildPlayerUrl({
     provider: selectedServer,
     mediaType: currentItem.type === 'series' ? 'tv' : 'movie',
@@ -1856,8 +1857,8 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
     title: item.title,
     season: currentItem.season || 1,
     episode: isSeries ? selectedEpisode : undefined,
-    progressSeconds: Math.floor((currentItem.watchedDuration || 0) / 1000),
-  }), [selectedServer, currentItem.type, currentItem.tmdbId, currentItem.season, currentItem.watchedDuration, tmdbId, item.title, isSeries, selectedEpisode]);
+    progressSeconds: initProgressRef.current,
+  }), [selectedServer, currentItem.type, currentItem.tmdbId, currentItem.season, tmdbId, item.title, isSeries, selectedEpisode]);
   const roadmapInfo = useMemo(() => getRoadmap(currentItem, activeItems), [activeItems, currentItem]);
 
   const currentOrder = currentItem.order || currentItem.id;
