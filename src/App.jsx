@@ -551,7 +551,16 @@ export default function App() {
     return () => { cancelled = true; };
   }, [activeItems]);
 
-  const heroItems = activeItems.slice(0, 6);
+  const lastHeroKeyRef = useRef('');
+  const stableHeroRef = useRef([]);
+  const heroItems = useMemo(() => {
+    const next = activeItems.slice(0, 6);
+    const key = next.map(i => i.id).join(',');
+    if (key === lastHeroKeyRef.current) return stableHeroRef.current;
+    lastHeroKeyRef.current = key;
+    stableHeroRef.current = next;
+    return next;
+  }, [activeItems]);
   const featured = heroItems[heroIndex % Math.max(heroItems.length, 1)] || activeItems[0];
   const genres = ['All', 'Action', 'Adventure', 'Drama', 'Sci-fi', 'Essential', 'Series'];
   const externalTrackedItems = useMemo(() => Object.entries(actions)
@@ -2158,26 +2167,30 @@ function Filters({ genre, setGenre, rating, setRating, ageRatingFilter, setAgeRa
 
 /* ── Footer ──────────────────────────────────────────────────────────────────── */
 function Footer() {
+  const [open, setOpen] = useState(false);
   return (
-    <footer className="site-footer">
-      <div className="footer-content">
-        <div className="footer-col">
-          <h4>Disclaimer</h4>
-          <p>This website does not host, store, or distribute any video files, media content, or copyrighted material. All content is provided by third-party services and is the property of their respective owners.</p>
-        </div>
-        <div className="footer-col">
-          <h4>Legal</h4>
-          <p>This site operates under the principles of fair use and does not intend to infringe upon any copyrights. If you believe your copyrighted work has been used inappropriately, please contact the respective third-party provider directly. We comply with DMCA and take intellectual property rights seriously.</p>
-        </div>
-        <div className="footer-col">
-          <h4>Data Attribution</h4>
-          <p>Movie and series metadata, including posters, ratings, and descriptions, are sourced from <a href="https://www.themoviedb.org/" target="_blank" rel="noopener noreferrer">TMDB</a>. This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
-        </div>
-      </div>
+    <footer className={`site-footer${open ? ' footer-expanded' : ''}`}>
       <div className="footer-bottom">
         <span>&copy; {new Date().getFullYear()} Cinematic Viewing Order. All rights reserved.</span>
         <span>Not affiliated with Marvel, DC, Disney, Warner Bros., or any film studio.</span>
+        <button className="footer-info-btn" onClick={() => setOpen(!open)} title={open ? 'Hide details' : 'Show disclaimers & attribution'}>{open ? '✕' : 'ⓘ'}</button>
       </div>
+      {open && (
+        <div className="footer-content">
+          <div className="footer-col">
+            <h4>Disclaimer</h4>
+            <p>This website does not host, store, or distribute any video files, media content, or copyrighted material. All content is provided by third-party services and is the property of their respective owners.</p>
+          </div>
+          <div className="footer-col">
+            <h4>Legal</h4>
+            <p>This site operates under the principles of fair use and does not intend to infringe upon any copyrights. If you believe your copyrighted work has been used inappropriately, please contact the respective third-party provider directly. We comply with DMCA and take intellectual property rights seriously.</p>
+          </div>
+          <div className="footer-col">
+            <h4>Data Attribution</h4>
+            <p>Movie and series metadata, including posters, ratings, and descriptions, are sourced from <a href="https://www.themoviedb.org/" target="_blank" rel="noopener noreferrer">TMDB</a>. This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
+          </div>
+        </div>
+      )}
     </footer>
   );
 }
