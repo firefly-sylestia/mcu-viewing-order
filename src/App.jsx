@@ -318,7 +318,7 @@ export default function App() {
       if (sortBy === 'tomato') return ((parseInt(a.tomatoRating) || 0) - (parseInt(b.tomatoRating) || 0)) * dir;
       if (sortBy === 'meta') return ((parseInt(a.metaRating) || 0) - (parseInt(b.metaRating) || 0)) * dir;
       if (sortBy === 'popularity') return ((Number(a.voteCount) || 0) - (Number(b.voteCount) || 0)) * dir;
-      return a.order - b.order;
+      return (a.order - b.order) * (sortDirection === 'asc' ? 1 : -1);
     });
     return sorted;
   }, [allItems, universe, query, genre, rating, ageRatingFilter, sortBy, sortDirection, typeFilter, enrichItem]);
