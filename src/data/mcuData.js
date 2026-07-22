@@ -167,7 +167,7 @@ export const RELEASE_INFO = Object.freeze(
 
 
 export const UPCOMING_PLACEHOLDERS = [
-  { id: 68, order: 68, phase: 6, type: 'film', year: 2027, releaseStatus: 'announced', essential: false, episodes: null, title: 'Untitled MCU Feature (2027)', seriesGroup: 'avengers-multiverse', ageRating: 'TBA', prereq: 'Avengers: Secret Wars', desc: 'An untitled Marvel Studios film currently scheduled for 2027. Details are under wraps as the Multiverse Saga unfolds.' },
+  { id: 68, order: 68, phase: 6, type: 'film', year: 2027, releaseStatus: 'announced', essential: false, episodes: null, title: 'Armor Wars', seriesGroup: 'iron-man-trilogy', ageRating: 'TBA', prereq: 'Avengers: Secret Wars', desc: 'Don Cheadle returns as War Machine in a feature film exploring what happens when Tony Stark\'s tech falls into the wrong hands. In development — release date TBA.' },
   { id: 69, order: 69, phase: 6, type: 'series', year: 2027, releaseStatus: 'announced', essential: false, episodes: null, title: 'Untitled MCU Series (2027)', seriesGroup: 'avengers-multiverse', ageRating: 'TBA', prereq: 'TBA', desc: 'An untitled Marvel Studios Disney+ series slated for 2027. Part of the expanding post-Secret Wars landscape.' },
   { id: 70, order: 70, phase: 6, type: 'film', year: 2028, releaseStatus: 'announced', essential: false, episodes: null, title: 'Untitled MCU Feature (2028)', seriesGroup: 'avengers-multiverse', ageRating: 'TBA', prereq: 'TBA', desc: 'An untitled Marvel Studios film scheduled for 2028. Expected to launch the next saga after the Multiverse Saga concludes.' },
 ];

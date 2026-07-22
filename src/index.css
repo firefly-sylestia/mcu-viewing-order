@@ -1637,6 +1637,8 @@ button { border: 0; color: inherit; cursor: pointer; }
 .detail-snap:hover { background: linear-gradient(135deg, #242440 0%, #34345a 50%, #242440 100%); border-color: rgba(160,160,240,.35); }
 .detail-snap:disabled { cursor: wait; opacity: .65; }
 .detail-snap.snap-failed { background: linear-gradient(135deg, #3a1a1a 0%, #5a2a2a 50%, #3a1a1a 100%); border-color: rgba(240,100,100,.3); color: #f8d0d0; }
+.detail-tmdb-link { display: inline-flex; align-items: center; justify-content: center; height: 46px; padding: 0 16px; border-radius: 10px; background: rgba(13,37,63,.6); border: 1px solid rgba(100,180,255,.2); color: #90caf9; font-weight: 800; font-size: 13px; text-decoration: none; transition: all .15s ease; flex-shrink: 0; }
+.detail-tmdb-link:hover { background: rgba(13,37,63,.9); border-color: rgba(100,180,255,.35); color: #bbdefb; }
 .download-dropdown { position: absolute; right: 0; top: calc(100% + 6px); min-width: 220px; background: #14181d; border: 1px solid rgba(255,255,255,.12); border-radius: 14px; padding: 6px; z-index: 50; box-shadow: 0 12px 40px rgba(0,0,0,.6); animation: dropIn .15s ease; }
 @keyframes dropIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
 .download-loading, .download-empty { display: block; padding: 12px 14px; color: #888; font-size: 13px; text-align: center; }
