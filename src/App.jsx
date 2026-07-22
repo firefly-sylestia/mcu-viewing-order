@@ -299,6 +299,7 @@ export default function App() {
   }, [actions, posterMap, omdbVersion]);
 
   const activeItems = useMemo(() => {
+    const effectiveRating = (item) => Number(item.rating) || Number(item.imdbRating) || 0;
     const sorted = allItems
       .filter(item => item.universe === universe)
       .filter(isCatalogVisible)
@@ -308,7 +309,6 @@ export default function App() {
       .filter(item => typeFilter === 'All' || (typeFilter === 'Movies' ? item.type === 'film' : item.type === 'series'))
       .map(enrichItem)
       .filter(item => effectiveRating(item) >= rating);
-    const effectiveRating = (item) => Number(item.rating) || Number(item.imdbRating) || 0;
     sorted.sort((a, b) => {
       const dir = sortDirection === 'asc' ? 1 : -1;
       if (sortBy === 'year') return (a.year - b.year) * (sortDirection === 'asc' ? 1 : -1);
