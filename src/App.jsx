@@ -245,6 +245,7 @@ export default function App() {
     
     // Always check cache for rating + poster metadata
     let imdbRating = null;
+    let tomatoRating = null;
     let voteCount = null;
     if (item.tmdbId) {
       const cached = getFromCache(metadataCacheKey(item));
@@ -252,6 +253,7 @@ export default function App() {
         if (!poster && cached.poster) poster = cached.poster;
         if (cached.rating) rating = cached.rating;
         if (cached.imdbRating) imdbRating = cached.imdbRating;
+        if (cached.tomatoRating) tomatoRating = cached.tomatoRating;
         if (cached.voteCount) voteCount = cached.voteCount;
       }
     }
@@ -273,6 +275,7 @@ export default function App() {
       watchedEpisodes: action.watchedEpisodes || [],
       rating,
       imdbRating,
+      tomatoRating,
       voteCount,
     };
   }, [actions, posterMap]);
@@ -286,7 +289,7 @@ export default function App() {
       .filter(item => Number(item.rating) >= rating)
       .filter(item => ageRatingFilter === 'All' || (item.ageRating || (item.type === 'series' ? 'TV-14' : 'PG-13')) === ageRatingFilter)
       .map(enrichItem);
-    sorted.sort((a, b) => sortBy === 'year' ? a.year - b.year : sortBy === 'title' ? a.title.localeCompare(b.title) : sortBy === 'rating-desc' ? (Number(b.rating) || 0) - (Number(a.rating) || 0) : sortBy === 'rating-asc' ? (Number(a.rating) || 0) - (Number(b.rating) || 0) : sortBy === 'imdb-desc' ? (Number(b.imdbRating) || 0) - (Number(a.imdbRating) || 0) : sortBy === 'imdb-asc' ? (Number(a.imdbRating) || 0) - (Number(b.imdbRating) || 0) : sortBy === 'popularity-desc' ? (Number(b.voteCount) || 0) - (Number(a.voteCount) || 0) : a.order - b.order);
+    sorted.sort((a, b) => sortBy === 'year' ? a.year - b.year : sortBy === 'title' ? a.title.localeCompare(b.title) : sortBy === 'rating-desc' ? (Number(b.rating) || 0) - (Number(a.rating) || 0) : sortBy === 'rating-asc' ? (Number(a.rating) || 0) - (Number(b.rating) || 0) : sortBy === 'imdb-desc' ? (Number(b.imdbRating) || 0) - (Number(a.imdbRating) || 0) : sortBy === 'imdb-asc' ? (Number(a.imdbRating) || 0) - (Number(b.imdbRating) || 0) : sortBy === 'tomato-desc' ? (parseInt(b.tomatoRating) || 0) - (parseInt(a.tomatoRating) || 0) : sortBy === 'tomato-asc' ? (parseInt(a.tomatoRating) || 0) - (parseInt(b.tomatoRating) || 0) : sortBy === 'popularity-desc' ? (Number(b.voteCount) || 0) - (Number(a.voteCount) || 0) : a.order - b.order);
     return sorted;
   }, [allItems, universe, query, genre, rating, ageRatingFilter, sortBy, enrichItem]);
 
@@ -444,7 +447,7 @@ export default function App() {
                   .then(omdb => {
                     if (omdb.rating) {
                       const cur = getFromCache(cacheKey) || {};
-                      setCache(cacheKey, { ...cur, imdbRating: omdb.rating });
+                      setCache(cacheKey, { ...cur, imdbRating: omdb.rating, tomatoRating: omdb.tomatoRating || cur.tomatoRating });
                     }
                   })
                   .catch(() => {});
@@ -817,7 +820,7 @@ function MovieCard({ item, setSelected, cycleStatus, setStatus, toggleBookmark, 
   return <article className="movie-card" style={{ '--accent': item.accent }}>
     <button className="poster-button" onClick={() => setSelected(item)}>
       <PosterArt item={item} />
-      {(item.rating || item.imdbRating) && <span className="card-rating">{item.rating && <><Star size={11} fill="currentColor" />{Number(item.rating).toFixed(1)}</>}{item.rating && item.imdbRating && <span className="card-rating-sep" />}{item.imdbRating && <span className="card-rating-imdb">★{item.imdbRating}</span>}</span>}
+      {(item.rating || item.imdbRating || item.tomatoRating) && <span className="card-rating">{item.rating && <><Star size={11} fill="currentColor" />{Number(item.rating).toFixed(1)}</>}{item.rating && item.imdbRating && <span className="card-rating-sep" />}{item.imdbRating && <span className="card-rating-imdb">★{item.imdbRating}</span>}{(item.rating || item.imdbRating) && item.tomatoRating && <span className="card-rating-sep" />}{item.tomatoRating && <span className="card-rating-tomato">{item.tomatoRating}</span>}</span>}
     </button>
     <div className="card-body"><button className="title-button" onClick={() => setSelected(item)}>{item.title}</button><span>{item.year} · {runtimeLabel(item.runtime, item.type)}{item.userStatus === 'watching' && item.watchedDuration > 30000 ? ` · ${watchTimeLabel(item)}` : ''}</span></div>
     <div className="card-actions"><button onClick={() => playTrailer(item)} className="trailer-chip" aria-label={`Play ${item.title} trailer`}><Play size={16} fill="currentColor" /><span>Trailer</span></button><StatusSelect item={item} setStatus={setStatus} compact /><button onClick={() => toggleBookmark(item)} className={`bookmark-chip ${item.bookmarked ? 'saved' : ''}`} aria-label={item.bookmarked ? 'Remove bookmark' : 'Bookmark title'}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button></div>
@@ -844,7 +847,7 @@ function ListSection({ items, externalResults = [], externalLoading = false, que
     {viewMode === 'grid' ? <div className="movie-grid web-grid list-card-grid">{visibleItems.map(item => <MovieCard key={item.id} item={item} setSelected={setSelected} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />)}</div> : <div className="list-grid">{visibleItems.map((item, index) => <article className="list-row" key={item.id} style={{ '--accent': item.accent }} onClick={() => setSelected(item)} role="button" tabIndex={0} aria-label={`View ${item.title} details`} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(item); } }}>
       <span className="list-index">{String(firstItem + index + 1).padStart(2, '0')}</span>
       <div className="list-poster"><img src={item.poster} alt={`${item.title} poster`} width="82" height="108" loading="lazy" /></div>
-      <div className="list-copy"><div className="list-title-line"><strong>{item.title}</strong>{item.essential && <span>Essential</span>}{item.rating && <span className="list-rating"><Star size={11} fill="currentColor" />{Number(item.rating).toFixed(1)}</span>}{item.imdbRating && <span className="list-rating list-rating-imdb">★{item.imdbRating}</span>}</div><span>{item.year} · {item.type} · {runtimeLabel(item.runtime, item.type)}</span><p>{item.desc || `${item.title} in the complete ${item.universe === 'marvel' ? 'MCU' : 'DC'} story timeline.`}</p><div className="list-tags">{(item.genres || []).slice(0,3).map(g => <span key={g}>{g}</span>)}</div></div>
+      <div className="list-copy"><div className="list-title-line"><strong>{item.title}</strong>{item.essential && <span>Essential</span>}{item.rating && <span className="list-rating"><Star size={11} fill="currentColor" />{Number(item.rating).toFixed(1)}</span>}{item.imdbRating && <span className="list-rating list-rating-imdb">★{item.imdbRating}</span>}{item.tomatoRating && <span className="list-rating list-rating-tomato">{item.tomatoRating}</span>}</div><span>{item.year} · {item.type} · {runtimeLabel(item.runtime, item.type)}</span><p>{item.desc || `${item.title} in the complete ${item.universe === 'marvel' ? 'MCU' : 'DC'} story timeline.`}</p><div className="list-tags">{(item.genres || []).slice(0,3).map(g => <span key={g}>{g}</span>)}</div></div>
       <div className="list-actions" onClick={e => e.stopPropagation()}><button className="list-trailer" onClick={() => playTrailer(item)} aria-label={`Play ${item.title} trailer`}><Play size={16} fill="currentColor" /><span>Trailer</span></button><StatusSelect item={item} setStatus={setStatus} /><button className={`list-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Bookmark title'}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button></div>
     </article>)}</div>}
     {pageCount > 1 && <nav className="pagination" aria-label="Viewing list pages"><button onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} aria-label="Previous page"><ChevronLeft size={18} /></button>{Array.from({ length: pageCount }, (_, index) => index + 1).map(pageNumber => <button key={pageNumber} className={currentPage === pageNumber ? 'active' : ''} aria-current={currentPage === pageNumber ? 'page' : undefined} onClick={() => goToPage(pageNumber)}>{pageNumber}</button>)}<button onClick={() => goToPage(currentPage + 1)} disabled={currentPage === pageCount} aria-label="Next page"><ChevronRight size={18} /></button></nav>}
@@ -1002,11 +1005,13 @@ function EpisodeDropdown({ episodes, selected, onSelect, season }) {
 function RatingChips({ item }) {
   const tmdb = item.rating?.toFixed ? item.rating.toFixed(1) : (item.rating ?? null);
   const imdb = item.imdbRating;
+  const tomato = item.tomatoRating;
   return (
     <>
       {tmdb && <span className="detail-rating tmdb-rating"><Star size={15} fill="currentColor" /> {tmdb}<small>TMDB</small></span>}
-      {imdb && <span className="detail-rating imdb-rating">{/* ⭐ */}★ {imdb}<small>IMDb</small></span>}
-      {!tmdb && !imdb && <span className="detail-rating"><Star size={15} fill="currentColor" /> N/A</span>}
+      {imdb && <span className="detail-rating imdb-rating">★ {imdb}<small>IMDb</small></span>}
+      {tomato && <span className="detail-rating tomato-rating">🍅 {tomato}<small>RT</small></span>}
+      {!tmdb && !imdb && !tomato && <span className="detail-rating"><Star size={15} fill="currentColor" /> N/A</span>}
     </>
   );
 }
@@ -1646,7 +1651,7 @@ const AGE_RATINGS = ['PG-13', 'R', 'TV-14', 'TV-PG', 'TV-MA', 'Not Rated'];
 function Filters({ genre, setGenre, rating, setRating, ageRatingFilter, setAgeRatingFilter, sortBy, setSortBy, genres, count, onClose }) {
   return <aside className="filter-screen web-filter">
     <div className="filter-head"><button onClick={() => { setGenre('All'); setRating(0); setAgeRatingFilter('All'); setSortBy('order'); }}>Clear All</button><b>Filters</b><button onClick={onClose}><X /></button></div>
-    <label>Sort by</label>     <FilterSelect value={sortBy} onChange={setSortBy} options={[{ value: 'order', label: 'Recommended' }, { value: 'rating-desc', label: 'Highest rated' }, { value: 'rating-asc', label: 'Lowest rated' }, { value: 'imdb-desc', label: 'Highest IMDb' }, { value: 'imdb-asc', label: 'Lowest IMDb' }, { value: 'popularity-desc', label: 'Most popular' }, { value: 'year', label: 'Year' }, { value: 'title', label: 'Title' }]} />
+    <label>Sort by</label>     <FilterSelect value={sortBy} onChange={setSortBy} options={[{ value: 'order', label: 'Recommended' }, { value: 'rating-desc', label: 'Highest rated' }, { value: 'rating-asc', label: 'Lowest rated' }, { value: 'imdb-desc', label: 'Highest IMDb' }, { value: 'imdb-asc', label: 'Lowest IMDb' }, { value: 'tomato-desc', label: 'Highest Tomato' }, { value: 'tomato-asc', label: 'Lowest Tomato' }, { value: 'popularity-desc', label: 'Most popular' }, { value: 'year', label: 'Year' }, { value: 'title', label: 'Title' }]} />
     <label>Minimum rating</label>
     <FilterSelect value={rating} onChange={v => setRating(Number(v))} options={[{ value: 0, label: 'Any rating' }, { value: 8, label: '8 & above' }, { value: 7, label: '7 & above' }, { value: 6, label: '6 & above' }]} />
     <label>Age rating</label>
