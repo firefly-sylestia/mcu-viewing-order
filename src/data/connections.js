@@ -300,5 +300,239 @@ export const STORY_BRIDGES = [
     sourceId: 12,  // I Am Groot S1 (12)
     targetId: 203, // I Am Groot S2 (12)
     bridges: []
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // DC UNIVERSE BRIDGES
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // ── WONDER WOMAN — WW → WW84
+  {
+    sourceId: 5001, // Wonder Woman (1)
+    targetId: 5002, // Wonder Woman 1984 (2)
+    bridges: []
+  },
+
+  // ── DCEU SUPERMAN — Man of Steel → BvS → ZS Justice League
+  {
+    sourceId: 5003, // Man of Steel (3)
+    targetId: 5004, // Batman v Superman (4)
+    bridges: []
+  },
+  {
+    sourceId: 5004, // Batman v Superman (4)
+    targetId: 5007, // Zack Snyder's Justice League (7)
+    bridges: [
+      { id: 5005, note: 'Suicide Squad — Amanda Waller assembles Task Force X in the aftermath of Superman\'s death, showing the government\'s response to the power vacuum' },
+      { id: 5006, note: 'Justice League (theatrical) — the heavily altered theatrical cut; Snyder Cut restores the full vision' }
+    ]
+  },
+
+  // ── SUICIDE SQUAD — Suicide Squad → The Suicide Squad → Peacemaker
+  {
+    sourceId: 5005, // Suicide Squad (5)
+    targetId: 5011, // The Suicide Squad (11)
+    bridges: [
+      { id: 5010, note: 'Birds of Prey — Harley Quinn emancipates from the Joker and builds her own crew, bridging her arc to the new Task Force X' }
+    ]
+  },
+  {
+    sourceId: 5011, // The Suicide Squad (11)
+    targetId: 5012, // Peacemaker S1 (12)
+    bridges: []
+  },
+
+  // ── AQUAMAN — Aquaman → Lost Kingdom
+  {
+    sourceId: 5008, // Aquaman (8)
+    targetId: 5017, // Aquaman and the Lost Kingdom (17)
+    bridges: [
+      { id: 5015, note: 'The Flash — the multiverse-altering events ripple across the DCEU timeline, affecting all heroes including Arthur Curry' }
+    ]
+  },
+
+  // ── SHAZAM — Shazam! → Black Adam → Fury of the Gods
+  {
+    sourceId: 5009, // Shazam! (9)
+    targetId: 5013, // Black Adam (13)
+    bridges: []
+  },
+  {
+    sourceId: 5013, // Black Adam (13)
+    targetId: 5014, // Shazam! Fury of the Gods (14)
+    bridges: []
+  },
+
+  // ── RE(E)VES BATMAN — The Batman → The Penguin → Part II
+  {
+    sourceId: 5019, // The Batman (19)
+    targetId: 5048, // The Batman Part II (48)
+    bridges: [
+      { id: 5045, note: 'The Penguin S1 — Oswald Cobblepot rises through Gotham\'s criminal underworld after Falcone\'s death, setting the stage for Part II' }
+    ]
+  },
+
+  // ── JOKER CYCLE — Joker → Folie à Deux
+  {
+    sourceId: 5018, // Joker (18)
+    targetId: 5020, // Joker: Folie à Deux (20)
+    bridges: []
+  },
+
+  // ── BURTON BATMAN — Batman → Batman Returns
+  {
+    sourceId: 5023, // Batman (23)
+    targetId: 5024, // Batman Returns (24)
+    bridges: []
+  },
+
+  // ── DARK KNIGHT TRILOGY — Begins → Dark Knight → Rises
+  {
+    sourceId: 5025, // Batman Begins (25)
+    targetId: 5026, // The Dark Knight (26)
+    bridges: []
+  },
+  {
+    sourceId: 5026, // The Dark Knight (26)
+    targetId: 5027, // The Dark Knight Rises (27)
+    bridges: []
+  },
+
+  // ── DCU SUPERMAN — Superman → Supergirl → Man of Tomorrow
+  {
+    sourceId: 5022, // Superman (32)
+    targetId: 5046, // Supergirl: Woman of Tomorrow (46)
+    bridges: []
+  },
+  {
+    sourceId: 5046, // Supergirl: Woman of Tomorrow (46)
+    targetId: 5049, // Superman: Man of Tomorrow (49)
+    bridges: [
+      { id: 5047, note: 'Clayface — expands the DCU\'s Gotham underworld while Superman and Supergirl\'s cosmic saga unfolds' }
+    ]
+  },
+
+  // ── ARROW — S1 → S2 → S3 → S4
+  {
+    sourceId: 5033, // Arrow S1 (33)
+    targetId: 5034, // Arrow S2 (34)
+    bridges: []
+  },
+  {
+    sourceId: 5034, // Arrow S2 (34)
+    targetId: 5036, // Arrow S3 (36)
+    bridges: [
+      { id: 5035, note: 'The Flash S1 — introduces Barry Allen, metahumans, and STAR Labs; major crossover events connect Starling and Central City' }
+    ]
+  },
+  {
+    sourceId: 5036, // Arrow S3 (36)
+    targetId: 5038, // Arrow S4 (38)
+    bridges: [
+      { id: 5037, note: 'The Flash S2 — introduces the multiverse, Zoom, and further crossovers that shape Oliver Queen\'s world' }
+    ]
+  },
+
+  // ── FLASH (CW) — S1 → S2
+  {
+    sourceId: 5035, // The Flash S1 (35)
+    targetId: 5037, // The Flash S2 (37)
+    bridges: [
+      { id: 5036, note: 'Arrow S3 — the League of Assassins arc and major crossovers that impact Team Flash and Central City' }
+    ]
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // X-MEN UNIVERSE BRIDGES
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // ── ORIGINAL X-MEN — X-Men → X2 → The Last Stand
+  {
+    sourceId: 6001, // X-Men (1)
+    targetId: 6002, // X2: X-Men United (2)
+    bridges: []
+  },
+  {
+    sourceId: 6002, // X2: X-Men United (2)
+    targetId: 6003, // The Last Stand (3)
+    bridges: []
+  },
+
+  // ── WOLVERINE SAGA — Origins → The Wolverine → Logan
+  {
+    sourceId: 6004, // X-Men Origins: Wolverine (4)
+    targetId: 6006, // The Wolverine (6)
+    bridges: [
+      { id: 6005, note: 'X-Men: First Class — reboots the timeline in the 1960s, establishing the young Xavier/Magneto dynamic that echoes Wolverine\'s mentor figures' }
+    ]
+  },
+  {
+    sourceId: 6006, // The Wolverine (6)
+    targetId: 6010, // Logan (10)
+    bridges: [
+      { id: 6007, note: 'Days of Future Past — the time-altering events reset the timeline, directly affecting Wolverine\'s future and setting up the dystopian Logan era' },
+      { id: 6008, note: 'Deadpool — introduces the irreverent mutant world that exists alongside Wolverine\'s journey' },
+      { id: 6009, note: 'X-Men: Apocalypse — the ancient mutant\'s awakening reshapes the world Wolverine will inhabit in his final chapter' }
+    ]
+  },
+
+  // ── FIRST CLASS ERA — First Class → DOFP → Apocalypse → Dark Phoenix
+  {
+    sourceId: 6005, // First Class (5)
+    targetId: 6007, // Days of Future Past (7)
+    bridges: [
+      { id: 6006, note: 'The Wolverine — Logan\'s confrontation with mortality in Japan foreshadows his crucial role as the time-traveler in DOFP' }
+    ]
+  },
+  {
+    sourceId: 6007, // Days of Future Past (7)
+    targetId: 6009, // Apocalypse (9)
+    bridges: [
+      { id: 6008, note: 'Deadpool — expands the post-DOFP mutant landscape before the ancient Apocalypse awakens' }
+    ]
+  },
+  {
+    sourceId: 6009, // Apocalypse (9)
+    targetId: 6012, // Dark Phoenix (12)
+    bridges: [
+      { id: 6010, note: 'Logan — the tragic future awaiting mutantkind echoes the darkness Jean Grey carries within' },
+      { id: 6011, note: 'Deadpool 2 — the X-Force and time-travel shenanigans expand the chaotic mutant world before Dark Phoenix\'s cosmic finale' }
+    ]
+  },
+
+  // ── DEADPOOL CYCLE — Deadpool → Deadpool 2
+  {
+    sourceId: 6008, // Deadpool (8)
+    targetId: 6011, // Deadpool 2 (11)
+    bridges: [
+      { id: 6009, note: 'X-Men: Apocalypse — the world-ending mutant threat raises the stakes before Wade forms X-Force' },
+      { id: 6010, note: 'Logan — Wolverine\'s final mission and the emergence of new mutant children reshapes the world Deadpool navigates' }
+    ]
+  },
+
+  // ── LEGION — S1 → S2 → S3
+  {
+    sourceId: 6014, // Legion S1 (14)
+    targetId: 6015, // Legion S2 (15)
+    bridges: []
+  },
+  {
+    sourceId: 6015, // Legion S2 (15)
+    targetId: 6016, // Legion S3 (16)
+    bridges: []
+  },
+
+  // ── THE GIFTED — S1 → S2
+  {
+    sourceId: 6017, // The Gifted S1 (17)
+    targetId: 6018, // The Gifted S2 (18)
+    bridges: []
+  },
+
+  // ── X-MEN '97 — S1 → S2
+  {
+    sourceId: 6019, // X-Men '97 S1 (19)
+    targetId: 6020, // X-Men '97 S2 (20)
+    bridges: []
   }
 ];
