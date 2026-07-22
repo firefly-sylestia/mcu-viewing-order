@@ -485,27 +485,20 @@ export default function App() {
   const selectedItem = selected ? activeItems.find(item => item.id === selected.id) || selected : null;
   const nextUp = activeItems.find(item => item.userStatus !== 'watched' && item.userStatus !== 'dropped') || activeItems[0];
   const playTrailer = async (item) => {
-    // 1. Check hardcoded trailer data first (fastest)
-    const match = getTrailerByTitle(item.title);
-    const youtubeId = match?.primary?.youtubeId || match?.youtubeId;
+    // 1. Kinocheck API with client-side cache (primary, most accurate)
+    const kinocheck = await fetchTrailerFromApi(item.title, item.year, item.tmdbId);
+    
+    // 2. Fallback: hardcoded TRAILER_DATA
+    const match = !kinocheck?.youtubeId ? getTrailerByTitle(item.title) : null;
+    const youtubeId = kinocheck?.youtubeId || match?.primary?.youtubeId || match?.youtubeId;
+    const options = kinocheck?.options || match?.options;
+
+    // 3. Play or YouTube search
     if (youtubeId) {
-      const url = trailerEmbedUrl(youtubeId);
-      setTrailer({ title: item.title, url, options: match?.options });
-      return;
+      setTrailer({ title: item.title, url: trailerEmbedUrl(youtubeId), options });
+    } else {
+      window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(`${item.title} official trailer`)}`, '_blank', 'noopener');
     }
-
-    // 2. Try Kinocheck API with client-side cache
-    try {
-      const kinocheck = await fetchTrailerFromApi(item.title, item.year, item.tmdbId);
-      if (kinocheck?.youtubeId) {
-        const url = trailerEmbedUrl(kinocheck.youtubeId);
-        setTrailer({ title: item.title, url, options: kinocheck.options });
-        return;
-      }
-    } catch { /* fall through to search */ }
-
-    // 3. Fallback: YouTube search in new tab
-    window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(`${item.title} official trailer`)}`, '_blank', 'noopener');
   };
   const resetFilters = () => { setQuery(''); setGenre('All'); setRating(0); setAgeRatingFilter('All'); setSortBy('order'); };
   const handleStartWatch = (item, tmdbId, mediaType) => {
@@ -708,19 +701,9 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
   }, [heroIndex, inlineTrailer, items.length, paused, setHeroIndex]);
 
   const showTrailer = async () => {
-    // Check hardcoded data first
-    const match = getTrailerByTitle(featured.title);
-    const youtubeId = match?.primary?.youtubeId || match?.youtubeId;
-    let id = youtubeId;
-
-    // Try Kinocheck if no hardcoded match
-    if (!id) {
-      try {
-        const kc = await fetchTrailerFromApi(featured.title, featured.year, featured.tmdbId);
-        if (kc?.youtubeId) id = kc.youtubeId;
-      } catch {}
-    }
-
+    const kc = await fetchTrailerFromApi(featured.title, featured.year, featured.tmdbId);
+    const match = !kc?.youtubeId ? getTrailerByTitle(featured.title) : null;
+    const id = kc?.youtubeId || match?.primary?.youtubeId || match?.youtubeId;
     if (id) {
       setInlineTrailer(`${trailerEmbedUrl(id)}&autoplay=1`);
     } else {
@@ -895,17 +878,9 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, ac
   const [inlineTrailer, setInlineTrailer] = useState(null);
   const [isTrailerExpanded, setIsTrailerExpanded] = useState(false);
   const showTrailer = async () => {
-    const match = getTrailerByTitle(item.title);
-    const youtubeId = match?.primary?.youtubeId || match?.youtubeId;
-    let id = youtubeId;
-
-    if (!id) {
-      try {
-        const kc = await fetchTrailerFromApi(item.title, item.year, item.tmdbId);
-        if (kc?.youtubeId) id = kc.youtubeId;
-      } catch {}
-    }
-
+    const kc = await fetchTrailerFromApi(item.title, item.year, item.tmdbId);
+    const match = !kc?.youtubeId ? getTrailerByTitle(item.title) : null;
+    const id = kc?.youtubeId || match?.primary?.youtubeId || match?.youtubeId;
     if (id) {
       setInlineTrailer(`${trailerEmbedUrl(id)}&autoplay=1`);
       setIsTrailerExpanded(true);
