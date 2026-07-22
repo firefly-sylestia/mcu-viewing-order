@@ -35,7 +35,7 @@ export const XMEN_RAW = [
 
   // ── Era 5: X-Men '97 / Animated Revival ──
   { id: 6019, order: 19, title: "X-Men '97 S1", ageRating: 'TV-PG', year: 2024, phase: 5, type: 'series', essential: true, runtime: 300, releaseDate: '2024-03-20', status: 'unwatched', prereq: 'X-Men: The Animated Series (optional)', tmdbId: 226606, season: 1, epStart: 1, epEnd: 10, seriesGroup: 'xmen-97', desc: 'A direct continuation of the beloved 90s X-Men animated series. Cyclops, Wolverine, Storm, Rogue, Gambit, Beast, Jubilee and Morph face a world without Professor X — and a dangerous new threat. 10 episodes.' },
-  { id: 6020, order: 20, title: "X-Men '97 S2", ageRating: 'TV-PG', year: 2026, phase: 5, type: 'series', essential: true, runtime: 300, releaseDate: '2026-01-01', status: 'unwatched', upcoming: true, prereq: "X-Men '97 S1", tmdbId: 226606, season: 2, epStart: 1, epEnd: 10, seriesGroup: 'xmen-97', desc: 'Season 2 picks up after the explosive finale, with the team scattered across time and facing an even greater existential threat to mutantkind. Apocalypse rises. 10 episodes.' },
+  { id: 6020, order: 20, title: "X-Men '97 S2", ageRating: 'TV-PG', year: 2026, phase: 5, type: 'series', essential: true, runtime: 300, releaseDate: '2026-01-01', releaseStatus: 'released', upcoming: true, prereq: "X-Men '97 S1", tmdbId: 226606, season: 2, epStart: 1, epEnd: 10, seriesGroup: 'xmen-97', desc: 'Season 2 picks up after the explosive finale, with the team scattered across time and facing an even greater existential threat to mutantkind. Apocalypse rises. 10 episodes.' },
 ];
 
 export const XMEN_CORE_IDS = new Set(XMEN_RAW.map(item => item.id));
