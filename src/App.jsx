@@ -820,7 +820,7 @@ function MovieCard({ item, setSelected, cycleStatus, setStatus, toggleBookmark, 
   return <article className="movie-card" style={{ '--accent': item.accent }}>
     <button className="poster-button" onClick={() => setSelected(item)}>
       <PosterArt item={item} />
-      {(item.rating || item.imdbRating || item.tomatoRating) && <span className="card-rating">{item.rating && <><Star size={11} fill="currentColor" />{Number(item.rating).toFixed(1)}</>}{item.rating && item.imdbRating && <span className="card-rating-sep" />}{item.imdbRating && <span className="card-rating-imdb">★{item.imdbRating}</span>}{(item.rating || item.imdbRating) && item.tomatoRating && <span className="card-rating-sep" />}{item.tomatoRating && <span className="card-rating-tomato">{item.tomatoRating}</span>}</span>}
+      {(item.rating || item.imdbRating || item.tomatoRating) && <span className="card-rating">{item.rating && <><Star size={11} fill="currentColor" />{Number(item.rating).toFixed(1)}</>}{item.rating && item.imdbRating && <span className="card-rating-sep" />}{item.imdbRating && <span className="card-rating-imdb">★{item.imdbRating}</span>}{(item.rating || item.imdbRating) && item.tomatoRating && <span className="card-rating-sep" />}{item.tomatoRating && <span className={`card-rating-tomato ${getTomatoTier(item.tomatoRating).cls}`}>{getTomatoTier(item.tomatoRating).emoji}{item.tomatoRating}</span>}</span>}
     </button>
     <div className="card-body"><button className="title-button" onClick={() => setSelected(item)}>{item.title}</button><span>{item.year} · {runtimeLabel(item.runtime, item.type)}{item.userStatus === 'watching' && item.watchedDuration > 30000 ? ` · ${watchTimeLabel(item)}` : ''}</span></div>
     <div className="card-actions"><button onClick={() => playTrailer(item)} className="trailer-chip" aria-label={`Play ${item.title} trailer`}><Play size={16} fill="currentColor" /><span>Trailer</span></button><StatusSelect item={item} setStatus={setStatus} compact /><button onClick={() => toggleBookmark(item)} className={`bookmark-chip ${item.bookmarked ? 'saved' : ''}`} aria-label={item.bookmarked ? 'Remove bookmark' : 'Bookmark title'}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button></div>
@@ -847,7 +847,7 @@ function ListSection({ items, externalResults = [], externalLoading = false, que
     {viewMode === 'grid' ? <div className="movie-grid web-grid list-card-grid">{visibleItems.map(item => <MovieCard key={item.id} item={item} setSelected={setSelected} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />)}</div> : <div className="list-grid">{visibleItems.map((item, index) => <article className="list-row" key={item.id} style={{ '--accent': item.accent }} onClick={() => setSelected(item)} role="button" tabIndex={0} aria-label={`View ${item.title} details`} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(item); } }}>
       <span className="list-index">{String(firstItem + index + 1).padStart(2, '0')}</span>
       <div className="list-poster"><img src={item.poster} alt={`${item.title} poster`} width="82" height="108" loading="lazy" /></div>
-      <div className="list-copy"><div className="list-title-line"><strong>{item.title}</strong>{item.essential && <span>Essential</span>}{item.rating && <span className="list-rating"><Star size={11} fill="currentColor" />{Number(item.rating).toFixed(1)}</span>}{item.imdbRating && <span className="list-rating list-rating-imdb">★{item.imdbRating}</span>}{item.tomatoRating && <span className="list-rating list-rating-tomato">{item.tomatoRating}</span>}</div><span>{item.year} · {item.type} · {runtimeLabel(item.runtime, item.type)}</span><p>{item.desc || `${item.title} in the complete ${item.universe === 'marvel' ? 'MCU' : 'DC'} story timeline.`}</p><div className="list-tags">{(item.genres || []).slice(0,3).map(g => <span key={g}>{g}</span>)}</div></div>
+      <div className="list-copy"><div className="list-title-line"><strong>{item.title}</strong>{item.essential && <span>Essential</span>}{item.rating && <span className="list-rating"><Star size={11} fill="currentColor" />{Number(item.rating).toFixed(1)}</span>}{item.imdbRating && <span className="list-rating list-rating-imdb">★{item.imdbRating}</span>}{item.tomatoRating && <span className={`list-rating list-rating-tomato ${getTomatoTier(item.tomatoRating).cls}`}>{getTomatoTier(item.tomatoRating).emoji}{item.tomatoRating}</span>}</div><span>{item.year} · {item.type} · {runtimeLabel(item.runtime, item.type)}</span><p>{item.desc || `${item.title} in the complete ${item.universe === 'marvel' ? 'MCU' : 'DC'} story timeline.`}</p><div className="list-tags">{(item.genres || []).slice(0,3).map(g => <span key={g}>{g}</span>)}</div></div>
       <div className="list-actions" onClick={e => e.stopPropagation()}><button className="list-trailer" onClick={() => playTrailer(item)} aria-label={`Play ${item.title} trailer`}><Play size={16} fill="currentColor" /><span>Trailer</span></button><StatusSelect item={item} setStatus={setStatus} /><button className={`list-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Bookmark title'}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button></div>
     </article>)}</div>}
     {pageCount > 1 && <nav className="pagination" aria-label="Viewing list pages"><button onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} aria-label="Previous page"><ChevronLeft size={18} /></button>{Array.from({ length: pageCount }, (_, index) => index + 1).map(pageNumber => <button key={pageNumber} className={currentPage === pageNumber ? 'active' : ''} aria-current={currentPage === pageNumber ? 'page' : undefined} onClick={() => goToPage(pageNumber)}>{pageNumber}</button>)}<button onClick={() => goToPage(currentPage + 1)} disabled={currentPage === pageCount} aria-label="Next page"><ChevronRight size={18} /></button></nav>}
@@ -1002,6 +1002,13 @@ function EpisodeDropdown({ episodes, selected, onSelect, season }) {
 }
 
 /* ── Rating Chips (DetailView) ──────────────────────────────────────────────── */
+const getTomatoTier = (rating) => {
+  const pct = parseInt(rating) || 0;
+  if (pct >= 75) return { emoji: '🍅', cls: 'certified-fresh', label: 'Certified Fresh' };
+  if (pct >= 60) return { emoji: '🍅', cls: 'fresh', label: 'Fresh' };
+  return { emoji: '💀', cls: 'rotten', label: 'Rotten' };
+};
+
 function RatingChips({ item }) {
   const tmdb = item.rating?.toFixed ? item.rating.toFixed(1) : (item.rating ?? null);
   const imdb = item.imdbRating;
@@ -1010,7 +1017,7 @@ function RatingChips({ item }) {
     <>
       {tmdb && <span className="detail-rating tmdb-rating"><Star size={15} fill="currentColor" /> {tmdb}<small>TMDB</small></span>}
       {imdb && <span className="detail-rating imdb-rating">★ {imdb}<small>IMDb</small></span>}
-      {tomato && <span className="detail-rating tomato-rating">🍅 {tomato}<small>RT</small></span>}
+      {tomato && (() => { const t = getTomatoTier(tomato); return <span className={`detail-rating tomato-rating ${t.cls}`}>{t.emoji} {tomato}<small>{t.label}</small></span>; })()}
       {!tmdb && !imdb && !tomato && <span className="detail-rating"><Star size={15} fill="currentColor" /> N/A</span>}
     </>
   );
