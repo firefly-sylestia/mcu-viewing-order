@@ -3963,6 +3963,29 @@ button { border: 0; color: inherit; cursor: pointer; }
   flex-shrink: 0;
 }
 
+.roadmap-expand-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 14px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.08);
+  color: #999;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+.roadmap-expand-btn:hover {
+  background: rgba(255,255,255,.08);
+  color: #ddd;
+  border-color: rgba(255,255,255,.14);
+}
+
 .roadmap-part.active .roadmap-part-dot {
   background: var(--accent);
   border-color: var(--accent);

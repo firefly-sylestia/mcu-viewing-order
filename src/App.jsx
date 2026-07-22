@@ -1757,6 +1757,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
   const { item, tmdbId, mediaType } = watchItem;
   const [switching, setSwitching] = useState(false);
   const [toast, setToast] = useState('');
+  const [contextExpanded, setContextExpanded] = useState(false);
   const [selectedServer, setSelectedServer] = useState('videasy'); // 'videasy' or 'moviepire'
   const currentItem = activeItems.find(i => i.id === item.id) || item;
   const isSeries = currentItem.type === 'series' && currentItem.tmdbId;
@@ -1776,7 +1777,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
   const watchedInRange = watchedEpisodes.filter(episode => episode >= (currentItem.epStart || 1) && episode <= (currentItem.epEnd || Infinity));
   const allEpisodesWatched = episodeRangeTotal > 0 && watchedInRange.length >= episodeRangeTotal;
 
-  useEffect(() => { setSelectedEpisode(currentItem.epStart || 1); }, [currentItem.id, currentItem.epStart]);
+  useEffect(() => { setSelectedEpisode(currentItem.epStart || 1); setContextExpanded(false); }, [currentItem.id, currentItem.epStart]);
 
   useEffect(() => {
     if (!isSeries) { setEpisodes([]); return; }
@@ -1810,6 +1811,14 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
     progressSeconds: Math.floor((currentItem.watchedDuration || 0) / 1000),
   }), [selectedServer, currentItem.type, currentItem.tmdbId, currentItem.season, currentItem.watchedDuration, tmdbId, item.title, isSeries, selectedEpisode]);
   const roadmapInfo = useMemo(() => getRoadmap(currentItem, activeItems), [activeItems, currentItem]);
+
+  const contextItems = useMemo(() => {
+    const currentOrder = currentItem.order || currentItem.id;
+    return activeItems.filter(i => {
+      if (contextExpanded) return true;
+      return Math.abs(i.order - currentOrder) <= 2;
+    }).sort((a, b) => a.order - b.order);
+  }, [activeItems, currentItem.order, currentItem.id, contextExpanded]);
 
   const upNext = roadmapInfo 
     ? roadmapInfo.nextInSequence.slice(0, 12)
@@ -1996,7 +2005,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
         <section className="watch-roadmap">
           <div className="section-title"><div><p className="eyebrow">Story context</p><h2>Viewing order</h2></div><span className="roadmap-summary">#{String(currentItem.order || currentItem.id).padStart(2, '0')} of {activeItems.length}</span></div>
           <div className="roadmap-timeline">
-            {activeItems.filter(i => i.order === currentItem.order - 1 || i.order === currentItem.order || i.order === currentItem.order + 1).sort((a, b) => a.order - b.order).map(item => (
+            {contextItems.map(item => (
               <button
                 key={item.id}
                 className={`roadmap-part ${item.id === currentItem.id ? 'active' : ''} ${item.userStatus === 'watched' ? 'watched' : ''}`}
@@ -2008,13 +2017,19 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
                   {item.poster ? <img src={item.poster} alt={item.title} loading="lazy" /> : <FallbackPoster item={item} />}
                 </div>
                 <div className="roadmap-part-info">
-                  <span className="roadmap-part-badge">{item.userStatus === 'watched' ? 'Watched' : item.id === currentItem.id ? 'Now playing' : item.order < currentItem.order ? 'Previous' : 'Next'}</span>
+                  <span className="roadmap-part-badge">{item.userStatus === 'watched' ? 'Watched' : item.id === currentItem.id ? 'Now playing' : item.order < currentOrder ? 'Previous' : 'Next'}</span>
                   <span className="roadmap-part-name">{item.title}</span>
                   <span className="roadmap-part-meta">{item.year} · {runtimeLabel(item.runtime, item.type)}</span>
                 </div>
               </button>
             ))}
           </div>
+          {activeItems.length > 5 && (
+            <button className="roadmap-expand-btn" onClick={() => setContextExpanded(!contextExpanded)}>
+              {contextExpanded ? 'Show less' : `View full timeline (${activeItems.length} titles)`}
+              <ChevronDown size={14} style={{ transform: contextExpanded ? 'rotate(180deg)' : 'none', transition: 'transform .2s ease' }} />
+            </button>
+          )}
         </section>
       )}
       <div className="watch-info">
