@@ -1515,7 +1515,9 @@ button { border: 0; color: inherit; cursor: pointer; }
 .detail-progress-actions > button { height: 46px; padding: 0 14px; display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 10px; background: #1b1f25; border: 1px solid rgba(255,255,255,.1); font-weight: 800; font-size: 13px; }
 .detail-progress-actions .detail-bookmark { width: 46px; padding: 0; }
 .detail-download-wrap { position: relative; grid-column: 1 / -1; }
-.detail-download-wrap .detail-download { width: 100%; }
+.detail-download-row { display: flex; gap: 8px; margin-top: 12px; align-items: stretch; }
+.detail-download-row .episode-dropdown { flex-shrink: 0; }
+.detail-download-row .detail-download { flex: 1; }
 .detail-download { height: 46px; padding: 0 14px; border-radius: 10px; background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #1e293b 100%); border: 1px solid rgba(255,255,255,.1); color: #e0e0e0; display: inline-flex; align-items: center; gap: 7px; font-weight: 700; font-size: 13px; white-space: nowrap; cursor: pointer; transition: background .2s ease, border-color .2s ease; }
 .detail-download:hover { background: linear-gradient(135deg, #2a3a50 0%, #3d5268 50%, #2a3a50 100%); border-color: rgba(255,255,255,.2); }
 .download-dropdown { position: absolute; right: 0; top: calc(100% + 6px); min-width: 220px; background: #14181d; border: 1px solid rgba(255,255,255,.12); border-radius: 14px; padding: 6px; z-index: 50; box-shadow: 0 12px 40px rgba(0,0,0,.6); animation: dropIn .15s ease; }
