@@ -4625,3 +4625,41 @@ button { border: 0; color: inherit; cursor: pointer; }
 
 /* Hide grid card ratings on desktop (poster overlay already shows them) */
 .movie-card .card-body .card-ratings-line { display: none; }
+
+/* ── Audio sync offset control ─────────────────────────────────────────────── */
+.watch-player-controls {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.watch-audio-sync {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 10px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.08);
+}
+.watch-audio-sync button {
+  width: 34px; height: 28px;
+  border-radius: 6px;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.1);
+  color: rgba(255,255,255,.55);
+  font-size: 11px; font-weight: 700;
+  cursor: pointer;
+  display: grid; place-items: center;
+  transition: background .12s, color .12s;
+}
+.watch-audio-sync button:hover { background: rgba(255,255,255,.14); color: #fff; }
+.watch-audio-sync-val {
+  min-width: 40px; text-align: center;
+  font-size: 12px; font-weight: 700;
+  color: var(--accent, #da1e37);
+  font-variant-numeric: tabular-nums;
+}
+.watch-audio-sync-reset {
+  width: auto !important; padding: 0 8px !important;
+  font-size: 10px !important; font-weight: 600 !important;
+  color: rgba(255,255,255,.35) !important;
+}
+.watch-audio-sync-reset:hover { color: rgba(255,255,255,.7) !important; }
