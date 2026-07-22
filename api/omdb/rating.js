@@ -12,8 +12,12 @@ export default async function handler(req, res) {
   if (!r.ok) return res.status(r.status).json({ error: 'OMDB request failed' });
   const data = await r.json();
 
+  const tomato = (data?.Ratings || []).find(r => r.Source === 'Rotten Tomatoes');
+  const meta = (data?.Ratings || []).find(r => r.Source === 'Metacritic');
   return res.status(200).json({
     rating: data?.imdbRating && data.imdbRating !== 'N/A' ? data.imdbRating : '',
+    tomatoRating: tomato?.Value && tomato.Value !== 'N/A' ? tomato.Value : '',
+    metaRating: meta?.Value && meta.Value !== 'N/A' ? meta.Value : '',
     released: data?.Released && data.Released !== 'N/A' ? data.Released : '',
     source: 'omdb',
   });

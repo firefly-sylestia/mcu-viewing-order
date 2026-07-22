@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, Bookmark, RotateCcw, Clock, Check, X, Pencil, Trophy, LogIn, LogOut, Cloud, RefreshCw, Sun, Moon, Settings } from 'lucide-react';
+import { Play, Bookmark, RotateCcw, Clock, Check, X, Pencil, Trophy, LogIn, LogOut, Cloud, RefreshCw, Sun, Moon, Settings, Upload, Download } from 'lucide-react';
 
 function useAppTheme() {
   const [theme, setThemeState] = useState(() => {
@@ -141,7 +141,7 @@ function ProfilePage({ stats, activeItems, universe, setSelected, cycleStatus, s
 
         {activeTab === 'settings' && (
           <div id="settings-panel" role="tabpanel" className="profile-panel settings-panel">
-            <SettingsPanel profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={onLogin} onLogout={onLogout} />
+            <SettingsPanel profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={onLogin} onLogout={onLogout} universe={universe} activeItems={activeItems} setStatus={setStatus} toggleBookmark={toggleBookmark} />
           </div>
         )}
       </div>
@@ -238,7 +238,7 @@ function ProfileHeader({ universe, stats, profileName, setProfileName, user, con
   );
 }
 
-function SettingsPanel({ profileName, setProfileName, user, configured, onLogin, onLogout }) {
+function SettingsPanel({ profileName, setProfileName, user, configured, onLogin, onLogout, universe, activeItems, setStatus, toggleBookmark }) {
   const { theme, setTheme } = useAppTheme();
   const [mounted, setMounted] = useState(false);
   const [draft, setDraft] = useState(profileName);
@@ -352,6 +352,9 @@ function SettingsPanel({ profileName, setProfileName, user, configured, onLogin,
           </div>
         </div>
       )}
+
+      {/* Data Management */}
+      <DataSection universe={universe} activeItems={activeItems} profileName={profileName} setStatus={setStatus} toggleBookmark={toggleBookmark} />
     </div>
   );
 }
@@ -555,6 +558,143 @@ function StatusSelect({ item, setStatus, compact = false }) {
             </button>
           ))}
         </div>
+      )}
+    </div>
+  );
+}
+
+const SCHEMA_VERSION = 2;
+
+function DataSection({ universe, activeItems, profileName, setStatus, toggleBookmark }) {
+  const fileRef = useRef(null);
+  const [importMsg, setImportMsg] = useState(null);
+  const [exporting, setExporting] = useState(false);
+  const [pendingImport, setPendingImport] = useState(null);
+  const importTimer = useRef(null);
+  const universeName = universe === 'marvel' ? 'Marvel' : universe === 'xmen' ? 'X-Men' : 'DC';
+
+  useEffect(() => {
+    if (!importMsg) return;
+    clearTimeout(importTimer.current);
+    importTimer.current = setTimeout(() => setImportMsg(null), 5000);
+    return () => clearTimeout(importTimer.current);
+  }, [importMsg]);
+
+  const handleExport = () => {
+    setExporting(true);
+    const items = activeItems.map(item => ({
+      id: item.id,
+      status: item.userStatus || 'unwatched',
+      bookmarked: Boolean(item.bookmarked),
+      watchedDuration: item.watchedDuration || 0,
+      watchedEpisodes: item.watchedEpisodes || [],
+    }));
+    const payload = {
+      schemaVersion: SCHEMA_VERSION,
+      exportedAt: new Date().toISOString(),
+      universe,
+      universeName,
+      profileName: profileName || '',
+      total: items.length,
+      items,
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${universe}-progress-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setExporting(false);
+  };
+
+  const applyImport = (data) => {
+    let applied = 0;
+    const itemMap = new Map(activeItems.map(i => [i.id, i]));
+    data.items.forEach(entry => {
+      const item = itemMap.get(entry.id);
+      if (!item) return;
+      if (entry.status && item.userStatus !== entry.status) {
+        setStatus(item, entry.status);
+        applied++;
+      }
+      if (entry.bookmarked !== item.bookmarked) {
+        toggleBookmark(item);
+        applied++;
+      }
+    });
+    setImportMsg({ type: 'success', text: `Imported ${applied} changes from ${data.total || data.items.length} entries.` });
+  };
+
+  const handleImport = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (!data || !Array.isArray(data.items)) {
+          setImportMsg({ type: 'error', text: 'Invalid file format — expected a progress backup with items array.' });
+          return;
+        }
+        const importUniverse = data.universe || 'marvel';
+        if (importUniverse !== universe) {
+          setImportMsg({ type: 'error', text: `This backup is for ${data.universeName || importUniverse}. Switch to that universe to import it.` });
+          return;
+        }
+        // Show confirmation with preview before applying
+        const watched = data.items.filter(e => e.status === 'watched').length;
+        const bookmarked = data.items.filter(e => e.bookmarked).length;
+        setPendingImport({ data, watched, bookmarked, total: data.total || data.items.length });
+      } catch {
+        setImportMsg({ type: 'error', text: 'Could not parse the file. Make sure it\'s a valid JSON backup.' });
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
+  return (
+    <div className="settings-group">
+      <h3 className="settings-group-title">Data Management</h3>
+      <p className="settings-data-desc">Export your {universeName} viewing progress as a JSON backup, or restore from a previous export.</p>
+      {pendingImport ? (
+        <div className="settings-data-confirm">
+          <p><strong>Import progress backup?</strong></p>
+          <p className="settings-data-preview">{pendingImport.watched} watched · {pendingImport.bookmarked} bookmarked · {pendingImport.total} entries</p>
+          <div className="settings-data-confirm-actions">
+            <button className="settings-btn" onClick={() => { applyImport(pendingImport.data); setPendingImport(null); }}>Apply</button>
+            <button className="settings-btn" onClick={() => setPendingImport(null)}>Cancel</button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="settings-data-actions">
+            <button className="settings-btn" onClick={handleExport} disabled={exporting}>
+              <Download size={15} />
+              {exporting ? 'Exporting…' : 'Export Progress'}
+            </button>
+            <button className="settings-btn" onClick={() => fileRef.current?.click()}>
+              <Upload size={15} />
+              Import Progress
+            </button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".json"
+              onChange={handleImport}
+              style={{ display: 'none' }}
+              aria-hidden="true"
+            />
+          </div>
+          {importMsg && (
+            <p className={`settings-data-msg ${importMsg.type === 'error' ? 'settings-data-msg-error' : ''}`}>
+              {importMsg.type === 'error' ? '⚠️' : '✓'} {importMsg.text}
+            </p>
+          )}
+        </>
       )}
     </div>
   );

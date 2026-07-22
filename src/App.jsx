@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Search, SlidersHorizontal, Home, Bookmark, Play, UserRound, X, ArrowLeft, Star, BarChart3, Check, Clock, ListFilter, RotateCcw, ChevronLeft, ChevronRight, Calendar, Timer, Sparkles, LogIn, LogOut, Cloud, Download } from 'lucide-react';
+import { Search, SlidersHorizontal, Home, Bookmark, Play, UserRound, X, ArrowLeft, Star, BarChart3, Check, Clock, ListFilter, RotateCcw, ChevronLeft, ChevronRight, ChevronDown, Calendar, Timer, Sparkles, LogIn, LogOut, Cloud, Download, Camera } from 'lucide-react';
 import { RAW } from './data/mcuData';
 import { DC_RAW } from './data/dcData';
 import { XMEN_RAW } from './data/xmenData';
 import { getTrailerByTitle, trailerEmbedUrl } from './data/trailerData';
+import { STORY_BRIDGES } from './data/connections';
 import { fetchTrailerFromApi } from './utils/trailerCache';
 import ProfilePage from './components/ProfilePage';
 import AuthModal from './components/AuthModal';
@@ -67,6 +68,13 @@ const slugifyPosterName = (value) => String(value || '')
   .replace(/[^a-z0-9]+/g, '-')
   .replace(/^-+|-+$/g, '');
 
+const lightenHex = (hex, ratio) => {
+  const c = hex.replace('#', '');
+  const r = parseInt(c.slice(0, 2), 16), g = parseInt(c.slice(2, 4), 16), b = parseInt(c.slice(4, 6), 16);
+  const mix = (v) => Math.round(v * ratio + 255 * (1 - ratio));
+  return `#${[mix(r), mix(g), mix(b)].map(v => v.toString(16).padStart(2, '0')).join('')}`;
+};
+
 const metadataCacheKey = (item) => item?.tmdbId ? `${item.tmdbId}:${item.season || 0}` : null;
 
 const mediaKey = (item) => item?.external
@@ -97,8 +105,16 @@ const getRoadmap = (item, items) => {
     sequence.push(part);
     const next = siblings[index + 1];
     if (!next) return;
+    const bridgeDef = STORY_BRIDGES.find(
+      b => b.sourceId === part.id && b.targetId === next.id
+    );
+    const validBridgeIds = new Set(bridgeDef?.bridges?.map(b => b.id) || []);
     const interstitials = items
-      .filter(candidate => !siblings.some(sibling => sibling.id === candidate.id) && candidate.order > part.order && candidate.order < next.order)
+      .filter(candidate => validBridgeIds.has(candidate.id))
+      .map(candidate => ({
+        ...candidate,
+        connectionNote: bridgeDef.bridges.find(b => b.id === candidate.id)?.note || null
+      }))
       .sort((a, b) => a.order - b.order);
     if (interstitials.length) {
       segments.push({ type: 'interstitials', items: interstitials });
@@ -126,7 +142,7 @@ const enhance = (item, universe) => ({
   ...item,
   universe,
   runtime: item.runtime || (item.type === 'series' ? (item.episodes || 6) * 42 : 125 + (item.id % 42)),
-  rating: Number((6.7 + ((item.id * 17) % 25) / 10).toFixed(1)),
+  rating: item.rating || null,
   genres: item.type === 'series' ? ['Series', 'Action', 'Drama'] : ['Action', item.phase >= 4 ? 'Adventure' : 'Sci-fi', item.essential ? 'Essential' : 'Canon'],
   poster: item.poster || '',
   accent: universe === 'dc' ? dcPalette[(item.phase - 1) % dcPalette.length] : universe === 'xmen' ? xmenPalette[(item.phase - 1) % xmenPalette.length] : marvelPalette[(item.phase - 1) % marvelPalette.length],
@@ -178,15 +194,30 @@ export default function App() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ universe, query, genre, rating, ageRatingFilter, sortBy, actions, section, watchItem, profileName, heroIndex }));
   }, [universe, query, genre, rating, ageRatingFilter, sortBy, actions, section, watchItem, profileName, heroIndex]);
 
+  const initialRender = useRef(true);
   useEffect(() => {
     const hashed = parseHash().section;
     if (hashed !== section) {
       const target = section === 'watch' && safeWatchItem
         ? `#watch/${slugifyPosterName(safeWatchItem.item.title)}`
         : `#${section}`;
-      window.history.replaceState(null, '', target);
+      if (initialRender.current) {
+        window.history.replaceState(null, '', target);
+        initialRender.current = false;
+      } else {
+        window.history.pushState(null, '', target);
+      }
     }
   }, [section, safeWatchItem]);
+
+  // Sync search query into URL silently (no history entry per keystroke)
+  useEffect(() => {
+    if (section === 'list' && !initialRender.current) {
+      const q = query ? `?q=${encodeURIComponent(query)}` : '';
+      const currentHash = window.location.hash.replace(/\?.*/, '');
+      window.history.replaceState(null, '', `${currentHash}${q}`);
+    }
+  }, [query, section]);
 
   useEffect(() => {
     const onHashChange = () => {
@@ -219,12 +250,20 @@ export default function App() {
     let poster = item.poster;
     let rating = item.rating;
     
-    // Try cache
-    if (!poster && item.tmdbId) {
+    // Always check cache for rating + poster metadata
+    let imdbRating = null;
+    let tomatoRating = null;
+    let metaRating = null;
+    let voteCount = null;
+    if (item.tmdbId) {
       const cached = getFromCache(metadataCacheKey(item));
-      if (cached?.poster) {
-        poster = cached.poster;
+      if (cached) {
+        if (!poster && cached.poster) poster = cached.poster;
         if (cached.rating) rating = cached.rating;
+        if (cached.imdbRating) imdbRating = cached.imdbRating;
+        if (cached.tomatoRating) tomatoRating = cached.tomatoRating;
+        if (cached.metaRating) metaRating = cached.metaRating;
+        if (cached.voteCount) voteCount = cached.voteCount;
       }
     }
     
@@ -244,6 +283,10 @@ export default function App() {
       watchedDuration: action.watchedDuration || 0,
       watchedEpisodes: action.watchedEpisodes || [],
       rating,
+      imdbRating,
+      tomatoRating,
+      metaRating,
+      voteCount,
     };
   }, [actions, posterMap]);
 
@@ -256,7 +299,7 @@ export default function App() {
       .filter(item => Number(item.rating) >= rating)
       .filter(item => ageRatingFilter === 'All' || (item.ageRating || (item.type === 'series' ? 'TV-14' : 'PG-13')) === ageRatingFilter)
       .map(enrichItem);
-    sorted.sort((a, b) => sortBy === 'year' ? a.year - b.year : sortBy === 'title' ? a.title.localeCompare(b.title) : a.order - b.order);
+    sorted.sort((a, b) => sortBy === 'year' ? a.year - b.year : sortBy === 'title' ? a.title.localeCompare(b.title) : sortBy === 'rating-desc' ? (Number(b.rating) || 0) - (Number(a.rating) || 0) : sortBy === 'rating-asc' ? (Number(a.rating) || 0) - (Number(b.rating) || 0) : sortBy === 'imdb-desc' ? (Number(b.imdbRating) || 0) - (Number(a.imdbRating) || 0) : sortBy === 'imdb-asc' ? (Number(a.imdbRating) || 0) - (Number(b.imdbRating) || 0) : sortBy === 'tomato-desc' ? (parseInt(b.tomatoRating) || 0) - (parseInt(a.tomatoRating) || 0) : sortBy === 'tomato-asc' ? (parseInt(a.tomatoRating) || 0) - (parseInt(b.tomatoRating) || 0) : sortBy === 'meta-desc' ? (parseInt(b.metaRating) || 0) - (parseInt(a.metaRating) || 0) : sortBy === 'meta-asc' ? (parseInt(a.metaRating) || 0) - (parseInt(b.metaRating) || 0) : sortBy === 'popularity-desc' ? (Number(b.voteCount) || 0) - (Number(a.voteCount) || 0) : a.order - b.order);
     return sorted;
   }, [allItems, universe, query, genre, rating, ageRatingFilter, sortBy, enrichItem]);
 
@@ -392,16 +435,34 @@ export default function App() {
               // Cache the metadata - use provided tmdbId or item's tmdbId
               const cacheKey = metadataCacheKey({ tmdbId: data.tmdbId || item.tmdbId, season: item.season });
               if (cacheKey) {
+                const existing = getFromCache(cacheKey) || {};
+                const hadImdb = !!existing.imdbRating;
                 setCache(cacheKey, {
+                  ...existing,
                   poster: data.poster,
                   backdrop: data.backdrop,
                   overview: data.overview,
                   rating: data.rating,
+                  voteCount: data.voteCount || existing.voteCount || 0,
                   releaseDate: data.releaseDate,
                   mediaType: data.mediaType,
                 });
-              }
+              
               console.log(`[v0] Successfully fetched poster for ${item.title}`);
+              
+              // Fire-and-forget: fetch IMDb rating from OMDb (only if not already cached)
+              if (!hadImdb) {
+                fetch(`/api/omdb/rating?title=${encodeURIComponent(item.title)}&year=${item.year}`)
+                  .then(r => r.json())
+                  .then(omdb => {
+                    if (omdb.rating) {
+                      const cur = getFromCache(cacheKey) || {};
+                      setCache(cacheKey, { ...cur, imdbRating: omdb.rating, tomatoRating: omdb.tomatoRating || cur.tomatoRating, metaRating: omdb.metaRating || cur.metaRating });
+                    }
+                  })
+                  .catch(() => {});
+              }
+              }
             } else {
               console.warn(`[v0] No poster found for ${item.title} (error: ${data.error || 'no poster_path'})`);
               failed.push(item.id);
@@ -485,27 +546,20 @@ export default function App() {
   const selectedItem = selected ? activeItems.find(item => item.id === selected.id) || selected : null;
   const nextUp = activeItems.find(item => item.userStatus !== 'watched' && item.userStatus !== 'dropped') || activeItems[0];
   const playTrailer = async (item) => {
-    // 1. Check hardcoded trailer data first (fastest)
-    const match = getTrailerByTitle(item.title);
-    const youtubeId = match?.primary?.youtubeId || match?.youtubeId;
+    // 1. Kinocheck API with client-side cache (primary, most accurate)
+    const kinocheck = await fetchTrailerFromApi(item.title, item.year, item.tmdbId);
+    
+    // 2. Fallback: hardcoded TRAILER_DATA
+    const match = !kinocheck?.youtubeId ? getTrailerByTitle(item.title) : null;
+    const youtubeId = kinocheck?.youtubeId || match?.primary?.youtubeId || match?.youtubeId;
+    const options = kinocheck?.options || match?.options;
+
+    // 3. Play or YouTube search
     if (youtubeId) {
-      const url = trailerEmbedUrl(youtubeId);
-      setTrailer({ title: item.title, url, options: match?.options });
-      return;
+      setTrailer({ title: item.title, url: trailerEmbedUrl(youtubeId), options });
+    } else {
+      window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(`${item.title} official trailer`)}`, '_blank', 'noopener');
     }
-
-    // 2. Try Kinocheck API with client-side cache
-    try {
-      const kinocheck = await fetchTrailerFromApi(item.title, item.year, item.tmdbId);
-      if (kinocheck?.youtubeId) {
-        const url = trailerEmbedUrl(kinocheck.youtubeId);
-        setTrailer({ title: item.title, url, options: kinocheck.options });
-        return;
-      }
-    } catch { /* fall through to search */ }
-
-    // 3. Fallback: YouTube search in new tab
-    window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(`${item.title} official trailer`)}`, '_blank', 'noopener');
   };
   const resetFilters = () => { setQuery(''); setGenre('All'); setRating(0); setAgeRatingFilter('All'); setSortBy('order'); };
   const handleStartWatch = (item, tmdbId, mediaType) => {
@@ -663,17 +717,18 @@ export default function App() {
       {section === 'watch' && !safeWatchItem && <WatchBrowse activeItems={activeItems} externalResults={externalSearchResults} externalLoading={externalSearchLoading} actions={actions} onStartWatch={handleStartWatch} onPlayExternal={onPlayExternal} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} setSection={setSection} setQuery={setQuery} />}
 
       <nav className="bottom-nav" aria-label="Primary">
-        <button className={section === 'home' ? 'active' : ''} onClick={() => { setQuery(''); setSection('home'); setWatchItem(null); }}><Home size={22} /><span>Home</span></button>
-        <button className={section === 'list' ? 'active' : ''} onClick={() => { setQuery(''); setSection('list'); }}><ListFilter size={22} /><span>List</span></button>
-        <button className={section === 'analytics' ? 'active' : ''} onClick={() => { setQuery(''); setSection('analytics'); }}><BarChart3 size={22} /><span>Stats</span></button>
-        <button className={section === 'watch' ? 'active' : ''} onClick={() => { setQuery(''); setSection('watch'); }}><Play size={22} /><span>Watch</span></button>
-        <button className={section === 'profile' ? 'active' : ''} onClick={() => { setQuery(''); setSection('profile'); }}><UserRound size={22} /><span>Profile</span></button>
+        <button className={section === 'home' ? 'active' : ''} onClick={() => { setSection('home'); setWatchItem(null); }}><Home size={22} /><span>Home</span></button>
+        <button className={section === 'list' ? 'active' : ''} onClick={() => { setSection('list'); }}><ListFilter size={22} /><span>List</span></button>
+        <button className={section === 'analytics' ? 'active' : ''} onClick={() => { setSection('analytics'); }}><BarChart3 size={22} /><span>Stats</span></button>
+        <button className={section === 'watch' ? 'active' : ''} onClick={() => { setSection('watch'); }}><Play size={22} /><span>Watch</span></button>
+        <button className={section === 'profile' ? 'active' : ''} onClick={() => { setSection('profile'); }}><UserRound size={22} /><span>Profile</span></button>
       </nav>
 
       {selectedItem && <DetailView item={selectedItem} onClose={() => selectItem(null)} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={handleStartWatch} activeItems={roadmapItems} />}
       {trailer && <TrailerModal trailer={trailer} onClose={() => setTrailer(null)} />}
       {filtersOpen && <Filters genre={genre} setGenre={setGenre} rating={rating} setRating={setRating} ageRatingFilter={ageRatingFilter} setAgeRatingFilter={setAgeRatingFilter} sortBy={sortBy} setSortBy={setSortBy} genres={genres} count={activeItems.length} onClose={() => setFiltersOpen(false)} />}
       {authOpen && <AuthModal onClose={() => setAuthOpen(false)} onLogin={login} onSignup={signup} onGoogleSignIn={googleSignIn} onAnonymousSignIn={anonymousSignIn} onResetPassword={resetPassword} />}
+      <Footer />
     </main>
   );
 }
@@ -708,19 +763,9 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
   }, [heroIndex, inlineTrailer, items.length, paused, setHeroIndex]);
 
   const showTrailer = async () => {
-    // Check hardcoded data first
-    const match = getTrailerByTitle(featured.title);
-    const youtubeId = match?.primary?.youtubeId || match?.youtubeId;
-    let id = youtubeId;
-
-    // Try Kinocheck if no hardcoded match
-    if (!id) {
-      try {
-        const kc = await fetchTrailerFromApi(featured.title, featured.year, featured.tmdbId);
-        if (kc?.youtubeId) id = kc.youtubeId;
-      } catch {}
-    }
-
+    const kc = await fetchTrailerFromApi(featured.title, featured.year, featured.tmdbId);
+    const match = !kc?.youtubeId ? getTrailerByTitle(featured.title) : null;
+    const id = kc?.youtubeId || match?.primary?.youtubeId || match?.youtubeId;
     if (id) {
       setInlineTrailer(`${trailerEmbedUrl(id)}&autoplay=1`);
     } else {
@@ -783,7 +828,9 @@ function MovieRail({ title, items, setSelected, cycleStatus, setStatus, toggleBo
 
 function MovieCard({ item, setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer }) {
   return <article className="movie-card" style={{ '--accent': item.accent }}>
-    <button className="poster-button" onClick={() => setSelected(item)}><PosterArt item={item} /></button>
+    <button className="poster-button" onClick={() => setSelected(item)}>
+      <PosterArt item={item} />
+    </button>
     <div className="card-body"><button className="title-button" onClick={() => setSelected(item)}>{item.title}</button><span>{item.year} · {runtimeLabel(item.runtime, item.type)}{item.userStatus === 'watching' && item.watchedDuration > 30000 ? ` · ${watchTimeLabel(item)}` : ''}</span></div>
     <div className="card-actions"><button onClick={() => playTrailer(item)} className="trailer-chip" aria-label={`Play ${item.title} trailer`}><Play size={16} fill="currentColor" /><span>Trailer</span></button><StatusSelect item={item} setStatus={setStatus} compact /><button onClick={() => toggleBookmark(item)} className={`bookmark-chip ${item.bookmarked ? 'saved' : ''}`} aria-label={item.bookmarked ? 'Remove bookmark' : 'Bookmark title'}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button></div>
   </article>;
@@ -809,7 +856,7 @@ function ListSection({ items, externalResults = [], externalLoading = false, que
     {viewMode === 'grid' ? <div className="movie-grid web-grid list-card-grid">{visibleItems.map(item => <MovieCard key={item.id} item={item} setSelected={setSelected} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />)}</div> : <div className="list-grid">{visibleItems.map((item, index) => <article className="list-row" key={item.id} style={{ '--accent': item.accent }} onClick={() => setSelected(item)} role="button" tabIndex={0} aria-label={`View ${item.title} details`} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(item); } }}>
       <span className="list-index">{String(firstItem + index + 1).padStart(2, '0')}</span>
       <div className="list-poster"><img src={item.poster} alt={`${item.title} poster`} width="82" height="108" loading="lazy" /></div>
-      <div className="list-copy"><div className="list-title-line"><strong>{item.title}</strong>{item.essential && <span>Essential</span>}</div><span>{item.year} · {item.type} · {runtimeLabel(item.runtime, item.type)}</span><p>{item.desc || `${item.title} in the complete ${item.universe === 'marvel' ? 'MCU' : 'DC'} story timeline.`}</p><div className="list-tags">{(item.genres || []).slice(0,3).map(g => <span key={g}>{g}</span>)}</div></div>
+      <div className="list-copy"><div className="list-title-line"><strong>{item.title}</strong>{item.essential && <span>Essential</span>}{item.rating && <span className="list-rating"><Star size={11} fill="currentColor" />{Number(item.rating).toFixed(1)}</span>}{item.imdbRating && <span className="list-rating list-rating-imdb">★{item.imdbRating}</span>}{item.tomatoRating && <span className={`list-rating list-rating-tomato ${getTomatoTier(item.tomatoRating).cls}`}>{getTomatoTier(item.tomatoRating).emoji}{item.tomatoRating}</span>}{item.metaRating && <span className="list-rating list-rating-meta">{item.metaRating}</span>}</div><span>{item.year} · {item.type} · {runtimeLabel(item.runtime, item.type)}</span><p>{item.desc || `${item.title} in the complete ${item.universe === 'marvel' ? 'MCU' : 'DC'} story timeline.`}</p><div className="list-tags">{(item.genres || []).slice(0,3).map(g => <span key={g}>{g}</span>)}</div></div>
       <div className="list-actions" onClick={e => e.stopPropagation()}><button className="list-trailer" onClick={() => playTrailer(item)} aria-label={`Play ${item.title} trailer`}><Play size={16} fill="currentColor" /><span>Trailer</span></button><StatusSelect item={item} setStatus={setStatus} /><button className={`list-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Bookmark title'}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button></div>
     </article>)}</div>}
     {pageCount > 1 && <nav className="pagination" aria-label="Viewing list pages"><button onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} aria-label="Previous page"><ChevronLeft size={18} /></button>{Array.from({ length: pageCount }, (_, index) => index + 1).map(pageNumber => <button key={pageNumber} className={currentPage === pageNumber ? 'active' : ''} aria-current={currentPage === pageNumber ? 'page' : undefined} onClick={() => goToPage(pageNumber)}>{pageNumber}</button>)}<button onClick={() => goToPage(currentPage + 1)} disabled={currentPage === pageCount} aria-label="Next page"><ChevronRight size={18} /></button></nav>}
@@ -879,6 +926,114 @@ function StatusSelect({ item, setStatus, compact = false }) {
   </div>;
 }
 
+/* ── Server Dropdown ─────────────────────────────────────────────────────────── */
+function ServerDropdown({ server, onSelect }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    const handleClick = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+  const SERVERS = { videasy: 'Videasy', moviepire: 'MoviePire' };
+  return (
+    <div className={`custom-dropdown server-dropdown ${open ? 'open' : ''}`} ref={ref}>
+      <button className="custom-dropdown-trigger" onClick={() => setOpen(!open)} aria-haspopup="listbox" aria-expanded={open}>
+        <span>{SERVERS[server] || server}</span>
+        <ChevronDown size={14} className="dropdown-chevron" />
+      </button>
+      {open && (
+        <div className="custom-dropdown-menu" role="listbox" aria-label="Select server">
+          {Object.entries(SERVERS).map(([key, label]) => (
+            <button
+              key={key}
+              className={`custom-dropdown-option ${server === key ? 'active' : ''}`}
+              role="option"
+              aria-selected={server === key}
+              onClick={() => { onSelect(key); setOpen(false); }}
+            >
+              <span className="option-label">{label}</span>
+              {server === key && <Check size={15} />}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Episode Dropdown ───────────────────────────────────────────────────────── */
+function EpisodeDropdown({ episodes, selected, onSelect, season }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    const handleClick = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+  if (!episodes.length) {
+    return (
+      <div className="custom-dropdown episode-dropdown disabled">
+        <button className="custom-dropdown-trigger" disabled>
+          <span>No episodes</span>
+          <ChevronDown size={14} className="dropdown-chevron" />
+        </button>
+      </div>
+    );
+  }
+  return (
+    <div className={`custom-dropdown episode-dropdown ${open ? 'open' : ''}`} ref={ref}>
+      <button className="custom-dropdown-trigger" onClick={() => setOpen(!open)} aria-haspopup="listbox" aria-expanded={open} aria-label="Select episode to download">
+        <span>S{season} E{selected}</span>
+        <ChevronDown size={14} className="dropdown-chevron" />
+      </button>
+      {open && (
+        <div className="custom-dropdown-menu episode-menu" role="listbox" aria-label="Select episode">
+          {episodes.map(ep => (
+            <button
+              key={ep.episode}
+              className={`custom-dropdown-option ${selected === ep.episode ? 'active' : ''}`}
+              role="option"
+              aria-selected={selected === ep.episode}
+              onClick={() => { onSelect(ep.episode); setOpen(false); }}
+            >
+              <span className="option-label">
+                <span className="ep-num">E{String(ep.episode).padStart(2, '0')}</span>
+                <span className="ep-title">{ep.title || `Episode ${ep.episode}`}</span>
+              </span>
+              {selected === ep.episode && <Check size={15} />}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Rating Chips (DetailView) ──────────────────────────────────────────────── */
+const getTomatoTier = (rating) => {
+  const pct = parseInt(rating) || 0;
+  if (pct >= 75) return { emoji: '🍅', cls: 'certified-fresh', label: 'Certified Fresh' };
+  if (pct >= 60) return { emoji: '🍅', cls: 'fresh', label: 'Fresh' };
+  return { emoji: '💀', cls: 'rotten', label: 'Rotten' };
+};
+
+function RatingChips({ item }) {
+  const tmdb = item.rating?.toFixed ? item.rating.toFixed(1) : (item.rating ?? null);
+  const imdb = item.imdbRating;
+  const tomato = item.tomatoRating;
+  const meta = item.metaRating;
+  return (
+    <>
+      {tmdb && <span className="detail-rating tmdb-rating"><Star size={15} fill="currentColor" /> {tmdb}<small>TMDB</small></span>}
+      {imdb && <span className="detail-rating imdb-rating">★ {imdb}<small>IMDb</small></span>}
+      {tomato && (() => { const t = getTomatoTier(tomato); return <span className={`detail-rating tomato-rating ${t.cls}`}>{t.emoji} {tomato}<small>{t.label}</small></span>; })()}
+      {meta && <span className="detail-rating meta-rating">M {meta}<small>Meta</small></span>}
+      {!tmdb && !imdb && !tomato && !meta && <span className="detail-rating"><Star size={15} fill="currentColor" /> N/A</span>}
+    </>
+  );
+}
+
 function SuggestionStrip({ nextUp, stats, setSelected, playTrailer }) {
   if (!nextUp) return null;
   return <section className="suggestion-strip" style={{ '--accent': nextUp.accent }}>
@@ -895,17 +1050,9 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, ac
   const [inlineTrailer, setInlineTrailer] = useState(null);
   const [isTrailerExpanded, setIsTrailerExpanded] = useState(false);
   const showTrailer = async () => {
-    const match = getTrailerByTitle(item.title);
-    const youtubeId = match?.primary?.youtubeId || match?.youtubeId;
-    let id = youtubeId;
-
-    if (!id) {
-      try {
-        const kc = await fetchTrailerFromApi(item.title, item.year, item.tmdbId);
-        if (kc?.youtubeId) id = kc.youtubeId;
-      } catch {}
-    }
-
+    const kc = await fetchTrailerFromApi(item.title, item.year, item.tmdbId);
+    const match = !kc?.youtubeId ? getTrailerByTitle(item.title) : null;
+    const id = kc?.youtubeId || match?.primary?.youtubeId || match?.youtubeId;
     if (id) {
       setInlineTrailer(`${trailerEmbedUrl(id)}&autoplay=1`);
       setIsTrailerExpanded(true);
@@ -942,6 +1089,242 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, ac
       episode: item.type === 'series' ? downloadEpisode : undefined,
     });
     if (url) window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const [snapping, setSnapping] = useState(false);
+  const [snapError, setSnapError] = useState(null);
+  const snapCard = async () => {
+    if (snapping) return;
+    setSnapping(true);
+    setSnapError(null);
+    try {
+      const scale = 2;
+      const W = 1040, H = 780, R = 28;
+      const pad = 52, gap = 48, posterW = 300, posterH = 450;
+      const contentX = pad + posterW + gap;
+      const canvas = document.createElement('canvas');
+      canvas.width = W * scale;
+      canvas.height = H * scale;
+      const ctx = canvas.getContext('2d');
+      ctx.scale(scale, scale);
+
+      // ── Card background ──
+      ctx.fillStyle = '#111419';
+      ctx.beginPath(); ctx.roundRect(0, 0, W, H, R); ctx.fill();
+
+      // ── Poster backdrop — rich dark gradient only (matching CSS shade)
+      const shade = ctx.createLinearGradient(W * 0.3, 0, W, H);
+      shade.addColorStop(0, 'rgba(10,12,17,0.92)');
+      shade.addColorStop(0.5, 'rgba(10,12,17,0.95)');
+      shade.addColorStop(1, 'rgba(10,12,17,0.98)');
+      ctx.fillStyle = shade;
+      ctx.fillRect(0, 0, W, H);
+
+      // Load poster via fetch+blob to avoid CORS tainting
+      let bgImg = null;
+      if (item.poster) {
+        try {
+          const resp = await fetch(item.poster);
+          if (resp.ok) {
+            const blob = await resp.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            bgImg = await new Promise((resolve) => {
+              const i = new Image();
+              i.onload = () => resolve(i);
+              i.onerror = () => resolve(null);
+              i.src = blobUrl;
+            });
+            URL.revokeObjectURL(blobUrl);
+          }
+        } catch { /* poster failed silently */ }
+      }
+
+      // ── Poster ──
+      const px = pad, py = pad;
+      // Soft shadow matching CSS box-shadow: 0 24px 60px rgba(0,0,0,.5)
+      [3, 2, 1].forEach(layer => {
+        ctx.fillStyle = `rgba(0,0,0,${0.12 * layer})`;
+        ctx.beginPath(); ctx.roundRect(px + 6 * layer, py + 8 * layer, posterW, posterH, 22); ctx.fill();
+      });
+      if (bgImg) {
+        ctx.save();
+        ctx.beginPath(); ctx.roundRect(px, py, posterW, posterH, 22); ctx.clip();
+        const iw = bgImg.naturalWidth || bgImg.width, ih = bgImg.naturalHeight || bgImg.height;
+        const s = Math.max(posterW / iw, posterH / ih);
+        const sw = posterW / s, sh = posterH / s;
+        ctx.drawImage(bgImg, (iw - sw) / 2, (ih - sh) / 2, sw, sh, px, py, posterW, posterH);
+        ctx.restore();
+      } else {
+        // Fallback poster area
+        ctx.fillStyle = 'rgba(255,255,255,0.04)';
+        ctx.beginPath(); ctx.roundRect(px, py, posterW, posterH, 22); ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+        ctx.beginPath(); ctx.roundRect(px, py, posterW, posterH, 22); ctx.stroke();
+      }
+
+      const a = item.accent || '#da1e37';
+
+      // ── Kicker ──
+      const uLabel = (item.universe === 'marvel' ? 'Marvel Cinematic Universe' : item.universe === 'xmen' ? 'X-Men Universe' : 'DC Universe').toUpperCase();
+      const orderLabel = '#' + String(item.order || item.id).padStart(2, '0');
+      ctx.font = '900 11px Inter, sans-serif';
+      // Lighten accent matching CSS color-mix(in srgb, var(--brand-accent) 72%, #ffffff)
+      const kickerAccent = lightenHex(item.accent || '#da1e37', 0.72);
+      ctx.fillStyle = kickerAccent;
+      ctx.fillText(uLabel, contentX, pad + 16);
+      const orderW = ctx.measureText(orderLabel).width;
+      ctx.fillText(orderLabel, W - pad - orderW, pad + 16);
+      ctx.globalAlpha = 1;
+
+      // ── Title ──
+      ctx.fillStyle = '#fff';
+      const title = item.title || '';
+      let titleSize = 62;
+      while (titleSize > 32) {
+        ctx.font = `900 ${titleSize}px Inter, sans-serif`;
+        if (ctx.measureText(title).width <= (W - contentX - pad)) break;
+        titleSize -= 2;
+      }
+      const titleLines = [];
+      let rem = title;
+      while (rem && titleLines.length < 2) {
+        let cut = rem.length;
+        while (cut > 0 && ctx.measureText(rem.slice(0, cut)).width > (W - contentX - pad)) cut--;
+        if (cut === 0) cut = rem.length;
+        titleLines.push(rem.slice(0, cut));
+        rem = rem.slice(cut).trim();
+      }
+      titleLines.forEach((line, i) => {
+        ctx.fillText(line, contentX, pad + 54 + i * (titleSize * 0.96));
+      });
+
+      // ── Rating chips ──
+      let chipX = contentX, chipY = pad + 54 + titleLines.length * (titleSize * 0.96) + 22;
+      const drawChip = (label, sub, color, emoji = '') => {
+        const text = emoji ? `${emoji} ${label}` : label;
+        ctx.font = 'bold 11px Inter, sans-serif';
+        const tw = ctx.measureText(text).width + 8;
+        ctx.font = '9px Inter, sans-serif';
+        const sw = ctx.measureText(sub).width;
+        const cw = Math.max(tw, sw) + 20, ch = 44;
+        if (chipX + cw > W - pad) { chipX = contentX; chipY += 56; }
+        // Chip bg
+        ctx.fillStyle = 'rgba(255,255,255,0.045)';
+        ctx.beginPath(); ctx.roundRect(chipX, chipY, cw, ch, 16); ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.roundRect(chipX, chipY, cw, ch, 16); ctx.stroke();
+        // Value
+        ctx.fillStyle = color;
+        ctx.font = 'bold 12px Inter, sans-serif';
+        ctx.fillText(text, chipX + 10, chipY + 18);
+        // Sub-label
+        ctx.fillStyle = '#777d86';
+        ctx.font = '9px Inter, sans-serif';
+        ctx.fillText(sub, chipX + 10, chipY + 34);
+        chipX += cw + 7;
+      };
+      const drawGenreChip = (g) => {
+        ctx.font = '11px Inter, sans-serif';
+        const cw = ctx.measureText(g).width + 20, ch = 44;
+        if (chipX + cw > W - pad) { chipX = contentX; chipY += 56; }
+        ctx.fillStyle = 'rgba(255,255,255,0.045)';
+        ctx.beginPath(); ctx.roundRect(chipX, chipY, cw, ch, 16); ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+        ctx.beginPath(); ctx.roundRect(chipX, chipY, cw, ch, 16); ctx.stroke();
+        ctx.fillStyle = '#b4b8bf';
+        ctx.fillText(g, chipX + 10, chipY + 28);
+        chipX += cw + 7;
+      };
+      if (item.rating) drawChip(Number(item.rating).toFixed(1), 'TMDB', '#f2c94c', '★');
+      if (item.imdbRating) drawChip(item.imdbRating, 'IMDb', '#f5c518');
+      if (item.tomatoRating) {
+        const t = getTomatoTier(item.tomatoRating);
+        drawChip(item.tomatoRating, t.label, t.cls === 'certified-fresh' ? '#4ade80' : t.cls === 'fresh' ? '#e74c3c' : '#22c55e', t.emoji);
+      }
+      if (item.metaRating) drawChip(item.metaRating, 'Meta', '#f59e0b', 'M');
+      (item.genres || []).slice(0, 3).forEach(g => drawGenreChip(g));
+
+      // ── Description ──
+      const descY = chipY + 68;
+      ctx.fillStyle = '#a3a8b0';
+      const desc = item.desc || `Follow ${item.title} in the complete ${item.universe === 'marvel' ? 'Marvel Cinematic Universe' : item.universe === 'xmen' ? 'X-Men Universe' : 'DC Universe'} viewing order.`;
+      let descSize = 15;
+      ctx.font = `${descSize}px Inter, sans-serif`;
+      const descWords = desc.split(' ');
+      let descLine = '', dy = descY, maxDescW = W - contentX - pad, lh = Math.round(descSize * 1.65);
+      const descMaxY = H - pad - 130;
+      for (const w of descWords) {
+        const test = descLine ? descLine + ' ' + w : w;
+        if (ctx.measureText(test).width > maxDescW) {
+          ctx.fillText(descLine, contentX, dy);
+          descLine = w;
+          dy += lh;
+          if (dy > descMaxY) break;
+        } else { descLine = test; }
+      }
+      if (descLine && dy <= descMaxY) {
+        if (dy + lh > descMaxY) descLine = descLine.replace(/[\s,.!?]+$/, '') + '…';
+        ctx.fillText(descLine, contentX, dy);
+      }
+
+      // Track actual last rendered line Y (if loop broke, dy was incremented past limit)
+      let descBottom = dy > descMaxY && descLine ? dy - lh : dy;
+
+      // ── Facts grid ──
+      const maxFactsY = H - pad - 120;
+      const factsY = Math.min(Math.max(descBottom + 24, posterH + pad + 16), maxFactsY);
+      const facts = [
+        { icon: '🗓', label: 'RELEASE YEAR', value: String(item.year) },
+        { icon: '⏱', label: 'RUNTIME', value: runtimeLabel(item.runtime, item.type) },
+        { icon: '✨', label: 'FORMAT', value: item.type === 'series' ? 'Series' : 'Film' },
+      ];
+      const factW = (W - pad * 2 - 16) / 3;
+      facts.forEach((f, i) => {
+        const fx = pad + i * (factW + 8), fy = factsY, fh = 84;
+        ctx.fillStyle = 'rgba(255,255,255,0.045)';
+        ctx.beginPath(); ctx.roundRect(fx, fy, factW, fh, 15); ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+        ctx.beginPath(); ctx.roundRect(fx, fy, factW, fh, 15); ctx.stroke();
+        ctx.fillStyle = a;
+        ctx.font = '18px Inter, sans-serif';
+        ctx.fillText(f.icon, fx + 14, fy + 38);
+        ctx.fillStyle = '#777d86';
+        ctx.font = '10px Inter, sans-serif';
+        ctx.fillText(f.label, fx + 14, fy + 58);
+        ctx.fillStyle = '#f1f2f4';
+        ctx.font = 'bold 13px Inter, sans-serif';
+        ctx.fillText(f.value, fx + 14, fy + 76);
+      });
+
+      // ── Footer ──
+      const footY = H - pad - 20;
+      ctx.fillStyle = 'rgba(255,255,255,0.06)';
+      ctx.fillRect(pad, footY - 10, W - pad * 2, 1);
+      ctx.fillStyle = '#555';
+      ctx.font = '600 11px Inter, sans-serif';
+      ctx.fillText(`${uLabel.replace(/ .*/, '')} Viewing Order`, pad, footY + 10);
+      ctx.fillStyle = a;
+      ctx.beginPath(); ctx.arc(W - pad - 10, footY + 4, 6, 0, Math.PI * 2); ctx.fill();
+
+      const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+      if (blob) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${slugifyPosterName(item.title)}-card.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+    } catch (err) {
+      console.error('Snap failed:', err);
+      setSnapError('Failed');
+      setTimeout(() => setSnapError(null), 2500);
+    } finally {
+      setSnapping(false);
+    }
   };
 
   const handleWatchOnVideasy = async (item) => {
@@ -988,10 +1371,10 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, ac
         <div className="detail-content">
           <div className="detail-kicker"><span>{item.universe === 'marvel' ? 'Marvel Cinematic Universe' : item.universe === 'xmen' ? 'X-Men Universe' : 'DC Universe'}</span><span>#{String(item.order || item.id).padStart(2, '0')}</span></div>
           <h1 id="detail-title">{item.title}</h1>
-          <div className="detail-chips"><span className="detail-rating"><Star size={15} fill="currentColor" /> {item.rating.toFixed ? item.rating.toFixed(1) : item.rating}</span>{(item.genres || []).slice(0,3).map(g => <span key={g}>{g}</span>)}</div>
+          <div className="detail-chips"><RatingChips item={item} />{(item.genres || []).slice(0,3).map(g => <span key={g}>{g}</span>)}</div>
           <p className="detail-description">{item.desc || `Follow ${item.title} in the complete ${item.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} viewing order.`}</p>
           <div className="detail-facts"><div><Calendar size={18} /><span>Release year</span><strong>{item.year}</strong></div><div><Timer size={18} /><span>Runtime</span><strong>{runtimeLabel(item.runtime, item.type)}</strong></div><div><Sparkles size={18} /><span>Format</span><strong>{item.type}</strong></div>{item.userStatus === 'watching' && item.watchedDuration > 30000 && <div><Clock size={18} /><span>Watched</span><strong>{watchTimeLabel(item)}</strong></div>}</div>
-          <div className="detail-progress-actions"><StatusSelect item={item} setStatus={setStatus} /><button className={`detail-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={19} fill={item.bookmarked ? 'currentColor' : 'none'} /></button><button className="detail-videasy" onClick={() => handleWatchOnVideasy(item)} disabled={watchLoading} aria-label={`Watch ${item.title} on Videasy`}><Play size={18} fill="currentColor" /><span>{watchLoading ? 'Loading...' : 'Watch Now'}</span></button>{item.type === 'series' && <label className="detail-download-episode"><span className="sr-only">Episode to download</span><select value={downloadEpisode} onChange={event => setDownloadEpisode(Number(event.target.value))} disabled={!downloadEpisodes.length}>{downloadEpisodes.length ? downloadEpisodes.map(episode => <option key={episode.episode} value={episode.episode}>S{item.season || 1} E{episode.episode}</option>) : <option>Episodes unavailable</option>}</select></label>}<button className="detail-download" onClick={handleDownloadClick} disabled={!item.tmdbId || (item.type === 'series' && !downloadEpisodes.length)} aria-label={`Download ${item.title}${item.type === 'series' ? ` episode ${downloadEpisode}` : ''}`}><Download size={18} /><span>Download</span></button></div>
+          <div className="detail-progress-actions"><StatusSelect item={item} setStatus={setStatus} /><button className={`detail-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={19} fill={item.bookmarked ? 'currentColor' : 'none'} /></button><button className="detail-videasy" onClick={() => handleWatchOnVideasy(item)} disabled={watchLoading} aria-label={`Watch ${item.title} on Videasy`}><Play size={18} fill="currentColor" /><span>{watchLoading ? 'Loading...' : 'Watch Now'}</span></button></div><div className="detail-download-row">{item.type === 'series' && <EpisodeDropdown episodes={downloadEpisodes} selected={downloadEpisode} onSelect={setDownloadEpisode} season={item.season || 1} />}<button className="detail-download" onClick={handleDownloadClick} disabled={!item.tmdbId || (item.type === 'series' && !downloadEpisodes.length)} aria-label={`Download ${item.title}${item.type === 'series' ? ` episode ${downloadEpisode}` : ''}`}><Download size={18} /><span>Download</span></button><button className={`detail-snap${snapError ? ' snap-failed' : ''}`} onClick={snapCard} disabled={snapping} aria-label={`Snapshot ${item.title} as shareable card`}><Camera size={17} /><span>{snapping ? '…' : snapError || 'Snap'}</span></button></div>
           {itemRoadmap && (
             <div className="detail-roadmap">
               <div className="section-title"><h2>Viewing Roadmap</h2><button>{itemRoadmap.siblings.length} Parts</button></div>
@@ -1017,27 +1400,31 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, ac
                       <div key={`int-${idx}`} className="roadmap-interstitial">
                         <div className="roadmap-inter-header">
                           <ChevronRight size={14} className="chevron" />
-                          <span>watch between</span>
+                          <span>connected stories</span>
                           <ChevronRight size={14} className="chevron" />
                         </div>
                         <div className="roadmap-inter-items">
                           {seg.items.map(intItem => (
                             <div key={intItem.id} className="roadmap-inter-card" style={{ '--accent': intItem.accent, cursor: 'default' }}>
-                              <div className="roadmap-inter-poster">
-                                {intItem.poster ? <img src={intItem.poster} alt={intItem.title} loading="lazy" /> : <FallbackPoster item={intItem} />}
-                              </div>
-                              <span className="roadmap-inter-title">{intItem.title}</span>
+                              <div className="roadmap-inter-poster">                              {intItem.poster ? <img src={intItem.poster} alt={intItem.title} loading="lazy" /> : <FallbackPoster item={intItem} />}
+                            </div>
+                            <span className="roadmap-inter-title">{intItem.title}</span>
+                            {intItem.connectionNote && (
+                              <p className="connection-note"><Sparkles size={11} /><span>{intItem.connectionNote}</span></p>
+                            )}
+                              {intItem.connectionNote && (
+                                <p className="connection-note"><Sparkles size={11} /><span>{intItem.connectionNote}</span></p>
+                              )}
                             </div>
                           ))}
                         </div>
                       </div>
-                    );
-                  }
-                })}
+                    );}
+                  })}
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
       </div>
       </div>
     </article>
@@ -1371,10 +1758,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
         <label className="watch-server-select">
           <Cloud size={15} aria-hidden="true" />
           <span>Server</span>
-          <select value={selectedServer} onChange={event => setSelectedServer(event.target.value)} aria-label="Playback server">
-            <option value="videasy">Videasy</option>
-            <option value="moviepire">MoviePire</option>
-          </select>
+          <ServerDropdown server={selectedServer} onSelect={setSelectedServer} />
         </label>
       </header>
       {toast && <div className="watch-toast">{toast}</div>}
@@ -1432,7 +1816,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
                   <div key={`int-${idx}`} className="roadmap-interstitial">
                     <div className="roadmap-inter-header">
                       <ChevronRight size={14} className="chevron" />
-                      <span>watch between</span>
+                      <span>connected stories</span>
                       <ChevronRight size={14} className="chevron" />
                     </div>
                     <div className="roadmap-inter-items">
@@ -1463,7 +1847,7 @@ function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, 
           <span>·</span>
           <span>{runtimeLabel(currentItem.runtime, currentItem.type)}</span>
           <span>·</span>
-          <span className="watch-rating"><Star size={14} fill="currentColor" /> {currentItem.rating.toFixed ? currentItem.rating.toFixed(1) : currentItem.rating}</span>
+          <span className="watch-rating"><Star size={14} fill="currentColor" /> {currentItem.rating?.toFixed ? currentItem.rating.toFixed(1) : (currentItem.rating ?? 'N/A')}</span>
         </div>
         <p className="watch-desc">{currentItem.desc || `Watch ${currentItem.title} in the complete ${currentItem.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} viewing order.`}</p>
         <div className="watch-actions">
@@ -1521,8 +1905,7 @@ const AGE_RATINGS = ['PG-13', 'R', 'TV-14', 'TV-PG', 'TV-MA', 'Not Rated'];
 function Filters({ genre, setGenre, rating, setRating, ageRatingFilter, setAgeRatingFilter, sortBy, setSortBy, genres, count, onClose }) {
   return <aside className="filter-screen web-filter">
     <div className="filter-head"><button onClick={() => { setGenre('All'); setRating(0); setAgeRatingFilter('All'); setSortBy('order'); }}>Clear All</button><b>Filters</b><button onClick={onClose}><X /></button></div>
-    <label>Sort by</label>
-    <FilterSelect value={sortBy} onChange={setSortBy} options={[{ value: 'order', label: 'Recommended' }, { value: 'year', label: 'Year' }, { value: 'title', label: 'Title' }]} />
+    <label>Sort by</label>     <FilterSelect value={sortBy} onChange={setSortBy} options={[{ value: 'order', label: 'Recommended' }, { value: 'rating-desc', label: 'Highest rated' }, { value: 'rating-asc', label: 'Lowest rated' }, { value: 'imdb-desc', label: 'Highest IMDb' }, { value: 'imdb-asc', label: 'Lowest IMDb' }, { value: 'tomato-desc', label: 'Highest Tomato' }, { value: 'tomato-asc', label: 'Lowest Tomato' }, { value: 'meta-desc', label: 'Highest Meta' }, { value: 'meta-asc', label: 'Lowest Meta' }, { value: 'popularity-desc', label: 'Most popular' }, { value: 'year', label: 'Year' }, { value: 'title', label: 'Title' }]} />
     <label>Minimum rating</label>
     <FilterSelect value={rating} onChange={v => setRating(Number(v))} options={[{ value: 0, label: 'Any rating' }, { value: 8, label: '8 & above' }, { value: 7, label: '7 & above' }, { value: 6, label: '6 & above' }]} />
     <label>Age rating</label>
@@ -1530,4 +1913,30 @@ function Filters({ genre, setGenre, rating, setRating, ageRatingFilter, setAgeRa
     <div className="genre-title">Genres <span>{genre === 'All' ? 0 : 1}</span></div><div className="filter-chips">{genres.map(g => <button key={g} className={genre === g ? 'selected' : ''} onClick={() => setGenre(g)}>{g}</button>)}</div>
     <button className="show-results" onClick={onClose}>Show {count} results</button>
   </aside>;
+}
+
+/* ── Footer ──────────────────────────────────────────────────────────────────── */
+function Footer() {
+  return (
+    <footer className="site-footer">
+      <div className="footer-content">
+        <div className="footer-col">
+          <h4>Disclaimer</h4>
+          <p>This website does not host, store, or distribute any video files, media content, or copyrighted material. All content is provided by third-party services and is the property of their respective owners.</p>
+        </div>
+        <div className="footer-col">
+          <h4>Legal</h4>
+          <p>This site operates under the principles of fair use and does not intend to infringe upon any copyrights. If you believe your copyrighted work has been used inappropriately, please contact the respective third-party provider directly. We comply with DMCA and take intellectual property rights seriously.</p>
+        </div>
+        <div className="footer-col">
+          <h4>Data Attribution</h4>
+          <p>Movie and series metadata, including posters, ratings, and descriptions, are sourced from <a href="https://www.themoviedb.org/" target="_blank" rel="noopener noreferrer">TMDB</a>. This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
+        </div>
+      </div>
+      <div className="footer-bottom">
+        <span>&copy; {new Date().getFullYear()} Cinematic Viewing Order. All rights reserved.</span>
+        <span>Not affiliated with Marvel, DC, Disney, Warner Bros., or any film studio.</span>
+      </div>
+    </footer>
+  );
 }

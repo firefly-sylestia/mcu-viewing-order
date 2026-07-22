@@ -105,6 +105,8 @@ export default async function handler(req, res) {
       title: best.title || best.name || title,
       overview: best.overview || null,
       rating: best.vote_average ? Number(best.vote_average).toFixed(1) : null,
+      voteCount: best.vote_count || 0,
+      popularity: best.popularity || 0,
       releaseDate: best.release_date || best.first_air_date || null,
       mediaType: mediaType,
       tmdbId: best.id,
