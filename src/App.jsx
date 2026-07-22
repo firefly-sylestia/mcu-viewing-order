@@ -245,12 +245,14 @@ export default function App() {
     
     // Always check cache for rating + poster metadata
     let imdbRating = null;
+    let voteCount = null;
     if (item.tmdbId) {
       const cached = getFromCache(metadataCacheKey(item));
       if (cached) {
         if (!poster && cached.poster) poster = cached.poster;
         if (cached.rating) rating = cached.rating;
         if (cached.imdbRating) imdbRating = cached.imdbRating;
+        if (cached.voteCount) voteCount = cached.voteCount;
       }
     }
     
@@ -271,6 +273,7 @@ export default function App() {
       watchedEpisodes: action.watchedEpisodes || [],
       rating,
       imdbRating,
+      voteCount,
     };
   }, [actions, posterMap]);
 
@@ -283,7 +286,7 @@ export default function App() {
       .filter(item => Number(item.rating) >= rating)
       .filter(item => ageRatingFilter === 'All' || (item.ageRating || (item.type === 'series' ? 'TV-14' : 'PG-13')) === ageRatingFilter)
       .map(enrichItem);
-    sorted.sort((a, b) => sortBy === 'year' ? a.year - b.year : sortBy === 'title' ? a.title.localeCompare(b.title) : sortBy === 'rating-desc' ? (Number(b.rating) || 0) - (Number(a.rating) || 0) : sortBy === 'rating-asc' ? (Number(a.rating) || 0) - (Number(b.rating) || 0) : a.order - b.order);
+    sorted.sort((a, b) => sortBy === 'year' ? a.year - b.year : sortBy === 'title' ? a.title.localeCompare(b.title) : sortBy === 'rating-desc' ? (Number(b.rating) || 0) - (Number(a.rating) || 0) : sortBy === 'rating-asc' ? (Number(a.rating) || 0) - (Number(b.rating) || 0) : sortBy === 'popularity-desc' ? (Number(b.voteCount) || 0) - (Number(a.voteCount) || 0) : a.order - b.order);
     return sorted;
   }, [allItems, universe, query, genre, rating, ageRatingFilter, sortBy, enrichItem]);
 
@@ -427,6 +430,7 @@ export default function App() {
                   backdrop: data.backdrop,
                   overview: data.overview,
                   rating: data.rating,
+                  voteCount: data.voteCount || existing.voteCount || 0,
                   releaseDate: data.releaseDate,
                   mediaType: data.mediaType,
                 });
@@ -1639,7 +1643,7 @@ const AGE_RATINGS = ['PG-13', 'R', 'TV-14', 'TV-PG', 'TV-MA', 'Not Rated'];
 function Filters({ genre, setGenre, rating, setRating, ageRatingFilter, setAgeRatingFilter, sortBy, setSortBy, genres, count, onClose }) {
   return <aside className="filter-screen web-filter">
     <div className="filter-head"><button onClick={() => { setGenre('All'); setRating(0); setAgeRatingFilter('All'); setSortBy('order'); }}>Clear All</button><b>Filters</b><button onClick={onClose}><X /></button></div>
-    <label>Sort by</label>     <FilterSelect value={sortBy} onChange={setSortBy} options={[{ value: 'order', label: 'Recommended' }, { value: 'rating-desc', label: 'Highest rated' }, { value: 'rating-asc', label: 'Lowest rated' }, { value: 'year', label: 'Year' }, { value: 'title', label: 'Title' }]} />
+    <label>Sort by</label>     <FilterSelect value={sortBy} onChange={setSortBy} options={[{ value: 'order', label: 'Recommended' }, { value: 'rating-desc', label: 'Highest rated' }, { value: 'rating-asc', label: 'Lowest rated' }, { value: 'popularity-desc', label: 'Most popular' }, { value: 'year', label: 'Year' }, { value: 'title', label: 'Title' }]} />
     <label>Minimum rating</label>
     <FilterSelect value={rating} onChange={v => setRating(Number(v))} options={[{ value: 0, label: 'Any rating' }, { value: 8, label: '8 & above' }, { value: 7, label: '7 & above' }, { value: 6, label: '6 & above' }]} />
     <label>Age rating</label>
