@@ -3701,6 +3701,37 @@ button { border: 0; color: inherit; cursor: pointer; }
     display: none !important;
   }
 
+  /* Watch page — emulate the home page's vertical "normal" rail view (like Up next / Your TMDB).
+     Hide the local 2/3 density toggle + pagination, and turn the .wb-grid into a horizontal
+     scroll row so all Start Watching titles flow horizontally on desktop. */
+  .wb-density-toggle {
+    display: none !important;
+  }
+  .watch-browse .pagination,
+  .watch-browse nav.pagination {
+    display: none !important;
+  }
+  .wb-grid {
+    grid-template-columns: none !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    gap: 14px !important;
+    padding-bottom: 6px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    scroll-snap-type: x proximity;
+  }
+  .wb-grid::-webkit-scrollbar { display: none; }
+  .wb-grid > .wb-card {
+    flex: 0 0 200px;
+    width: 200px;
+    max-width: 200px;
+    min-width: 0;
+    scroll-snap-align: start;
+  }
+
   .web-rail .web-grid:not(.rail-scroll),
   .web-rail .movie-grid:not(.rail-scroll) {
     grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)) !important;
