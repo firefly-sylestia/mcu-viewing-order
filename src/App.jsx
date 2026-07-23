@@ -844,7 +844,7 @@ export default function App() {
         <button className={section === 'profile' ? 'active' : ''} onClick={() => { setSection('profile'); }}><UserRound size={22} /><span>Profile</span></button>
       </nav>
 
-      {selectedItem && <DetailView item={selectedItem} onClose={() => selectItem(null)} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={startWatchFromRoadmap} activeItems={roadmapItems} />}
+      {selectedItem && <DetailView item={selectedItem} onClose={() => selectItem(null)} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={startWatchWithConfirm} onStartWatchFromRoadmap={startWatchFromRoadmap} activeItems={roadmapItems} />}
       {trailer && <TrailerModal trailer={trailer} onClose={() => setTrailer(null)} />}
       {filtersOpen && <Filters genre={genre} setGenre={setGenre} rating={rating} setRating={setRating} ageRatingFilter={ageRatingFilter} setAgeRatingFilter={setAgeRatingFilter} sortBy={sortBy} setSortBy={setSortBy} sortDirection={sortDirection} setSortDirection={setSortDirection} typeFilter={typeFilter} setTypeFilter={setTypeFilter} genres={genres} count={activeItems.length} onClose={() => setFiltersOpen(false)} />}
       {authOpen && <AuthModal onClose={() => setAuthOpen(false)} onLogin={login} onSignup={signup} onGoogleSignIn={googleSignIn} onAnonymousSignIn={anonymousSignIn} onResetPassword={resetPassword} />}
@@ -1171,7 +1171,7 @@ function AnalyticsPanel({ stats, large = false }) {
   return <section className={`analytics-panel ${large ? 'large' : ''}`}><div><p className="eyebrow">Analytics</p><h2>{stats.percent}% complete</h2><div className="progress"><span style={{ width: `${stats.percent}%` }} /></div></div><div className="stat-grid"><div><b>{stats.total}</b><span>Total</span></div><div><b>{stats.watched}</b><span>Watched</span></div><div><b>{stats.watching}</b><span>Watching</span></div><div><b>{stats.dropped}</b><span>Dropped</span></div><div><b>{stats.bookmarked}</b><span>Saved</span></div><div><b>{stats.watchedTime}</b><span>Watch Time</span></div></div></section>;
 }
 
-function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, activeItems }) {
+function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, onStartWatchFromRoadmap, activeItems }) {
   const [inlineTrailer, setInlineTrailer] = useState(null);
   const [isTrailerExpanded, setIsTrailerExpanded] = useState(false);
   const showTrailer = async () => {
@@ -1508,7 +1508,7 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, ac
                   if (seg.type === 'part') {
                     const partNum = itemRoadmap.segments.filter((s, i) => s.type === 'part' && i <= idx).length;
                     return (
-                      <div key={seg.item.id} className={`roadmap-part ${seg.isActive ? 'active' : ''} ${seg.item.userStatus === 'watched' ? 'watched' : ''}`} style={{ '--accent': seg.item.accent, cursor: 'default' }}>
+                      <div key={seg.item.id} role="button" tabIndex={0} aria-label={`Watch ${seg.item.title} (part ${partNum})`} title="Click to watch this part" className={`roadmap-part ${seg.isActive ? 'active' : ''} ${seg.item.userStatus === 'watched' ? 'watched' : ''}`} style={{ '--accent': seg.item.accent, cursor: 'pointer' }} onClick={() => onStartWatchFromRoadmap?.(seg.item, seg.item.tmdbId || null, seg.item.type === 'series' ? 'tv' : 'movie')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onStartWatchFromRoadmap?.(seg.item, seg.item.tmdbId || null, seg.item.type === 'series' ? 'tv' : 'movie'); } }}>
                         <span className="roadmap-part-dot" />
                         <div className="roadmap-part-poster">
                           {seg.item.poster ? <img src={seg.item.poster} alt={seg.item.title} loading="lazy" /> : <FallbackPoster item={seg.item} />}
@@ -1530,7 +1530,7 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, ac
                         </div>
                         <div className="roadmap-inter-items">
                           {seg.items.map(intItem => (
-                            <div key={intItem.id} className="roadmap-inter-card" style={{ '--accent': intItem.accent, cursor: 'default' }}>
+                            <div key={intItem.id} role="button" tabIndex={0} aria-label={`Watch ${intItem.title}`} title="Click to watch this connected story" className="roadmap-inter-card" style={{ '--accent': intItem.accent, cursor: 'pointer' }} onClick={() => onStartWatchFromRoadmap?.(intItem, intItem.tmdbId || null, intItem.type === 'series' ? 'tv' : 'movie')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onStartWatchFromRoadmap?.(intItem, intItem.tmdbId || null, intItem.type === 'series' ? 'tv' : 'movie'); } }}>
                               <div className="roadmap-inter-poster">                              {intItem.poster ? <img src={intItem.poster} alt={intItem.title} loading="lazy" /> : <FallbackPoster item={intItem} />}
                             </div>
                             <span className="roadmap-inter-title">{intItem.title}</span>
