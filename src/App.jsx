@@ -1677,7 +1677,7 @@ function WatchBrowse({ activeItems, externalResults = [], externalLoading = fals
           <div className="wb-scroll">
             {inProgress.map(item => (
               <article key={item.id} className="wb-card wb-continue-card" style={{ '--accent': item.accent }}>
-                <button className="wb-card-media" onClick={() => handleResume(item)}>
+                <button className="wb-card-media" onClick={() => setSelected(item)}>
                   <PosterArt item={item} />
                   <div className="wb-continue-overlay">
                     <div className="wb-progress-ring">
@@ -1694,7 +1694,7 @@ function WatchBrowse({ activeItems, externalResults = [], externalLoading = fals
                   </div>
                 </div>
                 <div className="wb-card-actions">
-                  <button onClick={() => handleResume(item)} className="wb-action-btn wb-action-primary"><Play size={14} fill="currentColor" /> Resume</button>
+                  <button onClick={(e) => { e.stopPropagation(); handleResume(item); }} className="wb-action-btn wb-action-primary"><Play size={14} fill="currentColor" /> Resume</button>
                   <StatusSelect item={item} setStatus={setStatus} compact />
                   <button onClick={() => toggleBookmark(item)} className={`wb-action-btn wb-action-icon ${item.bookmarked ? 'saved' : ''}`} aria-label={item.bookmarked ? 'Remove bookmark' : 'Bookmark'}><Bookmark size={16} fill={item.bookmarked ? 'currentColor' : 'none'} /></button>
                 </div>
