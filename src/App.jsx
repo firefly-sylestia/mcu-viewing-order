@@ -36,7 +36,7 @@ const marvelPalette = ['#641220', '#85182a', '#a11d33', '#b21e35', '#bd1f36', '#
 const dcPalette = ['#061226', '#08204a', '#0b3a78', '#0d4f9c', '#1367c8', '#2f80ed'];
 const xmenPalette = ['#6a6a7a', '#828294', '#9a9aa8', '#b0b0ba', '#c4c4cc', '#d8d8de'];
 
-const SORT_LABELS = { order: 'Order', rating: 'Rating', imdb: 'IMDb', tomato: 'Tomato', meta: 'Meta', popularity: 'Popular', year: 'Year', title: 'Title' };
+const SORT_LABELS = { order: 'Order', rating: 'Rating', imdb: 'IMDb', tomato: 'Tomato', meta: 'Meta', popularity: 'Popular', year: 'Year', title: 'Title', essential: 'Essential' };
 const runtimeLabel = (minutes = 0, type = 'film') => {
   if (!minutes) return type === 'series' ? 'Series' : 'TBA';
   const h = Math.floor(minutes / 60);
@@ -311,6 +311,7 @@ export default function App() {
       .filter(item => genre === 'All' || item.genres.includes(genre) || item.type === genre.toLowerCase())
       .filter(item => ageRatingFilter === 'All' || (item.ageRating || (item.type === 'series' ? 'TV-14' : 'PG-13')) === ageRatingFilter)
       .filter(item => typeFilter === 'All' || (typeFilter === 'Movies' ? item.type === 'film' : item.type === 'series'))
+      .filter(item => sortBy !== 'essential' || item.essential)
       .map(enrichItem)
       .filter(item => effectiveRating(item) >= rating);
     sorted.sort((a, b) => {
