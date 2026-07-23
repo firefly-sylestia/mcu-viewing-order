@@ -4220,6 +4220,10 @@ button { border: 0; color: inherit; cursor: pointer; }
 .roadmap-inter-card:active {
   transform: translateY(0) scale(.97);
 }
+.roadmap-inter-card:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 65%, white);
+  outline-offset: 2px;
+}
 
 .roadmap-inter-poster {
   width: 32px;

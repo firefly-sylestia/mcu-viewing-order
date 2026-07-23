@@ -1508,7 +1508,7 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, on
                   if (seg.type === 'part') {
                     const partNum = itemRoadmap.segments.filter((s, i) => s.type === 'part' && i <= idx).length;
                     return (
-                      <div key={seg.item.id} role="button" tabIndex={0} aria-label={`Watch ${seg.item.title} (part ${partNum})`} title="Click to watch this part" className={`roadmap-part ${seg.isActive ? 'active' : ''} ${seg.item.userStatus === 'watched' ? 'watched' : ''}`} style={{ '--accent': seg.item.accent, cursor: 'pointer' }} onClick={() => onStartWatchFromRoadmap?.(seg.item, seg.item.tmdbId || null, seg.item.type === 'series' ? 'tv' : 'movie')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onStartWatchFromRoadmap?.(seg.item, seg.item.tmdbId || null, seg.item.type === 'series' ? 'tv' : 'movie'); } }}>
+                      <div key={seg.item.id} role="button" tabIndex={0} aria-label={`Watch ${seg.item.title} (part ${partNum})`} title="Click to watch this part" className={`roadmap-part ${seg.isActive ? 'active' : ''} ${seg.item.userStatus === 'watched' ? 'watched' : ''}`} style={{ '--accent': seg.item.accent, cursor: 'pointer' }} onClick={() => onStartWatchFromRoadmap(seg.item, seg.item.tmdbId || null, seg.item.type === 'series' ? 'tv' : 'movie')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onStartWatchFromRoadmap(seg.item, seg.item.tmdbId || null, seg.item.type === 'series' ? 'tv' : 'movie'); } }}>
                         <span className="roadmap-part-dot" />
                         <div className="roadmap-part-poster">
                           {seg.item.poster ? <img src={seg.item.poster} alt={seg.item.title} loading="lazy" /> : <FallbackPoster item={seg.item} />}
@@ -1530,7 +1530,7 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, on
                         </div>
                         <div className="roadmap-inter-items">
                           {seg.items.map(intItem => (
-                            <div key={intItem.id} role="button" tabIndex={0} aria-label={`Watch ${intItem.title}`} title="Click to watch this connected story" className="roadmap-inter-card" style={{ '--accent': intItem.accent, cursor: 'pointer' }} onClick={() => onStartWatchFromRoadmap?.(intItem, intItem.tmdbId || null, intItem.type === 'series' ? 'tv' : 'movie')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onStartWatchFromRoadmap?.(intItem, intItem.tmdbId || null, intItem.type === 'series' ? 'tv' : 'movie'); } }}>
+                            <div key={intItem.id} role="button" tabIndex={0} aria-label={`Watch ${intItem.title}`} title="Click to watch this connected story" className="roadmap-inter-card" style={{ '--accent': intItem.accent, cursor: 'pointer' }} onClick={() => onStartWatchFromRoadmap(intItem, intItem.tmdbId || null, intItem.type === 'series' ? 'tv' : 'movie')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onStartWatchFromRoadmap(intItem, intItem.tmdbId || null, intItem.type === 'series' ? 'tv' : 'movie'); } }}>
                               <div className="roadmap-inter-poster">                              {intItem.poster ? <img src={intItem.poster} alt={intItem.title} loading="lazy" /> : <FallbackPoster item={intItem} />}
                             </div>
                             <span className="roadmap-inter-title">{intItem.title}</span>
