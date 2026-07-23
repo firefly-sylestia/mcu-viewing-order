@@ -1221,7 +1221,9 @@ button { border: 0; color: inherit; cursor: pointer; }
 .card-rating-tomato.rotten { color: #22c55e; }
 .card-rating-meta { color: #f59e0b; }
 .movie-card .card-body { min-width: 0; position: relative; z-index: 1; }
-.movie-card .card-actions { display: grid; grid-template-columns: minmax(0, 1fr) 44px; gap: 7px; width: 100%; position: relative; z-index: 1; }
+.movie-card .card-actions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) 40px; gap: 7px; width: 100%; position: relative; z-index: 1; }
+.movie-card .card-actions .watch-now-chip { background: var(--brand-accent); color: #fff; border-color: transparent; gap: 6px; font-weight: 800; }
+.movie-card .card-actions .watch-now-chip:hover { filter: brightness(1.08); }
 .movie-card .card-actions .trailer-chip { grid-column: 1 / -1; width: 100%; }
 .movie-card .card-actions .status-select { min-width: 0; width: 100%; }
 .movie-card .card-actions .status-trigger { min-width: 0; width: 100%; overflow: hidden; }
@@ -1238,7 +1240,9 @@ button { border: 0; color: inherit; cursor: pointer; }
 .detail-inline-trailer + * { display: none; }
 @media (max-width: 560px) {
   .web-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .movie-card .card-actions { grid-template-columns: minmax(0, 1fr) 42px; }
+  .movie-card .card-actions { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) 40px; }
+.movie-card .card-actions .trailer-chip span,
+.movie-card .card-actions .watch-now-chip span { display: none; }
   .movie-card .card-actions .trailer-chip span { display: inline; }
   .movie-card .card-actions .status-label { display: inline; }
   .movie-card .card-actions .status-chevron { display: block; flex: 0 0 auto; }
@@ -1292,7 +1296,7 @@ button { border: 0; color: inherit; cursor: pointer; }
   .top-carousel { touch-action: pan-y; }
   .carousel-backdrop { filter: blur(26px) saturate(.8) brightness(.66); opacity: .4; }
   .smooth-stack .stack-poster { transition-duration: .28s; transition-timing-function: cubic-bezier(.2,.75,.2,1); will-change: auto; transform: translateZ(0); backface-visibility: hidden; }
-  .movie-card .card-actions { grid-template-columns: minmax(0,1fr) 40px; gap: 6px; }
+  .movie-card .card-actions { grid-template-columns: minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) 40px; gap: 6px; }
   .movie-card .card-actions .bookmark-chip { width: 40px; min-width: 40px; padding: 0; }
   .movie-card .status-select,
   .movie-card .status-trigger { max-width: 100%; }

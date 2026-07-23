@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, Bookmark, RotateCcw, Clock, Check, X, Pencil, Trophy, LogIn, LogOut, Cloud, RefreshCw, Sun, Moon, Settings, Upload, Download } from 'lucide-react';
+import { Play, Bookmark, RotateCcw, Clock, Check, X, Pencil, Trophy, LogIn, LogOut, Cloud, RefreshCw, Sun, Moon, Settings, Upload, Download, Clapperboard } from 'lucide-react';
 
 function useAppTheme() {
   const [theme, setThemeState] = useState(() => {
@@ -33,7 +33,7 @@ const formatTimeAgo = (timestamp) => {
   return 'Synced ' + Math.floor(hours / 24) + 'd ago';
 };
 
-function ProfilePage({ stats, activeItems, universe, setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, profileName, setProfileName, user, configured, onLogin, onLogout, lastSynced, syncing, onSync, conflict, onResolveRemote, onResolveLocal, syncToast, nativePlayer, setNativePlayer }) {
+function ProfilePage({ stats, activeItems, universe, setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, onStartWatch, profileName, setProfileName, user, configured, onLogin, onLogout, lastSynced, syncing, onSync, conflict, onResolveRemote, onResolveLocal, syncToast, nativePlayer, setNativePlayer }) {
   const [activeTab, setActiveTab] = useState('insights');
   
   const savedItems = activeItems.filter(i => i.bookmarked);
@@ -110,16 +110,16 @@ function ProfilePage({ stats, activeItems, universe, setSelected, cycleStatus, s
           <div id="insights-panel" role="tabpanel" className="profile-panel insights-panel">
             <AnalyticsPanel stats={stats} activeItems={activeItems} inProgressItems={inProgressItems} />
             {inProgressItems.length > 0 && (
-              <MovieRail title="In progress" items={inProgressItems} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />
+              <MovieRail title="In progress" items={inProgressItems} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} onStartWatch={onStartWatch} />
             )}
             {watchedItems.length > 0 && (
-              <MovieRail title="Watched" items={watchedItems} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />
+              <MovieRail title="Watched" items={watchedItems} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} onStartWatch={onStartWatch} />
             )}
             {droppedItems.length > 0 && (
-              <MovieRail title="Dropped" items={droppedItems} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />
+              <MovieRail title="Dropped" items={droppedItems} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} onStartWatch={onStartWatch} />
             )}
             {savedItems.length > 0 && (
-              <MovieRail title="Bookmarked" items={savedItems} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />
+              <MovieRail title="Bookmarked" items={savedItems} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} onStartWatch={onStartWatch} />
             )}
           </div>
         )}
@@ -134,6 +134,7 @@ function ProfilePage({ stats, activeItems, universe, setSelected, cycleStatus, s
               setStatus={setStatus}
               toggleBookmark={toggleBookmark}
               playTrailer={playTrailer}
+              onStartWatch={onStartWatch}
               empty="No saved titles yet. Tap bookmarks on any card."
             />
           </div>
@@ -434,7 +435,7 @@ function AnalyticsPanel({ stats, activeItems, inProgressItems }) {
   );
 }
 
-function MovieRail({ title, items, setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, empty }) {
+function MovieRail({ title, items, setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, onStartWatch, empty }) {
   return (
     <section className="rail-card profile-rail">
       <div className="section-title">
@@ -452,6 +453,7 @@ function MovieRail({ title, items, setSelected, cycleStatus, setStatus, toggleBo
               setStatus={setStatus}
               toggleBookmark={toggleBookmark}
               playTrailer={playTrailer}
+              onStartWatch={onStartWatch}
             />
           ))}
         </div>
@@ -462,7 +464,7 @@ function MovieRail({ title, items, setSelected, cycleStatus, setStatus, toggleBo
   );
 }
 
-function MovieCard({ item, setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer }) {
+function MovieCard({ item, setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, onStartWatch }) {
   return (
     <article className="movie-card" style={{ '--accent': item.accent }}>
       <button className="poster-button" onClick={() => setSelected(item)}>
@@ -475,12 +477,20 @@ function MovieCard({ item, setSelected, cycleStatus, setStatus, toggleBookmark, 
         <span>{item.year} · {runtimeLabel(item.runtime, item.type)}</span>
       </div>
       <div className="card-actions">
+        {onStartWatch && <button
+          onClick={() => onStartWatch(item)}
+          className="watch-now-chip"
+          aria-label={`Watch ${item.title} now`}
+        >
+          <Play size={16} fill="currentColor" />
+          <span>Watch</span>
+        </button>}
         <button
           onClick={() => playTrailer(item)}
           className="trailer-chip"
-          aria-label={`Play ${item.title} trailer`}
+          aria-label={`Watch ${item.title} trailer`}
         >
-          <Play size={16} fill="currentColor" />
+          <Clapperboard size={16} />
           <span>Trailer</span>
         </button>
         <StatusSelect item={item} setStatus={setStatus} compact />
