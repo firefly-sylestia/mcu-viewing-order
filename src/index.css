@@ -1673,7 +1673,8 @@ button { border: 0; color: inherit; cursor: pointer; }
 }
 .detail-trailer { height: 50px; display: flex; align-items: center; justify-content: center; gap: 9px; border-radius: 15px; background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%); border: 1px solid color-mix(in srgb, var(--accent) 60%, transparent); color: #fff; font-weight: 850; box-shadow: 0 8px 24px var(--accent-glow); transition: transform .15s ease, box-shadow .15s ease; }
 .detail-trailer:hover { transform: translateY(-1px); box-shadow: 0 12px 32px var(--accent-glow); }
-.detail-media-actions { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); display: flex; gap: 10px; z-index: 3; flex-wrap: wrap; justify-content: center; max-width: calc(100% - 32px); }
+.detail-media-actions { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; gap: 10px; z-index: 3; flex-wrap: wrap; justify-content: center; max-width: calc(100% - 32px); pointer-events: none; }
+.detail-media-actions > button { pointer-events: auto; }
 .detail-media-actions > button { height: 46px; padding: 0 18px; font-size: 14px; }
 .detail-watch-now { background: var(--brand-accent); color: #fff; border: none; border-radius: 15px; font-weight: 850; display: inline-flex; align-items: center; justify-content: center; gap: 9px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45); transition: transform 0.15s ease, box-shadow 0.15s ease; cursor: pointer; }
 .detail-watch-now:hover { transform: translateY(-1px); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55); }
