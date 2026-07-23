@@ -650,16 +650,28 @@ export default function App() {
     setSelected(null);
     setSection('watch');
     window.history.replaceState(null, '', `#watch/${slugifyPosterName(item.title)}`);
+    // Scroll to top so the player is visible, even when tapped from a long-scrolled page like the list/home.
+    if (typeof window !== 'undefined' && window.scrollY > 4) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   }, []);
 
-  // -- Watch confirmation: intercepts user-triggered play to ask for confirmation --
-  const startWatchWithConfirm = useCallback((item, tmdbId, mediaType) => {
-    if (watchConfirmSkipped) {
+  // -- Watch confirmation: only shows the dialog for plays triggered FROM the Viewing Roadmap.
+  // Every other play path (browse, continue watching, watch-page up-next, etc.) starts playback
+  // immediately so the rest of the app feels snappy and uninterrupted. --
+  const startWatchWithConfirm = useCallback((item, tmdbId, mediaType, fromRoadmap = false) => {
+    if (!fromRoadmap || watchConfirmSkipped) {
       handleStartWatch(item, tmdbId, mediaType);
       return;
     }
     setWatchConfirmItem({ item, tmdbId, mediaType });
   }, [watchConfirmSkipped, handleStartWatch]);
+
+  // Used by the DetailView — keeps the confirmation when tapping Watch Now from the Viewing Roadmap
+  // (unless the user previously checked "Don't show this again").
+  const startWatchFromRoadmap = useCallback((item, tmdbId, mediaType) => {
+    startWatchWithConfirm(item, tmdbId, mediaType, true);
+  }, [startWatchWithConfirm]);
 
   const confirmWatch = useCallback(() => {
     if (!watchConfirmItem) return;
@@ -832,7 +844,7 @@ export default function App() {
         <button className={section === 'profile' ? 'active' : ''} onClick={() => { setSection('profile'); }}><UserRound size={22} /><span>Profile</span></button>
       </nav>
 
-      {selectedItem && <DetailView item={selectedItem} onClose={() => selectItem(null)} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={startWatchWithConfirm} activeItems={roadmapItems} />}
+      {selectedItem && <DetailView item={selectedItem} onClose={() => selectItem(null)} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={startWatchFromRoadmap} activeItems={roadmapItems} />}
       {trailer && <TrailerModal trailer={trailer} onClose={() => setTrailer(null)} />}
       {filtersOpen && <Filters genre={genre} setGenre={setGenre} rating={rating} setRating={setRating} ageRatingFilter={ageRatingFilter} setAgeRatingFilter={setAgeRatingFilter} sortBy={sortBy} setSortBy={setSortBy} sortDirection={sortDirection} setSortDirection={setSortDirection} typeFilter={typeFilter} setTypeFilter={setTypeFilter} genres={genres} count={activeItems.length} onClose={() => setFiltersOpen(false)} />}
       {authOpen && <AuthModal onClose={() => setAuthOpen(false)} onLogin={login} onSignup={signup} onGoogleSignIn={googleSignIn} onAnonymousSignIn={anonymousSignIn} onResetPassword={resetPassword} />}
@@ -1704,7 +1716,7 @@ function WatchBrowse({ activeItems, externalResults = [], externalLoading = fals
               {[2, 3].map(count => <button key={count} className={upNextGridDensity === count ? 'active' : ''} onClick={() => setUpNextGridDensity(count)} aria-label={`${count} columns`}>{count}</button>)}
             </div>
           </div>
-          <div className={`wb-grid wb-grid-${upNextGridDensity}`}>
+          <div key={`wbgrid-${upNextGridDensity}`} className={`wb-grid wb-grid-${upNextGridDensity}`}>
             {upNext.map(item => (
               <article key={item.id} className="wb-card" style={{ '--accent': item.accent }}>
                 <button className="wb-card-media" onClick={() => setSelected(item)}>
