@@ -1,7 +1,10 @@
 import { readStorageJSON, safeLocalStorageSetItem, removeStorageValue } from './cacheStorage';
 
 const CACHE_PREFIX = 'media_cache_';
-const EXPIRY_MS = 48 * 60 * 60 * 1000; // 48 hours
+// Cache TTL: 1 year. TMDB poster URLs and basic movie metadata are essentially immutable,
+// and OMDb ratings update so rarely that a yearly refresh is plenty. Users who need a
+// forced refresh can clear `media_cache_*` from DevTools → Application → Local Storage.
+const EXPIRY_MS = 365 * 24 * 60 * 60 * 1000; // 1 year
 
 /**
  * Generate cache key for media item

@@ -12,7 +12,7 @@
  */
 
 const CACHE_PREFIX = 'trailer_cache_';
-const EXPIRY_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+const EXPIRY_MS = 365 * 24 * 60 * 60 * 1000; // 1 year (trailer YouTube IDs are stable) // 7 days
 const KINOCHECK_BASE = 'https://api.kinocheck.com';
 
 const cacheKey = (title, year) => {
