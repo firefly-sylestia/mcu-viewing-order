@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Search, SlidersHorizontal, Home, Bookmark, Play, UserRound, X, ArrowLeft, Star, BarChart3, Check, Clock, ListFilter, RotateCcw, ChevronLeft, ChevronRight, ChevronDown, Calendar, Timer, Sparkles, LogIn, LogOut, Cloud, Download, Camera, Info, ShieldAlert } from 'lucide-react';
+import { Search, SlidersHorizontal, Home, Bookmark, Play, UserRound, X, ArrowLeft, Star, BarChart3, Check, Clock, ListFilter, RotateCcw, ChevronLeft, ChevronRight, ChevronDown, Calendar, Timer, Sparkles, LogIn, LogOut, Cloud, Download, Camera, Info, ShieldAlert, Clapperboard } from 'lucide-react';
 import { RAW } from './data/mcuData';
 import { DC_RAW } from './data/dcData';
 import { XMEN_RAW } from './data/xmenData';
@@ -1186,7 +1186,7 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, on
     setIsTrailerExpanded(false);
     setTimeout(() => setInlineTrailer(null), 400);
   };
-  const [watchLoading, setWatchLoading] = useState(false);
+
   const [downloadEpisodes, setDownloadEpisodes] = useState([]);
   const [downloadEpisode, setDownloadEpisode] = useState(item.epStart || 1);
 
@@ -1449,26 +1449,6 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, on
     }
   };
 
-  const handleWatchOnVideasy = async (item) => {
-    if (watchLoading) return;
-    setWatchLoading(true);
-    try {
-      const params = new URLSearchParams({ title: item.title, year: String(item.year || '') });
-      if (item.tmdbId) params.set('tmdbId', String(item.tmdbId));
-      params.set('mediaType', item.type === 'series' ? 'tv' : 'movie');
-      const res = await fetch(`/api/tmdb/description?${params.toString()}`);
-      if (!res.ok) throw new Error('TMDB lookup failed');
-      const data = await res.json();
-      if (!data.success || !data.tmdbId) throw new Error('No TMDB ID found');
-      const mediaType = data.mediaType;
-      onStartWatch(item, data.tmdbId, mediaType);
-    } catch {
-      // fallback: use item's tmdbId and type
-      onStartWatch(item, item.tmdbId || null, item.type === 'series' ? 'tv' : 'movie');
-    } finally {
-      setWatchLoading(false);
-    }
-  };
   const modalRef = React.useRef(null);
   React.useEffect(() => {
     if (isTrailerExpanded && modalRef.current) modalRef.current.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1488,7 +1468,12 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, on
               ? <div className="detail-inline-trailer"><iframe src={inlineTrailer} title={`${item.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={closeTrailer} aria-label="Close trailer"><X size={20} /></button></div>
               : <PosterArt item={item} />}
           </div>
-          {!isTrailerExpanded && <button className="detail-trailer" onClick={showTrailer}><Play size={18} fill="currentColor" /> Watch trailer</button>}
+          {!isTrailerExpanded && (
+              <div className="detail-media-actions">
+                <button className="detail-watch-now" onClick={() => onStartWatch(item, item.tmdbId, item.type === 'series' ? 'tv' : 'movie')} aria-label={`Watch ${item.title} now`}><Play size={18} /> Watch Now</button>
+                <button className="detail-trailer" onClick={showTrailer}><Clapperboard size={18} /> Watch trailer</button>
+              </div>
+            )}
         </div>
         <div className="detail-content">
           <div className="detail-kicker"><span>{item.universe === 'marvel' ? 'Marvel Cinematic Universe' : item.universe === 'xmen' ? 'X-Men Universe' : 'DC Universe'}</span><span>#{String(item.order || item.id).padStart(2, '0')}</span></div>
@@ -1496,7 +1481,8 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, on
           <div className="detail-chips"><RatingChips item={item} />{(item.genres || []).slice(0,3).map(g => <span key={g}>{g}</span>)}</div>
           <p className="detail-description">{item.desc || `Follow ${item.title} in the complete ${item.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} viewing order.`}</p>
           <div className="detail-facts"><div><Calendar size={18} /><span>Release year</span><strong>{item.year}</strong></div><div><Timer size={18} /><span>Runtime</span><strong>{runtimeLabel(item.runtime, item.type)}</strong></div><div><Sparkles size={18} /><span>Format</span><strong>{item.type}</strong></div>{item.userStatus === 'watching' && item.watchedDuration > 30000 && <div><Clock size={18} /><span>Watched</span><strong>{watchTimeLabel(item)}</strong></div>}</div>
-          <div className="detail-progress-actions"><StatusSelect item={item} setStatus={setStatus} /><button className={`detail-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={19} fill={item.bookmarked ? 'currentColor' : 'none'} /></button><button className="detail-videasy" onClick={() => handleWatchOnVideasy(item)} disabled={watchLoading} aria-label={`Watch ${item.title} on Videasy`}><Play size={18} fill="currentColor" /><span>{watchLoading ? 'Loading...' : 'Watch Now'}</span></button></div><div className="detail-download-row">{item.type === 'series' && <EpisodeDropdown episodes={downloadEpisodes} selected={downloadEpisode} onSelect={setDownloadEpisode} season={item.season || 1} />}<button className="detail-download" onClick={handleDownloadClick} disabled={!item.tmdbId || (item.type === 'series' && !downloadEpisodes.length)} aria-label={`Download ${item.title}${item.type === 'series' ? ` episode ${downloadEpisode}` : ''}`}><Download size={18} /><span>Download</span></button><button className={`detail-snap${snapError ? ' snap-failed' : ''}`} onClick={snapCard} disabled={snapping} aria-label={`Snapshot ${item.title} as shareable card`}><Camera size={17} /><span>{snapping ? '…' : snapError || 'Snap'}</span></button></div>
+          <div className="detail-progress-actions"><StatusSelect item={item} setStatus={setStatus} /><button className={`detail-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={19} fill={item.bookmarked ? 'currentColor' : 'none'} /></button>
+</div><div className="detail-download-row">{item.type === 'series' && <EpisodeDropdown episodes={downloadEpisodes} selected={downloadEpisode} onSelect={setDownloadEpisode} season={item.season || 1} />}<button className="detail-download" onClick={handleDownloadClick} disabled={!item.tmdbId || (item.type === 'series' && !downloadEpisodes.length)} aria-label={`Download ${item.title}${item.type === 'series' ? ` episode ${downloadEpisode}` : ''}`}><Download size={18} /><span>Download</span></button><button className={`detail-snap${snapError ? ' snap-failed' : ''}`} onClick={snapCard} disabled={snapping} aria-label={`Snapshot ${item.title} as shareable card`}><Camera size={17} /><span>{snapping ? '…' : snapError || 'Snap'}</span></button></div>
           {itemRoadmap && (
             <div className="detail-roadmap">
               <div className="section-title"><h2>Viewing Roadmap</h2><button>{itemRoadmap.siblings.length} Parts</button></div>
