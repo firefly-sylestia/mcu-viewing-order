@@ -1567,7 +1567,7 @@ function ContinueWatching({ items, setSelected, setStatus, toggleBookmark, playT
   return (
     <section className="rail-card web-rail">
       <div className="section-title"><h2>Continue Watching</h2><span>{items.length} in progress</span></div>
-      <div className="movie-grid web-grid">
+      <div className="movie-grid web-grid grid-3">
         {visibleItems.map(item => (
           <article key={item.id} className="movie-card continue-card" style={{ '--accent': item.accent }}>
             <button className="poster-button" onClick={() => handleResume(item)}>
@@ -1594,6 +1594,7 @@ function ContinueWatching({ items, setSelected, setStatus, toggleBookmark, playT
 function WatchBrowse({ activeItems, externalResults = [], externalLoading = false, actions = {}, query = '', onStartWatch, onPlayExternal, setSelected, setStatus, toggleBookmark }) {
   const pageSize = 12;
   const [upNextPage, setUpNextPage] = useState(1);
+  const [upNextGridDensity, setUpNextGridDensity] = useState(3);
   const inProgress = activeItems.filter(i => i.userStatus === 'watching');
   const allUpNext = activeItems.filter(i => i.userStatus === 'unwatched');
   const upNextPageCount = Math.max(1, Math.ceil(allUpNext.length / pageSize));
@@ -1699,8 +1700,11 @@ function WatchBrowse({ activeItems, externalResults = [], externalLoading = fals
         <section className="wb-section">            <div className="wb-section-head">
             <h2>Start Watching</h2>
             <span className="wb-section-count">{allUpNext.length} available</span>
+            <div className="wb-density-toggle" role="group" aria-label="Start Watching grid columns">
+              {[2, 3].map(count => <button key={count} className={upNextGridDensity === count ? 'active' : ''} onClick={() => setUpNextGridDensity(count)} aria-label={`${count} columns`}>{count}</button>)}
+            </div>
           </div>
-          <div className="wb-grid">
+          <div className={`wb-grid wb-grid-${upNextGridDensity}`}>
             {upNext.map(item => (
               <article key={item.id} className="wb-card" style={{ '--accent': item.accent }}>
                 <button className="wb-card-media" onClick={() => setSelected(item)}>
@@ -2306,12 +2310,44 @@ function AdBlockerDialog({ onDismiss }) {
   return (
     <div className="confirm-overlay" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) onDismiss(); }}>
       <div className="confirm-modal adblocker-modal" role="dialog" aria-modal="true" aria-labelledby="adblocker-title">
-        <div className="confirm-icon-ring adblocker-icon-ring">
-          <ShieldAlert size={28} />
+        <button className="confirm-close adblocker-close" onClick={onDismiss} aria-label="Close">
+          <X size={18} />
+        </button>
+        <div className="adblocker-hero">
+          <div className="adblocker-hero-glow" aria-hidden="true" />
+          <div className="confirm-icon-ring adblocker-icon-ring">
+            <ShieldAlert size={30} />
+          </div>
+          <span className="adblocker-eyebrow">Quick tip</span>
+          <h2 id="adblocker-title">Use an Ad&nbsp;Blocker</h2>
+          <p className="adblocker-subtitle">Player sites can show popups, redirects &amp; pre-roll ads. A free ad blocker keeps your marathon uninterrupted.</p>
         </div>
-        <h2 id="adblocker-title">Use an Ad Blocker</h2>
-        <p>For the best viewing experience, we recommend using an ad blocker to avoid interruptions during playback.</p>
-        <button onClick={onDismiss}>Got it</button>
+        <ul className="adblocker-benefits">
+          <li>
+            <span className="adblocker-bullet" aria-hidden="true"><Play size={14} fill="currentColor" /></span>
+            Skips popups, redirects &amp; pre-roll ads
+          </li>
+          <li>
+            <span className="adblocker-bullet" aria-hidden="true"><ShieldAlert size={14} /></span>
+            Stops trackers &amp; malicious redirects
+          </li>
+          <li>
+            <span className="adblocker-bullet" aria-hidden="true"><Sparkles size={14} /></span>
+            Faster page loads &amp; lower data use
+          </li>
+        </ul>
+        <div className="adblocker-recommend">
+          <span className="adblocker-recommend-label">Recommended:</span>
+          <a href="https://github.com/gorhill/uBlock" target="_blank" rel="noopener noreferrer" className="adblocker-pill">
+            uBlock Origin <span className="adblocker-pill-meta">Free · Open Source</span>
+          </a>
+          <a href="https://adguard.com/adguard-browser-extension/overview.html" target="_blank" rel="noopener noreferrer" className="adblocker-pill">
+            AdGuard <span className="adblocker-pill-meta">Free tier</span>
+          </a>
+        </div>
+        <div className="confirm-actions">
+          <button onClick={onDismiss} className="confirm-btn confirm-btn-primary adblocker-cta">Got it — let’s watch</button>
+        </div>
       </div>
     </div>
   );
