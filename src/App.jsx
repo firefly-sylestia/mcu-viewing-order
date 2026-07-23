@@ -493,10 +493,10 @@ export default function App() {
                 fetch(`/api/omdb/rating?title=${encodeURIComponent(item.title)}&year=${item.year}`)
                   .then(r => r.json())
                   .then(omdb => {
-                    if (omdb.rating) {
+                    if (omdb.rating || omdb.tomatoRating || omdb.metaRating) {
                       const cur = getFromCache(cacheKey) || {};
                       setCache(cacheKey, { ...cur, imdbRating: omdb.rating, tomatoRating: omdb.tomatoRating || cur.tomatoRating, metaRating: omdb.metaRating ? String(parseInt(omdb.metaRating)) : (cur.metaRating || '') });
-                    setOmdbVersion(v => v + 1);
+                      setOmdbVersion(v => v + 1);
                     }
                   })
                   .catch(() => {});
@@ -538,11 +538,13 @@ export default function App() {
       const batch = needRatings.slice(idx, idx + 3);
       await Promise.allSettled(batch.map(async (item) => {
         const ck = metadataCacheKey(item) || `omdb:${item.id}`;
-        omdbFetchedRef.current.add(ck);
         try {
           const r = await fetch(`/api/omdb/rating?title=${encodeURIComponent(item.title)}&year=${item.year}`);
           if (!r.ok) return;
           const omdb = await r.json();
+          // Mark as fetched only after a real response so failed lookups (rate-limited, 5xx, etc.)
+          // are retried on the next session instead of being silently skipped for the lifetime of this page.
+          omdbFetchedRef.current.add(ck);
           if (omdb.rating || omdb.tomatoRating || omdb.metaRating) {
             const cur = getFromCache(ck) || {};
             setCache(ck, { ...cur, imdbRating: omdb.rating || cur.imdbRating, tomatoRating: omdb.tomatoRating || cur.tomatoRating, metaRating: omdb.metaRating ? String(parseInt(omdb.metaRating)) : (cur.metaRating || '') });
