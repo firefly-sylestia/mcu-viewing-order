@@ -557,16 +557,10 @@ export default function App() {
     return () => { cancelled = true; };
   }, [activeItems]);
 
-  const lastHeroKeyRef = useRef('');
-  const stableHeroRef = useRef([]);
-  const heroItems = useMemo(() => {
-    const next = activeItems.slice(0, 6);
-    const key = next.map(i => i.id).join(',');
-    if (key === lastHeroKeyRef.current) return stableHeroRef.current;
-    lastHeroKeyRef.current = key;
-    stableHeroRef.current = next;
-    return next;
-  }, [activeItems]);
+  // Slicing 6 items is cheap; do NOT memoize-by-id-only — items keep mutating as posters,
+  // ratings, and user state load async, and an id-keyed freeze would lock the carousel to
+  // the first-pass objects (poster-less) forever.
+  const heroItems = useMemo(() => activeItems.slice(0, 6), [activeItems]);
   const featured = heroItems[heroIndex % Math.max(heroItems.length, 1)] || activeItems[0];
   const genres = ['All', 'Action', 'Adventure', 'Drama', 'Sci-fi', 'Essential', 'Series'];
   const externalTrackedItems = useMemo(() => Object.entries(actions)
