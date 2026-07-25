@@ -903,7 +903,7 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
         <div className="feature-kicker"><span>{featured?.year}</span><span>{runtimeLabel(featured?.runtime, featured?.type)}</span><span>{featured?.rating} rating</span></div>
         <h1>{featured?.title}</h1>
         <p>{featured?.desc || `Follow ${featured?.title} in the complete ${featured?.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} viewing order.`}</p>
-        <div className="feature-footer"><button className="feature-play" onClick={showTrailer}><Play size={18} fill="currentColor" /> Watch trailer</button><div className="chips">{featured?.genres.slice(0, 3).map(g => <span key={g}>{g}</span>)}</div></div>
+        <div className="feature-footer"><button className="feature-play" onClick={showTrailer}><Clapperboard size={18} /> Watch trailer</button><div className="chips">{featured?.genres.slice(0, 3).map(g => <span key={g}>{g}</span>)}</div></div>
       </div>
     </div>
     <div className="carousel-nav"><button onClick={() => move(-1)} aria-label="Previous title"><ChevronLeft /></button><div className="dots">{items.map((item, index) => <button key={item.id} aria-label={`Show ${item.title}`} className={item.id === featured?.id ? 'active' : ''} onClick={() => { setHeroIndex(index); setInlineTrailer(null); }} />)}</div><button onClick={() => move(1)} aria-label="Next title"><ChevronRight /></button></div>
@@ -954,7 +954,7 @@ function MovieCard({ item, setSelected, cycleStatus, setStatus, toggleBookmark, 
         <div className="card-ratings-line">{item.rating && <span className="list-rating"><Star size={11} fill="currentColor" />{Number(item.rating).toFixed(1)}</span>}{item.imdbRating && <span className="list-rating list-rating-imdb">★{item.imdbRating}</span>}{item.tomatoRating && <span className={`list-rating list-rating-tomato ${getTomatoTier(item.tomatoRating).cls}`}>{getTomatoTier(item.tomatoRating).emoji}{item.tomatoRating}</span>}{item.metaRating && <span className="list-rating list-rating-meta">M{parseInt(item.metaRating)}</span>}</div>
       )}
     </div>
-    <div className="card-actions"><button onClick={() => playTrailer(item)} className="trailer-chip" aria-label={`Play ${item.title} trailer`}><Play size={16} fill="currentColor" /><span>Trailer</span></button><StatusSelect item={item} setStatus={setStatus} compact /><button onClick={() => toggleBookmark(item)} className={`bookmark-chip ${item.bookmarked ? 'saved' : ''}`} aria-label={item.bookmarked ? 'Remove bookmark' : 'Bookmark title'}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button></div>
+    <div className="card-actions"><button onClick={() => playTrailer(item)} className="trailer-chip" aria-label={`Play ${item.title} trailer`}><Clapperboard size={16} /><span>Trailer</span></button><StatusSelect item={item} setStatus={setStatus} compact /><button onClick={() => toggleBookmark(item)} className={`bookmark-chip ${item.bookmarked ? 'saved' : ''}`} aria-label={item.bookmarked ? 'Remove bookmark' : 'Bookmark title'}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button></div>
   </article>;
 }
 
@@ -979,7 +979,7 @@ function ListSection({ items, sortKey, externalResults = [], externalLoading = f
       <span className="list-index">{String(firstItem + index + 1).padStart(2, '0')}</span>
       <div className="list-poster"><img src={item.poster} alt={`${item.title} poster`} width="82" height="108" loading="lazy" /></div>
       <div className="list-copy"><div className="list-title-line"><strong>{item.title}</strong>{item.essential && <span>Essential</span>}</div>{(item.rating || item.imdbRating || item.tomatoRating || item.metaRating) && <div className="list-ratings-line">{item.rating && <span className="list-rating"><Star size={11} fill="currentColor" />{Number(item.rating).toFixed(1)}</span>}{item.imdbRating && <span className="list-rating list-rating-imdb">★{item.imdbRating}</span>}{item.tomatoRating && <span className={`list-rating list-rating-tomato ${getTomatoTier(item.tomatoRating).cls}`}>{getTomatoTier(item.tomatoRating).emoji}{item.tomatoRating}</span>}{item.metaRating && <span className="list-rating list-rating-meta">M{parseInt(item.metaRating)}</span>}</div>}<span>{item.year} · {item.type} · {runtimeLabel(item.runtime, item.type)}</span><p>{item.desc || `${item.title} in the complete ${item.universe === 'marvel' ? 'MCU' : 'DC'} story timeline.`}</p><div className="list-tags">{(item.genres || []).slice(0,3).map(g => <span key={g}>{g}</span>)}</div></div>
-      <div className="list-actions" onClick={e => e.stopPropagation()}><button className="list-trailer" onClick={() => playTrailer(item)} aria-label={`Play ${item.title} trailer`}><Play size={16} fill="currentColor" /><span>Trailer</span></button><StatusSelect item={item} setStatus={setStatus} /><button className={`list-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Bookmark title'}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button></div>
+      <div className="list-actions" onClick={e => e.stopPropagation()}><button className="list-trailer" onClick={() => playTrailer(item)} aria-label={`Play ${item.title} trailer`}><Clapperboard size={16} /><span>Trailer</span></button><StatusSelect item={item} setStatus={setStatus} /><button className={`list-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Bookmark title'}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button></div>
     </article>)}</div>}
     {pageCount > 1 && <nav className="pagination" aria-label="Viewing list pages"><button onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} aria-label="Previous page"><ChevronLeft size={18} /></button>{Array.from({ length: pageCount }, (_, index) => index + 1).map(pageNumber => <button key={pageNumber} className={currentPage === pageNumber ? 'active' : ''} aria-current={currentPage === pageNumber ? 'page' : undefined} onClick={() => goToPage(pageNumber)}>{pageNumber}</button>)}<button onClick={() => goToPage(currentPage + 1)} disabled={currentPage === pageCount} aria-label="Next page"><ChevronRight size={18} /></button></nav>}
     
@@ -1041,9 +1041,14 @@ function StatusSelect({ item, setStatus, compact = false }) {
     </button>
     {open && <div className="status-dropdown" role="listbox" aria-label={`Set status for ${item.title}`}>
       <p className="status-menu-title">Viewing status</p>
-      {STATUS.map(status => <button key={status} className={`status-option ${status} ${item.userStatus === status ? 'active' : ''}`} role="option" aria-selected={item.userStatus === status} onClick={() => { setStatus(item, status); setOpen(false); }}>
-        <span className="status-option-copy"><strong>{STATUS_LABELS[status]}</strong><small>{STATUS_META[status].detail}</small></span>
-      </button>)}
+      {STATUS.map(status => {
+        const Icon = STATUS_META[status].icon;
+        return <button key={status} className={`status-option ${status} ${item.userStatus === status ? 'active' : ''}`} role="option" aria-selected={item.userStatus === status} onClick={() => { setStatus(item, status); setOpen(false); }}>
+          <span className="status-option-icon"><Icon size={15} /></span>
+          <span className="status-option-copy"><strong>{STATUS_LABELS[status]}</strong><small>{STATUS_META[status].detail}</small></span>
+          {item.userStatus === status && <Check size={14} className="status-option-check" />}
+        </button>;
+      })}
     </div>}
   </div>;
 }
@@ -1160,7 +1165,7 @@ function SuggestionStrip({ nextUp, stats, setSelected, playTrailer }) {
   if (!nextUp) return null;
   return <section className="suggestion-strip" style={{ '--accent': nextUp.accent }}>
     <div><p className="eyebrow">Smart suggestion</p><h2>Next up: {nextUp.title}</h2><span>{stats.percent}% complete · {stats.watched} watched · {stats.bookmarked} saved</span></div>
-    <div className="suggestion-actions"><button onClick={() => playTrailer(nextUp)}><Play size={16} fill="currentColor" /> Trailer</button><button onClick={() => setSelected(nextUp)}>Details</button></div>
+    <div className="suggestion-actions"><button onClick={() => playTrailer(nextUp)}><Clapperboard size={16} /> Trailer</button><button onClick={() => setSelected(nextUp)}>Details</button></div>
   </section>;
 }
 
@@ -1468,14 +1473,14 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, on
               ? <div className="detail-inline-trailer"><iframe src={inlineTrailer} title={`${item.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={closeTrailer} aria-label="Close trailer"><X size={20} /></button></div>
               : <PosterArt item={item} />}
           </div>
-          {!isTrailerExpanded && (
-              <div className="detail-media-actions">
-                <button className="detail-watch-now" onClick={() => onStartWatch(item, item.tmdbId, item.type === 'series' ? 'tv' : 'movie')} aria-label={`Watch ${item.title} now`}><Play size={18} /> Watch Now</button>
-                <button className="detail-trailer" onClick={showTrailer}><Clapperboard size={18} /> Watch trailer</button>
-              </div>
-            )}
         </div>
         <div className="detail-content">
+          {!isTrailerExpanded && (
+            <div className="detail-actions-row">
+              <button className="detail-watch-now" onClick={() => onStartWatch(item, item.tmdbId, item.type === 'series' ? 'tv' : 'movie')} aria-label={`Watch ${item.title} now`}><Play size={18} /> Watch Now</button>
+              <button className="detail-trailer" onClick={showTrailer}><Clapperboard size={18} /> Watch trailer</button>
+            </div>
+          )}
           <div className="detail-kicker"><span>{item.universe === 'marvel' ? 'Marvel Cinematic Universe' : item.universe === 'xmen' ? 'X-Men Universe' : 'DC Universe'}</span><span>#{String(item.order || item.id).padStart(2, '0')}</span></div>
           <h1 id="detail-title">{item.title}</h1>
           <div className="detail-chips"><RatingChips item={item} />{(item.genres || []).slice(0,3).map(g => <span key={g}>{g}</span>)}</div>
@@ -1589,7 +1594,7 @@ function ContinueWatching({ items, setSelected, setStatus, toggleBookmark, playT
 function WatchBrowse({ activeItems, externalResults = [], externalLoading = false, actions = {}, query = '', onStartWatch, onPlayExternal, setSelected, setStatus, toggleBookmark }) {
   const pageSize = 12;
   const [upNextPage, setUpNextPage] = useState(1);
-  const [upNextGridDensity, setUpNextGridDensity] = useState(3);
+  const [upNextGridDensity, setUpNextGridDensity] = useState(4);
   const inProgress = activeItems.filter(i => i.userStatus === 'watching');
   const allUpNext = activeItems.filter(i => i.userStatus === 'unwatched');
   const upNextPageCount = Math.max(1, Math.ceil(allUpNext.length / pageSize));
@@ -1696,7 +1701,7 @@ function WatchBrowse({ activeItems, externalResults = [], externalLoading = fals
             <h2>Start Watching</h2>
             <span className="wb-section-count">{allUpNext.length} available</span>
             <div className="wb-density-toggle" role="group" aria-label="Start Watching grid columns">
-              {[2, 3].map(count => <button key={count} className={upNextGridDensity === count ? 'active' : ''} onClick={() => setUpNextGridDensity(count)} aria-label={`${count} columns`}>{count}</button>)}
+              {[2, 3, 4].map(count => <button key={count} className={upNextGridDensity === count ? 'active' : ''} onClick={() => setUpNextGridDensity(count)} aria-label={`${count} columns`}>{count}</button>)}
             </div>
           </div>
           <div key={`wbgrid-${upNextGridDensity}`} className={`wb-grid wb-grid-${upNextGridDensity}`}>
@@ -2310,6 +2315,13 @@ function AdBlockerDialog({ onDismiss }) {
     const t = setTimeout(() => setVisible(true), 600);
     return () => clearTimeout(t);
   }, []);
+
+  // Auto-dismiss after 1s once visible
+  useEffect(() => {
+    if (!visible) return;
+    const t = setTimeout(handleDismiss, 1000);
+    return () => clearTimeout(t);
+  }, [visible]);
 
   const handleDismiss = () => {
     setExiting(true);

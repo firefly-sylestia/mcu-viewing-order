@@ -1136,24 +1136,24 @@ button { border: 0; color: inherit; cursor: pointer; }
 .suggestion-strip h2 { margin: 0 0 6px; font-size: clamp(24px, 4vw, 42px); }.suggestion-strip span { color: rgba(255,255,255,.72); }.suggestion-actions { display: flex; gap: 10px; flex-wrap: wrap; }.suggestion-actions button { min-height: 44px; border-radius: 14px; padding: 0 16px; background: rgba(255,255,255,.12); display: inline-flex; align-items: center; gap: 8px; font-weight: 800; font-size: 14px; transition: transform .15s ease, background .18s ease; }
 .suggestion-actions button:hover { transform: translateY(-1px); }
 .suggestion-actions button:first-child { background: #fff; color: #101010; }
+/* ── Status Select — trigger (original) + dropdown (improved) ────────────── */
 .status-select { position: relative; min-width: 120px; }
-.status-trigger { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 14px; border-radius: 12px; background: rgba(255,255,255,.06); border: none; color: #fff; font-weight: 700; font-size: 13px; transition: all .18s ease; min-height: 44px; cursor: pointer; letter-spacing: .02em; }
+.status-trigger {
+  width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px 14px; border-radius: 12px;
+  background: rgba(255,255,255,.06); border: none;
+  color: #fff; font-weight: 700; font-size: 13px;
+  min-height: 44px; cursor: pointer; letter-spacing: .02em;
+  transition: all .18s ease;
+}
 .status-trigger:hover { transform: translateY(-1px); }
 .status-trigger:active { transform: translateY(0) scale(.98); }
 .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: currentColor; opacity: .5; display: none; }
 .status-label { flex: 1; text-align: center; text-transform: capitalize; }
 .status-chevron { flex-shrink: 0; opacity: .55; transition: transform .18s ease; display: none; }
 .status-select .status-trigger[aria-expanded="true"] .status-chevron { transform: rotate(180deg); }
-.status-dropdown { position: absolute; z-index: 100; top: calc(100% + 6px); left: 0; right: 0; background: #1a1c20; border: 1px solid rgba(255,255,255,.14); border-radius: 14px; padding: 6px; box-shadow: 0 16px 42px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.04); animation: dropdownIn .18s cubic-bezier(.2,.8,.2,1) both; backdrop-filter: blur(18px); }
-@keyframes dropdownIn { from { opacity: 0; transform: translateY(-6px) scale(.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
-.status-option { width: 100%; display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 10px; background: transparent; border: 0; color: #aaa; font-weight: 600; font-size: 13px; cursor: pointer; transition: all .12s ease; text-transform: capitalize; text-align: left; }
-.status-option:hover { background: rgba(255,255,255,.08); color: #fff; }
-.status-option.active { color: #fff; background: rgba(255,255,255,.06); }
-.status-option .status-dot { flex-shrink: 0; }
-.status-option.watched .status-dot { background: #1a6b3a; opacity: 1; }
-.status-option.watching .status-dot { background: #8b6914; opacity: 1; }
-.status-option.dropped .status-dot { background: #8b2020; opacity: 1; }
-.status-option.unwatched .status-dot { background: #4b5563; opacity: 1; }
+
+/* Status trigger gradient backgrounds (original) */
 .status-select.watched .status-trigger { background: linear-gradient(135deg, #0d2818 0%, #1a4a2e 50%, #0d2818 100%); color: #a3e6b8; border: 1px solid rgba(34, 197, 94, 0.2); }
 .status-select.watched .status-trigger:hover { background: linear-gradient(135deg, #153a24 0%, #205a38 50%, #153a24 100%); border-color: rgba(34, 197, 94, 0.35); }
 .status-select.watching .status-trigger { background: linear-gradient(135deg, #2d1a08 0%, #4a2c10 50%, #2d1a08 100%); color: #f0c878; border: 1px solid rgba(245, 158, 11, 0.2); }
@@ -1172,6 +1172,86 @@ button { border: 0; color: inherit; cursor: pointer; }
 .status-select.watching .status-trigger .status-dot { background: #8b6914; opacity: 1; }
 .status-select.dropped .status-trigger .status-dot { background: #8b2020; opacity: 1; }
 .status-select.unwatched .status-trigger .status-dot { background: #6b7280; opacity: 1; }
+
+/* Dropdown menu — opens downward by default */
+.status-dropdown {
+  position: absolute;
+  z-index: 500;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 200px;
+  width: max-content;
+  background: rgba(20,21,24,.97);
+  border: 1px solid rgba(255,255,255,.13);
+  border-radius: 14px;
+  padding: 6px;
+  box-shadow: 0 20px 54px rgba(0,0,0,.68), 0 0 0 1px rgba(255,255,255,.04);
+  animation: dropdownIn .18s cubic-bezier(.2,.8,.2,1) both;
+  backdrop-filter: blur(22px) saturate(125%);
+  -webkit-backdrop-filter: blur(22px) saturate(125%);
+}
+/* Card contexts override to open upward */
+.movie-card .status-dropdown,
+.card-actions .status-dropdown,
+.list-actions .status-dropdown {
+  top: auto;
+  bottom: calc(100% + 6px);
+}
+@keyframes dropdownIn {
+  from { opacity: 0; transform: translateY(-6px) scale(.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Dropdown menu title */
+.status-menu-title { margin: 2px 7px 7px; color: #838790; font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+
+/* Dropdown options with icons */
+.status-option {
+  width: 100%; display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px; border-radius: 10px;
+  background: transparent; border: 0;
+  color: #aaa;
+  font-weight: 600; font-size: 13px;
+  cursor: pointer;
+  transition: background .12s ease, color .12s ease;
+  text-align: left;
+}
+.status-option:hover { background: rgba(255,255,255,.07); color: #fff; }
+.status-option.active { color: #fff; background: rgba(255,255,255,.06); }
+
+/* Option icon */
+.status-option-icon {
+  flex-shrink: 0;
+  width: 28px; height: 28px;
+  display: grid; place-items: center;
+  border-radius: 8px;
+  background: rgba(255,255,255,.05);
+  color: rgba(255,255,255,.4);
+  transition: background .12s ease, color .12s ease;
+}
+.status-option:hover .status-option-icon,
+.status-option.active .status-option-icon {
+  background: rgba(255,255,255,.1);
+  color: rgba(255,255,255,.7);
+}
+.status-option.watched .status-option-icon { color: #86efac; background: rgba(34,197,94,.12); }
+.status-option.watching .status-option-icon { color: #fde68a; background: rgba(234,179,8,.12); }
+.status-option.dropped .status-option-icon { color: #fca5a5; background: rgba(239,68,68,.12); }
+
+/* Option text */
+.status-option-copy { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.status-option-copy strong { font-size: 13px; font-weight: 700; color: inherit; }
+.status-option-copy small { font-size: 11px; font-weight: 500; color: rgba(255,255,255,.35); }
+.status-option:hover .status-option-copy small,
+.status-option.active .status-option-copy small { color: rgba(255,255,255,.5); }
+
+/* Checkmark for active status */
+.status-option-check {
+  margin-left: auto;
+  flex-shrink: 0;
+  color: rgba(255,255,255,.3);
+}
+.status-option.active .status-option-check { color: var(--accent, #da1e37); }
 .list-row { grid-template-columns: 48px 58px minmax(180px,1fr) minmax(160px,auto) 54px 132px 48px; }
 .list-row > button:nth-child(3) { text-align: left; padding: 0 14px; font-weight: 900; }
 .list-row > button:nth-child(3) span { display: block; color: #999; font-size: 12px; font-weight: 500; }
@@ -1202,7 +1282,7 @@ button { border: 0; color: inherit; cursor: pointer; }
   border-radius: 20px;
   perspective: 800px;
   background: rgba(12,12,14,.45);
-}.poster-button { position: relative; aspect-ratio: 2/3; width: 100%; }.poster-button::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(255,255,255,.08) 0%, transparent 50%, rgba(255,255,255,.02) 100%); opacity: 0; transition: opacity .3s ease; pointer-events: none; border-radius: inherit; z-index: 2; }.movie-card:hover .poster-button::after { opacity: 1; }.poster-play { position: absolute; right: 10px; bottom: 10px; width: 38px; height: 38px; display: grid; place-items: center; border-radius: 12px; background: rgba(8,8,8,.82); }.card-actions { grid-template-columns: minmax(78px,.8fr) minmax(100px,1.25fr) 42px; align-items: center; gap: 6px; }.card-actions button { min-width: 0; height: 42px; min-height: 42px; padding: 0 10px; }.card-actions .trailer-chip { gap: 7px; background: linear-gradient(135deg, #0f0f1e 0%, #18182c 50%, #0f0f1e 100%); color: #b0b0c8; border: 1px solid rgba(140,140,200,.1); }.card-actions .trailer-chip svg, .list-trailer svg, .feature-play svg, .detail-trailer svg, .suggestion-actions button svg { flex-shrink: 0; }.bookmark-chip { padding: 0 !important; }.status-dropdown { top: auto; bottom: calc(100% + 6px); z-index: 500; }
+}.poster-button { position: relative; aspect-ratio: 2/3; width: 100%; }.poster-button::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(255,255,255,.08) 0%, transparent 50%, rgba(255,255,255,.02) 100%); opacity: 0; transition: opacity .3s ease; pointer-events: none; border-radius: inherit; z-index: 2; }.movie-card:hover .poster-button::after { opacity: 1; }.poster-play { position: absolute; right: 10px; bottom: 10px; width: 38px; height: 38px; display: grid; place-items: center; border-radius: 12px; background: rgba(8,8,8,.82); }.card-actions { grid-template-columns: minmax(78px,.8fr) minmax(100px,1.25fr) 42px; align-items: center; gap: 6px; }.card-actions button { min-width: 0; height: 42px; min-height: 42px; padding: 0 10px; }.card-actions .trailer-chip { gap: 7px; background: linear-gradient(135deg, #0f0f1e 0%, #18182c 50%, #0f0f1e 100%); color: #b0b0c8; border: 1px solid rgba(140,140,200,.1); }.card-actions .trailer-chip svg, .list-trailer svg, .feature-play svg, .detail-trailer svg, .suggestion-actions button svg { flex-shrink: 0; }.bookmark-chip { padding: 0 !important; }
 .list-section { padding: clamp(16px, 2.5vw, 28px); overflow: visible; }.list-heading { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 18px; }.list-heading h2 { font-size: clamp(28px,4vw,48px); }.list-heading > span { color: var(--cinema-muted); }.list-grid { display: grid; gap: 10px; }.list-row { position: relative; display: grid; grid-template-columns: 40px 82px minmax(220px,1fr) auto minmax(330px,auto); gap: 16px; align-items: center; min-height: 126px; padding: 12px 14px; border-radius: 20px; background: #101010; overflow: visible; }.list-row:hover { transform: translateY(-2px); }.list-index { color: var(--accent); font-size: 14px; font-weight: 800; }.list-poster { width: 82px; height: 108px; border-radius: 14px !important; }.list-copy { min-width: 0; }.list-copy > button { padding: 0; background: transparent; text-align: left; font-size: 18px; font-weight: 800; }.list-copy > span { display: block; margin-top: 4px; color: var(--cinema-muted); font-size: 12px; }.list-copy p { max-width: 50ch; margin-top: 8px; color: #777; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }.list-tags { display: flex; gap: 6px; }.list-tags span { padding: 6px 9px; border: 1px solid rgba(255,255,255,.1); border-radius: 999px; color: #aaa; font-size: 11px; }.list-actions { display: grid; grid-template-columns: 82px 132px 42px; gap: 7px; align-items: center; }.list-actions > button { height: 42px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; border-radius: 12px; background: #1b1b1b; }.list-actions .list-trailer { background: linear-gradient(135deg, #0f0f1e 0%, #18182c 50%, #0f0f1e 100%); color: #b0b0c8; border: 1px solid rgba(140,140,200,.1); }.list-actions .saved { color: #e0e0e0; }
 @media (max-width: 920px) { .site-header { grid-template-columns: auto 1fr 40px; }.universe-tabs { order: 2; }.header-search { order: 4; grid-column: 1 / -1; }.header-filter-btn { order: 3; }.feature-stage { grid-template-columns: 1fr; }.top-carousel { min-height: 790px; }.poster-stack { width: min(100%, 620px); margin-inline: auto; }.feature-copy { padding: 0 8px 54px; }.list-row { grid-template-columns: 34px 68px 1fr; }.list-poster { width: 68px; height: 94px; }.list-tags { display: none; }.list-actions { grid-column: 3; grid-template-columns: 88px minmax(120px,1fr) 42px; }.list-copy p { display: none; } }
 @media (max-width: 560px) {
@@ -1500,7 +1580,7 @@ button { border: 0; color: inherit; cursor: pointer; }
   .wb-section-head { margin-bottom: 12px; }
   .wb-section-head h2 { font-size: 17px; }
   .wb-section-count { font-size: 11px; padding: 4px 10px; }
-  .wb-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .wb-grid { gap: 10px; }
   .wb-card { border-radius: 12px; }
   .wb-card-info { padding: 8px 8px 4px; }
   .wb-card-title { font-size: 12px; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
@@ -1527,7 +1607,7 @@ button { border: 0; color: inherit; cursor: pointer; }
 }
 
 @media (max-width: 400px) {
-  .wb-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .wb-grid { gap: 8px; }
   .wb-card-title { font-size: 10px; }
   .wb-card-meta > span { font-size: 9px; }
   .wb-card-actions { flex-direction: column; gap: 4px; }
@@ -1671,13 +1751,51 @@ button { border: 0; color: inherit; cursor: pointer; }
   .watch-rec-card { flex: 0 0 110px; }
   .watch-rec-poster { width: 110px; height: 156px; }
 }
-.detail-trailer { height: 50px; display: flex; align-items: center; justify-content: center; gap: 9px; border-radius: 15px; background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%); border: 1px solid color-mix(in srgb, var(--accent) 60%, transparent); color: #fff; font-weight: 850; box-shadow: 0 8px 24px var(--accent-glow); transition: transform .15s ease, box-shadow .15s ease; }
-.detail-trailer:hover { transform: translateY(-1px); box-shadow: 0 12px 32px var(--accent-glow); }
-.detail-media-actions { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; gap: 10px; z-index: 3; flex-wrap: wrap; justify-content: center; max-width: calc(100% - 32px); pointer-events: none; }
-.detail-media-actions > button { pointer-events: auto; }
-.detail-media-actions > button { height: 46px; padding: 0 18px; font-size: 14px; }
-.detail-watch-now { background: var(--brand-accent); color: #fff; border: none; border-radius: 15px; font-weight: 850; display: inline-flex; align-items: center; justify-content: center; gap: 9px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45); transition: transform 0.15s ease, box-shadow 0.15s ease; cursor: pointer; }
-.detail-watch-now:hover { transform: translateY(-1px); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55); }
+/* Detail action buttons row — sits below poster, no overlap */
+.detail-actions-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+.detail-actions-row > button {
+  flex: 1;
+  height: 50px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border-radius: 14px;
+  font-weight: 850;
+  font-size: 14px;
+  cursor: pointer;
+  transition: transform .15s ease, box-shadow .15s ease, background .15s ease, border-color .15s ease;
+}
+.detail-actions-row > button:hover { transform: translateY(-1px); }
+.detail-actions-row > button:active { transform: translateY(0) scale(.97); }
+
+/* Watch Now — primary filled button */
+.detail-watch-now {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+  color: #fff;
+  border: none;
+  box-shadow: 0 8px 24px var(--accent-glow);
+}
+.detail-watch-now:hover {
+  box-shadow: 0 12px 32px var(--accent-glow);
+  filter: brightness(1.08);
+}
+
+/* Watch Trailer — secondary outlined button */
+.detail-trailer {
+  background: rgba(255,255,255,.04);
+  color: rgba(255,255,255,.8);
+  border: 1px solid rgba(255,255,255,.12);
+}
+.detail-trailer:hover {
+  background: rgba(255,255,255,.08);
+  border-color: rgba(255,255,255,.2);
+  color: #fff;
+}
 .detail-content {
   display: flex;
   flex-direction: column;
@@ -1786,7 +1904,6 @@ button { border: 0; color: inherit; cursor: pointer; }
   .detail-layout.has-trailer .detail-media { grid-template-columns: 1fr; }
   .detail-poster { border-radius: 16px; }
   .detail-poster.is-expanded { aspect-ratio: 16/9; border-radius: 14px; }
-  .detail-trailer { align-self: end; }
   .detail-content h1 { margin-top: 10px; font-size: 38px; }
   .detail-description { margin: 18px 0; font-size: 14px; }
   .detail-facts { gap: 6px; }
@@ -3701,35 +3818,14 @@ button { border: 0; color: inherit; cursor: pointer; }
     display: none !important;
   }
 
-  /* Watch page — emulate the home page's vertical "normal" rail view (like Up next / Your TMDB).
-     Hide the local 2/3 density toggle + pagination, and turn the .wb-grid into a horizontal
-     scroll row so all Start Watching titles flow horizontally on desktop. */
-  .wb-density-toggle {
-    display: none !important;
-  }
-  .watch-browse .pagination,
-  .watch-browse nav.pagination {
-    display: none !important;
-  }
+  /* Watch page — proper grid layout on desktop (like home screen MovieRail).
+     Density toggle + pagination remain visible. Grid columns controlled by .wb-grid-2 / .wb-grid-3 classes. */
   .wb-grid {
-    grid-template-columns: none !important;
-    display: flex !important;
-    flex-wrap: nowrap !important;
-    overflow-x: auto !important;
-    overflow-y: visible !important;
-    gap: 14px !important;
-    padding-bottom: 6px;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-    scroll-snap-type: x proximity;
+    gap: 16px;
   }
-  .wb-grid::-webkit-scrollbar { display: none; }
   .wb-grid > .wb-card {
-    flex: 0 0 200px;
-    width: 200px;
-    max-width: 200px;
-    min-width: 0;
-    scroll-snap-align: start;
+    width: auto;
+    max-width: none;
   }
 
   .web-rail .web-grid:not(.rail-scroll),
@@ -4581,6 +4677,7 @@ button { border: 0; color: inherit; cursor: pointer; }
 /* ── WatchBrowse density toggle + fixed grid cols ─────────────────── */
 .wb-grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
 .wb-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+.wb-grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
 .wb-density-toggle {
   display: inline-flex; gap: 4px;
   background: rgba(255,255,255,0.04);
@@ -4607,8 +4704,9 @@ button { border: 0; color: inherit; cursor: pointer; }
 }
 @media (max-width: 520px) {
   .wb-density-toggle button { min-width: 26px; padding: 0 7px; font-size: 10px; }
-  /* On phones the 3-col layout cramps the cards; fall back to 2 cols */
-  .wb-grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  /* On phones the 3+ col layout cramps the cards; fall back to 2 cols */
+  .wb-grid-3,
+  .wb-grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
 }
 
 /* ── Ad Blocker Toast — compact side toast (not AI slop) ──────────────────── */
