@@ -527,9 +527,31 @@ export default function App() {
   }, [activeItems, posterMap]);
 
   // Fetch OMDb ratings (IMDb, Rotten Tomatoes, Metacritic) for ALL items
+  // Items visible on screen are prioritised so the ratings users see populate first.
   const omdbFetchedRef = useRef(new Set());
   useEffect(() => {
-    const needRatings = activeItems.filter(item => {
+    // Build a priority-ordered list: items likely on screen come first so they get
+    // their ratings before off-screen items further down the timeline.
+    const seen = new Set();
+    const ordered = [];
+    const gather = (items) => {
+      for (const item of items) {
+        if (!seen.has(item.id)) { seen.add(item.id); ordered.push(item); }
+      }
+    };
+
+    if (section === 'home') {
+      gather(heroItems);                                                        // Hero carousel
+      gather(activeItems.filter(i => i.userStatus === 'unwatched').slice(0, 10)); // Up next rail
+      gather(activeItems.filter(i => i.userStatus === 'watching'));              // Continue watching
+      gather(activeItems.filter(i => i.essential));                              // Essential picks
+      gather(activeItems.filter(i => i.userStatus === 'watched').slice(-24).reverse()); // Recently watched
+      gather(activeItems);                                                      // Everything else
+    } else {
+      gather(activeItems);
+    }
+
+    const needRatings = ordered.filter(item => {
       const ck = metadataCacheKey(item) || `omdb:${item.id}`;
       if (omdbFetchedRef.current.has(ck)) return false;
       const cached = getFromCache(ck);
@@ -564,7 +586,7 @@ export default function App() {
     };
     fetchOmdbBatch(0);
     return () => { cancelled = true; };
-  }, [activeItems]);
+  }, [activeItems, section, heroItems]);
 
   // Slicing 6 items is cheap; do NOT memoize-by-id-only — items keep mutating as posters,
   // ratings, and user state load async, and an id-keyed freeze would lock the carousel to
