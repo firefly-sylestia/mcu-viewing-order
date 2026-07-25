@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, Bookmark, RotateCcw, Clock, Check, X, Pencil, Trophy, LogIn, LogOut, Cloud, RefreshCw, Sun, Moon, Settings, Upload, Download } from 'lucide-react';
+import { Play, Bookmark, RotateCcw, Clock, Check, X, Pencil, Trophy, LogIn, LogOut, Cloud, RefreshCw, Sun, Moon, Settings, Upload, Download, Clapperboard } from 'lucide-react';
 
 function useAppTheme() {
   const [theme, setThemeState] = useState(() => {
@@ -480,7 +480,7 @@ function MovieCard({ item, setSelected, cycleStatus, setStatus, toggleBookmark, 
           className="trailer-chip"
           aria-label={`Play ${item.title} trailer`}
         >
-          <Play size={16} fill="currentColor" />
+          <Clapperboard size={16} />
           <span>Trailer</span>
         </button>
         <StatusSelect item={item} setStatus={setStatus} compact />
