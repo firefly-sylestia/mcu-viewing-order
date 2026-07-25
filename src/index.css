@@ -4677,6 +4677,7 @@ button { border: 0; color: inherit; cursor: pointer; }
 /* ── WatchBrowse density toggle + fixed grid cols ─────────────────── */
 .wb-grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
 .wb-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+.wb-grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
 .wb-density-toggle {
   display: inline-flex; gap: 4px;
   background: rgba(255,255,255,0.04);
@@ -4703,8 +4704,9 @@ button { border: 0; color: inherit; cursor: pointer; }
 }
 @media (max-width: 520px) {
   .wb-density-toggle button { min-width: 26px; padding: 0 7px; font-size: 10px; }
-  /* On phones the 3-col layout cramps the cards; fall back to 2 cols */
-  .wb-grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  /* On phones the 3+ col layout cramps the cards; fall back to 2 cols */
+  .wb-grid-3,
+  .wb-grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
 }
 
 /* ── Ad Blocker Toast — compact side toast (not AI slop) ──────────────────── */
