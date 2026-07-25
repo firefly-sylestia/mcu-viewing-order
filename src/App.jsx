@@ -526,6 +526,11 @@ export default function App() {
     return () => { cancelled = true; };
   }, [activeItems, posterMap]);
 
+  // Slicing 6 items is cheap; do NOT memoize-by-id-only — items keep mutating as posters,
+  // ratings, and user state load async, and an id-keyed freeze would lock the carousel to
+  // the first-pass objects (poster-less) forever.
+  const heroItems = useMemo(() => activeItems.slice(0, 6), [activeItems]);
+
   // Fetch OMDb ratings (IMDb, Rotten Tomatoes, Metacritic) for ALL items
   // Items visible on screen are prioritised so the ratings users see populate first.
   const omdbFetchedRef = useRef(new Set());
@@ -587,11 +592,6 @@ export default function App() {
     fetchOmdbBatch(0);
     return () => { cancelled = true; };
   }, [activeItems, section, heroItems]);
-
-  // Slicing 6 items is cheap; do NOT memoize-by-id-only — items keep mutating as posters,
-  // ratings, and user state load async, and an id-keyed freeze would lock the carousel to
-  // the first-pass objects (poster-less) forever.
-  const heroItems = useMemo(() => activeItems.slice(0, 6), [activeItems]);
   const featured = heroItems[heroIndex % Math.max(heroItems.length, 1)] || activeItems[0];
   const genres = ['All', 'Action', 'Adventure', 'Drama', 'Sci-fi', 'Essential', 'Series'];
   const externalTrackedItems = useMemo(() => Object.entries(actions)
