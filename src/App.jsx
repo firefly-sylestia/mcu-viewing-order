@@ -1040,12 +1040,11 @@ function StatusSelect({ item, setStatus, compact = false }) {
       <span className="status-label">{triggerLabel}</span>
     </button>
     {open && <div className="status-dropdown" role="listbox" aria-label={`Set status for ${item.title}`}>
-      <p className="status-menu-title">Viewing status</p>
       {STATUS.map(status => {
         const Icon = STATUS_META[status].icon;
         return <button key={status} className={`status-option ${status} ${item.userStatus === status ? 'active' : ''}`} role="option" aria-selected={item.userStatus === status} onClick={() => { setStatus(item, status); setOpen(false); }}>
-          <span className="status-option-icon"><Icon size={15} /></span>
-          <span className="status-option-copy"><strong>{STATUS_LABELS[status]}</strong><small>{STATUS_META[status].detail}</small></span>
+          <Icon size={15} className="status-option-icon" />
+          <span className="status-option-label">{STATUS_LABELS[status]}</span>
           {item.userStatus === status && <Check size={14} className="status-option-check" />}
         </button>;
       })}
@@ -2022,9 +2021,6 @@ const saveServerPref = (tmdbId, server) => {
           <Cloud size={15} aria-hidden="true" />
           <span>Server</span>
           <ServerDropdown server={selectedServer} onSelect={setSelectedServer} />
-          <button className="watch-server-switch" onClick={() => setSelectedServer(selectedServer === 'videasy' ? 'moviepire' : 'videasy')} title={`Switch to ${selectedServer === 'videasy' ? 'MoviePire' : 'Videasy'}`}>
-            Try {selectedServer === 'videasy' ? 'MoviePire' : 'Videasy'} <RotateCcw size={12} />
-          </button>
         </div>
       </header>
       {toast && (
@@ -2316,10 +2312,10 @@ function AdBlockerDialog({ onDismiss }) {
     return () => clearTimeout(t);
   }, []);
 
-  // Auto-dismiss after 1s once visible
+  // Auto-dismiss after 5s once visible
   useEffect(() => {
     if (!visible) return;
-    const t = setTimeout(handleDismiss, 1000);
+    const t = setTimeout(handleDismiss, 5000);
     return () => clearTimeout(t);
   }, [visible]);
 

@@ -1181,14 +1181,12 @@ button { border: 0; color: inherit; cursor: pointer; }
   left: 0;
   min-width: 200px;
   width: max-content;
-  background: rgba(20,21,24,.97);
-  border: 1px solid rgba(255,255,255,.13);
+  background: #1a1b1f;
+  border: 1px solid rgba(255,255,255,.12);
   border-radius: 14px;
   padding: 6px;
-  box-shadow: 0 20px 54px rgba(0,0,0,.68), 0 0 0 1px rgba(255,255,255,.04);
-  animation: dropdownIn .18s cubic-bezier(.2,.8,.2,1) both;
-  backdrop-filter: blur(22px) saturate(125%);
-  -webkit-backdrop-filter: blur(22px) saturate(125%);
+  box-shadow: 0 20px 54px rgba(0,0,0,.68);
+  animation: dropdownIn .14s cubic-bezier(.2,.8,.2,1) both;
 }
 /* Card contexts override to open upward */
 .movie-card .status-dropdown,
@@ -1202,56 +1200,53 @@ button { border: 0; color: inherit; cursor: pointer; }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* Dropdown menu title */
-.status-menu-title { margin: 2px 7px 7px; color: #838790; font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
-
-/* Dropdown options with icons */
+/* Dropdown options — button design system style */
 .status-option {
   width: 100%; display: flex; align-items: center; gap: 10px;
-  padding: 9px 12px; border-radius: 10px;
-  background: transparent; border: 0;
-  color: #aaa;
-  font-weight: 600; font-size: 13px;
+  padding: 8px 10px; border-radius: 10px;
+  background: transparent; border: 1px solid transparent;
+  color: #b0b0b8;
+  font-weight: 700; font-size: 13px;
   cursor: pointer;
-  transition: background .12s ease, color .12s ease;
+  transition: background .12s ease, color .12s ease, border-color .12s ease;
   text-align: left;
 }
-.status-option:hover { background: rgba(255,255,255,.07); color: #fff; }
-.status-option.active { color: #fff; background: rgba(255,255,255,.06); }
+.status-option:hover { background: rgba(255,255,255,.08); color: #fff; border-color: rgba(255,255,255,.1); }
+.status-option.active {
+  color: #fff;
+  background: rgba(255,255,255,.06);
+  border-color: rgba(255,255,255,.15);
+}
 
-/* Option icon */
+/* Option icon — simple inline, no circle bg */
 .status-option-icon {
   flex-shrink: 0;
-  width: 28px; height: 28px;
-  display: grid; place-items: center;
-  border-radius: 8px;
-  background: rgba(255,255,255,.05);
-  color: rgba(255,255,255,.4);
-  transition: background .12s ease, color .12s ease;
+  opacity: .6;
+  transition: opacity .12s ease;
 }
 .status-option:hover .status-option-icon,
 .status-option.active .status-option-icon {
-  background: rgba(255,255,255,.1);
-  color: rgba(255,255,255,.7);
+  opacity: .9;
 }
-.status-option.watched .status-option-icon { color: #86efac; background: rgba(34,197,94,.12); }
-.status-option.watching .status-option-icon { color: #fde68a; background: rgba(234,179,8,.12); }
-.status-option.dropped .status-option-icon { color: #fca5a5; background: rgba(239,68,68,.12); }
+.status-option.watched .status-option-icon { color: #86efac; }
+.status-option.watching .status-option-icon { color: #fde68a; }
+.status-option.dropped .status-option-icon { color: #fca5a5; }
 
-/* Option text */
-.status-option-copy { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-.status-option-copy strong { font-size: 13px; font-weight: 700; color: inherit; }
-.status-option-copy small { font-size: 11px; font-weight: 500; color: rgba(255,255,255,.35); }
-.status-option:hover .status-option-copy small,
-.status-option.active .status-option-copy small { color: rgba(255,255,255,.5); }
+/* Option label */
+.status-option-label {
+  flex: 1;
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1.2;
+}
 
 /* Checkmark for active status */
 .status-option-check {
   margin-left: auto;
   flex-shrink: 0;
-  color: rgba(255,255,255,.3);
+  opacity: .5;
 }
-.status-option.active .status-option-check { color: var(--accent, #da1e37); }
+.status-option.active .status-option-check { color: var(--accent, #da1e37); opacity: 1; }
 .list-row { grid-template-columns: 48px 58px minmax(180px,1fr) minmax(160px,auto) 54px 132px 48px; }
 .list-row > button:nth-child(3) { text-align: left; padding: 0 14px; font-weight: 900; }
 .list-row > button:nth-child(3) span { display: block; color: #999; font-size: 12px; font-weight: 500; }
@@ -1359,14 +1354,15 @@ button { border: 0; color: inherit; cursor: pointer; }
 /* Current status menu */
 .status-trigger { border-radius: 14px; background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.1); }
 .status-trigger[aria-expanded="true"] { }
-.status-dropdown { min-width: 218px; width: max-content; padding: 8px; border-radius: 18px; background: rgba(20,21,24,.97); border-color: rgba(255,255,255,.13); box-shadow: 0 20px 54px rgba(0,0,0,.68); backdrop-filter: blur(22px) saturate(125%); }
-.status-menu-title { margin: 2px 7px 7px; color: #838790; font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
-.status-option { min-height: 50px; padding: 7px 12px; border-radius: 12px; text-transform: none; }
-.status-option:hover { background: rgba(255,255,255,.07); }
-.status-option.active { background: color-mix(in srgb, rgba(255,255,255,.08) 16%, #1a1b1f); border-left: 2px solid rgba(255,255,255,.2); }
-.status-option-copy { display: grid; flex: 1; gap: 2px; text-align: left; }
-.status-option-copy strong { color: #f4f4f5; font-size: 13px; line-height: 1.15; }
-.status-option-copy small { color: #858991; font-size: 11px; line-height: 1.15; }
+.status-dropdown { min-width: 218px; width: max-content; padding: 8px; border-radius: 14px; background: #1a1b1f; border-color: rgba(255,255,255,.12); box-shadow: 0 20px 54px rgba(0,0,0,.68); }
+.status-option:hover { background: rgba(255,255,255,.08); }
+.status-option.active { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.15); }
+.status-option-label {
+  flex: 1;
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1.2;
+}
 
 @media (max-width: 560px) {
   .top-carousel { touch-action: pan-y; }
@@ -3309,9 +3305,9 @@ button { border: 0; color: inherit; cursor: pointer; }
 
 .movie-site .status-dropdown {
   z-index: 10050;
-  background: linear-gradient(145deg, color-mix(in srgb, var(--palette-surface-strong) 96%, #000), color-mix(in srgb, var(--palette-bg-raised) 98%, #000));
-  border-color: color-mix(in srgb, var(--palette-primary) 48%, rgba(255,255,255,.12));
-  box-shadow: 0 24px 64px rgba(0,0,0,.78), 0 0 0 1px color-mix(in srgb, var(--palette-primary) 24%, transparent);
+  background: #1a1b1f;
+  border: 1px solid rgba(255,255,255,.12);
+  box-shadow: 0 24px 64px rgba(0,0,0,.78);
 }
 
 .movie-card:has(.status-select.open),
