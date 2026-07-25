@@ -534,12 +534,12 @@ export default function App() {
       if (omdbFetchedRef.current.has(ck)) return false;
       const cached = getFromCache(ck);
       return !cached || (!cached.imdbRating && !cached.tomatoRating && !cached.metaRating);
-    }).slice(0, 40);
+    }).slice(0, 12);
     if (!needRatings.length) return;
     let cancelled = false;
     const fetchOmdbBatch = async (idx) => {
       if (cancelled || idx >= needRatings.length) return;
-      const batch = needRatings.slice(idx, idx + 3);
+      const batch = needRatings.slice(idx, idx + 2);
       await Promise.allSettled(batch.map(async (item) => {
         const ck = metadataCacheKey(item) || `omdb:${item.id}`;
         try {
@@ -559,7 +559,7 @@ export default function App() {
           }
         } catch {}
       }));
-      if (!cancelled) { setOmdbVersion(v => v + 1); setTimeout(() => fetchOmdbBatch(idx + 3), 200); }
+      if (!cancelled) { setOmdbVersion(v => v + 1); setTimeout(() => fetchOmdbBatch(idx + 2), 500); }
     };
     fetchOmdbBatch(0);
     return () => { cancelled = true; };
