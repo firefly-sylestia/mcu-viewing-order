@@ -4505,7 +4505,7 @@ button { border: 0; color: inherit; cursor: pointer; }
   box-shadow: 0 24px 60px rgba(0,0,0,.55);
   text-align: center;
 }
-.adblocker-modal { max-width: 400px; }
+
 .confirm-close {
   position: absolute; top: 12px; right: 12px;
   width: 34px; height: 34px;
@@ -4611,188 +4611,160 @@ button { border: 0; color: inherit; cursor: pointer; }
   .wb-grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
 }
 
-/* ── Ad Blocker Dialog — premium redesign (scoped to .adblocker-*) ───── */
-.adblocker-modal {
-  max-width: 440px;
-  text-align: left;
-  padding: 28px 26px 22px;
-  background:
-    radial-gradient(120% 80% at 50% 0%, rgba(245,158,11,0.10), transparent 60%),
-    linear-gradient(160deg, #14161a 0%, #0e1014 100%);
-  border: 1px solid rgba(245,158,11,0.20);
-  box-shadow:
-    0 24px 60px rgba(0,0,0,0.55),
-    inset 0 1px 0 rgba(255,255,255,0.04);
-  overflow: hidden;
-}
-.adblocker-close {
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.08);
-}
-.adblocker-hero {
-  position: relative;
-  display: flex; flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: 4px 0 6px;
-  margin-bottom: 14px;
-}
-.adblocker-hero-glow {
-  position: absolute;
-  top: -36px; left: 50%; transform: translateX(-50%);
-  width: 260px; height: 260px;
-  background: radial-gradient(circle, rgba(245,158,11,0.20), transparent 65%);
-  filter: blur(20px);
-  pointer-events: none;
-  z-index: 0;
-}
-.adblocker-hero > .confirm-icon-ring,
-.adblocker-hero > .adblocker-eyebrow,
-.adblocker-hero > h2,
-.adblocker-hero > .adblocker-subtitle { position: relative; z-index: 1; }
-.adblocker-icon-ring {
-  width: 64px; height: 64px;
-  margin-bottom: 14px;
-  background: linear-gradient(135deg, rgba(245,158,11,0.24), rgba(245,158,11,0.06));
-  border: 1px solid rgba(245,158,11,0.32);
-  color: #fbbf24;
-  box-shadow: 0 12px 32px rgba(245,158,11,0.22), inset 0 1px 0 rgba(255,255,255,0.08);
-}
-.adblocker-eyebrow {
-  font-size: 10px;
-  font-weight: 900;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: #fbbf24;
-  background: rgba(245,158,11,0.14);
-  border: 1px solid rgba(245,158,11,0.32);
-  border-radius: 999px;
-  padding: 4px 11px;
-  margin-bottom: 10px;
-}
-.adblocker-modal h2 {
-  font-size: 22px;
-  font-weight: 850;
-  letter-spacing: -0.01em;
-  margin: 0 0 6px;
-  color: #fff;
-}
-.adblocker-subtitle {
-  font-size: 13.5px;
-  line-height: 1.55;
-  color: rgba(255,255,255,0.65);
-  max-width: 38ch;
-  margin: 0 auto 2px;
-}
-.adblocker-benefits {
-  list-style: none;
-  margin: 4px 0 14px;
-  padding: 0;
-  display: grid;
-  gap: 8px;
-}
-.adblocker-benefits li {
+/* ── Ad Blocker Toast — compact side toast (not AI slop) ──────────────────── */
+.adblocker-toast {
+  position: fixed;
+  bottom: 88px;
+  right: clamp(16px, 3vw, 32px);
+  z-index: 120;
   display: flex;
   align-items: center;
-  gap: 11px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.06);
+  gap: 10px;
+  padding: 10px 10px 10px 12px;
   border-radius: 12px;
-  padding: 10px 12px;
-  color: rgba(255,255,255,0.85);
-  font-size: 13px;
-  font-weight: 500;
-  transition: background .15s ease, border-color .15s ease;
+  background: var(--surface-2, rgba(22,26,29,0.96));
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  box-shadow:
+    0 12px 32px rgba(0,0,0,0.40),
+    0 2px 8px rgba(0,0,0,0.24),
+    inset 0 1px 0 rgba(255,255,255,0.04);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  max-width: min(380px, calc(100vw - 32px));
+  animation: adblockerToastIn 0.35s var(--ease-out) both;
+  pointer-events: auto;
 }
-.adblocker-benefits li:hover {
-  background: rgba(245,158,11,0.08);
-  border-color: rgba(245,158,11,0.20);
+.adblocker-toast-exit {
+  animation: adblockerToastOut 0.2s var(--ease-in, ease-in) both !important;
 }
-.adblocker-bullet {
+@keyframes adblockerToastIn {
+  from {
+    opacity: 0;
+    transform: translateX(calc(100% + 24px));
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes adblockerToastOut {
+  to {
+    opacity: 0;
+    transform: translateX(calc(100% + 24px));
+  }
+}
+@keyframes adblockerToastInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes adblockerToastOutDown {
+  to {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+.adblocker-toast-icon {
   flex-shrink: 0;
   width: 28px; height: 28px;
   display: grid; place-items: center;
   border-radius: 8px;
-  background: linear-gradient(135deg, rgba(245,158,11,0.20), rgba(245,158,11,0.05));
-  border: 1px solid rgba(245,158,11,0.30);
-  color: #fbbf24;
+  background: color-mix(in srgb, var(--accent, #da1e37) 18%, transparent);
+  color: var(--accent, #da1e37);
 }
-.adblocker-recommend {
+.adblocker-toast-body {
+  flex: 1;
+  min-width: 0;
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-  margin: 0 0 18px;
-  padding: 10px 12px;
-  background: rgba(255,255,255,0.025);
-  border: 1px dashed rgba(255,255,255,0.10);
-  border-radius: 12px;
+  flex-direction: column;
+  gap: 1px;
 }
-.adblocker-recommend-label {
-  font-size: 10px;
+.adblocker-toast-title {
+  font-size: 11px;
   font-weight: 800;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.5);
+  color: var(--accent, #da1e37);
 }
-.adblocker-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
-  border-radius: 999px;
-  background: rgba(245,158,11,0.14);
-  border: 1px solid rgba(245,158,11,0.32);
-  color: #fbbf24;
-  font-size: 12px;
-  font-weight: 700;
-  text-decoration: none;
-  transition: background .15s ease, color .15s ease, transform .12s ease;
+.adblocker-toast-desc {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: rgba(255,255,255,0.7);
+  margin: 0;
 }
-.adblocker-pill:hover {
-  background: rgba(245,158,11,0.24);
-  color: #fff;
-  transform: translateY(-1px);
-}
-.adblocker-pill-meta {
-  font-size: 9.5px;
+.adblocker-toast-desc a {
+  color: rgba(255,255,255,0.85);
   font-weight: 600;
-  color: rgba(255,255,255,0.55);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: rgba(255,255,255,0.2);
+  transition: color .15s ease, text-decoration-color .15s ease;
 }
-.adblocker-cta {
-  width: 100%;
-  background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
-  color: #1a1207;
-  border-color: rgba(255,255,255,0.18);
-  box-shadow: 0 12px 30px rgba(245,158,11,0.28), inset 0 1px 0 rgba(255,255,255,0.20);
-  font-weight: 800;
-  letter-spacing: 0.02em;
+.adblocker-toast-desc a:hover {
+  color: #fff;
+  text-decoration-color: rgba(255,255,255,0.5);
 }
-.adblocker-cta:hover {
-  filter: brightness(1.05);
-  box-shadow: 0 16px 38px rgba(245,158,11,0.40), inset 0 1px 0 rgba(255,255,255,0.20);
+.adblocker-toast-close {
+  flex-shrink: 0;
+  width: 24px; height: 24px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.35);
+  display: grid; place-items: center;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease;
+  padding: 0;
+}
+.adblocker-toast-close:hover {
+  background: rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.85);
 }
 @media (max-width: 520px) {
-  .adblocker-modal { padding: 22px 18px 16px; }
-  .adblocker-modal h2 { font-size: 19px; }
-  .adblocker-benefits li { padding: 9px 11px; font-size: 12.5px; }
-  .adblocker-bullet { width: 26px; height: 26px; }
-  .adblocker-recommend { padding: 9px 10px; }
+  .adblocker-toast {
+    bottom: 80px;
+    right: 12px;
+    left: 12px;
+    max-width: none;
+    padding: 10px 10px 10px 14px;
+    border-radius: 14px;
+    animation-name: adblockerToastInUp;
+  }
+  .adblocker-toast-exit {
+    animation-name: adblockerToastOutDown !important;
+  }
 }
-:root[data-theme="light"] .adblocker-modal {
-  background:
-    radial-gradient(120% 80% at 50% 0%, rgba(245,158,11,0.18), transparent 60%),
-    linear-gradient(160deg, #ffffff 0%, #f5f5f7 100%);
-  border-color: rgba(245,158,11,0.32);
+:root[data-theme="light"] .adblocker-toast {
+  background: rgba(255,255,255,0.96);
+  border-color: rgba(0,0,0,0.08);
+  box-shadow:
+    0 12px 32px rgba(0,0,0,0.10),
+    0 2px 8px rgba(0,0,0,0.06);
 }
-:root[data-theme="light"] .adblocker-eyebrow,
-:root[data-theme="light"] .adblocker-pill { color: #92400e; }
-:root[data-theme="light"] .adblocker-modal h2 { color: #111; }
-:root[data-theme="light"] .adblocker-subtitle { color: #555; }
-:root[data-theme="light"] .adblocker-benefits li { color: #222; background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.08); }
-:root[data-theme="light"] .adblocker-recommend { background: rgba(245,158,11,0.06); border-color: rgba(245,158,11,0.20); }
+:root[data-theme="light"] .adblocker-toast-desc {
+  color: rgba(0,0,0,0.6);
+}
+:root[data-theme="light"] .adblocker-toast-desc a {
+  color: rgba(0,0,0,0.85);
+  text-decoration-color: rgba(0,0,0,0.15);
+}
+:root[data-theme="light"] .adblocker-toast-desc a:hover {
+  color: #000;
+  text-decoration-color: rgba(0,0,0,0.4);
+}
+:root[data-theme="light"] .adblocker-toast-close {
+  background: rgba(0,0,0,0.06);
+  color: rgba(0,0,0,0.35);
+}
+:root[data-theme="light"] .adblocker-toast-close:hover {
+  background: rgba(0,0,0,0.12);
+  color: rgba(0,0,0,0.85);
+}
 
 /* ── Server quick-switch button ─────────────────────────────────────────────── */
 .watch-server-switch {

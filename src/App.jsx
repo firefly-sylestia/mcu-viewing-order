@@ -2302,48 +2302,37 @@ function WatchConfirmDialog({ item, onConfirm, onDismiss }) {
 }
 
 function AdBlockerDialog({ onDismiss }) {
+  const [visible, setVisible] = useState(false);
+  const [exiting, setExiting] = useState(false);
+
+  useEffect(() => {
+    // Stagger entrance so it slides in after the page loads
+    const t = setTimeout(() => setVisible(true), 600);
+    return () => clearTimeout(t);
+  }, []);
+
+  const handleDismiss = () => {
+    setExiting(true);
+    setTimeout(onDismiss, 200);
+  };
+
+  if (!visible && !exiting) return null;
+
   return (
-    <div className="confirm-overlay" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) onDismiss(); }}>
-      <div className="confirm-modal adblocker-modal" role="dialog" aria-modal="true" aria-labelledby="adblocker-title">
-        <button className="confirm-close adblocker-close" onClick={onDismiss} aria-label="Close">
-          <X size={18} />
-        </button>
-        <div className="adblocker-hero">
-          <div className="adblocker-hero-glow" aria-hidden="true" />
-          <div className="confirm-icon-ring adblocker-icon-ring">
-            <ShieldAlert size={30} />
-          </div>
-          <span className="adblocker-eyebrow">Quick tip</span>
-          <h2 id="adblocker-title">Use an Ad&nbsp;Blocker</h2>
-          <p className="adblocker-subtitle">Player sites can show popups, redirects &amp; pre-roll ads. A free ad blocker keeps your marathon uninterrupted.</p>
-        </div>
-        <ul className="adblocker-benefits">
-          <li>
-            <span className="adblocker-bullet" aria-hidden="true"><Play size={14} fill="currentColor" /></span>
-            Skips popups, redirects &amp; pre-roll ads
-          </li>
-          <li>
-            <span className="adblocker-bullet" aria-hidden="true"><ShieldAlert size={14} /></span>
-            Stops trackers &amp; malicious redirects
-          </li>
-          <li>
-            <span className="adblocker-bullet" aria-hidden="true"><Sparkles size={14} /></span>
-            Faster page loads &amp; lower data use
-          </li>
-        </ul>
-        <div className="adblocker-recommend">
-          <span className="adblocker-recommend-label">Recommended:</span>
-          <a href="https://github.com/gorhill/uBlock" target="_blank" rel="noopener noreferrer" className="adblocker-pill">
-            uBlock Origin <span className="adblocker-pill-meta">Free · Open Source</span>
-          </a>
-          <a href="https://adguard.com/adguard-browser-extension/overview.html" target="_blank" rel="noopener noreferrer" className="adblocker-pill">
-            AdGuard <span className="adblocker-pill-meta">Free tier</span>
-          </a>
-        </div>
-        <div className="confirm-actions">
-          <button onClick={onDismiss} className="confirm-btn confirm-btn-primary adblocker-cta">Got it — let’s watch</button>
-        </div>
+    <div className={`adblocker-toast${exiting ? ' adblocker-toast-exit' : ''}`} role="status" aria-live="polite">
+      <div className="adblocker-toast-icon">
+        <ShieldAlert size={16} />
       </div>
+      <div className="adblocker-toast-body">
+        <span className="adblocker-toast-title">Pro tip</span>
+        <p className="adblocker-toast-desc">
+          Use an ad blocker for cleaner streams.{' '}
+          <a href="https://github.com/gorhill/uBlock" target="_blank" rel="noopener noreferrer">uBlock Origin</a>
+        </p>
+      </div>
+      <button className="adblocker-toast-close" onClick={handleDismiss} aria-label="Dismiss">
+        <X size={14} />
+      </button>
     </div>
   );
 }
