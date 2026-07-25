@@ -1090,9 +1090,9 @@ button { border: 0; color: inherit; cursor: pointer; }
   .list-title-line .list-rating-tomato,
   .list-title-line .list-rating-meta { font-size: 10px; padding: 2px 6px; }
   /* Mobile: show grid card ratings (hidden on desktop — poster overlay already shows them) */
-  .movie-card .card-body .card-ratings-line { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+  .movie-card .card-body .card-ratings-line { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 2px; }
   .movie-card .card-body .card-ratings-line span {
-    font-size: 10px; padding: 2px 6px; border-radius: 5px;
+    font-size: 9px; padding: 1px 5px; border-radius: 4px;
     display: inline-flex; align-items: center; gap: 2px;
   } }
 @media (max-width: 520px) { .movie-site .phone-shell, .movie-site .detail-screen, .movie-site .filter-screen { border-radius: 28px; box-shadow: 0 0 0 9999px rgba(0,0,0,.66), 0 34px 90px rgba(0,0,0,.75); } .top-carousel { padding: 14px; min-height: 330px; }.stack-poster { width: 76%; height: 220px; }.poster-stack { height: 220px; } .web-grid, .movie-grid { grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; }.poster-button { border-radius: 12px; }.small-card > img, .small-card .fallback-poster { aspect-ratio: 2/3; height: auto; border-radius: 12px; }.movie-card { padding: 5px; border-radius: 14px; }.card-body { padding: 5px 2px; }.card-actions button { min-height: 28px; font-size: 10px; border-radius: 9px; }.site-header { position: relative; }.web-detail, .web-filter { inset: 8px; width: calc(100% - 16px); height: calc(100svh - 16px); } }
@@ -5015,8 +5015,8 @@ button { border: 0; color: inherit; cursor: pointer; }
 .watch-native-embed-link:hover { color: rgba(255,255,255,.6); }
 
 /* Grid card ratings row — chip styling (visible on desktop + mobile) */
-.movie-card .card-body .card-ratings-line { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; align-items: center; }
-.movie-card .card-body .card-ratings-line > span { font-size: 10px; font-weight: 700; border-radius: 5px; padding: 2px 6px; display: inline-flex; align-items: center; gap: 2px; background: rgba(51,65,85,.18); color: #94a3b8; line-height: 1.4; }
+.movie-card .card-body .card-ratings-line { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 2px; align-items: center; min-height: 16px; }
+.movie-card .card-body .card-ratings-line > span { font-size: 9px; font-weight: 700; border-radius: 4px; padding: 1px 5px; display: inline-flex; align-items: center; gap: 2px; background: rgba(51,65,85,.18); color: #94a3b8; line-height: 1.2; }
 .movie-card .card-body .card-ratings-line .list-rating { color: #f2c94c; background: rgba(242,201,76,.12); }
 .movie-card .card-body .card-ratings-line .list-rating-imdb { color: #f5c518; background: rgba(245,197,24,.12); }
 .movie-card .card-body .card-ratings-line .list-rating-tomato { color: #e74c3c; background: rgba(231,76,60,.12); }
