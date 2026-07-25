@@ -1029,7 +1029,6 @@ const STATUS_META = {
 function StatusSelect({ item, setStatus, compact = false }) {
   const [open, setOpen] = React.useState(false);
   const ref = useRef(null);
-  const triggerLabel = compact && item.userStatus === 'unwatched' ? 'Unseen' : STATUS_LABELS[item.userStatus];
   React.useEffect(() => {
     const handleClick = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
     document.addEventListener('mousedown', handleClick);
@@ -1037,13 +1036,19 @@ function StatusSelect({ item, setStatus, compact = false }) {
   }, []);
   return <div className={`status-select ${item.userStatus} ${compact ? 'compact' : ''} ${open ? 'open' : ''}`} ref={ref}>
     <button className="status-trigger" onClick={() => setOpen(!open)} aria-haspopup="listbox" aria-expanded={open}>
-      <span className="status-label">{triggerLabel}</span>
+      <span className="status-dot" aria-hidden="true" />
+      <span className="status-label">{STATUS_LABELS[item.userStatus]}</span>
+      <ChevronDown size={14} className="status-chevron" />
     </button>
     {open && <div className="status-dropdown" role="listbox" aria-label={`Set status for ${item.title}`}>
-      <p className="status-menu-title">Viewing status</p>
-      {STATUS.map(status => <button key={status} className={`status-option ${status} ${item.userStatus === status ? 'active' : ''}`} role="option" aria-selected={item.userStatus === status} onClick={() => { setStatus(item, status); setOpen(false); }}>
-        <span className="status-option-copy"><strong>{STATUS_LABELS[status]}</strong><small>{STATUS_META[status].detail}</small></span>
-      </button>)}
+      {STATUS.map(status => {
+        const Icon = STATUS_META[status].icon;
+        return <button key={status} className={`status-option ${status} ${item.userStatus === status ? 'active' : ''}`} role="option" aria-selected={item.userStatus === status} onClick={() => { setStatus(item, status); setOpen(false); }}>
+          <span className="status-option-icon"><Icon size={15} /></span>
+          <span className="status-option-copy"><strong>{STATUS_LABELS[status]}</strong><small>{STATUS_META[status].detail}</small></span>
+          {item.userStatus === status && <Check size={14} className="status-option-check" />}
+        </button>;
+      })}
     </div>}
   </div>;
 }
