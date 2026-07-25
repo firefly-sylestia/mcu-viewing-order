@@ -1,7 +1,7 @@
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
   
-  const token = process.env.TMDB_READ_ACCESS_TOKEN;
+  const token = process.env.TMDB_READ_ACCESS_TOKEN || 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI2NWVkYTQ4Y2Y1ODAzZjIyMzA0ZmQyMWY0ZjA2YTM1ZSIsIm5iZiI6MTc3ODY4NTg2My42ODcsInN1YiI6IjZhMDQ5N2E3N2IyZDk3NzQ2MDM3N2E1OSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.XTD8e-B7awrTVIJd5WtD3vZ5FnWjE8sWkSjgYIeauAA';
   if (!token) return res.status(503).json({ error: 'TMDB is not configured' });
 
   const title = (req.query.title || '').toString().trim();
@@ -98,6 +98,22 @@ export default async function handler(req, res) {
       runtime = best.episode_run_time[0];
     }
 
+    // Fetch IMDb ID — movies include it in detail, TV shows need a separate external_ids call
+    let imdbId = null;
+    if (mediaType === 'movie') {
+      imdbId = best.imdb_id || null;
+    } else if (mediaType === 'tv') {
+      try {
+        const extRes = await fetch(`https://api.themoviedb.org/3/tv/${best.id}/external_ids`, {
+          headers: { Authorization: `Bearer ${token}`, accept: 'application/json' },
+        });
+        if (extRes.ok) {
+          const extData = await extRes.json();
+          imdbId = extData.imdb_id || null;
+        }
+      } catch {}
+    }
+
     return res.status(200).json({
       success: true,
       poster,
@@ -110,6 +126,7 @@ export default async function handler(req, res) {
       releaseDate: best.release_date || best.first_air_date || null,
       mediaType: mediaType,
       tmdbId: best.id,
+      imdbId,
       runtime,
       genres: best.genres || [],
       originalLanguage: best.original_language || null,

@@ -1071,13 +1071,14 @@ button { border: 0; color: inherit; cursor: pointer; }
 .list-title-line .list-rating-meta { color: #f59e0b; background: rgba(245,158,11,.12); }
 /* Own row for ratings inside list-view rows */
 .list-ratings-line { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; align-items: center; min-width: 0; }
-.list-ratings-line > span { flex-shrink: 0; font-size: 11px; font-weight: 700; background: rgba(51,65,85,.18); color: #94a3b8; border-radius: 6px; padding: 2px 7px; line-height: 1.4; }
+.list-ratings-line > span { flex-shrink: 0; font-size: 9px; font-weight: 700; background: rgba(51,65,85,.18); color: #94a3b8; border-radius: 5px; padding: 1px 6px; line-height: 1.2; }
 .list-ratings-line .list-rating { color: #f2c94c; background: rgba(242,201,76,.12); display: inline-flex; align-items: center; gap: 3px; }
 .list-ratings-line .list-rating-imdb { color: #f5c518; background: rgba(245,197,24,.12); }
 .list-ratings-line .list-rating-tomato { color: #e74c3c; background: rgba(231,76,60,.12); }
 .list-ratings-line .list-rating-tomato.certified-fresh { color: #4ade80; background: rgba(74,222,128,.12); }
 .list-ratings-line .list-rating-tomato.rotten { color: #22c55e; background: rgba(34,197,94,.10); }
 .list-ratings-line .list-rating-meta { color: #f59e0b; background: rgba(245,158,11,.12); }
+.list-ratings-line .list-rating-na { color: #6b7280; background: rgba(107,114,128,.12); font-style: italic; }
 .list-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }.list-tags span { font-size: 11px; color: #888; background: #1a1a1a; border-radius: 6px; padding: 2px 8px; }.list-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }.list-trailer { display: flex; align-items: center; gap: 6px; height: 38px; padding: 0 14px; border-radius: 12px; background: linear-gradient(135deg, #0f0f1e 0%, #18182c 50%, #0f0f1e 100%); border: 1px solid rgba(140,140,200,.1); color: #b0b0c8; font-size: 13px; font-weight: 700; white-space: nowrap; }.list-bookmark { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 12px; background: #1b1b1b; }.list-bookmark.saved { background: linear-gradient(135deg, #1a1a1e 0%, #2a2a30 50%, #1a1a1e 100%); border: 1px solid rgba(255,255,255,.08); color: #e0e0e0; }.list-row .chips { margin: 0; }
 .web-detail, .web-filter { position: fixed; inset: 18px; transform: none; margin: auto; max-width: 520px; width: calc(100% - 32px); height: min(900px, calc(100svh - 36px)); border-radius: 34px; box-shadow: 0 0 0 9999px rgba(0,0,0,.66), 0 34px 90px rgba(0,0,0,.8); z-index: 40; }.empty-state { color: #aaa; font-size: 18px; padding: 24px; text-align: center; }
 @media (max-width: 860px) { .movie-site { padding: 12px 12px 88px; } .site-header { grid-template-columns: auto 1fr auto; gap: 8px; }.site-header .header-search { order: 4; grid-column: 1 / -1; }.site-header .header-auth-btn { order: 3; justify-self: end; }.universe-tabs { justify-content: stretch; }.universe-tabs button { flex: 1; }.hero-layout { grid-template-columns: 1fr; }.hero-copy h1 { font-size: 32px; }.top-carousel { min-height: 360px; }.web-grid, .movie-grid { grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; }.small-card > img, .small-card .fallback-poster { aspect-ratio: 2/3; height: auto; }.movie-card { padding: 7px; border-radius: 18px; }.card-body { padding: 8px 2px; }.title-button { font-size: 12px; }.card-body span { font-size: 11px; }.card-actions { gap: 5px; }.card-actions button { min-height: 34px; font-size: 11px; border-radius: 11px; }.analytics-panel { grid-template-columns: 1fr; }.stat-grid { grid-template-columns: repeat(2, 1fr); }.list-row { grid-template-columns: 34px 48px 1fr auto; }.list-row .list-tags, .list-row .list-copy p, .list-row .list-actions .status-select { display: none; } .bottom-nav { bottom: 10px; border-radius: 14px; padding: 4px; gap: 2px; }.bottom-nav button { padding: 7px 14px; min-width: 52px; font-size: 11px; } 
@@ -1090,9 +1091,9 @@ button { border: 0; color: inherit; cursor: pointer; }
   .list-title-line .list-rating-tomato,
   .list-title-line .list-rating-meta { font-size: 10px; padding: 2px 6px; }
   /* Mobile: show grid card ratings (hidden on desktop — poster overlay already shows them) */
-  .movie-card .card-body .card-ratings-line { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+  .movie-card .card-body .card-ratings-line { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 2px; }
   .movie-card .card-body .card-ratings-line span {
-    font-size: 10px; padding: 2px 6px; border-radius: 5px;
+    font-size: 9px; padding: 1px 5px; border-radius: 4px;
     display: inline-flex; align-items: center; gap: 2px;
   } }
 @media (max-width: 520px) { .movie-site .phone-shell, .movie-site .detail-screen, .movie-site .filter-screen { border-radius: 28px; box-shadow: 0 0 0 9999px rgba(0,0,0,.66), 0 34px 90px rgba(0,0,0,.75); } .top-carousel { padding: 14px; min-height: 330px; }.stack-poster { width: 76%; height: 220px; }.poster-stack { height: 220px; } .web-grid, .movie-grid { grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; }.poster-button { border-radius: 12px; }.small-card > img, .small-card .fallback-poster { aspect-ratio: 2/3; height: auto; border-radius: 12px; }.movie-card { padding: 5px; border-radius: 14px; }.card-body { padding: 5px 2px; }.card-actions button { min-height: 28px; font-size: 10px; border-radius: 9px; }.site-header { position: relative; }.web-detail, .web-filter { inset: 8px; width: calc(100% - 16px); height: calc(100svh - 16px); } }
@@ -1181,14 +1182,12 @@ button { border: 0; color: inherit; cursor: pointer; }
   left: 0;
   min-width: 200px;
   width: max-content;
-  background: rgba(20,21,24,.97);
-  border: 1px solid rgba(255,255,255,.13);
+  background: #1a1b1f;
+  border: 1px solid rgba(255,255,255,.12);
   border-radius: 14px;
   padding: 6px;
-  box-shadow: 0 20px 54px rgba(0,0,0,.68), 0 0 0 1px rgba(255,255,255,.04);
-  animation: dropdownIn .18s cubic-bezier(.2,.8,.2,1) both;
-  backdrop-filter: blur(22px) saturate(125%);
-  -webkit-backdrop-filter: blur(22px) saturate(125%);
+  box-shadow: 0 20px 54px rgba(0,0,0,.68);
+  animation: dropdownIn .14s cubic-bezier(.2,.8,.2,1) both;
 }
 /* Card contexts override to open upward */
 .movie-card .status-dropdown,
@@ -1202,56 +1201,53 @@ button { border: 0; color: inherit; cursor: pointer; }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* Dropdown menu title */
-.status-menu-title { margin: 2px 7px 7px; color: #838790; font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
-
-/* Dropdown options with icons */
+/* Dropdown options — button design system style */
 .status-option {
   width: 100%; display: flex; align-items: center; gap: 10px;
-  padding: 9px 12px; border-radius: 10px;
-  background: transparent; border: 0;
-  color: #aaa;
-  font-weight: 600; font-size: 13px;
+  padding: 8px 10px; border-radius: 10px;
+  background: transparent; border: 1px solid transparent;
+  color: #b0b0b8;
+  font-weight: 700; font-size: 13px;
   cursor: pointer;
-  transition: background .12s ease, color .12s ease;
+  transition: background .12s ease, color .12s ease, border-color .12s ease;
   text-align: left;
 }
-.status-option:hover { background: rgba(255,255,255,.07); color: #fff; }
-.status-option.active { color: #fff; background: rgba(255,255,255,.06); }
+.status-option:hover { background: rgba(255,255,255,.08); color: #fff; border-color: rgba(255,255,255,.1); }
+.status-option.active {
+  color: #fff;
+  background: rgba(255,255,255,.06);
+  border-color: rgba(255,255,255,.15);
+}
 
-/* Option icon */
+/* Option icon — simple inline, no circle bg */
 .status-option-icon {
   flex-shrink: 0;
-  width: 28px; height: 28px;
-  display: grid; place-items: center;
-  border-radius: 8px;
-  background: rgba(255,255,255,.05);
-  color: rgba(255,255,255,.4);
-  transition: background .12s ease, color .12s ease;
+  opacity: .6;
+  transition: opacity .12s ease;
 }
 .status-option:hover .status-option-icon,
 .status-option.active .status-option-icon {
-  background: rgba(255,255,255,.1);
-  color: rgba(255,255,255,.7);
+  opacity: .9;
 }
-.status-option.watched .status-option-icon { color: #86efac; background: rgba(34,197,94,.12); }
-.status-option.watching .status-option-icon { color: #fde68a; background: rgba(234,179,8,.12); }
-.status-option.dropped .status-option-icon { color: #fca5a5; background: rgba(239,68,68,.12); }
+.status-option.watched .status-option-icon { color: #86efac; }
+.status-option.watching .status-option-icon { color: #fde68a; }
+.status-option.dropped .status-option-icon { color: #fca5a5; }
 
-/* Option text */
-.status-option-copy { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-.status-option-copy strong { font-size: 13px; font-weight: 700; color: inherit; }
-.status-option-copy small { font-size: 11px; font-weight: 500; color: rgba(255,255,255,.35); }
-.status-option:hover .status-option-copy small,
-.status-option.active .status-option-copy small { color: rgba(255,255,255,.5); }
+/* Option label */
+.status-option-label {
+  flex: 1;
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1.2;
+}
 
 /* Checkmark for active status */
 .status-option-check {
   margin-left: auto;
   flex-shrink: 0;
-  color: rgba(255,255,255,.3);
+  opacity: .5;
 }
-.status-option.active .status-option-check { color: var(--accent, #da1e37); }
+.status-option.active .status-option-check { color: var(--accent, #da1e37); opacity: 1; }
 .list-row { grid-template-columns: 48px 58px minmax(180px,1fr) minmax(160px,auto) 54px 132px 48px; }
 .list-row > button:nth-child(3) { text-align: left; padding: 0 14px; font-weight: 900; }
 .list-row > button:nth-child(3) span { display: block; color: #999; font-size: 12px; font-weight: 500; }
@@ -1359,14 +1355,15 @@ button { border: 0; color: inherit; cursor: pointer; }
 /* Current status menu */
 .status-trigger { border-radius: 14px; background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.1); }
 .status-trigger[aria-expanded="true"] { }
-.status-dropdown { min-width: 218px; width: max-content; padding: 8px; border-radius: 18px; background: rgba(20,21,24,.97); border-color: rgba(255,255,255,.13); box-shadow: 0 20px 54px rgba(0,0,0,.68); backdrop-filter: blur(22px) saturate(125%); }
-.status-menu-title { margin: 2px 7px 7px; color: #838790; font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
-.status-option { min-height: 50px; padding: 7px 12px; border-radius: 12px; text-transform: none; }
-.status-option:hover { background: rgba(255,255,255,.07); }
-.status-option.active { background: color-mix(in srgb, rgba(255,255,255,.08) 16%, #1a1b1f); border-left: 2px solid rgba(255,255,255,.2); }
-.status-option-copy { display: grid; flex: 1; gap: 2px; text-align: left; }
-.status-option-copy strong { color: #f4f4f5; font-size: 13px; line-height: 1.15; }
-.status-option-copy small { color: #858991; font-size: 11px; line-height: 1.15; }
+.status-dropdown { min-width: 218px; width: max-content; padding: 8px; border-radius: 14px; background: #1a1b1f; border-color: rgba(255,255,255,.12); box-shadow: 0 20px 54px rgba(0,0,0,.68); }
+.status-option:hover { background: rgba(255,255,255,.08); }
+.status-option.active { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.15); }
+.status-option-label {
+  flex: 1;
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1.2;
+}
 
 @media (max-width: 560px) {
   .top-carousel { touch-action: pan-y; }
@@ -1539,6 +1536,7 @@ button { border: 0; color: inherit; cursor: pointer; }
 /* ── Rating badges ── */
 .wb-rating-badges { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 2px; }
 .wb-rating-badge { display: inline-flex; align-items: center; gap: 2px; padding: 2px 7px; border-radius: 6px; font-size: 11px; font-weight: 800; }
+.wb-rating-badge.wb-na { color: #6b7280; background: rgba(107,114,128,.12); font-style: italic; font-weight: 700; }
 .wb-tmdb { background: rgba(13,37,63,.7); color: #90caf9; }
 .wb-imdb { background: rgba(63,48,13,.7); color: #f5c518; }
 .wb-tomato { background: rgba(13,40,13,.7); color: #4ade80; }
@@ -1675,14 +1673,14 @@ button { border: 0; color: inherit; cursor: pointer; }
 .dropdown-chevron { flex-shrink: 0; opacity: .5; transition: transform .2s ease; }
 .custom-dropdown.open .dropdown-chevron { transform: rotate(180deg); opacity: .8; }
 
-.custom-dropdown-menu { position: absolute; z-index: 60; top: calc(100% + 5px); right: 0; min-width: 190px; background: #14181d; border: 1px solid rgba(255,255,255,.12); border-radius: 14px; padding: 6px; box-shadow: 0 16px 42px rgba(0,0,0,.55); animation: dropIn .15s ease; }
-.custom-dropdown-option { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; padding: 10px 14px; border: 0; border-radius: 10px; background: transparent; color: #bbb; font-weight: 600; font-size: 13px; text-align: left; cursor: pointer; transition: all .12s ease; }
-.custom-dropdown-option:hover { background: rgba(255,255,255,.07); color: #fff; }
-.custom-dropdown-option.active { background: color-mix(in srgb, var(--accent, #da1e37) 16%, #14181d); color: #fff; }
+.custom-dropdown-menu { position: absolute; z-index: 60; top: calc(100% + 5px); right: 0; min-width: 190px; background: #1a1b1f; border: 1px solid rgba(255,255,255,.12); border-radius: 14px; padding: 6px; box-shadow: 0 16px 42px rgba(0,0,0,.55); animation: dropIn .15s ease; }
+.custom-dropdown-option { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; padding: 8px 10px; border: 1px solid transparent; border-radius: 10px; background: transparent; color: #b0b0b8; font-weight: 700; font-size: 13px; text-align: left; cursor: pointer; transition: all .12s ease; }
+.custom-dropdown-option:hover { background: rgba(255,255,255,.08); color: #fff; border-color: rgba(255,255,255,.1); }
+.custom-dropdown-option.active { background: rgba(255,255,255,.06); color: #fff; border-color: rgba(255,255,255,.15); }
 .custom-dropdown-option.active svg { color: var(--accent); }
 
 /* Server dropdown specifics */
-.server-dropdown .custom-dropdown-trigger { min-width: 90px; }
+.server-dropdown .custom-dropdown-trigger { min-width: 0; padding: 6px 10px; font-size: 12px; }
 .server-dropdown .custom-dropdown-menu { min-width: 150px; }
 
 /* Episode dropdown specifics */
@@ -3309,9 +3307,9 @@ button { border: 0; color: inherit; cursor: pointer; }
 
 .movie-site .status-dropdown {
   z-index: 10050;
-  background: linear-gradient(145deg, color-mix(in srgb, var(--palette-surface-strong) 96%, #000), color-mix(in srgb, var(--palette-bg-raised) 98%, #000));
-  border-color: color-mix(in srgb, var(--palette-primary) 48%, rgba(255,255,255,.12));
-  box-shadow: 0 24px 64px rgba(0,0,0,.78), 0 0 0 1px color-mix(in srgb, var(--palette-primary) 24%, transparent);
+  background: #1a1b1f;
+  border: 1px solid rgba(255,255,255,.12);
+  box-shadow: 0 24px 64px rgba(0,0,0,.78);
 }
 
 .movie-card:has(.status-select.open),
@@ -4546,7 +4544,7 @@ button { border: 0; color: inherit; cursor: pointer; }
 :root[data-theme="light"] .custom-dropdown-menu { background: #fff; border-color: rgba(0,0,0,.12); box-shadow: 0 12px 36px rgba(0,0,0,.15); }
 :root[data-theme="light"] .custom-dropdown-option { color: #555; }
 :root[data-theme="light"] .custom-dropdown-option:hover { background: rgba(0,0,0,.05); color: #111; }
-:root[data-theme="light"] .custom-dropdown-option.active { background: color-mix(in srgb, var(--accent, #da1e37) 10%, #fff); color: var(--accent); }
+:root[data-theme="light"] .custom-dropdown-option.active { background: rgba(0,0,0,.06); color: #000; border-color: rgba(0,0,0,.15); }
 :root[data-theme="light"] .watch-server-select { background: rgba(0,0,0,.03); border-color: rgba(0,0,0,.1); color: #555; }
 :root[data-theme="light"] .episode-dropdown .custom-dropdown-trigger { background: rgba(0,0,0,.03); border-color: rgba(0,0,0,.1); color: #333; }
 :root[data-theme="light"] .episode-dropdown .custom-dropdown-trigger:hover { background: rgba(0,0,0,.06); border-color: rgba(0,0,0,.15); }
@@ -4677,7 +4675,7 @@ button { border: 0; color: inherit; cursor: pointer; }
 /* ── WatchBrowse density toggle + fixed grid cols ─────────────────── */
 .wb-grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
 .wb-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
-.wb-grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+.wb-grid-4 { grid-template-columns: repeat(4, minmax(120px, 1fr)) !important; }
 .wb-density-toggle {
   display: inline-flex; gap: 4px;
   background: rgba(255,255,255,0.04);
@@ -4705,8 +4703,7 @@ button { border: 0; color: inherit; cursor: pointer; }
 @media (max-width: 520px) {
   .wb-density-toggle button { min-width: 26px; padding: 0 7px; font-size: 10px; }
   /* On phones the 3+ col layout cramps the cards; fall back to 2 cols */
-  .wb-grid-3,
-  .wb-grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  /* Remove forced 2-col override so density toggle works on mobile */
 }
 
 /* ── Ad Blocker Toast — compact side toast (not AI slop) ──────────────────── */
@@ -5020,14 +5017,15 @@ button { border: 0; color: inherit; cursor: pointer; }
 .watch-native-embed-link:hover { color: rgba(255,255,255,.6); }
 
 /* Grid card ratings row — chip styling (visible on desktop + mobile) */
-.movie-card .card-body .card-ratings-line { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; align-items: center; }
-.movie-card .card-body .card-ratings-line > span { font-size: 10px; font-weight: 700; border-radius: 5px; padding: 2px 6px; display: inline-flex; align-items: center; gap: 2px; background: rgba(51,65,85,.18); color: #94a3b8; line-height: 1.4; }
+.movie-card .card-body .card-ratings-line { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 2px; align-items: center; min-height: 16px; }
+.movie-card .card-body .card-ratings-line > span { font-size: 9px; font-weight: 700; border-radius: 4px; padding: 1px 5px; display: inline-flex; align-items: center; gap: 2px; background: rgba(51,65,85,.18); color: #94a3b8; line-height: 1.2; }
 .movie-card .card-body .card-ratings-line .list-rating { color: #f2c94c; background: rgba(242,201,76,.12); }
 .movie-card .card-body .card-ratings-line .list-rating-imdb { color: #f5c518; background: rgba(245,197,24,.12); }
 .movie-card .card-body .card-ratings-line .list-rating-tomato { color: #e74c3c; background: rgba(231,76,60,.12); }
 .movie-card .card-body .card-ratings-line .list-rating-tomato.certified-fresh { color: #4ade80; background: rgba(74,222,128,.12); }
 .movie-card .card-body .card-ratings-line .list-rating-tomato.rotten { color: #22c55e; background: rgba(34,197,94,.10); }
 .movie-card .card-body .card-ratings-line .list-rating-meta { color: #f59e0b; background: rgba(245,158,11,.12); }
+.movie-card .card-body .card-ratings-line .list-rating-na { color: #6b7280; background: rgba(107,114,128,.12); font-style: italic; }
 
 /* ── Audio sync offset control ─────────────────────────────────────────────── */
 

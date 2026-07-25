@@ -395,7 +395,7 @@ export default function App() {
     const missing = activeItems.filter(item => {
       const cached = item.tmdbId ? getFromCache(metadataCacheKey(item)) : null;
       return !item.poster && !cached && !posterFromManifest(item, posterMap) && !failedRef.current.has(item.id);
-    }).slice(0, 6);
+    }).slice(0, 15);
     
     if (!missing.length) return;
     let cancelled = false;
@@ -482,6 +482,7 @@ export default function App() {
                   backdrop: data.backdrop,
                   overview: data.overview,
                   rating: data.rating,
+                  imdbId: data.imdbId || existing.imdbId,
                   voteCount: data.voteCount || existing.voteCount || 0,
                   releaseDate: data.releaseDate,
                   mediaType: data.mediaType,
@@ -491,7 +492,9 @@ export default function App() {
               
               // Fire-and-forget: fetch IMDb rating from OMDb (only if not already cached)
               if (!hadImdb) {
-                fetch(`/api/omdb/rating?title=${encodeURIComponent(item.title)}&year=${item.year}`)
+                const omdbParams = new URLSearchParams({ title: item.title, year: String(item.year || '') });
+                if (data.imdbId) omdbParams.set('imdbId', data.imdbId);
+                fetch(`/api/omdb/rating?${omdbParams.toString()}`)
                   .then(r => r.json())
                   .then(omdb => {
                     if (omdb.rating || omdb.tomatoRating || omdb.metaRating) {
@@ -523,45 +526,72 @@ export default function App() {
     return () => { cancelled = true; };
   }, [activeItems, posterMap]);
 
+  // Slicing 6 items is cheap; do NOT memoize-by-id-only — items keep mutating as posters,
+  // ratings, and user state load async, and an id-keyed freeze would lock the carousel to
+  // the first-pass objects (poster-less) forever.
+  const heroItems = useMemo(() => activeItems.slice(0, 6), [activeItems]);
+
   // Fetch OMDb ratings (IMDb, Rotten Tomatoes, Metacritic) for ALL items
+  // Items visible on screen are prioritised so the ratings users see populate first.
   const omdbFetchedRef = useRef(new Set());
   useEffect(() => {
-    const needRatings = activeItems.filter(item => {
+    // Build a priority-ordered list: items likely on screen come first so they get
+    // their ratings before off-screen items further down the timeline.
+    const seen = new Set();
+    const ordered = [];
+    const gather = (items) => {
+      for (const item of items) {
+        if (!seen.has(item.id)) { seen.add(item.id); ordered.push(item); }
+      }
+    };
+
+    if (section === 'home') {
+      gather(heroItems);                                                        // Hero carousel
+      gather(activeItems.filter(i => i.userStatus === 'unwatched').slice(0, 10)); // Up next rail
+      gather(activeItems.filter(i => i.userStatus === 'watching'));              // Continue watching
+      gather(activeItems.filter(i => i.essential));                              // Essential picks
+      gather(activeItems.filter(i => i.userStatus === 'watched').slice(-24).reverse()); // Recently watched
+      gather(activeItems);                                                      // Everything else
+    } else {
+      gather(activeItems);
+    }
+
+    const needRatings = ordered.filter(item => {
       const ck = metadataCacheKey(item) || `omdb:${item.id}`;
       if (omdbFetchedRef.current.has(ck)) return false;
       const cached = getFromCache(ck);
       return !cached || (!cached.imdbRating && !cached.tomatoRating && !cached.metaRating);
-    }).slice(0, 8);
+    }).slice(0, 12);
     if (!needRatings.length) return;
     let cancelled = false;
     const fetchOmdbBatch = async (idx) => {
       if (cancelled || idx >= needRatings.length) return;
-      const batch = needRatings.slice(idx, idx + 3);
+      const batch = needRatings.slice(idx, idx + 2);
       await Promise.allSettled(batch.map(async (item) => {
         const ck = metadataCacheKey(item) || `omdb:${item.id}`;
         try {
-          const r = await fetch(`/api/omdb/rating?title=${encodeURIComponent(item.title)}&year=${item.year}`);
+          // Use cached IMDb ID for more reliable OMDb lookup if available
+          const cached = getFromCache(ck) || {};
+          const omdbParams = new URLSearchParams({ title: item.title, year: String(item.year || '') });
+          if (cached.imdbId) omdbParams.set('imdbId', cached.imdbId);
+          const r = await fetch(`/api/omdb/rating?${omdbParams.toString()}`);
+          // Mark as fetched immediately so rate-limited or empty responses don't cause
+          // infinite retry loops within the same session. The next page load resets
+          // omdbFetchedRef so un-cached items will be retried automatically.
+          omdbFetchedRef.current.add(ck);
           if (!r.ok) return;
           const omdb = await r.json();
-          // Mark as fetched only after a real response so failed lookups (rate-limited, 5xx, etc.)
-          // are retried on the next session instead of being silently skipped for the lifetime of this page.
-          omdbFetchedRef.current.add(ck);
           if (omdb.rating || omdb.tomatoRating || omdb.metaRating) {
             const cur = getFromCache(ck) || {};
             setCache(ck, { ...cur, imdbRating: omdb.rating || cur.imdbRating, tomatoRating: omdb.tomatoRating || cur.tomatoRating, metaRating: omdb.metaRating ? String(parseInt(omdb.metaRating)) : (cur.metaRating || '') });
           }
         } catch {}
       }));
-      if (!cancelled) { setOmdbVersion(v => v + 1); setTimeout(() => fetchOmdbBatch(idx + 3), 200); }
+      if (!cancelled) { setOmdbVersion(v => v + 1); setTimeout(() => fetchOmdbBatch(idx + 2), 500); }
     };
     fetchOmdbBatch(0);
     return () => { cancelled = true; };
-  }, [activeItems]);
-
-  // Slicing 6 items is cheap; do NOT memoize-by-id-only — items keep mutating as posters,
-  // ratings, and user state load async, and an id-keyed freeze would lock the carousel to
-  // the first-pass objects (poster-less) forever.
-  const heroItems = useMemo(() => activeItems.slice(0, 6), [activeItems]);
+  }, [activeItems, section, heroItems]);
   const featured = heroItems[heroIndex % Math.max(heroItems.length, 1)] || activeItems[0];
   const genres = ['All', 'Action', 'Adventure', 'Drama', 'Sci-fi', 'Essential', 'Series'];
   const externalTrackedItems = useMemo(() => Object.entries(actions)
@@ -950,9 +980,7 @@ function MovieCard({ item, setSelected, cycleStatus, setStatus, toggleBookmark, 
       <PosterArt item={item} />
     </button>
     <div className="card-body"><button className="title-button" onClick={() => setSelected(item)}>{item.title}</button><span>{item.year} · {runtimeLabel(item.runtime, item.type)}{item.userStatus === 'watching' && item.watchedDuration > 30000 ? ` · ${watchTimeLabel(item)}` : ''}{item.releaseStatus === 'upcoming' && item.releaseDate ? <span className="card-release-badge">{new Date(item.releaseDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span> : ''}{item.releaseStatus === 'upcoming' && !item.releaseDate ? <span className="card-release-badge">Upcoming</span> : ''}{item.releaseStatus === 'announced' ? <span className="card-release-badge announced">Announced</span> : ''}</span>
-      {(item.rating || item.imdbRating || item.tomatoRating || item.metaRating) && (
-        <div className="card-ratings-line">{item.rating && <span className="list-rating"><Star size={11} fill="currentColor" />{Number(item.rating).toFixed(1)}</span>}{item.imdbRating && <span className="list-rating list-rating-imdb">★{item.imdbRating}</span>}{item.tomatoRating && <span className={`list-rating list-rating-tomato ${getTomatoTier(item.tomatoRating).cls}`}>{getTomatoTier(item.tomatoRating).emoji}{item.tomatoRating}</span>}{item.metaRating && <span className="list-rating list-rating-meta">M{parseInt(item.metaRating)}</span>}</div>
-      )}
+        <div className="card-ratings-line">{item.rating && <span className="list-rating"><Star size={9} fill="currentColor" />{Number(item.rating).toFixed(1)}</span>}{item.imdbRating && <span className="list-rating list-rating-imdb">★{item.imdbRating}</span>}{item.tomatoRating && <span className={`list-rating list-rating-tomato ${getTomatoTier(item.tomatoRating).cls}`}>{getTomatoTier(item.tomatoRating).emoji}{item.tomatoRating}</span>}{item.metaRating && <span className="list-rating list-rating-meta">M{parseInt(item.metaRating)}</span>}{!(item.rating || item.imdbRating || item.tomatoRating || item.metaRating) && <span className="list-rating list-rating-na">N/A</span>}</div>
     </div>
     <div className="card-actions"><button onClick={() => playTrailer(item)} className="trailer-chip" aria-label={`Play ${item.title} trailer`}><Clapperboard size={16} /><span>Trailer</span></button><StatusSelect item={item} setStatus={setStatus} compact /><button onClick={() => toggleBookmark(item)} className={`bookmark-chip ${item.bookmarked ? 'saved' : ''}`} aria-label={item.bookmarked ? 'Remove bookmark' : 'Bookmark title'}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button></div>
   </article>;
@@ -978,7 +1006,7 @@ function ListSection({ items, sortKey, externalResults = [], externalLoading = f
     {viewMode === 'grid' ? <div key={`grid-${sortKey}`} className="movie-grid web-grid list-card-grid">{visibleItems.map((item, i) => <MovieCard key={item.id} item={item} setSelected={setSelected} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} style={{ animationDelay: `${i * 30}ms` }} />)}</div> : <div key={`list-${sortKey}`} className="list-grid">{visibleItems.map((item, index) => <article className="list-row" key={item.id} style={{ '--accent': item.accent, animationDelay: `${index * 30}ms` }} onClick={() => setSelected(item)} role="button" tabIndex={0} aria-label={`View ${item.title} details`} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(item); } }}>
       <span className="list-index">{String(firstItem + index + 1).padStart(2, '0')}</span>
       <div className="list-poster"><img src={item.poster} alt={`${item.title} poster`} width="82" height="108" loading="lazy" /></div>
-      <div className="list-copy"><div className="list-title-line"><strong>{item.title}</strong>{item.essential && <span>Essential</span>}</div>{(item.rating || item.imdbRating || item.tomatoRating || item.metaRating) && <div className="list-ratings-line">{item.rating && <span className="list-rating"><Star size={11} fill="currentColor" />{Number(item.rating).toFixed(1)}</span>}{item.imdbRating && <span className="list-rating list-rating-imdb">★{item.imdbRating}</span>}{item.tomatoRating && <span className={`list-rating list-rating-tomato ${getTomatoTier(item.tomatoRating).cls}`}>{getTomatoTier(item.tomatoRating).emoji}{item.tomatoRating}</span>}{item.metaRating && <span className="list-rating list-rating-meta">M{parseInt(item.metaRating)}</span>}</div>}<span>{item.year} · {item.type} · {runtimeLabel(item.runtime, item.type)}</span><p>{item.desc || `${item.title} in the complete ${item.universe === 'marvel' ? 'MCU' : 'DC'} story timeline.`}</p><div className="list-tags">{(item.genres || []).slice(0,3).map(g => <span key={g}>{g}</span>)}</div></div>
+      <div className="list-copy"><div className="list-title-line"><strong>{item.title}</strong>{item.essential && <span>Essential</span>}</div><div className="list-ratings-line">{item.rating && <span className="list-rating"><Star size={9} fill="currentColor" />{Number(item.rating).toFixed(1)}</span>}{item.imdbRating && <span className="list-rating list-rating-imdb">★{item.imdbRating}</span>}{item.tomatoRating && <span className={`list-rating list-rating-tomato ${getTomatoTier(item.tomatoRating).cls}`}>{getTomatoTier(item.tomatoRating).emoji}{item.tomatoRating}</span>}{item.metaRating && <span className="list-rating list-rating-meta">M{parseInt(item.metaRating)}</span>}{!(item.rating || item.imdbRating || item.tomatoRating || item.metaRating) && <span className="list-rating list-rating-na">N/A</span>}</div><span>{item.year} · {item.type} · {runtimeLabel(item.runtime, item.type)}</span><p>{item.desc || `${item.title} in the complete ${item.universe === 'marvel' ? 'MCU' : 'DC'} story timeline.`}</p><div className="list-tags">{(item.genres || []).slice(0,3).map(g => <span key={g}>{g}</span>)}</div></div>
       <div className="list-actions" onClick={e => e.stopPropagation()}><button className="list-trailer" onClick={() => playTrailer(item)} aria-label={`Play ${item.title} trailer`}><Clapperboard size={16} /><span>Trailer</span></button><StatusSelect item={item} setStatus={setStatus} /><button className={`list-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Bookmark title'}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button></div>
     </article>)}</div>}
     {pageCount > 1 && <nav className="pagination" aria-label="Viewing list pages"><button onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} aria-label="Previous page"><ChevronLeft size={18} /></button>{Array.from({ length: pageCount }, (_, index) => index + 1).map(pageNumber => <button key={pageNumber} className={currentPage === pageNumber ? 'active' : ''} aria-current={currentPage === pageNumber ? 'page' : undefined} onClick={() => goToPage(pageNumber)}>{pageNumber}</button>)}<button onClick={() => goToPage(currentPage + 1)} disabled={currentPage === pageCount} aria-label="Next page"><ChevronRight size={18} /></button></nav>}
@@ -1040,12 +1068,11 @@ function StatusSelect({ item, setStatus, compact = false }) {
       <span className="status-label">{triggerLabel}</span>
     </button>
     {open && <div className="status-dropdown" role="listbox" aria-label={`Set status for ${item.title}`}>
-      <p className="status-menu-title">Viewing status</p>
       {STATUS.map(status => {
         const Icon = STATUS_META[status].icon;
         return <button key={status} className={`status-option ${status} ${item.userStatus === status ? 'active' : ''}`} role="option" aria-selected={item.userStatus === status} onClick={() => { setStatus(item, status); setOpen(false); }}>
-          <span className="status-option-icon"><Icon size={15} /></span>
-          <span className="status-option-copy"><strong>{STATUS_LABELS[status]}</strong><small>{STATUS_META[status].detail}</small></span>
+          <Icon size={15} className="status-option-icon" />
+          <span className="status-option-label">{STATUS_LABELS[status]}</span>
           {item.userStatus === status && <Check size={14} className="status-option-check" />}
         </button>;
       })}
@@ -1370,6 +1397,7 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, on
         drawChip(item.tomatoRating, t.label, t.cls === 'certified-fresh' ? '#4ade80' : t.cls === 'fresh' ? '#e74c3c' : '#22c55e', t.emoji);
       }
       if (item.metaRating) drawChip(String(parseInt(item.metaRating)), 'Meta', '#f59e0b', 'M');
+      if (!item.rating && !item.imdbRating && !item.tomatoRating && !item.metaRating) drawChip('N/A', 'No ratings', '#6b7280', '—');
       (item.genres || []).slice(0, 3).forEach(g => drawGenreChip(g));
 
       // ── Description ──
@@ -1621,6 +1649,7 @@ function WatchBrowse({ activeItems, externalResults = [], externalLoading = fals
       {item.imdbRating && <span className="wb-rating-badge wb-imdb">★{item.imdbRating}</span>}
       {item.tomatoRating && (() => { const t = getTomatoTier(item.tomatoRating); return <span className={`wb-rating-badge wb-tomato ${t.cls}`}>{t.emoji}{item.tomatoRating}</span>; })()}
       {item.metaRating && <span className="wb-rating-badge wb-meta">M{parseInt(item.metaRating)}</span>}
+      {!(item.rating || item.imdbRating || item.tomatoRating || item.metaRating) && <span className="wb-rating-badge wb-na">N/A</span>}
     </div>
   );
 
@@ -2022,9 +2051,6 @@ const saveServerPref = (tmdbId, server) => {
           <Cloud size={15} aria-hidden="true" />
           <span>Server</span>
           <ServerDropdown server={selectedServer} onSelect={setSelectedServer} />
-          <button className="watch-server-switch" onClick={() => setSelectedServer(selectedServer === 'videasy' ? 'moviepire' : 'videasy')} title={`Switch to ${selectedServer === 'videasy' ? 'MoviePire' : 'Videasy'}`}>
-            Try {selectedServer === 'videasy' ? 'MoviePire' : 'Videasy'} <RotateCcw size={12} />
-          </button>
         </div>
       </header>
       {toast && (
@@ -2316,10 +2342,10 @@ function AdBlockerDialog({ onDismiss }) {
     return () => clearTimeout(t);
   }, []);
 
-  // Auto-dismiss after 1s once visible
+  // Auto-dismiss after 5s once visible
   useEffect(() => {
     if (!visible) return;
-    const t = setTimeout(handleDismiss, 1000);
+    const t = setTimeout(handleDismiss, 5000);
     return () => clearTimeout(t);
   }, [visible]);
 
