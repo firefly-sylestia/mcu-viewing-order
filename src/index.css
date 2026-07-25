@@ -1671,14 +1671,14 @@ button { border: 0; color: inherit; cursor: pointer; }
 .dropdown-chevron { flex-shrink: 0; opacity: .5; transition: transform .2s ease; }
 .custom-dropdown.open .dropdown-chevron { transform: rotate(180deg); opacity: .8; }
 
-.custom-dropdown-menu { position: absolute; z-index: 60; top: calc(100% + 5px); right: 0; min-width: 190px; background: #14181d; border: 1px solid rgba(255,255,255,.12); border-radius: 14px; padding: 6px; box-shadow: 0 16px 42px rgba(0,0,0,.55); animation: dropIn .15s ease; }
-.custom-dropdown-option { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; padding: 10px 14px; border: 0; border-radius: 10px; background: transparent; color: #bbb; font-weight: 600; font-size: 13px; text-align: left; cursor: pointer; transition: all .12s ease; }
-.custom-dropdown-option:hover { background: rgba(255,255,255,.07); color: #fff; }
-.custom-dropdown-option.active { background: color-mix(in srgb, var(--accent, #da1e37) 16%, #14181d); color: #fff; }
+.custom-dropdown-menu { position: absolute; z-index: 60; top: calc(100% + 5px); right: 0; min-width: 190px; background: #1a1b1f; border: 1px solid rgba(255,255,255,.12); border-radius: 14px; padding: 6px; box-shadow: 0 16px 42px rgba(0,0,0,.55); animation: dropIn .15s ease; }
+.custom-dropdown-option { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; padding: 8px 10px; border: 1px solid transparent; border-radius: 10px; background: transparent; color: #b0b0b8; font-weight: 700; font-size: 13px; text-align: left; cursor: pointer; transition: all .12s ease; }
+.custom-dropdown-option:hover { background: rgba(255,255,255,.08); color: #fff; border-color: rgba(255,255,255,.1); }
+.custom-dropdown-option.active { background: rgba(255,255,255,.06); color: #fff; border-color: rgba(255,255,255,.15); }
 .custom-dropdown-option.active svg { color: var(--accent); }
 
 /* Server dropdown specifics */
-.server-dropdown .custom-dropdown-trigger { min-width: 90px; }
+.server-dropdown .custom-dropdown-trigger { min-width: 0; padding: 6px 10px; font-size: 12px; }
 .server-dropdown .custom-dropdown-menu { min-width: 150px; }
 
 /* Episode dropdown specifics */
@@ -4542,7 +4542,7 @@ button { border: 0; color: inherit; cursor: pointer; }
 :root[data-theme="light"] .custom-dropdown-menu { background: #fff; border-color: rgba(0,0,0,.12); box-shadow: 0 12px 36px rgba(0,0,0,.15); }
 :root[data-theme="light"] .custom-dropdown-option { color: #555; }
 :root[data-theme="light"] .custom-dropdown-option:hover { background: rgba(0,0,0,.05); color: #111; }
-:root[data-theme="light"] .custom-dropdown-option.active { background: color-mix(in srgb, var(--accent, #da1e37) 10%, #fff); color: var(--accent); }
+:root[data-theme="light"] .custom-dropdown-option.active { background: rgba(0,0,0,.06); color: #000; border-color: rgba(0,0,0,.15); }
 :root[data-theme="light"] .watch-server-select { background: rgba(0,0,0,.03); border-color: rgba(0,0,0,.1); color: #555; }
 :root[data-theme="light"] .episode-dropdown .custom-dropdown-trigger { background: rgba(0,0,0,.03); border-color: rgba(0,0,0,.1); color: #333; }
 :root[data-theme="light"] .episode-dropdown .custom-dropdown-trigger:hover { background: rgba(0,0,0,.06); border-color: rgba(0,0,0,.15); }
@@ -4673,7 +4673,7 @@ button { border: 0; color: inherit; cursor: pointer; }
 /* ── WatchBrowse density toggle + fixed grid cols ─────────────────── */
 .wb-grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
 .wb-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
-.wb-grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+.wb-grid-4 { grid-template-columns: repeat(4, minmax(120px, 1fr)) !important; }
 .wb-density-toggle {
   display: inline-flex; gap: 4px;
   background: rgba(255,255,255,0.04);
@@ -4701,8 +4701,7 @@ button { border: 0; color: inherit; cursor: pointer; }
 @media (max-width: 520px) {
   .wb-density-toggle button { min-width: 26px; padding: 0 7px; font-size: 10px; }
   /* On phones the 3+ col layout cramps the cards; fall back to 2 cols */
-  .wb-grid-3,
-  .wb-grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  /* Remove forced 2-col override so density toggle works on mobile */
 }
 
 /* ── Ad Blocker Toast — compact side toast (not AI slop) ──────────────────── */
