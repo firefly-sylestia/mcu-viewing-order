@@ -1374,6 +1374,7 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, on
         drawChip(item.tomatoRating, t.label, t.cls === 'certified-fresh' ? '#4ade80' : t.cls === 'fresh' ? '#e74c3c' : '#22c55e', t.emoji);
       }
       if (item.metaRating) drawChip(String(parseInt(item.metaRating)), 'Meta', '#f59e0b', 'M');
+      if (!item.rating && !item.imdbRating && !item.tomatoRating && !item.metaRating) drawChip('N/A', 'No ratings', '#6b7280', '—');
       (item.genres || []).slice(0, 3).forEach(g => drawGenreChip(g));
 
       // ── Description ──
@@ -1625,6 +1626,7 @@ function WatchBrowse({ activeItems, externalResults = [], externalLoading = fals
       {item.imdbRating && <span className="wb-rating-badge wb-imdb">★{item.imdbRating}</span>}
       {item.tomatoRating && (() => { const t = getTomatoTier(item.tomatoRating); return <span className={`wb-rating-badge wb-tomato ${t.cls}`}>{t.emoji}{item.tomatoRating}</span>; })()}
       {item.metaRating && <span className="wb-rating-badge wb-meta">M{parseInt(item.metaRating)}</span>}
+      {!(item.rating || item.imdbRating || item.tomatoRating || item.metaRating) && <span className="wb-rating-badge wb-na">N/A</span>}
     </div>
   );
 
