@@ -548,11 +548,12 @@ export default function App() {
           const omdbParams = new URLSearchParams({ title: item.title, year: String(item.year || '') });
           if (cached.imdbId) omdbParams.set('imdbId', cached.imdbId);
           const r = await fetch(`/api/omdb/rating?${omdbParams.toString()}`);
+          // Mark as fetched immediately so rate-limited or empty responses don't cause
+          // infinite retry loops within the same session. The next page load resets
+          // omdbFetchedRef so un-cached items will be retried automatically.
+          omdbFetchedRef.current.add(ck);
           if (!r.ok) return;
           const omdb = await r.json();
-          // Mark as fetched only after a real response so failed lookups (rate-limited, 5xx, etc.)
-          // are retried on the next session instead of being silently skipped for the lifetime of this page.
-          omdbFetchedRef.current.add(ck);
           if (omdb.rating || omdb.tomatoRating || omdb.metaRating) {
             const cur = getFromCache(ck) || {};
             setCache(ck, { ...cur, imdbRating: omdb.rating || cur.imdbRating, tomatoRating: omdb.tomatoRating || cur.tomatoRating, metaRating: omdb.metaRating ? String(parseInt(omdb.metaRating)) : (cur.metaRating || '') });
