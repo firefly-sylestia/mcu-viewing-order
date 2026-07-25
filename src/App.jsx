@@ -2316,6 +2316,13 @@ function AdBlockerDialog({ onDismiss }) {
     return () => clearTimeout(t);
   }, []);
 
+  // Auto-dismiss after 1s once visible
+  useEffect(() => {
+    if (!visible) return;
+    const t = setTimeout(handleDismiss, 1000);
+    return () => clearTimeout(t);
+  }, [visible]);
+
   const handleDismiss = () => {
     setExiting(true);
     setTimeout(onDismiss, 200);
