@@ -1473,14 +1473,14 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, on
               ? <div className="detail-inline-trailer"><iframe src={inlineTrailer} title={`${item.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={closeTrailer} aria-label="Close trailer"><X size={20} /></button></div>
               : <PosterArt item={item} />}
           </div>
-          {!isTrailerExpanded && (
-              <div className="detail-media-actions">
-                <button className="detail-watch-now" onClick={() => onStartWatch(item, item.tmdbId, item.type === 'series' ? 'tv' : 'movie')} aria-label={`Watch ${item.title} now`}><Play size={18} /> Watch Now</button>
-                <button className="detail-trailer" onClick={showTrailer}><Clapperboard size={18} /> Watch trailer</button>
-              </div>
-            )}
         </div>
         <div className="detail-content">
+          {!isTrailerExpanded && (
+            <div className="detail-actions-row">
+              <button className="detail-watch-now" onClick={() => onStartWatch(item, item.tmdbId, item.type === 'series' ? 'tv' : 'movie')} aria-label={`Watch ${item.title} now`}><Play size={18} /> Watch Now</button>
+              <button className="detail-trailer" onClick={showTrailer}><Clapperboard size={18} /> Watch trailer</button>
+            </div>
+          )}
           <div className="detail-kicker"><span>{item.universe === 'marvel' ? 'Marvel Cinematic Universe' : item.universe === 'xmen' ? 'X-Men Universe' : 'DC Universe'}</span><span>#{String(item.order || item.id).padStart(2, '0')}</span></div>
           <h1 id="detail-title">{item.title}</h1>
           <div className="detail-chips"><RatingChips item={item} />{(item.genres || []).slice(0,3).map(g => <span key={g}>{g}</span>)}</div>
