@@ -3,10 +3,17 @@ export default async function handler(req, res) {
   const key = process.env.OMDB_API_KEY || '2c971c17';
   const title = (req.query.title || '').toString().trim();
   const year = (req.query.year || '').toString().trim();
-  if (!title) return res.status(400).json({ error: 'Missing title' });
+  const imdbId = (req.query.imdbId || '').toString().trim();
+  if (!title && !imdbId) return res.status(400).json({ error: 'Missing title or imdbId' });
 
-  const params = new URLSearchParams({ apikey: key, t: title });
-  if (year) params.set('y', year);
+  // Prefer IMDb ID lookup when available — much more reliable than title+year search
+  const params = new URLSearchParams({ apikey: key });
+  if (imdbId) {
+    params.set('i', imdbId);
+  } else {
+    params.set('t', title);
+    if (year) params.set('y', year);
+  }
 
   const r = await fetch(`https://www.omdbapi.com/?${params.toString()}`);
   if (!r.ok) return res.status(r.status).json({ error: 'OMDB request failed' });

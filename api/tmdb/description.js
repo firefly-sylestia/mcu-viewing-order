@@ -98,6 +98,22 @@ export default async function handler(req, res) {
       runtime = best.episode_run_time[0];
     }
 
+    // Fetch IMDb ID — movies include it in detail, TV shows need a separate external_ids call
+    let imdbId = null;
+    if (mediaType === 'movie') {
+      imdbId = best.imdb_id || null;
+    } else if (mediaType === 'tv') {
+      try {
+        const extRes = await fetch(`https://api.themoviedb.org/3/tv/${best.id}/external_ids`, {
+          headers: { Authorization: `Bearer ${token}`, accept: 'application/json' },
+        });
+        if (extRes.ok) {
+          const extData = await extRes.json();
+          imdbId = extData.imdb_id || null;
+        }
+      } catch {}
+    }
+
     return res.status(200).json({
       success: true,
       poster,
@@ -110,6 +126,7 @@ export default async function handler(req, res) {
       releaseDate: best.release_date || best.first_air_date || null,
       mediaType: mediaType,
       tmdbId: best.id,
+      imdbId,
       runtime,
       genres: best.genres || [],
       originalLanguage: best.original_language || null,

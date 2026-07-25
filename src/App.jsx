@@ -482,6 +482,7 @@ export default function App() {
                   backdrop: data.backdrop,
                   overview: data.overview,
                   rating: data.rating,
+                  imdbId: data.imdbId || existing.imdbId,
                   voteCount: data.voteCount || existing.voteCount || 0,
                   releaseDate: data.releaseDate,
                   mediaType: data.mediaType,
@@ -491,7 +492,9 @@ export default function App() {
               
               // Fire-and-forget: fetch IMDb rating from OMDb (only if not already cached)
               if (!hadImdb) {
-                fetch(`/api/omdb/rating?title=${encodeURIComponent(item.title)}&year=${item.year}`)
+                const omdbParams = new URLSearchParams({ title: item.title, year: String(item.year || '') });
+                if (data.imdbId) omdbParams.set('imdbId', data.imdbId);
+                fetch(`/api/omdb/rating?${omdbParams.toString()}`)
                   .then(r => r.json())
                   .then(omdb => {
                     if (omdb.rating || omdb.tomatoRating || omdb.metaRating) {
@@ -540,7 +543,11 @@ export default function App() {
       await Promise.allSettled(batch.map(async (item) => {
         const ck = metadataCacheKey(item) || `omdb:${item.id}`;
         try {
-          const r = await fetch(`/api/omdb/rating?title=${encodeURIComponent(item.title)}&year=${item.year}`);
+          // Use cached IMDb ID for more reliable OMDb lookup if available
+          const cached = getFromCache(ck) || {};
+          const omdbParams = new URLSearchParams({ title: item.title, year: String(item.year || '') });
+          if (cached.imdbId) omdbParams.set('imdbId', cached.imdbId);
+          const r = await fetch(`/api/omdb/rating?${omdbParams.toString()}`);
           if (!r.ok) return;
           const omdb = await r.json();
           // Mark as fetched only after a real response so failed lookups (rate-limited, 5xx, etc.)
@@ -978,7 +985,7 @@ function ListSection({ items, sortKey, externalResults = [], externalLoading = f
     {viewMode === 'grid' ? <div key={`grid-${sortKey}`} className="movie-grid web-grid list-card-grid">{visibleItems.map((item, i) => <MovieCard key={item.id} item={item} setSelected={setSelected} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} style={{ animationDelay: `${i * 30}ms` }} />)}</div> : <div key={`list-${sortKey}`} className="list-grid">{visibleItems.map((item, index) => <article className="list-row" key={item.id} style={{ '--accent': item.accent, animationDelay: `${index * 30}ms` }} onClick={() => setSelected(item)} role="button" tabIndex={0} aria-label={`View ${item.title} details`} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(item); } }}>
       <span className="list-index">{String(firstItem + index + 1).padStart(2, '0')}</span>
       <div className="list-poster"><img src={item.poster} alt={`${item.title} poster`} width="82" height="108" loading="lazy" /></div>
-      <div className="list-copy"><div className="list-title-line"><strong>{item.title}</strong>{item.essential && <span>Essential</span>}</div>{(item.rating || item.imdbRating || item.tomatoRating || item.metaRating) && <div className="list-ratings-line">{item.rating && <span className="list-rating"><Star size={11} fill="currentColor" />{Number(item.rating).toFixed(1)}</span>}{item.imdbRating && <span className="list-rating list-rating-imdb">★{item.imdbRating}</span>}{item.tomatoRating && <span className={`list-rating list-rating-tomato ${getTomatoTier(item.tomatoRating).cls}`}>{getTomatoTier(item.tomatoRating).emoji}{item.tomatoRating}</span>}{item.metaRating && <span className="list-rating list-rating-meta">M{parseInt(item.metaRating)}</span>}</div>}<span>{item.year} · {item.type} · {runtimeLabel(item.runtime, item.type)}</span><p>{item.desc || `${item.title} in the complete ${item.universe === 'marvel' ? 'MCU' : 'DC'} story timeline.`}</p><div className="list-tags">{(item.genres || []).slice(0,3).map(g => <span key={g}>{g}</span>)}</div></div>
+      <div className="list-copy"><div className="list-title-line"><strong>{item.title}</strong>{item.essential && <span>Essential</span>}</div>{(item.rating || item.imdbRating || item.tomatoRating || item.metaRating) && <div className="list-ratings-line">{item.rating && <span className="list-rating"><Star size={9} fill="currentColor" />{Number(item.rating).toFixed(1)}</span>}{item.imdbRating && <span className="list-rating list-rating-imdb">★{item.imdbRating}</span>}{item.tomatoRating && <span className={`list-rating list-rating-tomato ${getTomatoTier(item.tomatoRating).cls}`}>{getTomatoTier(item.tomatoRating).emoji}{item.tomatoRating}</span>}{item.metaRating && <span className="list-rating list-rating-meta">M{parseInt(item.metaRating)}</span>}</div>}<span>{item.year} · {item.type} · {runtimeLabel(item.runtime, item.type)}</span><p>{item.desc || `${item.title} in the complete ${item.universe === 'marvel' ? 'MCU' : 'DC'} story timeline.`}</p><div className="list-tags">{(item.genres || []).slice(0,3).map(g => <span key={g}>{g}</span>)}</div></div>
       <div className="list-actions" onClick={e => e.stopPropagation()}><button className="list-trailer" onClick={() => playTrailer(item)} aria-label={`Play ${item.title} trailer`}><Clapperboard size={16} /><span>Trailer</span></button><StatusSelect item={item} setStatus={setStatus} /><button className={`list-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Bookmark title'}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button></div>
     </article>)}</div>}
     {pageCount > 1 && <nav className="pagination" aria-label="Viewing list pages"><button onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} aria-label="Previous page"><ChevronLeft size={18} /></button>{Array.from({ length: pageCount }, (_, index) => index + 1).map(pageNumber => <button key={pageNumber} className={currentPage === pageNumber ? 'active' : ''} aria-current={currentPage === pageNumber ? 'page' : undefined} onClick={() => goToPage(pageNumber)}>{pageNumber}</button>)}<button onClick={() => goToPage(currentPage + 1)} disabled={currentPage === pageCount} aria-label="Next page"><ChevronRight size={18} /></button></nav>}
