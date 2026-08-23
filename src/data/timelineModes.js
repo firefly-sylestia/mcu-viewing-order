@@ -1,18 +1,8 @@
 export const TIMELINE_MODES = [
   { id: 'release', label: 'Release Order', description: 'The original theatrical, streaming, and television release sequence.' },
-  { id: 'chronological', label: 'Original Chronological', description: 'Approximate in-universe story order, including expanded shorts and series.' },
-  { id: 'doomsday-secret-wars', label: 'Doomsday → Secret Wars', description: 'Focused prerequisite path for the next Avengers saga finale.' },
-  { id: 'loki', label: 'Character POV: Loki', description: 'Focuses Loki and TVA-centric journey.' },
-  { id: 'wanda', label: 'Character POV: Wanda', description: 'Focuses Wanda Maximoff arc.' },
-  { id: 'multiverse', label: 'Branching Multiverse', description: 'Highlights multiverse branches and alternate continuities.' },
 ];
 
 export const TIMELINE_MODE_IDS = new Set(TIMELINE_MODES.map((m) => m.id));
-
-export const CHARACTER_POV_TITLE_SETS = {
-  loki: new Set(['Thor', 'The Avengers', 'Thor: The Dark World', 'Thor: Ragnarok', 'Avengers: Infinity War', 'Avengers: Endgame', 'Loki S1', 'Loki S2', 'What If...? S1', 'What If...? S2', 'What If...? S3', 'Deadpool & Wolverine']),
-  wanda: new Set(['Avengers: Age of Ultron', 'Captain America: Civil War', 'Avengers: Infinity War', 'Avengers: Endgame', 'WandaVision S1', 'Doctor Strange: Multiverse of Madness', 'Agatha All Along S1', 'What If...? S2']),
-};
 
 // Stable title keys keep ordering and guidance intact when display metadata changes.
 export const STORY_ORDER_OVERRIDES = new Map([
