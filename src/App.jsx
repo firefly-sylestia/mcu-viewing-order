@@ -6,6 +6,7 @@ import { XMEN_RAW } from './data/xmenData';
 import { SONY_RAW } from './data/sonyData';
 import { getTrailerByTitle, trailerEmbedUrl } from './data/trailerData';
 import { STORY_BRIDGES } from './data/connections';
+import { TIMELINE_MODES, CHARACTER_POV_TITLE_SETS, STORY_ORDER_OVERRIDES, DOOMSDAY_SECRET_WARS_TITLES, SPOILER_GUIDANCE } from './data/timelineModes';
 import ProfilePage from './components/ProfilePage';
 import AuthModal from './components/AuthModal';
 import { useAuth } from './hooks/useAuth';
@@ -168,6 +169,7 @@ export default function App() {
   const [ageRatingFilter, setAgeRatingFilter] = useState(saved.ageRatingFilter || 'All');
   const [sortBy, setSortBy] = useState(saved.sortBy || 'order');
   const [sortDirection, setSortDirection] = useState('asc');
+  const [timelineMode, setTimelineMode] = useState(saved.timelineMode || 'release');
   const [typeFilter, setTypeFilter] = useState(saved.typeFilter || 'All');
   const [heroIndex, setHeroIndex] = useState(saved.heroIndex || 0);
   const [section, setSection] = useState(parseHash().section || saved.section || 'home');
@@ -205,7 +207,7 @@ export default function App() {
   const allItems = useMemo(() => [...RAW.map(item => enhance(item, 'marvel')), ...DC_RAW.map(item => enhance(item, 'dc')), ...XMEN_RAW.map(item => enhance(item, 'xmen')), ...SONY_RAW.map(item => enhance(item, 'sony'))], []);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ universe, query, genre, rating, ageRatingFilter, sortBy, sortDirection, typeFilter, actions, section, watchItem, profileName, heroIndex }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ universe, query, genre, rating, ageRatingFilter, sortBy, sortDirection, timelineMode, typeFilter, actions, section, watchItem, profileName, heroIndex }));
   }, [universe, query, genre, rating, ageRatingFilter, sortBy, sortDirection, typeFilter, actions, section, watchItem, profileName, heroIndex]);
 
   const initialRender = useRef(true);
@@ -312,11 +314,14 @@ export default function App() {
       .filter(item => genre === 'All' || item.genres.includes(genre) || item.type === genre.toLowerCase())
       .filter(item => ageRatingFilter === 'All' || (item.ageRating || (item.type === 'series' ? 'TV-14' : 'PG-13')) === ageRatingFilter)
       .filter(item => typeFilter === 'All' || (typeFilter === 'Movies' ? item.type === 'film' : item.type === 'series'))
-      .filter(item => sortBy !== 'essential' || item.essential)
-      .map(enrichItem)
-      .filter(item => effectiveRating(item) >= rating);
-    sorted.sort((a, b) => {
-      const dir = sortDirection === 'asc' ? 1 : -1;
+  .filter(item => timelineMode !== 'doomsday-secret-wars' || DOOMSDAY_SECRET_WARS_TITLES.has(item.title))
+  .filter(item => !['loki', 'wanda', 'multiverse'].includes(timelineMode) || (timelineMode === 'multiverse' ? true : CHARACTER_POV_TITLE_SETS[timelineMode]?.has(item.title)))
+  .filter(item => sortBy !== 'essential' || item.essential)
+  .map(enrichItem)
+  .filter(item => effectiveRating(item) >= rating);
+  const timelineRank = (item) => STORY_ORDER_OVERRIDES.get(item.title) ?? (timelineMode === 'chronological' ? (Number(item.storyYear || item.year || 9999) * 1000 + item.order) : item.order);
+  sorted.sort((a, b) => {
+  const dir = sortDirection === 'asc' ? 1 : -1;
       if (sortBy === 'year') return (a.year - b.year) * (sortDirection === 'asc' ? 1 : -1);
       if (sortBy === 'title') return a.title.localeCompare(b.title) * (sortDirection === 'asc' ? 1 : -1);
       if (sortBy === 'rating') return (effectiveRating(a) - effectiveRating(b)) * dir;
@@ -324,10 +329,10 @@ export default function App() {
       if (sortBy === 'tomato') return ((parseInt(a.tomatoRating) || 0) - (parseInt(b.tomatoRating) || 0)) * dir;
       if (sortBy === 'meta') return ((parseInt(a.metaRating) || 0) - (parseInt(b.metaRating) || 0)) * dir;
       if (sortBy === 'popularity') return ((Number(a.voteCount) || 0) - (Number(b.voteCount) || 0)) * dir;
-      return (a.order - b.order) * (sortDirection === 'asc' ? 1 : -1);
+      return (timelineRank(a) - timelineRank(b)) * dir;
     });
     return sorted;
-  }, [allItems, universe, query, genre, rating, ageRatingFilter, sortBy, sortDirection, typeFilter, enrichItem]);
+  }, [allItems, universe, query, genre, rating, ageRatingFilter, sortBy, sortDirection, timelineMode, typeFilter, enrichItem]);
 
   // Unfiltered items (no search/filter) for WatchPage/WatchBrowse suggestions
   const roadmapItems = useMemo(() => {
@@ -666,7 +671,7 @@ export default function App() {
       window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(`${item.title} official trailer`)}`, '_blank', 'noopener');
     }
   };
-  const resetFilters = () => { setQuery(''); setGenre('All'); setRating(0); setAgeRatingFilter('All'); setTypeFilter('All'); setSortBy('order'); setSortDirection('desc'); };
+  const resetFilters = () => { setQuery(''); setGenre('All'); setRating(0); setAgeRatingFilter('All'); setTypeFilter('All'); setSortBy('order'); setSortDirection('desc'); setTimelineMode('release'); };
   const handleStartWatch = useCallback((item, tmdbId, mediaType) => {
     setWatchItem({ item, tmdbId, mediaType });
     setStatus(item, 'watching');
@@ -871,7 +876,7 @@ export default function App() {
 
       {selectedItem && <DetailView item={selectedItem} onClose={() => selectItem(null)} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={startWatchWithConfirm} onStartWatchFromRoadmap={startWatchFromRoadmap} activeItems={roadmapItems} />}
       {trailer && <TrailerModal trailer={trailer} onClose={() => setTrailer(null)} />}
-      {filtersOpen && <Filters genre={genre} setGenre={setGenre} rating={rating} setRating={setRating} ageRatingFilter={ageRatingFilter} setAgeRatingFilter={setAgeRatingFilter} sortBy={sortBy} setSortBy={setSortBy} sortDirection={sortDirection} setSortDirection={setSortDirection} typeFilter={typeFilter} setTypeFilter={setTypeFilter} genres={genres} count={activeItems.length} onClose={() => setFiltersOpen(false)} />}
+      {filtersOpen && <Filters genre={genre} setGenre={setGenre} rating={rating} setRating={setRating} ageRatingFilter={ageRatingFilter} setAgeRatingFilter={setAgeRatingFilter} sortBy={sortBy} setSortBy={setSortBy} sortDirection={sortDirection} setSortDirection={setSortDirection} timelineMode={timelineMode} setTimelineMode={setTimelineMode} universe={universe} typeFilter={typeFilter} setTypeFilter={setTypeFilter} genres={genres} count={activeItems.length} onClose={() => setFiltersOpen(false)} />}
       {authOpen && <AuthModal onClose={() => setAuthOpen(false)} onLogin={login} onSignup={signup} onGoogleSignIn={googleSignIn} onAnonymousSignIn={anonymousSignIn} onResetPassword={resetPassword} />}
       {watchConfirmItem && <WatchConfirmDialog item={watchConfirmItem.item} onConfirm={confirmWatch} onDismiss={(skipFuture) => dismissWatchConfirm(skipFuture)} />}
       <Footer />
@@ -976,7 +981,7 @@ function MovieCard({ item, setSelected, cycleStatus, setStatus, toggleBookmark, 
     <button className="poster-button" onClick={() => setSelected(item)}>
       <PosterArt item={item} />
     </button>
-    <div className="card-body"><button className="title-button" onClick={() => setSelected(item)}>{item.title}</button><span>{item.year} · {runtimeLabel(item.runtime, item.type)}{item.userStatus === 'watching' && item.watchedDuration > 30000 ? ` · ${watchTimeLabel(item)}` : ''}{item.releaseStatus === 'upcoming' && item.releaseDate ? <span className="card-release-badge">{new Date(item.releaseDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span> : ''}{item.releaseStatus === 'upcoming' && !item.releaseDate ? <span className="card-release-badge">Upcoming</span> : ''}{item.releaseStatus === 'announced' ? <span className="card-release-badge announced">Announced</span> : ''}</span>
+    <div className="card-body"><button className="title-button" onClick={() => setSelected(item)}>{item.title} <span className="phase-badge">Phase {item.phase || '—'}</span></button>{SPOILER_GUIDANCE[item.title] && <span className="spoiler-note">{SPOILER_GUIDANCE[item.title].note}</span>}<span>{item.year} · {runtimeLabel(item.runtime, item.type)}{item.userStatus === 'watching' && item.watchedDuration > 30000 ? ` · ${watchTimeLabel(item)}` : ''}{item.releaseStatus === 'upcoming' && item.releaseDate ? <span className="card-release-badge">{new Date(item.releaseDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span> : ''}{item.releaseStatus === 'upcoming' && !item.releaseDate ? <span className="card-release-badge">Upcoming</span> : ''}{item.releaseStatus === 'announced' ? <span className="card-release-badge announced">Announced</span> : ''}</span>
         <div className="card-ratings-line">{item.rating && <span className="list-rating"><Star size={9} fill="currentColor" />{Number(item.rating).toFixed(1)}</span>}{item.imdbRating && <span className="list-rating list-rating-imdb">★{item.imdbRating}</span>}{item.tomatoRating && <span className={`list-rating list-rating-tomato ${getTomatoTier(item.tomatoRating).cls}`}>{getTomatoTier(item.tomatoRating).emoji}{item.tomatoRating}</span>}{item.metaRating && <span className="list-rating list-rating-meta">M{parseInt(item.metaRating)}</span>}{!(item.rating || item.imdbRating || item.tomatoRating || item.metaRating) && <span className="list-rating list-rating-na">N/A</span>}</div>
     </div>
     <div className="card-actions"><button onClick={() => playTrailer(item)} className="trailer-chip" aria-label={`Play ${item.title} trailer`}><Clapperboard size={16} /><span>Trailer</span></button><StatusSelect item={item} setStatus={setStatus} compact /><button onClick={() => toggleBookmark(item)} className={`bookmark-chip ${item.bookmarked ? 'saved' : ''}`} aria-label={item.bookmarked ? 'Remove bookmark' : 'Bookmark title'}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button></div>
@@ -2227,7 +2232,7 @@ const saveServerPref = (tmdbId, server) => {
 
 const AGE_RATINGS = ['PG-13', 'R', 'TV-14', 'TV-PG', 'TV-MA', 'Not Rated'];
 
-function Filters({ genre, setGenre, rating, setRating, ageRatingFilter, setAgeRatingFilter, sortBy, setSortBy, sortDirection, setSortDirection, typeFilter, setTypeFilter, genres, count, onClose }) {
+function Filters({ genre, setGenre, rating, setRating, ageRatingFilter, setAgeRatingFilter, sortBy, setSortBy, sortDirection, setSortDirection, timelineMode, setTimelineMode, universe, typeFilter, setTypeFilter, genres, count, onClose }) {
   const SORT_OPTIONS = [
     { value: 'order', label: 'Viewing Order' },
     { value: 'rating', label: 'TMDB Rating' },
@@ -2248,6 +2253,14 @@ function Filters({ genre, setGenre, rating, setRating, ageRatingFilter, setAgeRa
     </div>
 
     <div className="filter-body">
+      {universe === 'marvel' && <section className="filter-section">
+        <h3>Marvel watch list</h3>
+        <div className="filter-chip-row">
+          {TIMELINE_MODES.map(mode => <button key={mode.id} className={`filter-chip ${timelineMode === mode.id ? 'selected' : ''}`} onClick={() => { setTimelineMode(mode.id); setSortBy('order'); setSortDirection('asc'); }} title={mode.description}>{mode.label}</button>)}
+        </div>
+        <p className="filter-hint">Chronological order is approximate for Marvel Television and animated branches.</p>
+      </section>}
+
       <section className="filter-section">
         <div className="filter-section-header"><h3>Sort by</h3><div className="sort-direction-toggle" role="group" aria-label="Sort direction">
           <button className={sortDirection === 'desc' ? 'active' : ''} onClick={() => setSortDirection('desc')} title="Highest first">↓</button>

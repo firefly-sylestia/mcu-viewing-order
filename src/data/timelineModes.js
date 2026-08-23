@@ -1,6 +1,7 @@
 export const TIMELINE_MODES = [
-  { id: 'release', label: 'Release Order', description: 'View by theatrical/streaming release order.' },
-  { id: 'chronological', label: 'Chronological Story', description: 'Approximate in-universe story chronology.' },
+  { id: 'release', label: 'Release Order', description: 'The original theatrical, streaming, and television release sequence.' },
+  { id: 'chronological', label: 'Original Chronological', description: 'Approximate in-universe story order, including expanded shorts and series.' },
+  { id: 'doomsday-secret-wars', label: 'Doomsday → Secret Wars', description: 'Focused prerequisite path for the next Avengers saga finale.' },
   { id: 'loki', label: 'Character POV: Loki', description: 'Focuses Loki and TVA-centric journey.' },
   { id: 'wanda', label: 'Character POV: Wanda', description: 'Focuses Wanda Maximoff arc.' },
   { id: 'multiverse', label: 'Branching Multiverse', description: 'Highlights multiverse branches and alternate continuities.' },
@@ -13,18 +14,35 @@ export const CHARACTER_POV_TITLE_SETS = {
   wanda: new Set(['Avengers: Age of Ultron', 'Captain America: Civil War', 'Avengers: Infinity War', 'Avengers: Endgame', 'WandaVision S1', 'Doctor Strange: Multiverse of Madness', 'Agatha All Along S1', 'What If...? S2']),
 };
 
+// Stable title keys keep ordering and guidance intact when display metadata changes.
 export const STORY_ORDER_OVERRIDES = new Map([
-  ['Captain America: The First Avenger', 1],
-  ['Captain Marvel', 2],
-  ['Iron Man', 3],
-  ['Iron Man 2', 4],
-  ['The Incredible Hulk', 5],
-  ['Thor', 6],
-  ['The Avengers', 7],
+  ['Captain America: The First Avenger', 10], ['Agent Carter (One-Shot)', 11], ['Agent Carter S1', 12], ['Agent Carter S2', 13],
+  ['Captain Marvel', 20], ['Iron Man', 30], ['Iron Man 2', 40], ['The Incredible Hulk', 45],
+  ['A Funny Thing Happened on the Way to Thor\'s Hammer', 50], ['Thor', 60], ['The Consultant', 70], ['The Avengers', 80], ['Item 47', 90],
+  ['Iron Man 3', 100], ['Thor: The Dark World', 110], ['Guardians of the Galaxy', 120], ['Guardians of the Galaxy Vol. 2', 130],
+  ['Avengers: Age of Ultron', 140], ['Ant-Man', 150], ['Captain America: Civil War', 160], ['Black Widow', 170], ['Black Panther', 180],
+  ['Spider-Man: Homecoming', 190], ['Doctor Strange', 200], ['Thor: Ragnarok', 210], ['Ant-Man & the Wasp', 220], ['Avengers: Infinity War', 230], ['Avengers: Endgame', 240],
+  ['Loki S1', 250], ['WandaVision S1', 260], ['The Falcon & the Winter Soldier S1', 270], ['Spider-Man: Far From Home', 280], ['Spider-Man: No Way Home', 290],
+  ['Doctor Strange: Multiverse of Madness', 300], ['Hawkeye S1', 310], ['Moon Knight S1', 320], ['Black Panther: Wakanda Forever', 330], ['Echo S1', 340],
+  ['Ms. Marvel S1', 350], ['Thor: Love and Thunder', 360], ['Werewolf by Night', 370], ['Guardians Holiday Special', 380], ['Ant-Man & the Wasp: Quantumania', 390],
+  ['Guardians of the Galaxy Vol. 3', 400], ['Loki S2', 410], ['The Marvels', 420], ['Deadpool & Wolverine', 430], ['Agatha All Along S1', 440],
+  ['Daredevil: Born Again S1', 450], ['Captain America: Brave New World', 460], ['Thunderbolts*', 470], ['Fantastic Four: First Steps', 480], ['Avengers: Doomsday', 490], ['Avengers: Secret Wars', 500],
 ]);
 
-export const MULTIVERSE_BRANCH_TAGS = {
-  main: ['MCU Sacred Timeline'],
-  whatif: ['What If Branch'],
-  legacy: ['Legacy Universe Branch'],
+export const DOOMSDAY_SECRET_WARS_TITLES = new Set([
+  'Captain America: The First Avenger', 'Iron Man', 'The Avengers', 'Captain America: The Winter Soldier', 'Guardians of the Galaxy',
+  'Avengers: Age of Ultron', 'Captain America: Civil War', 'Doctor Strange', 'Thor: Ragnarok', 'Avengers: Infinity War', 'Avengers: Endgame',
+  'Loki S1', 'WandaVision S1', 'Spider-Man: No Way Home', 'Doctor Strange: Multiverse of Madness', 'Loki S2', 'Deadpool & Wolverine',
+  'The Marvels', 'Fantastic Four: First Steps', 'Captain America: Brave New World', 'Thunderbolts*', 'Avengers: Doomsday', 'Avengers: Secret Wars',
+]);
+
+export const SPOILER_GUIDANCE = {
+  'Captain Marvel': { label: 'Post-credit spoiler', note: 'Skip the end credits until after Avengers: Infinity War.', watchAfter: 'Avengers: Infinity War' },
+  'Black Widow': { label: 'Post-credit spoiler', note: 'Skip the end credits until after Hawkeye S1.', watchAfter: 'Hawkeye S1' },
+  'The Consultant': { label: 'Placement note', note: 'Best after The Incredible Hulk and before The Avengers.', watchAfter: 'The Incredible Hulk' },
+  'Peter’s To-Do List': { label: 'Short placement', note: 'Watch after Spider-Man: Homecoming; it is a Homecoming short.', watchAfter: 'Spider-Man: Homecoming' },
+  'Avengers: Endgame': { label: 'Saga spoiler', note: 'Watch Avengers: Infinity War immediately before this.', watchAfter: 'Avengers: Infinity War' },
+  'Avengers: Secret Wars': { label: 'Finale prerequisite', note: 'Watch Avengers: Doomsday first.', watchAfter: 'Avengers: Doomsday' },
 };
+
+export const MULTIVERSE_BRANCH_TAGS = { main: ['MCU Sacred Timeline'], whatif: ['What If Branch'], legacy: ['Legacy Universe Branch'] };
