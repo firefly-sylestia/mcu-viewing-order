@@ -3,9 +3,9 @@ import { Search, SlidersHorizontal, Home, Bookmark, Play, UserRound, X, ArrowLef
 import { RAW } from './data/mcuData';
 import { DC_RAW } from './data/dcData';
 import { XMEN_RAW } from './data/xmenData';
+import { SONY_RAW } from './data/sonyData';
 import { getTrailerByTitle, trailerEmbedUrl } from './data/trailerData';
 import { STORY_BRIDGES } from './data/connections';
-import { fetchTrailerFromApi } from './utils/trailerCache';
 import ProfilePage from './components/ProfilePage';
 import AuthModal from './components/AuthModal';
 import { useAuth } from './hooks/useAuth';
@@ -35,6 +35,7 @@ const STATUS_LABELS = { unwatched: 'Unwatched', watching: 'Watching', watched: '
 const marvelPalette = ['#641220', '#85182a', '#a11d33', '#b21e35', '#bd1f36', '#da1e37'];
 const dcPalette = ['#061226', '#08204a', '#0b3a78', '#0d4f9c', '#1367c8', '#2f80ed'];
 const xmenPalette = ['#6a6a7a', '#828294', '#9a9aa8', '#b0b0ba', '#c4c4cc', '#d8d8de'];
+const sonyPalette = ['#7d1829', '#9e1d32', '#b51f2f', '#c94c3b', '#d9573f', '#e05b3f'];
 
 const SORT_LABELS = { order: 'Order', rating: 'Rating', imdb: 'IMDb', tomato: 'Tomato', meta: 'Meta', popularity: 'Popular', year: 'Year', title: 'Title', essential: 'Essential' };
 const runtimeLabel = (minutes = 0, type = 'film') => {
@@ -151,7 +152,7 @@ const enhance = (item, universe) => ({
   rating: item.rating || null,
   genres: item.type === 'series' ? ['Series', 'Action', 'Drama'] : ['Action', item.phase >= 4 ? 'Adventure' : 'Sci-fi', item.essential ? 'Essential' : 'Canon'],
   poster: item.poster || '',
-  accent: universe === 'dc' ? dcPalette[(item.phase - 1) % dcPalette.length] : universe === 'xmen' ? xmenPalette[(item.phase - 1) % xmenPalette.length] : marvelPalette[(item.phase - 1) % marvelPalette.length],
+  accent: universe === 'dc' ? dcPalette[(item.phase - 1) % dcPalette.length] : universe === 'xmen' ? xmenPalette[(item.phase - 1) % xmenPalette.length] : universe === 'sony' ? sonyPalette[(item.phase - 1) % sonyPalette.length] : marvelPalette[(item.phase - 1) % marvelPalette.length],
 });
 
 export default function App() {
@@ -201,7 +202,7 @@ export default function App() {
     }
   }, []);
 
-  const allItems = useMemo(() => [...RAW.map(item => enhance(item, 'marvel')), ...DC_RAW.map(item => enhance(item, 'dc')), ...XMEN_RAW.map(item => enhance(item, 'xmen'))], []);
+  const allItems = useMemo(() => [...RAW.map(item => enhance(item, 'marvel')), ...DC_RAW.map(item => enhance(item, 'dc')), ...XMEN_RAW.map(item => enhance(item, 'xmen')), ...SONY_RAW.map(item => enhance(item, 'sony'))], []);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ universe, query, genre, rating, ageRatingFilter, sortBy, sortDirection, typeFilter, actions, section, watchItem, profileName, heroIndex }));
@@ -653,14 +654,10 @@ export default function App() {
   };
   const selectedItem = selected ? activeItems.find(item => item.id === selected.id) || selected : null;
   const nextUp = activeItems.find(item => item.userStatus !== 'watched' && item.userStatus !== 'dropped') || activeItems[0];
-  const playTrailer = async (item) => {
-    // 1. Kinocheck API with client-side cache (primary, most accurate)
-    const kinocheck = await fetchTrailerFromApi(item.title, item.year, item.tmdbId);
-    
-    // 2. Fallback: hardcoded TRAILER_DATA
-    const match = !kinocheck?.youtubeId ? getTrailerByTitle(item.title) : null;
-    const youtubeId = kinocheck?.youtubeId || match?.primary?.youtubeId || match?.youtubeId;
-    const options = kinocheck?.options || match?.options;
+  const playTrailer = (item) => {
+    const match = getTrailerByTitle(item.title);
+    const youtubeId = match?.primary?.youtubeId || match?.youtubeId;
+    const options = match?.options;
 
     // 3. Play or YouTube search
     if (youtubeId) {
@@ -741,9 +738,9 @@ export default function App() {
     startWatchWithConfirm(tempItem, externalResult.id, externalResult.type);
   };
 
-  const universeName = universe === 'marvel' ? 'MCU' : universe === 'xmen' ? 'X-Men' : 'DC';
-  const universeAccent = universe === 'marvel' ? '#da1e37' : universe === 'xmen' ? '#a0a0ac' : '#2f80ed';
-  const profileInitial = (profileName?.trim()?.[0] || (universe === 'marvel' ? 'M' : universe === 'xmen' ? 'X' : 'D')).toUpperCase();
+  const universeName = universe === 'marvel' ? 'MCU' : universe === 'xmen' ? 'X-Men' : universe === 'sony' ? 'Sony' : 'DC';
+  const universeAccent = universe === 'marvel' ? '#da1e37' : universe === 'xmen' ? '#a0a0ac' : universe === 'sony' ? '#b51f2f' : '#2f80ed';
+  const profileInitial = (profileName?.trim()?.[0] || (universe === 'marvel' ? 'M' : universe === 'xmen' ? 'X' : universe === 'sony' ? 'S' : 'D')).toUpperCase();
 
   return (
     <main className={`movie-site universe-${universe}`} style={{ '--brand-accent': universeAccent, '--accent': universeAccent, '--theme-accent': universeAccent }}>
@@ -754,10 +751,11 @@ export default function App() {
           <button className={universe === 'marvel' ? 'active' : ''} onClick={() => { setUniverse('marvel'); setHeroIndex(0); }}>Marvel</button>
           <button className={universe === 'dc' ? 'active' : ''} onClick={() => { setUniverse('dc'); setHeroIndex(0); }}>DC</button>
           <button className={universe === 'xmen' ? 'active' : ''} onClick={() => { setUniverse('xmen'); setHeroIndex(0); }}>X-Men</button>
+  <button className={universe === 'sony' ? 'active' : ''} onClick={() => { setUniverse('sony'); setHeroIndex(0); }}>Sony</button>
         </div>
         <div className="header-search">
           <Search size={18} />
-          <input value={query} onChange={e => setQuery(e.target.value)} placeholder={`Search ${universe === 'marvel' ? 'Marvel' : universe === 'xmen' ? 'X-Men' : 'DC'} titles & TMDB…`} />
+          <input value={query} onChange={e => setQuery(e.target.value)} placeholder={`Search ${universe === 'marvel' ? 'Marvel' : universe === 'xmen' ? 'X-Men' : universe === 'sony' ? 'Sony' : 'DC'} titles & TMDB…`} />
           {query && <button className="search-clear" onClick={() => setQuery('')}><X size={16} /></button>}
           {sortBy !== 'order' && (
             <button className="header-sort-chip" onClick={() => setFiltersOpen(true)} title={`Sorted by ${SORT_LABELS[sortBy]} ${sortDirection === 'asc' ? '↑' : '↓'} — tap to change`}>
@@ -910,10 +908,9 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
     return () => window.clearTimeout(timer);
   }, [heroIndex, inlineTrailer, items.length, paused, setHeroIndex]);
 
-  const showTrailer = async () => {
-    const kc = await fetchTrailerFromApi(featured.title, featured.year, featured.tmdbId);
-    const match = !kc?.youtubeId ? getTrailerByTitle(featured.title) : null;
-    const id = kc?.youtubeId || match?.primary?.youtubeId || match?.youtubeId;
+  const showTrailer = () => {
+    const match = getTrailerByTitle(featured.title);
+    const id = match?.primary?.youtubeId || match?.youtubeId;
     if (id) {
       setInlineTrailer(`${trailerEmbedUrl(id)}&autoplay=1`);
     } else {
@@ -924,7 +921,7 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
   return <section className="top-carousel" style={{ '--accent': featured?.accent || '#9a4a4a' }} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocusCapture={() => setPaused(true)} onBlurCapture={() => setPaused(false)} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
     {featured?.poster && <img key={featured.id} className="carousel-backdrop" src={featured.poster} alt="" aria-hidden="true" width="300" height="450" referrerPolicy="no-referrer" />}
     <div className="carousel-backdrop-shade" aria-hidden="true" />
-    <div className="feature-heading"><div><p className="eyebrow">{featured?.universe === 'marvel' ? 'Marvel Cinematic Universe' : featured?.universe === 'xmen' ? 'X-Men Universe' : 'DC Universe'} · Featured</p><h2>Top movies</h2></div><button className="feature-detail" onClick={() => setSelected(featured)}>View details</button></div>
+    <div className="feature-heading"><div><p className="eyebrow">{featured?.universe === 'marvel' ? 'Marvel Cinematic Universe' : featured?.universe === 'xmen' ? 'X-Men Universe' : featured?.universe === 'sony' ? 'Sony Spider-Man Universe' : 'DC Universe'} · Featured</p><h2>Top movies</h2></div><button className="feature-detail" onClick={() => setSelected(featured)}>View details</button></div>
     <div className="feature-stage">
       <div className="poster-stack smooth-stack">
         {inlineTrailer ? <div className="inline-trailer"><iframe src={inlineTrailer} title={`${featured.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={() => setInlineTrailer(null)} aria-label="Close trailer"><X size={20} /></button></div> : items.map((item, rawIndex) => { const offset = (rawIndex - heroIndex + items.length) % items.length; if (offset > 2) return null; return <button key={item.id} aria-label={offset ? `Show ${item.title}` : `View ${item.title} details`} className={`stack-poster poster-${offset}`} onClick={() => selectPoster(item, rawIndex, offset)} style={{ '--accent': item.accent }}><PosterArt item={item} loading="eager" fetchPriority={offset === 0 ? 'high' : 'auto'} /></button>; })}
@@ -1203,10 +1200,9 @@ function AnalyticsPanel({ stats, large = false }) {
 function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, onStartWatchFromRoadmap, activeItems }) {
   const [inlineTrailer, setInlineTrailer] = useState(null);
   const [isTrailerExpanded, setIsTrailerExpanded] = useState(false);
-  const showTrailer = async () => {
-    const kc = await fetchTrailerFromApi(item.title, item.year, item.tmdbId);
-    const match = !kc?.youtubeId ? getTrailerByTitle(item.title) : null;
-    const id = kc?.youtubeId || match?.primary?.youtubeId || match?.youtubeId;
+  const showTrailer = () => {
+    const match = getTrailerByTitle(item.title);
+    const id = match?.primary?.youtubeId || match?.youtubeId;
     if (id) {
       setInlineTrailer(`${trailerEmbedUrl(id)}&autoplay=1`);
       setIsTrailerExpanded(true);
