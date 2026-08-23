@@ -105,6 +105,19 @@ export const TRAILER_DATA = {
   'The Falcon & the Winter Soldier S1': [{ label: 'Official Trailer', youtubeId: 'IWBsDaFWyTE', type: 'trailer' }],
   'Guardians Holiday Special': [{ label: 'Official Trailer', youtubeId: 'OYhFFQl4fLs', type: 'trailer' }],
   'Werewolf by Night': [{ label: 'Official Trailer', youtubeId: 'bLEFqhS5WmI', type: 'trailer' }],
+  'Spider-Man': [{ label: 'Official Trailer', youtubeId: 't06RUxPbp_c', type: 'trailer' }],
+  'Spider-Man 2': [{ label: 'Official Trailer', youtubeId: 'wXrYw9O6q8E', type: 'trailer' }],
+  'Spider-Man 3': [{ label: 'Official Trailer', youtubeId: 'e5wUilOeOmg', type: 'trailer' }],
+  'The Amazing Spider-Man': [{ label: 'Official Trailer', youtubeId: 'upwf8RsyNqQ', type: 'trailer' }],
+  'The Amazing Spider-Man 2': [{ label: 'Official Trailer', youtubeId: 'nbp3Ra3Yp74', type: 'trailer' }],
+  'Spider-Man: Into the Spider-Verse': [{ label: 'Official Trailer', youtubeId: 'g4Hbz2jLxvQ', type: 'trailer' }],
+  'Spider-Man: Across the Spider-Verse': [{ label: 'Official Trailer', youtubeId: 'cqGjhVJWtEg', type: 'trailer' }],
+  'Venom': [{ label: 'Official Trailer', youtubeId: 'u9Mv98Gr5pY', type: 'trailer' }],
+  'Venom: Let There Be Carnage': [{ label: 'Official Trailer', youtubeId: '-FmWuCgJmxo', type: 'trailer' }],
+  'Morbius': [{ label: 'Official Trailer', youtubeId: 'oZ6iiRrz1SY', type: 'trailer' }],
+  'Madame Web': [{ label: 'Official Trailer', youtubeId: 's_76M4c4LTo', type: 'trailer' }],
+  'Kraven the Hunter': [{ label: 'Official Trailer', youtubeId: 'rze8QYwWGMs', type: 'trailer' }],
+  'Venom: The Last Dance': [{ label: 'Official Trailer', youtubeId: 'HY4jCjufLG8', type: 'trailer' }],
 };
 
 export const trailerEmbedUrl = (youtubeId) => `https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1`;
