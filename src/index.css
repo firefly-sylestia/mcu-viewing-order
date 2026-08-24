@@ -1,3 +1,13 @@
+/* Warning indicators and spoiler feedback */
+.warning-info-button { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; padding: 0; border: 1px solid var(--color-danger, #da1e37); border-radius: 50%; color: var(--color-danger, #da1e37); background: transparent; cursor: pointer; }
+.warning-info-button:hover, .warning-info-button:focus-visible { background: var(--color-danger, #da1e37); color: var(--color-bg-base); }
+.detail-spoiler-warning, .app-warning-toast { display: flex; align-items: flex-start; gap: 10px; color: var(--color-danger, #da1e37); background: rgba(218, 30, 55, 0.12); border: 1px solid rgba(218, 30, 55, 0.5); border-radius: var(--radius-md); padding: 12px 14px; }
+.detail-spoiler-warning { margin-top: 12px; }
+.detail-spoiler-warning p { margin: 4px 0 0; color: var(--color-text-secondary); }
+.app-warning-toast { position: fixed; z-index: 100; left: 50%; bottom: 86px; transform: translateX(-50%); width: min(92vw, 520px); align-items: center; box-shadow: var(--elevation-surface-2); }
+.app-warning-toast span { flex: 1; color: var(--color-text-primary); }
+.app-warning-toast button { display: inline-flex; border: 0; background: transparent; color: inherit; cursor: pointer; }
+
 /* Geom variable font loaded via @fontsource-variable/geom in main.jsx */
 /* ═══════════════════════════════════════════════════════════════════════════
    MCU VIEWING TRACKER — Core Design Tokens
