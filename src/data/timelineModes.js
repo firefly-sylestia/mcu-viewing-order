@@ -26,13 +26,36 @@ export const DOOMSDAY_SECRET_WARS_TITLES = new Set([
   'The Marvels', 'Fantastic Four: First Steps', 'Captain America: Brave New World', 'Thunderbolts*', 'Avengers: Doomsday', 'Avengers: Secret Wars',
 ]);
 
+// Title-specific notes intentionally call out major prerequisite and post-credit spoilers.
+// Sources consulted: Marvel.com release guides, Disney+ MCU timeline, and Marvel Studios
+// post-credit scene coverage (accessed 2026-09-01). Keep this map concise and actionable.
 export const SPOILER_GUIDANCE = {
   'Captain Marvel': { label: 'Post-credit spoiler', note: 'Skip the end credits until after Avengers: Infinity War.', watchAfter: 'Avengers: Infinity War' },
   'Black Widow': { label: 'Post-credit spoiler', note: 'Skip the end credits until after Hawkeye S1.', watchAfter: 'Hawkeye S1' },
   'The Consultant': { label: 'Placement note', note: 'Best after The Incredible Hulk and before The Avengers.', watchAfter: 'The Incredible Hulk' },
   'Peter’s To-Do List': { label: 'Short placement', note: 'Watch after Spider-Man: Homecoming; it is a Homecoming short.', watchAfter: 'Spider-Man: Homecoming' },
-  'Avengers: Endgame': { label: 'Saga spoiler', note: 'Watch Avengers: Infinity War immediately before this.', watchAfter: 'Avengers: Infinity War' },
+  'Avengers: Endgame': { label: 'Saga spoiler', note: 'Watch Avengers: Infinity War immediately before this; it resolves the Snap cliffhanger.', watchAfter: 'Avengers: Infinity War' },
   'Avengers: Secret Wars': { label: 'Finale prerequisite', note: 'Watch Avengers: Doomsday first.', watchAfter: 'Avengers: Doomsday' },
+  'Avengers: Infinity War': { label: 'Saga prerequisite', note: 'Watch the earlier Avengers films and Guardians Vol. 1–2 first; this begins the two-part Thanos finale.', watchAfter: 'Avengers: Age of Ultron' },
+  'Spider-Man: Far From Home': { label: 'Endgame aftermath', note: 'Watch Avengers: Endgame first. The story opens after its world-changing ending.', watchAfter: 'Avengers: Endgame' },
+  'Spider-Man: No Way Home': { label: 'Multiverse prerequisite', note: 'Watch Far From Home first. For the full reveal, the earlier live-action Spider-Man films are strongly recommended.', watchAfter: 'Spider-Man: Far From Home' },
+  'Doctor Strange: Multiverse of Madness': { label: 'Story prerequisite', note: 'Watch WandaVision and Spider-Man: No Way Home first; both directly set up its multiverse and Wanda arcs.', watchAfter: 'WandaVision S1' },
+  'Thor: Love and Thunder': { label: 'Story prerequisite', note: 'Watch Thor: Ragnarok, Avengers: Infinity War, and Avengers: Endgame first.', watchAfter: 'Avengers: Endgame' },
+  'Guardians of the Galaxy Vol. 3': { label: 'Emotional prerequisite', note: 'Watch Guardians Vol. 1–2, Infinity War, Endgame, the Holiday Special, and Thor: Love and Thunder first.', watchAfter: 'Guardians Holiday Special' },
+  'The Marvels': { label: 'Character prerequisite', note: 'Watch Captain Marvel, WandaVision, and Ms. Marvel first; Monica, Carol, and Kamala’s arcs converge here.', watchAfter: 'Ms. Marvel S1' },
+  'Hawkeye S1': { label: 'Character spoiler', note: 'Watch Avengers: Endgame and Black Widow first; Yelena’s story continues after Black Widow’s end credits.', watchAfter: 'Black Widow' },
+  'Ant-Man & the Wasp: Quantumania': { label: 'Multiverse prerequisite', note: 'Watch Ant-Man, Ant-Man & the Wasp, Avengers: Endgame, and Loki S1 first.', watchAfter: 'Loki S1' },
+  'Deadpool & Wolverine': { label: 'Legacy prerequisite', note: 'The biggest reveals draw from the X-Men films, Deadpool 1–2, Logan, and Loki. Watch those first to avoid major spoilers.', watchAfter: 'Deadpool 2' },
 };
+
+export function getTitleGuidance(item) {
+  if (!item) return null;
+  const specific = SPOILER_GUIDANCE[item.title];
+  if (specific) return specific;
+  if (item.prereq && !/^None( |$)/.test(item.prereq) && item.prereq !== 'General MCU knowledge') {
+    return { label: 'Watch before this', note: `For the intended story context, watch ${item.prereq} first.`, watchAfter: item.prereq };
+  }
+  return null;
+}
 
 export const MULTIVERSE_BRANCH_TAGS = { main: ['MCU Sacred Timeline'], whatif: ['What If Branch'], legacy: ['Legacy Universe Branch'] };
