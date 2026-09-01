@@ -1,8 +1,163 @@
+import { RAW } from './mcuData';
+
 export const TIMELINE_MODES = [
   { id: 'release', label: 'Release Order', description: 'The original theatrical, streaming, and television release sequence.' },
 ];
 
 export const TIMELINE_MODE_IDS = new Set(TIMELINE_MODES.map((m) => m.id));
+
+// Canonical expanded MCU viewing order supplied for the app default.
+// Entries not present in this sequence are placed afterward by Phase 1 → 6.
+export const DEFAULT_VIEWING_ORDER = [
+  'Captain America: The First Avenger',
+  'Agent Carter (One-Shot)',
+  'Agent Carter S1 & S2',
+  'Captain Marvel',
+  'Iron Man',
+  'Iron Man 2',
+  'The Incredible Hulk',
+  'A Funny Thing Happened on the Way to Thor\'s Hammer',
+  'Thor',
+  'The Consultant',
+  'The Avengers',
+  'Item 47',
+  'Agents of SHIELD S1 Eps 1–7',
+  'Thor: The Dark World',
+  'Agents of SHIELD S1 Eps 8–12',
+  'Iron Man 3',
+  'Agents of SHIELD S1 Eps 13–15',
+  'All Hail the King',
+  'Agents of SHIELD S1 Ep 16',
+  'Captain America: The Winter Soldier',
+  'Agents of SHIELD S1 Eps 17–22 & S2 Eps 1–2',
+  'Guardians of the Galaxy',
+  'I Am Groot S1 & S2',
+  'Agents of SHIELD S2 Ep 3',
+  'Guardians of the Galaxy Vol. 2',
+  'Agents of SHIELD S2 Eps 4–5',
+  'Daredevil S1',
+  'Jessica Jones S1',
+  'Agents of SHIELD S2 Eps 6–19',
+  'Avengers: Age of Ultron',
+  'Agents of SHIELD S2 Eps 20–22',
+  'WHiH Newsfront S1',
+  'Ant-Man',
+  'Daredevil S2',
+  'Luke Cage S1',
+  'Agents of SHIELD S3 Eps 1–10',
+  'Iron Fist S1',
+  'Agents of SHIELD S3 Eps 11–14',
+  'WHiH Newsfront S2 Ep 1',
+  'Agents of SHIELD S3 Eps 15–16',
+  'WHiH Newsfront S2 Ep 2',
+  'Agents of SHIELD S3 Eps 17–18',
+  'WHiH Newsfront S2 Eps 3–5',
+  'The Defenders S1',
+  'Agents of SHIELD S3 Ep 19',
+  'Captain America: Civil War',
+  'Agents of SHIELD S3 Eps 20–22',
+  'Black Widow',
+  'Black Panther',
+  'Eyes of Wakanda S1',
+  'Inhumans S1',
+  'Spider-Man: Homecoming',
+  'The Punisher S1',
+  'Doctor Strange',
+  'Cloak & Dagger S1',
+  'Agents of SHIELD S4 Eps 1–8',
+  'Agents of SHIELD: Slingshot S1',
+  'Agents of SHIELD S4 Eps 9–22',
+  'Jessica Jones S2',
+  'Agents of SHIELD S5 Eps 1–10',
+  'Luke Cage S2',
+  'Iron Fist S2',
+  'Daredevil S3',
+  'Cloak & Dagger S2',
+  'Thor: Ragnarok',
+  'Agents of SHIELD S5 Eps 11–13',
+  'Runaways S1 & S2 & S3 Eps 1–4',
+  'The Punisher S2',
+  'Jessica Jones S3',
+  'Ant-Man & the Wasp',
+  'Agents of SHIELD S5 Eps 14–18',
+  'Avengers: Infinity War',
+  'Agents of SHIELD S5 Eps 19–22',
+  'Runaways S3 Eps 5–10',
+  'Agents of SHIELD S6 & S7',
+  'Helstrom S1',
+  'Avengers: Endgame',
+  'Loki S1',
+  'What If...? S1',
+  'WandaVision S1',
+  'Shang-Chi & the Legend of the Ten Rings',
+  'The Falcon & the Winter Soldier S1',
+  'Peter’s To-Do List',
+  'Spider-Man: Far From Home',
+  'The Daily Bugle S1 & S2',
+  'She-Hulk: Attorney at Law S1',
+  'Eternals',
+  'Spider-Man: No Way Home',
+  'Doctor Strange: Multiverse of Madness',
+  'Hawkeye S1',
+  'Moon Knight S1',
+  'Black Panther: Wakanda Forever',
+  'Echo S1',
+  'Ms. Marvel S1',
+  'Thor: Love and Thunder',
+  'Ironheart S1',
+  'Werewolf by Night',
+  'Guardians Holiday Special',
+  'Ant-Man & the Wasp: Quantumania',
+  'Guardians of the Galaxy Vol. 3',
+  'Secret Invasion S1',
+  'The Marvels',
+  'Loki S2',
+  'What If...? S2',
+  'Deadpool & Wolverine',
+  'Agatha All Along S1',
+  'What If...? S3',
+  'Your Friendly Neighborhood Spider-Man S1',
+  'Daredevil: Born Again S1',
+  'Captain America: Brave New World',
+  'Thunderbolts*',
+  'Fantastic Four: First Steps',
+];
+
+const DEFAULT_VIEWING_ORDER_RANK = new Map(DEFAULT_VIEWING_ORDER.map((title, index) => [title, index + 1]));
+
+// Existing data contains a few combined entries where the requested sequence splits
+// episodes/credits into multiple placements. Keep those entries intact so IDs and
+// progress tracking are not broken, while placing the combined record at its first
+// requested position.
+const DEFAULT_TITLE_ALIASES = new Map([
+  ['Agent Carter S1 & S2', 'Agent Carter S1 & S2'],
+  ['Daredevil S1', 'Daredevil S1'],
+  ['Daredevil S2', 'Daredevil S2'],
+  ['Daredevil S3', 'Daredevil S3'],
+  ['The Falcon & the Winter Soldier S1', 'The Falcon & the Winter Soldier S1'],
+]);
+
+const defaultRankForItem = (item) => {
+  const direct = DEFAULT_VIEWING_ORDER_RANK.get(item.title);
+  if (direct) return direct;
+  const alias = DEFAULT_TITLE_ALIASES.get(item.title);
+  if (alias) return DEFAULT_VIEWING_ORDER_RANK.get(alias) || null;
+  return null;
+};
+
+// `order` is the app's existing default list ranking. Apply the new canonical order
+// only to MCU RAW entries; non-MCU universes retain their existing order untouched.
+// Unlisted MCU titles are appended after the supplied 110-item sequence by phase.
+RAW.forEach((item) => {
+  const rank = defaultRankForItem(item);
+  if (rank) {
+    item.order = rank;
+  } else {
+    const phase = Number(item.phase) || 99;
+    const originalOrder = Number(item.order) || 0;
+    item.order = 1000 + phase * 1000 + originalOrder;
+  }
+});
 
 // Stable title keys keep ordering and guidance intact when display metadata changes.
 export const STORY_ORDER_OVERRIDES = new Map([
