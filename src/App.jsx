@@ -169,6 +169,8 @@ export default function App() {
   const [ageRatingFilter, setAgeRatingFilter] = useState(saved.ageRatingFilter || 'All');
   const [sortBy, setSortBy] = useState(saved.sortBy || 'order');
   const [sortDirection, setSortDirection] = useState('asc');
+  const [phaseFilter, setPhaseFilter] = useState(saved.phaseFilter || 'All');
+  const [phaseMenuOpen, setPhaseMenuOpen] = useState(false);
   const [typeFilter, setTypeFilter] = useState(saved.typeFilter || 'All');
   const [heroIndex, setHeroIndex] = useState(saved.heroIndex || 0);
   const [section, setSection] = useState(parseHash().section || saved.section || 'home');
@@ -214,7 +216,7 @@ export default function App() {
   const allItems = useMemo(() => [...RAW.map(item => enhance(item, 'marvel')), ...DC_RAW.map(item => enhance(item, 'dc')), ...XMEN_RAW.map(item => enhance(item, 'xmen')), ...SONY_RAW.map(item => enhance(item, 'sony'))], []);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ universe, query, genre, rating, ageRatingFilter, sortBy, sortDirection, typeFilter, actions, section, watchItem, profileName, heroIndex }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ universe, query, genre, rating, ageRatingFilter, sortBy, sortDirection, phaseFilter, typeFilter, actions, section, watchItem, profileName, heroIndex }));
   }, [universe, query, genre, rating, ageRatingFilter, sortBy, sortDirection, typeFilter, actions, section, watchItem, profileName, heroIndex]);
 
   const initialRender = useRef(true);
@@ -320,7 +322,8 @@ export default function App() {
       .filter(item => item.title.toLowerCase().includes(query.toLowerCase()))
       .filter(item => genre === 'All' || item.genres.includes(genre) || item.type === genre.toLowerCase())
       .filter(item => ageRatingFilter === 'All' || (item.ageRating || (item.type === 'series' ? 'TV-14' : 'PG-13')) === ageRatingFilter)
-      .filter(item => typeFilter === 'All' || (typeFilter === 'Movies' ? item.type === 'film' : item.type === 'series'))
+      .filter(item => phaseFilter === 'All' || String(item.phase || '') === String(phaseFilter))
+  .filter(item => typeFilter === 'All' || (typeFilter === 'Movies' ? item.type === 'film' : item.type === 'series'))
   .filter(item => sortBy !== 'doomsday-secret-wars' || DOOMSDAY_SECRET_WARS_TITLES.has(item.title))
   .filter(item => sortBy !== 'essential' || item.essential)
   .map(enrichItem)
@@ -343,7 +346,7 @@ export default function App() {
       return (timelineRank(a) - timelineRank(b)) * dir;
     });
     return sorted;
-  }, [allItems, universe, query, genre, rating, ageRatingFilter, sortBy, sortDirection, typeFilter, enrichItem]);
+  }, [allItems, universe, query, genre, rating, ageRatingFilter, sortBy, sortDirection, phaseFilter, typeFilter, enrichItem]);
 
   // Unfiltered items (no search/filter) for WatchPage/WatchBrowse suggestions
   const roadmapItems = useMemo(() => {
@@ -762,24 +765,27 @@ export default function App() {
     <main className={`movie-site universe-${universe}`} style={{ '--brand-accent': universeAccent, '--accent': universeAccent, '--theme-accent': universeAccent }}>
       <div className="site-glow" />
       <header className="site-header">
-        <button className="brand" onClick={() => { setQuery(''); setSection('home'); setWatchItem(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }} aria-label={`Go to ${universeName} Viewing Order home`}><span>{universeName}</span><b>{universeName} Viewing Order</b></button>
-        <div className="universe-tabs" role="tablist" aria-label="Universe">
-          <button className={universe === 'marvel' ? 'active' : ''} onClick={() => { setUniverse('marvel'); setHeroIndex(0); }}>Marvel</button>
-          <button className={universe === 'dc' ? 'active' : ''} onClick={() => { setUniverse('dc'); setHeroIndex(0); }}>DC</button>
-          <button className={universe === 'xmen' ? 'active' : ''} onClick={() => { setUniverse('xmen'); setHeroIndex(0); }}>X-Men</button>
+  <div className="header-main-row">
+  <button className="brand" onClick={() => { setQuery(''); setSection('home'); setWatchItem(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }} aria-label={`Go to ${universeName} Viewing Order home`}><span>{universeName}</span><b>{universeName} Viewing Order</b></button>
+  <div className="header-quick-actions" aria-label="Quick viewing controls">
+  <div className="header-phase-menu">
+  <button className={`header-phase-btn ${phaseFilter !== 'All' ? 'active' : ''}`} onClick={() => setPhaseMenuOpen(open => !open)} aria-expanded={phaseMenuOpen} aria-haspopup="listbox">
+  <ListFilter size={14} /> <span>{phaseFilter === 'All' ? 'Phase' : `Phase ${phaseFilter}`}</span><ChevronDown size={13} />
+  </button>
+  {phaseMenuOpen && <div className="header-phase-dropdown" role="listbox" aria-label="Select phase">
+  {['All', ...new Set(allItems.filter(item => item.universe === universe && item.phase).map(item => item.phase))].map(phase => <button key={phase} className={String(phaseFilter) === String(phase) ? 'selected' : ''} onClick={() => { setPhaseFilter(phase); setPhaseMenuOpen(false); }} role="option" aria-selected={String(phaseFilter) === String(phase)}>{phase === 'All' ? 'All phases' : `Phase ${phase}`}</button>)}
+  </div>}
+  </div>
+  {(() => { const watchingItem = activeItems.find(item => item.userStatus === 'watching'); return watchingItem && <button className="header-status-pill watching" onClick={() => selectItem(watchingItem)} title={`Open current: ${watchingItem.title}`}><Clock size={13} /><span className="header-pill-label"><small>Watching</small><b>{watchingItem.title}</b></span></button>; })()}
+  {nextUp && <button className="header-status-pill next" onClick={() => selectItem(nextUp)} title={`Open next: ${nextUp.title}`}><Play size={12} fill="currentColor" /><span className="header-pill-label"><small>Next</small><b>{nextUp.title}</b></span></button>}
+  </div>
+  </div>
+  <div className="universe-tabs" role="tablist" aria-label="Universe">
+  <button className={universe === 'marvel' ? 'active' : ''} onClick={() => { setUniverse('marvel'); setHeroIndex(0); }}>Marvel</button>
+  <button className={universe === 'dc' ? 'active' : ''} onClick={() => { setUniverse('dc'); setHeroIndex(0); }}>DC</button>
+  <button className={universe === 'xmen' ? 'active' : ''} onClick={() => { setUniverse('xmen'); setHeroIndex(0); }}>X-Men</button>
   <button className={universe === 'sony' ? 'active' : ''} onClick={() => { setUniverse('sony'); setHeroIndex(0); }}>Sony</button>
-        </div>
-        <div className="header-quick-actions" aria-label="Quick viewing controls">
-          <button className={`header-phase-btn ${sortBy === 'phase' ? 'active' : ''}`} onClick={() => { setSortBy('phase'); setSortDirection(sortBy === 'phase' && sortDirection === 'asc' ? 'desc' : 'asc'); }} aria-label={`Sort by phase ${sortBy === 'phase' ? sortDirection : 'asc'}`} title="Sort by phase">
-            <ListFilter size={14} /> <span>Phase</span>
-          </button>
-          {activeItems.filter(item => item.userStatus === 'watching').length > 0 && <button className="header-status-pill watching" onClick={() => selectItem(activeItems.find(item => item.userStatus === 'watching'))} title="Open current watching">
-            <Clock size={13} /> <span>Watching</span><b>{activeItems.filter(item => item.userStatus === 'watching').length}</b>
-          </button>}
-          {nextUp && <button className="header-status-pill next" onClick={() => selectItem(nextUp)} title={`Open next: ${nextUp.title}`}>
-            <Play size={12} fill="currentColor" /> <span>Next</span>
-          </button>}
-        </div>
+  </div>
         <div className="header-search">
           <Search size={18} />
           <input value={query} onChange={e => setQuery(e.target.value)} placeholder={`Search ${universe === 'marvel' ? 'Marvel' : universe === 'xmen' ? 'X-Men' : universe === 'sony' ? 'Sony' : 'DC'} titles & TMDB…`} />
