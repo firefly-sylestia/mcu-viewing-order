@@ -1090,16 +1090,17 @@ button { border: 0; color: inherit; cursor: pointer; }
   .universe-tabs button { flex: 1 0 auto; }
   .header-search { width: 100%; }
   @media (max-width: 520px) {
-    .movie-site { padding: 12px 12px 76px; }
-    .site-header { gap: 9px; padding: 10px 0 12px; }
-  .brand span { width: auto; height: 34px; padding: 0 9px; border-radius: 11px; font-size: 10px; white-space: nowrap; }
-  .brand b { display: none; }
-  .header-main-row { align-items: flex-start; flex-direction: column; }
-  .header-quick-actions { width: 100%; justify-content: stretch; flex-wrap: nowrap; gap: 4px; }
-  .header-phase-menu { flex: 0 0 auto; }
-  .header-phase-btn { justify-content: center; max-width: none; min-width: 78px; padding: 0 6px; }
-  .header-status-pill { flex: 1 1 0; max-width: none; min-width: 0; justify-content: center; padding: 0 6px; }
-  .header-pill-label b { max-width: 74px; }
+    .movie-site { padding: 12px 16px 76px; }
+    .site-header { gap: 9px; padding: 10px 4px 12px; }
+    .brand { width: 100%; padding: 4px 2px; }
+    .brand span { width: auto; height: auto; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; display: block; font-size: 10px; line-height: 1.15; white-space: nowrap; color: rgba(255,255,255,.62); }
+    .brand b { display: block; font-size: 15px; line-height: 1.2; }
+    .header-main-row { align-items: flex-start; flex-direction: column; gap: 8px; }
+    .header-quick-actions { width: 100%; justify-content: stretch; flex-wrap: nowrap; gap: 6px; padding: 2px 2px; }
+    .header-phase-menu { flex: 0 0 auto; }
+    .header-phase-btn { justify-content: center; max-width: none; min-width: 78px; padding: 0 6px; }
+    .header-status-pill { flex: 1 1 0; max-width: none; min-width: 0; justify-content: center; padding: 0 6px; }
+    .header-pill-label b { max-width: 74px; }
     .universe-tabs { padding: 3px; }
     .universe-tabs button { padding: 8px 11px; font-size: 12px; }
     .header-search { height: 44px; }
@@ -1170,7 +1171,7 @@ button { border: 0; color: inherit; cursor: pointer; }
 .desktop-nav { display: none !important; }
 .top-carousel, .movie-card, .list-row, .analytics-panel, .web-detail, .web-filter { animation: uiRise .42s cubic-bezier(.2,.8,.2,1) both; }
 @keyframes uiRise { from { opacity: 0; } to { opacity: 1; } }
-/* ── Sort staggered reveal ────────────────────────────────────────────────── */
+/* ── Sort staggered reveal ───────────────────────────────────────────────���── */
 @keyframes sortSlide { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 .list-section .list-row { animation: sortSlide .35s cubic-bezier(.2,.8,.2,1) both; }
 .list-section .movie-card { animation: sortSlide .35s cubic-bezier(.2,.8,.2,1) both; }
@@ -2947,7 +2948,7 @@ button { border: 0; color: inherit; cursor: pointer; }
 .streak-stat { color: #f0b90b !important; }
 .streak-stat b { display: flex; align-items: center; gap: 4px; }
 
-/* ── Auth Modal ─────────────────────────────────────────────────────── */
+/* ── Auth Modal ─────────────────────────────────────────���───────────── */
 .auth-modal {
   background: #141518;
   border: 1px solid rgba(255,255,255,.1);
@@ -4414,7 +4415,7 @@ button { border: 0; color: inherit; cursor: pointer; }
   color: #888;
 }
 
-/* ──  Interstitial "Watch Between" Section ─────────────────────────────────── */
+/* ──  Interstitial "Watch Between" Section ──────────────────────────────────��� */
 .roadmap-interstitial {
   position: relative;
   padding: 6px 0 10px;
