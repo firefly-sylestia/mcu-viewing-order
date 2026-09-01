@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Search, SlidersHorizontal, Home, Bookmark, Play, UserRound, X, ArrowLeft, Star, BarChart3, Check, Clock, ListFilter, RotateCcw, ChevronLeft, ChevronRight, ChevronDown, Calendar, Timer, Sparkles, LogIn, LogOut, Cloud, Download, Camera, Info, ShieldAlert, Clapperboard } from 'lucide-react';
+import { Search, SlidersHorizontal, Home, Bookmark, Play, UserRound, X, ArrowLeft, Star, BarChart3, Check, Clock, ListFilter, RotateCcw, ChevronLeft, ChevronRight, ChevronDown, Calendar, Timer, Sparkles, LogOut, Cloud, Download, Camera, Info, ShieldAlert, Clapperboard } from 'lucide-react';
 import { RAW } from './data/mcuData';
 import { DC_RAW } from './data/dcData';
 import { XMEN_RAW } from './data/xmenData';
 import { SONY_RAW } from './data/sonyData';
 import { getTrailerByTitle, trailerEmbedUrl } from './data/trailerData';
 import { STORY_BRIDGES } from './data/connections';
-import { STORY_ORDER_OVERRIDES, DOOMSDAY_SECRET_WARS_TITLES, SPOILER_GUIDANCE } from './data/timelineModes';
+import { STORY_ORDER_OVERRIDES, DOOMSDAY_SECRET_WARS_TITLES, getTitleGuidance } from './data/timelineModes';
 import ProfilePage from './components/ProfilePage';
 import AuthModal from './components/AuthModal';
 import { useAuth } from './hooks/useAuth';
@@ -189,9 +189,9 @@ export default function App() {
   const { user, login, signup, googleSignIn, anonymousSignIn, logout: authLogout, resetPassword, configured } = useAuth();
   const { pushToCloud, pushBeforeLogout, lastSynced, syncing, conflict, resolveUseRemote, resolveKeepLocal, toast } = useCloudSync(user, actions, profileName, setActions, setProfileName, watchItem, setWatchItem);
   const showWarningToast = useCallback((item) => {
-    const guidance = SPOILER_GUIDANCE[item?.title];
-    if (!guidance) return;
-    setWarningToast(`${guidance.label}: ${guidance.note}`);
+  const guidance = getTitleGuidance(item);
+  if (!guidance) return;
+  setWarningToast(`${guidance.label}: ${guidance.note}`);
     window.clearTimeout(showWarningToast.timer);
     showWarningToast.timer = window.setTimeout(() => setWarningToast(''), 5200);
   }, []);
@@ -217,7 +217,7 @@ export default function App() {
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ universe, query, genre, rating, ageRatingFilter, sortBy, sortDirection, phaseFilter, typeFilter, actions, section, watchItem, profileName, heroIndex }));
-  }, [universe, query, genre, rating, ageRatingFilter, sortBy, sortDirection, typeFilter, actions, section, watchItem, profileName, heroIndex]);
+  }, [universe, query, genre, rating, ageRatingFilter, sortBy, sortDirection, phaseFilter, typeFilter, actions, section, watchItem, profileName, heroIndex]);
 
   const initialRender = useRef(true);
   useEffect(() => {
@@ -685,7 +685,7 @@ export default function App() {
       window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(`${item.title} official trailer`)}`, '_blank', 'noopener');
     }
   };
-  const resetFilters = () => { setQuery(''); setGenre('All'); setRating(0); setAgeRatingFilter('All'); setTypeFilter('All'); setSortBy('order'); setSortDirection('asc'); };
+  const resetFilters = () => { setQuery(''); setGenre('All'); setRating(0); setAgeRatingFilter('All'); setPhaseFilter('All'); setTypeFilter('All'); setSortBy('order'); setSortDirection('asc'); };
   const handleStartWatch = useCallback((item, tmdbId, mediaType) => {
     setWatchItem({ item, tmdbId, mediaType });
     setStatus(item, 'watching');
@@ -759,7 +759,6 @@ export default function App() {
 
   const universeName = universe === 'marvel' ? 'MCU' : universe === 'xmen' ? 'X-Men' : universe === 'sony' ? 'Sony' : 'DC';
   const universeAccent = universe === 'marvel' ? '#da1e37' : universe === 'xmen' ? '#a0a0ac' : universe === 'sony' ? '#b51f2f' : '#2f80ed';
-  const profileInitial = (profileName?.trim()?.[0] || (universe === 'marvel' ? 'M' : universe === 'xmen' ? 'X' : universe === 'sony' ? 'S' : 'D')).toUpperCase();
 
   return (
     <main className={`movie-site universe-${universe}`} style={{ '--brand-accent': universeAccent, '--accent': universeAccent, '--theme-accent': universeAccent }}>
@@ -798,19 +797,7 @@ export default function App() {
           )}
           <button className="header-filter-btn" onClick={() => setFiltersOpen(true)} aria-label="Open filters"><SlidersHorizontal size={18} /></button>
         </div>
-        <button className="header-auth-btn" onClick={() => { if (user) { setSection('profile'); } else { setAuthOpen(true); } }} title={user ? 'View profile' : 'Sign in'}>
-          {user ? (
-            <span className="header-user-badge">
-              <Cloud size={13} />
-              <span className="header-user-name" aria-hidden="true">{profileInitial}</span>
-            </span>
-          ) : (
-            <span className="header-signin-badge">
-              <LogIn size={15} />
-              <span>Sign in</span>
-            </span>
-          )}
-        </button>
+
       </header>
 
       {section === 'home' && !adBlockerDismissed && <AdBlockerDialog onDismiss={() => { setAdBlockerDismissed(true); localStorage.setItem('adblocker-dismissed', '1'); }} />}
@@ -1006,11 +993,12 @@ function MovieRail({ title, items, setSelected, cycleStatus, setStatus, toggleBo
 }
 
 function MovieCard({ item, setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, onWarning, style }) {
+  const guidance = getTitleGuidance(item);
   return <article className="movie-card" style={{ '--accent': item.accent, ...style }}>
     <button className="poster-button" onClick={() => setSelected(item)}>
       <PosterArt item={item} />
     </button>
-    <div className="card-body"><button className="title-button" onClick={() => setSelected(item)}>{item.title} <span className="phase-badge">Phase {item.phase || '—'}</span></button>{SPOILER_GUIDANCE[item.title] && <button className="warning-info-button" onClick={() => onWarning(item)} aria-label={`Show spoiler warning for ${item.title}`}><Info size={13} /></button>}<span>{item.year} · {runtimeLabel(item.runtime, item.type)}{item.userStatus === 'watching' && item.watchedDuration > 30000 ? ` · ${watchTimeLabel(item)}` : ''}{item.releaseStatus === 'upcoming' && item.releaseDate ? <span className="card-release-badge">{new Date(item.releaseDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span> : ''}{item.releaseStatus === 'upcoming' && !item.releaseDate ? <span className="card-release-badge">Upcoming</span> : ''}{item.releaseStatus === 'announced' ? <span className="card-release-badge announced">Announced</span> : ''}</span>
+    <div className="card-body"><button className="title-button" onClick={() => setSelected(item)}>{item.title} <span className="phase-badge">Phase {item.phase || '—'}</span></button>{guidance && <button className="warning-info-button" onClick={() => onWarning(item)} aria-label={`Show viewing guidance for ${item.title}`}><Info size={13} /></button>}<span>{item.year} · {runtimeLabel(item.runtime, item.type)}{item.userStatus === 'watching' && item.watchedDuration > 30000 ? ` · ${watchTimeLabel(item)}` : ''}{item.releaseStatus === 'upcoming' && item.releaseDate ? <span className="card-release-badge">{new Date(item.releaseDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span> : ''}{item.releaseStatus === 'upcoming' && !item.releaseDate ? <span className="card-release-badge">Upcoming</span> : ''}{item.releaseStatus === 'announced' ? <span className="card-release-badge announced">Announced</span> : ''}</span>
         <div className="card-ratings-line">{item.rating && <span className="list-rating"><Star size={9} fill="currentColor" />{Number(item.rating).toFixed(1)}</span>}{item.imdbRating && <span className="list-rating list-rating-imdb">★{item.imdbRating}</span>}{item.tomatoRating && <span className={`list-rating list-rating-tomato ${getTomatoTier(item.tomatoRating).cls}`}>{getTomatoTier(item.tomatoRating).emoji}{item.tomatoRating}</span>}{item.metaRating && <span className="list-rating list-rating-meta">M{parseInt(item.metaRating)}</span>}{!(item.rating || item.imdbRating || item.tomatoRating || item.metaRating) && <span className="list-rating list-rating-na">N/A</span>}</div>
     </div>
     <div className="card-actions"><button onClick={() => playTrailer(item)} className="trailer-chip" aria-label={`Play ${item.title} trailer`}><Clapperboard size={16} /><span>Trailer</span></button><StatusSelect item={item} setStatus={setStatus} compact /><button onClick={() => toggleBookmark(item)} className={`bookmark-chip ${item.bookmarked ? 'saved' : ''}`} aria-label={item.bookmarked ? 'Remove bookmark' : 'Bookmark title'}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button></div>
@@ -1037,7 +1025,7 @@ function ListSection({ items, sortKey, externalResults = [], externalLoading = f
     {viewMode === 'grid' ? <div key={`grid-${sortKey}`} className="movie-grid web-grid list-card-grid">{visibleItems.map((item, i) => <MovieCard key={item.id} item={item} setSelected={setSelected} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} onWarning={onWarning} style={{ animationDelay: `${i * 30}ms` }} />)}</div> : <div key={`list-${sortKey}`} className="list-grid">{visibleItems.map((item, index) => <article className="list-row" key={item.id} style={{ '--accent': item.accent, animationDelay: `${index * 30}ms` }} onClick={() => setSelected(item)} role="button" tabIndex={0} aria-label={`View ${item.title} details`} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(item); } }}>
       <span className="list-index">{String(firstItem + index + 1).padStart(2, '0')}</span>
       <div className="list-poster"><img src={item.poster} alt={`${item.title} poster`} width="82" height="108" loading="lazy" /></div>
-      <div className="list-copy"><div className="list-title-line"><strong>{item.title}</strong><span className="phase-badge">Phase {item.phase || '—'}</span>{SPOILER_GUIDANCE[item.title] && <button className="warning-info-button" onClick={(event) => { event.stopPropagation(); onWarning(item); }} aria-label={`Show spoiler warning for ${item.title}`}><Info size={13} /></button>}{item.essential && <span>Essential</span>}</div><div className="list-ratings-line">{item.rating && <span className="list-rating"><Star size={9} fill="currentColor" />{Number(item.rating).toFixed(1)}</span>}{item.imdbRating && <span className="list-rating list-rating-imdb">★{item.imdbRating}</span>}{item.tomatoRating && <span className={`list-rating list-rating-tomato ${getTomatoTier(item.tomatoRating).cls}`}>{getTomatoTier(item.tomatoRating).emoji}{item.tomatoRating}</span>}{item.metaRating && <span className="list-rating list-rating-meta">M{parseInt(item.metaRating)}</span>}{!(item.rating || item.imdbRating || item.tomatoRating || item.metaRating) && <span className="list-rating list-rating-na">N/A</span>}</div><span>{item.year} · {item.type} · {runtimeLabel(item.runtime, item.type)}</span><p>{item.desc || `${item.title} in the complete ${item.universe === 'marvel' ? 'MCU' : 'DC'} story timeline.`}</p><div className="list-tags">{(item.genres || []).slice(0,3).map(g => <span key={g}>{g}</span>)}</div></div>
+      <div className="list-copy"><div className="list-title-line"><strong>{item.title}</strong><span className="phase-badge">Phase {item.phase || '—'}</span>{getTitleGuidance(item) && <button className="warning-info-button" onClick={(event) => { event.stopPropagation(); onWarning(item); }} aria-label={`Show viewing guidance for ${item.title}`}><Info size={13} /></button>}{item.essential && <span>Essential</span>}</div><div className="list-ratings-line">{item.rating && <span className="list-rating"><Star size={9} fill="currentColor" />{Number(item.rating).toFixed(1)}</span>}{item.imdbRating && <span className="list-rating list-rating-imdb">★{item.imdbRating}</span>}{item.tomatoRating && <span className={`list-rating list-rating-tomato ${getTomatoTier(item.tomatoRating).cls}`}>{getTomatoTier(item.tomatoRating).emoji}{item.tomatoRating}</span>}{item.metaRating && <span className="list-rating list-rating-meta">M{parseInt(item.metaRating)}</span>}{!(item.rating || item.imdbRating || item.tomatoRating || item.metaRating) && <span className="list-rating list-rating-na">N/A</span>}</div><span>{item.year} · {item.type} · {runtimeLabel(item.runtime, item.type)}</span><p>{item.desc || `${item.title} in the complete ${item.universe === 'marvel' ? 'MCU' : 'DC'} story timeline.`}</p><div className="list-tags">{(item.genres || []).slice(0,3).map(g => <span key={g}>{g}</span>)}</div></div>
       <div className="list-actions" onClick={e => e.stopPropagation()}><button className="list-trailer" onClick={() => playTrailer(item)} aria-label={`Play ${item.title} trailer`}><Clapperboard size={16} /><span>Trailer</span></button><StatusSelect item={item} setStatus={setStatus} /><button className={`list-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Bookmark title'}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button></div>
     </article>)}</div>}
     {pageCount > 1 && <nav className="pagination" aria-label="Viewing list pages"><button onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} aria-label="Previous page"><ChevronLeft size={18} /></button>{Array.from({ length: pageCount }, (_, index) => index + 1).map(pageNumber => <button key={pageNumber} className={currentPage === pageNumber ? 'active' : ''} aria-current={currentPage === pageNumber ? 'page' : undefined} onClick={() => goToPage(pageNumber)}>{pageNumber}</button>)}<button onClick={() => goToPage(currentPage + 1)} disabled={currentPage === pageCount} aria-label="Next page"><ChevronRight size={18} /></button></nav>}
@@ -1232,6 +1220,7 @@ function AnalyticsPanel({ stats, large = false }) {
 }
 
 function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, onStartWatchFromRoadmap, activeItems }) {
+  const guidance = getTitleGuidance(item);
   const [inlineTrailer, setInlineTrailer] = useState(null);
   const [isTrailerExpanded, setIsTrailerExpanded] = useState(false);
   const showTrailer = () => {
@@ -1541,7 +1530,7 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, on
           )}
           <div className="detail-kicker"><span>{item.universe === 'marvel' ? 'Marvel Cinematic Universe' : item.universe === 'xmen' ? 'X-Men Universe' : 'DC Universe'}</span><span>#{String(item.order || item.id).padStart(2, '0')}</span></div>
           <h1 id="detail-title">{item.title} <span className="phase-badge">Phase {item.phase || '—'}</span></h1>
-          {SPOILER_GUIDANCE[item.title] && <div className="detail-spoiler-warning" role="alert"><ShieldAlert size={18} /><div><strong>{SPOILER_GUIDANCE[item.title].label}</strong><p>{SPOILER_GUIDANCE[item.title].note}</p></div></div>}
+          {guidance && <div className="detail-spoiler-warning" role="alert"><ShieldAlert size={18} /><div><strong>{guidance.label}</strong><p>{guidance.note}</p></div></div>}
           <div className="detail-chips"><RatingChips item={item} />{(item.genres || []).slice(0,3).map(g => <span key={g}>{g}</span>)}</div>
           <p className="detail-description">{item.desc || `Follow ${item.title} in the complete ${item.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} viewing order.`}</p>
           <div className="detail-facts"><div><Calendar size={18} /><span>Release year</span><strong>{item.year}</strong></div><div><Timer size={18} /><span>Runtime</span><strong>{runtimeLabel(item.runtime, item.type)}</strong></div><div><Sparkles size={18} /><span>Format</span><strong>{item.type}</strong></div>{item.userStatus === 'watching' && item.watchedDuration > 30000 && <div><Clock size={18} /><span>Watched</span><strong>{watchTimeLabel(item)}</strong></div>}</div>
