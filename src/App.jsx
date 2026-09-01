@@ -84,9 +84,6 @@ const mediaKey = (item) => item?.external
   ? `tmdb:${item.mediaType || (item.type === 'series' ? 'tv' : 'movie')}:${item.tmdbId}`
   : String(item?.id);
 
-const isShieldRoadmapPart = (item) => item?.tmdbId === 1403 && item?.type === 'series';
-const isCatalogVisible = (item) => !isShieldRoadmapPart(item) || item.id === 106;
-
 const posterFromManifest = (item, manifest) => {
   const value = manifest?.byId?.[String(item.id)] || manifest?.byTitle?.[item.title];
   if (!value) return '';
@@ -320,7 +317,6 @@ export default function App() {
     const effectiveRating = (item) => Number(item.rating) || Number(item.imdbRating) || 0;
     const sorted = allItems
       .filter(item => item.universe === universe)
-      .filter(isCatalogVisible)
       .filter(item => item.title.toLowerCase().includes(query.toLowerCase()))
       .filter(item => genre === 'All' || item.genres.includes(genre) || item.type === genre.toLowerCase())
       .filter(item => ageRatingFilter === 'All' || (item.ageRating || (item.type === 'series' ? 'TV-14' : 'PG-13')) === ageRatingFilter)
@@ -358,7 +354,7 @@ export default function App() {
   }, [allItems, universe, enrichItem]);
 
   const unfilteredItems = useMemo(
-    () => roadmapItems.filter(isCatalogVisible),
+    () => roadmapItems,
     [roadmapItems],
   );
 
