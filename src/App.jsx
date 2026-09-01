@@ -767,7 +767,7 @@ export default function App() {
       <div className="site-glow" />
       <header className="site-header">
   <div className="header-main-row">
-  <button className="brand" onClick={() => { setQuery(''); setSection('home'); setWatchItem(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }} aria-label={`Go to ${universeName} Viewing Order home`}><span>{universe === 'marvel' ? 'Marvel Cinematic Universe' : universeName}</span><b>{universeName} Viewing Order</b></button>
+  <button className="brand" onClick={() => { setQuery(''); setSection('home'); setWatchItem(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }} aria-label={`Go to ${universeName} Viewing Order home`}><b>{universe === 'marvel' ? 'MCU Viewing Order' : `${universeName} Viewing Order`}</b></button>
   <div className="header-quick-actions" aria-label="Quick viewing controls">
   <div className="header-phase-menu">
   <button ref={phaseButtonRef} className={`header-phase-btn ${phaseFilter !== 'All' ? 'active' : ''}`} onClick={() => { const rect = phaseButtonRef.current?.getBoundingClientRect(); if (rect) setPhaseMenuPosition({ top: rect.bottom + 7, left: rect.left }); setPhaseMenuOpen(open => !open); }} aria-expanded={phaseMenuOpen} aria-haspopup="listbox">
