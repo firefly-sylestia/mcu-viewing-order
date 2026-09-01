@@ -38,7 +38,7 @@ const dcPalette = ['#061226', '#08204a', '#0b3a78', '#0d4f9c', '#1367c8', '#2f80
 const xmenPalette = ['#6a6a7a', '#828294', '#9a9aa8', '#b0b0ba', '#c4c4cc', '#d8d8de'];
 const sonyPalette = ['#7d1829', '#9e1d32', '#b51f2f', '#c94c3b', '#d9573f', '#e05b3f'];
 
-const SORT_LABELS = { order: 'Order', rating: 'Rating', imdb: 'IMDb', tomato: 'Tomato', meta: 'Meta', popularity: 'Popular', year: 'Year', title: 'Title', essential: 'Essential' };
+const SORT_LABELS = { order: 'Order', phase: 'Phase', rating: 'Rating', imdb: 'IMDb', tomato: 'Tomato', meta: 'Meta', popularity: 'Popular', year: 'Year', title: 'Title', essential: 'Essential' };
 const runtimeLabel = (minutes = 0, type = 'film') => {
   if (!minutes) return type === 'series' ? 'Series' : 'TBA';
   const h = Math.floor(minutes / 60);
@@ -332,7 +332,8 @@ export default function App() {
   };
   sorted.sort((a, b) => {
   const dir = sortDirection === 'asc' ? 1 : -1;
-      if (sortBy === 'year') return (a.year - b.year) * (sortDirection === 'asc' ? 1 : -1);
+      if (sortBy === 'phase') return ((Number(a.phase) || 99) - (Number(b.phase) || 99)) * dir;
+  if (sortBy === 'year') return (a.year - b.year) * (sortDirection === 'asc' ? 1 : -1);
       if (sortBy === 'title') return a.title.localeCompare(b.title) * (sortDirection === 'asc' ? 1 : -1);
       if (sortBy === 'rating') return (effectiveRating(a) - effectiveRating(b)) * dir;
       if (sortBy === 'imdb') return ((Number(a.imdbRating) || 0) - (Number(b.imdbRating) || 0)) * dir;
@@ -767,6 +768,17 @@ export default function App() {
           <button className={universe === 'dc' ? 'active' : ''} onClick={() => { setUniverse('dc'); setHeroIndex(0); }}>DC</button>
           <button className={universe === 'xmen' ? 'active' : ''} onClick={() => { setUniverse('xmen'); setHeroIndex(0); }}>X-Men</button>
   <button className={universe === 'sony' ? 'active' : ''} onClick={() => { setUniverse('sony'); setHeroIndex(0); }}>Sony</button>
+        </div>
+        <div className="header-quick-actions" aria-label="Quick viewing controls">
+          <button className={`header-phase-btn ${sortBy === 'phase' ? 'active' : ''}`} onClick={() => { setSortBy('phase'); setSortDirection(sortBy === 'phase' && sortDirection === 'asc' ? 'desc' : 'asc'); }} aria-label={`Sort by phase ${sortBy === 'phase' ? sortDirection : 'asc'}`} title="Sort by phase">
+            <ListFilter size={14} /> <span>Phase</span>
+          </button>
+          {activeItems.filter(item => item.userStatus === 'watching').length > 0 && <button className="header-status-pill watching" onClick={() => selectItem(activeItems.find(item => item.userStatus === 'watching'))} title="Open current watching">
+            <Clock size={13} /> <span>Watching</span><b>{activeItems.filter(item => item.userStatus === 'watching').length}</b>
+          </button>}
+          {nextUp && <button className="header-status-pill next" onClick={() => selectItem(nextUp)} title={`Open next: ${nextUp.title}`}>
+            <Play size={12} fill="currentColor" /> <span>Next</span>
+          </button>}
         </div>
         <div className="header-search">
           <Search size={18} />
