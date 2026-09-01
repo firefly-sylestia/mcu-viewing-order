@@ -46,6 +46,23 @@ export const SPOILER_GUIDANCE = {
   'Hawkeye S1': { label: 'Character spoiler', note: 'Watch Avengers: Endgame and Black Widow first; Yelena’s story continues after Black Widow’s end credits.', watchAfter: 'Black Widow' },
   'Ant-Man & the Wasp: Quantumania': { label: 'Multiverse prerequisite', note: 'Watch Ant-Man, Ant-Man & the Wasp, Avengers: Endgame, and Loki S1 first.', watchAfter: 'Loki S1' },
   'Deadpool & Wolverine': { label: 'Legacy prerequisite', note: 'The biggest reveals draw from the X-Men films, Deadpool 1–2, Logan, and Loki. Watch those first to avoid major spoilers.', watchAfter: 'Deadpool 2' },
+  'Iron Man 2': { label: 'Avengers setup', note: 'This introduces major Avengers-era characters and tech threads that pay off in The Avengers.', watchAfter: 'Iron Man' },
+  'Thor': { label: 'Avengers setup', note: 'Watch before The Avengers; its ending and characters directly lead into the team-up.', watchAfter: 'Iron Man 2' },
+  'The Avengers': { label: 'Saga milestone', note: 'This is the first major crossover. Watch Iron Man, Iron Man 2, Thor, and Captain America: The First Avenger first.', watchAfter: 'Thor' },
+  'Iron Man 3': { label: 'Post-Avengers aftermath', note: 'Watch The Avengers first. Tony’s story begins in the aftermath of the Battle of New York.', watchAfter: 'The Avengers' },
+  'Thor: The Dark World': { label: 'Infinity Stone setup', note: 'Watch The Avengers first; its post-credit scene introduces an important Infinity Stone thread.', watchAfter: 'The Avengers' },
+  'Guardians of the Galaxy': { label: 'Infinity Stone setup', note: 'Watch The Avengers first to recognize the wider Infinity Stone story this film expands.', watchAfter: 'The Avengers' },
+  'Avengers: Age of Ultron': { label: 'Team-up prerequisite', note: 'Watch The Avengers first. This sequel changes the team and introduces threads that lead into Civil War and Infinity War.', watchAfter: 'The Avengers' },
+  'Captain America: Civil War': { label: 'Major turning point', note: 'Watch The Avengers and Age of Ultron first. Its conflict reshapes the heroes before Infinity War.', watchAfter: 'Avengers: Age of Ultron' },
+  'Black Panther': { label: 'Civil War aftermath', note: 'Watch Captain America: Civil War first; Wakanda and T’Challa are introduced there.', watchAfter: 'Captain America: Civil War' },
+  'Spider-Man: Homecoming': { label: 'Character prerequisite', note: 'Watch Captain America: Civil War first. Peter Parker’s MCU introduction happens there.', watchAfter: 'Captain America: Civil War' },
+  'Doctor Strange': { label: 'Infinity Stone setup', note: 'Its post-credit scenes set up Thor: Ragnarok and the Infinity Saga. Watch through the credits.', watchAfter: 'Avengers: Age of Ultron' },
+  'Thor: Ragnarok': { label: 'Infinity War lead-in', note: 'Watch Thor, The Avengers, and Avengers: Age of Ultron first; its ending flows directly into Infinity War.', watchAfter: 'Doctor Strange' },
+  'Avengers: Infinity War': { label: 'Saga prerequisite', note: 'Watch the earlier Avengers films and Guardians Vol. 1–2 first; this begins the two-part Thanos finale.', watchAfter: 'Avengers: Age of Ultron' },
+  'Avengers: Endgame': { label: 'Full saga spoiler', note: 'Watch Infinity War immediately before this. Avoid trailers and post-credit discussions if you want the full finale unspoiled.', watchAfter: 'Avengers: Infinity War' },
+  'Spider-Man: No Way Home': { label: 'Major multiverse spoilers', note: 'Watch Far From Home first, then the earlier live-action Spider-Man films and Venom films for the biggest reveals.', watchAfter: 'Spider-Man: Far From Home' },
+  'Black Panther: Wakanda Forever': { label: 'Character aftermath', note: 'Watch Black Panther and Avengers: Endgame first; its story follows both films’ events.', watchAfter: 'Black Panther' },
+  'Guardians of the Galaxy Vol. 2': { label: 'Credits setup', note: 'Watch Guardians Vol. 1 first and stay through the credits; several scenes set up later Guardians stories.', watchAfter: 'Guardians of the Galaxy' },
 };
 
 export function getTitleGuidance(item) {
