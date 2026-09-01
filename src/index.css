@@ -1079,11 +1079,14 @@ button { border: 0; color: inherit; cursor: pointer; }
 
   /* Header layout: keep navigation and controls in predictable rows. */
   .site-header { display: flex; flex-direction: column; align-items: stretch; gap: 10px; padding: 14px 0 12px; }
-  .header-main-row { width: 100%; gap: 10px; }
-  .brand { min-width: 0; flex: 0 1 auto; }
-  .brand b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .header-quick-actions { flex: 0 1 auto; justify-content: flex-end; flex-wrap: wrap; }
-  .universe-tabs { width: 100%; justify-content: stretch; overflow-x: auto; }
+  .header-main-row { width: 100%; gap: 12px; align-items: flex-start; }
+ .brand { min-width: 0; flex: 1 1 auto; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; padding: 4px 0; overflow: hidden; }
+ .brand span { width: auto; height: auto; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; display: block; font-size: 11px; line-height: 1.15; color: rgba(255,255,255,.62); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+ .brand b { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; line-height: 1.2; }
+ .header-quick-actions { flex: 0 0 auto; justify-content: flex-end; flex-wrap: nowrap; gap: 4px; padding: 4px 0; min-width: 0; }
+ .header-phase-btn, .header-status-pill { height: 32px; gap: 3px; padding: 0 6px; border-radius: 8px; font-size: 10px; }
+ .header-pill-label b { max-width: 64px; font-size: 10px; }
+ .universe-tabs { width: 100%; justify-content: stretch; overflow-x: auto; }
   .universe-tabs button { flex: 1 0 auto; }
   .header-search { width: 100%; }
   @media (max-width: 520px) {
