@@ -1952,6 +1952,65 @@ button { border: 0; color: inherit; cursor: pointer; }
    Profile Page Styles
    ═══════════════════════════════════════════════════════════════════════════ */
 
+/* Header and action polish */
+.site-header {
+  padding: 14px 0 12px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  box-shadow: 0 14px 30px rgba(0,0,0,.16);
+}
+.header-main-row { align-items: center; }
+.header-quick-actions { gap: 8px; }
+.header-phase-btn,
+.header-status-pill {
+  min-height: 38px;
+  height: auto;
+  border-radius: 12px;
+  border-color: rgba(255,255,255,.13);
+  background: rgba(255,255,255,.07);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.07);
+}
+.header-phase-btn { padding-inline: 11px; color: #e4e7eb; }
+.header-phase-btn.active { box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-accent,#da1e37) 12%, transparent); }
+.header-status-pill { padding: 5px 10px; }
+.header-status-pill.watching { color: #f7d36a; background: rgba(247,211,106,.10); border-color: rgba(247,211,106,.3); }
+.header-status-pill.next { color: #a8ddff; background: rgba(86,177,235,.11); border-color: rgba(86,177,235,.3); }
+.header-status-pill:hover { transform: translateY(-1px); filter: brightness(1.12); }
+.header-pill-label small { letter-spacing: .08em; text-transform: uppercase; }
+.header-pill-label b { max-width: 150px; line-height: 1.2; }
+.header-sort-chip { height: 32px; border-radius: 10px; color: #f3b6be; background: color-mix(in srgb, var(--brand-accent,#da1e37) 22%, transparent); border-color: color-mix(in srgb, var(--brand-accent,#da1e37) 42%, transparent); }
+.universe-tabs { align-self: center; }
+.hero-actions button:first-child,
+.wb-action-primary {
+  color: #fff;
+  background: var(--brand-accent, #da1e37);
+  border: 1px solid color-mix(in srgb, var(--brand-accent,#da1e37) 72%, #fff);
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--brand-accent,#da1e37) 25%, transparent), inset 0 1px 0 rgba(255,255,255,.2);
+}
+.hero-actions button:first-child:hover,
+.wb-action-primary:hover { filter: brightness(1.12); box-shadow: 0 10px 26px color-mix(in srgb, var(--brand-accent,#da1e37) 34%, transparent); }
+.hero-actions button:last-child,
+.wb-action-save { color: #d8dde5; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15); }
+.hero-actions button:last-child:hover,
+.wb-action-save:hover { background: rgba(255,255,255,.13); border-color: rgba(255,255,255,.25); }
+@media (max-width: 860px) {
+  .site-header { grid-template-columns: 1fr auto; gap: 10px; padding-top: 10px; }
+  .header-main-row { grid-column: 1 / -1; }
+  .header-quick-actions { justify-content: flex-start; overflow-x: auto; padding: 2px 1px 4px; scrollbar-width: none; }
+  .header-quick-actions::-webkit-scrollbar { display: none; }
+  .header-status-pill { flex: 0 1 auto; min-width: 0; }
+  .header-pill-label b { max-width: 116px; }
+  .universe-tabs { grid-column: 1 / -1; width: 100%; order: 3; }
+  .universe-tabs button { min-height: 38px; padding-inline: 8px; }
+  .header-search { order: 4 !important; grid-column: 1 / -1 !important; width: 100%; }
+}
+@media (max-width: 420px) {
+  .header-main-row { gap: 8px; }
+  .brand b { max-width: 132px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .header-phase-btn, .header-status-pill { font-size: 10px; }
+  .header-phase-btn { padding-inline: 9px; }
+  .header-pill-label b { max-width: 92px; }
+}
+
 .profile-page {
   max-width: 1180px;
   margin: 0 auto;
