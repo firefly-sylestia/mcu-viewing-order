@@ -171,6 +171,8 @@ export default function App() {
   const [sortDirection, setSortDirection] = useState('asc');
   const [phaseFilter, setPhaseFilter] = useState(saved.phaseFilter || 'All');
   const [phaseMenuOpen, setPhaseMenuOpen] = useState(false);
+  const phaseButtonRef = useRef(null);
+  const [phaseMenuPosition, setPhaseMenuPosition] = useState({ top: 0, left: 0 });
   const [typeFilter, setTypeFilter] = useState(saved.typeFilter || 'All');
   const [heroIndex, setHeroIndex] = useState(saved.heroIndex || 0);
   const [section, setSection] = useState(parseHash().section || saved.section || 'home');
@@ -765,13 +767,13 @@ export default function App() {
       <div className="site-glow" />
       <header className="site-header">
   <div className="header-main-row">
-  <button className="brand" onClick={() => { setQuery(''); setSection('home'); setWatchItem(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }} aria-label={`Go to ${universeName} Viewing Order home`}><span>{universeName}</span><b>{universeName} Viewing Order</b></button>
+  <button className="brand" onClick={() => { setQuery(''); setSection('home'); setWatchItem(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }} aria-label={`Go to ${universeName} Viewing Order home`}><span>{universe === 'marvel' ? 'Marvel Cinematic Universe' : universeName}</span><b>{universeName} Viewing Order</b></button>
   <div className="header-quick-actions" aria-label="Quick viewing controls">
   <div className="header-phase-menu">
-  <button className={`header-phase-btn ${phaseFilter !== 'All' ? 'active' : ''}`} onClick={() => setPhaseMenuOpen(open => !open)} aria-expanded={phaseMenuOpen} aria-haspopup="listbox">
+  <button ref={phaseButtonRef} className={`header-phase-btn ${phaseFilter !== 'All' ? 'active' : ''}`} onClick={() => { const rect = phaseButtonRef.current?.getBoundingClientRect(); if (rect) setPhaseMenuPosition({ top: rect.bottom + 7, left: rect.left }); setPhaseMenuOpen(open => !open); }} aria-expanded={phaseMenuOpen} aria-haspopup="listbox">
   <ListFilter size={14} /> <span>{phaseFilter === 'All' ? 'Phase' : `Phase ${phaseFilter}`}</span><ChevronDown size={13} />
   </button>
-  {phaseMenuOpen && <div className="header-phase-dropdown" role="listbox" aria-label="Select phase">
+  {phaseMenuOpen && <div className="header-phase-dropdown" style={{ top: phaseMenuPosition.top, left: phaseMenuPosition.left }} role="listbox" aria-label="Select phase">
   {['All', ...new Set(allItems.filter(item => item.universe === universe && item.phase).map(item => item.phase))].map(phase => <button key={phase} className={String(phaseFilter) === String(phase) ? 'selected' : ''} onClick={() => { setPhaseFilter(phase); setPhaseMenuOpen(false); }} role="option" aria-selected={String(phaseFilter) === String(phase)}>{phase === 'All' ? 'All phases' : `Phase ${phase}`}</button>)}
   </div>}
   </div>
