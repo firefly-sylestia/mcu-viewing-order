@@ -9,6 +9,8 @@ import { STORY_BRIDGES } from './data/connections';
 import { STORY_ORDER_OVERRIDES, DOOMSDAY_SECRET_WARS_TITLES, getTitleGuidance } from './data/timelineModes';
 import ProfilePage from './components/ProfilePage';
 import AuthModal from './components/AuthModal';
+import SeoHead from './components/SeoHead';
+import NotFoundPage from './components/NotFoundPage';
 import { useAuth } from './hooks/useAuth';
 import { useCloudSync } from './hooks/useCloudSync';
 import { configured as firebaseReady } from './firebase';
@@ -757,10 +759,17 @@ export default function App() {
 
   const universeName = universe === 'marvel' ? 'MCU' : universe === 'xmen' ? 'X-Men' : universe === 'sony' ? 'Sony' : 'DC';
   const universeAccent = universe === 'marvel' ? '#da1e37' : universe === 'xmen' ? '#a0a0ac' : universe === 'sony' ? '#b51f2f' : '#2f80ed';
+  const selectedTitle = selected?.title || safeWatchItem?.item?.title || '';
+  const pageLabel = section === 'home' ? 'Home' : section === 'list' ? 'Browse titles' : section === 'analytics' ? 'Analytics' : section === 'profile' ? 'Profile' : section === 'watch' ? 'Now watching' : 'Title details';
+
+  if (window.location.pathname !== '/') return <NotFoundPage onHome={() => { window.location.hash = 'home'; window.history.pushState(null, '', '/#home'); window.location.reload(); }} />;
 
   return (
-    <main className={`movie-site universe-${universe}`} style={{ '--brand-accent': universeAccent, '--accent': universeAccent, '--theme-accent': universeAccent }}>
-      <div className="site-glow" />
+  <>
+  <SeoHead section={section} selectedTitle={selectedTitle} />
+  <main className={`movie-site universe-${universe}`} style={{ '--brand-accent': universeAccent, '--accent': universeAccent, '--theme-accent': universeAccent }}>
+  <nav className="seo-breadcrumbs" aria-label="Breadcrumb"><a href="#home">Home</a><span aria-hidden="true">/</span><span aria-current="page">{pageLabel}</span></nav>
+  <div className="site-glow" />
       <header className="site-header">
   <div className="header-main-row">
   <button className="brand" onClick={() => { setQuery(''); setSection('home'); setWatchItem(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }} aria-label={`Go to ${universeName} Viewing Order home`}><b>{universe === 'marvel' ? 'MCU Viewing Order' : `${universeName} Viewing Order`}</b></button>
@@ -895,6 +904,7 @@ export default function App() {
       {watchConfirmItem && <WatchConfirmDialog item={watchConfirmItem.item} onConfirm={confirmWatch} onDismiss={(skipFuture) => dismissWatchConfirm(skipFuture)} />}
       <Footer />
     </main>
+  </>
   );
 }
 

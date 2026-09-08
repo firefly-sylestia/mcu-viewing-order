@@ -1518,6 +1518,20 @@ button { border: 0; color: inherit; cursor: pointer; }
 .pagination button.active { background: linear-gradient(135deg, #1a1a1e 0%, #2a2a30 50%, #1a1a1e 100%); border: 1px solid rgba(255,255,255,.12); color: #fff; border-color: transparent; }
 .pagination button:disabled { opacity: .32; cursor: not-allowed; }
 
+.seo-breadcrumbs { max-width: 1240px; margin: 0 auto 8px; display: flex; align-items: center; gap: 8px; color: #858b94; font-size: 11px; letter-spacing: .04em; }
+.seo-breadcrumbs a { color: var(--brand-accent, #da1e37); text-decoration: none; font-weight: 800; }
+.seo-breadcrumbs a:hover { text-decoration: underline; }
+.not-found-page { min-height: 100svh; display: grid; place-items: center; padding: 24px; background: #08090c; color: #f7f7f8; }
+.not-found-card { width: min(100%, 560px); padding: clamp(28px, 6vw, 64px); border: 1px solid rgba(255,255,255,.1); border-radius: 28px; background: #14181d; box-shadow: 0 24px 80px rgba(0,0,0,.35); }
+.not-found-card h1 { margin: 8px 0 14px; font-size: clamp(36px, 7vw, 64px); line-height: .98; letter-spacing: -.05em; text-wrap: balance; }
+.not-found-card p:not(.eyebrow) { max-width: 420px; color: #a4aab3; line-height: 1.6; }
+.not-found-card .eyebrow { margin: 0; color: var(--brand-accent, #da1e37); font-size: 11px; font-weight: 900; letter-spacing: .14em; }
+.not-found-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+.not-found-actions button, .not-found-back { display: inline-flex; align-items: center; gap: 8px; border: 1px solid transparent; border-radius: 12px; padding: 11px 15px; background: var(--brand-accent, #da1e37); color: #fff; font-weight: 800; cursor: pointer; }
+.not-found-actions .secondary { background: transparent; border-color: rgba(255,255,255,.14); }
+.not-found-back { margin-top: 24px; padding: 0; background: transparent; color: #858b94; }
+@media (max-width: 640px) { .seo-breadcrumbs { margin-top: 4px; } .not-found-actions { flex-direction: column; align-items: stretch; } .not-found-actions button { justify-content: center; } }
+
 /* Cinematic detail modal */
 .detail-overlay { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 20px; background: rgba(3,4,6,.82); backdrop-filter: blur(16px); }
 .detail-modal { position: relative; isolation: isolate; width: min(1040px,100%); max-height: min(820px,calc(100svh - 40px)); overflow: hidden; border: 1px solid rgba(255,255,255,.14); border-radius: 28px; background: #111419; box-shadow: 0 40px 100px rgba(0,0,0,.75); }
