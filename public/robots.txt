@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://mcu-viewing-order.vercel.app/sitemap.xml

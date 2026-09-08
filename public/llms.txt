@@ -1,0 +1,11 @@
+# MCU Viewing Order
+
+> A focused viewing-order guide for Marvel, DC, X-Men, and Sony superhero films and series.
+
+## Main experience
+- https://mcu-viewing-order.vercel.app/
+- https://mcu-viewing-order.vercel.app/#list
+- https://mcu-viewing-order.vercel.app/#analytics
+
+## Summary
+MCU Viewing Order helps people discover a coherent story sequence, track watched titles, save favorites, and explore related timelines. Content is presented as a practical guide and is not affiliated with Marvel Studios, DC Studios, Sony Pictures, or Disney.
