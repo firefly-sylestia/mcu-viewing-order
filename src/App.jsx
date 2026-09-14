@@ -783,7 +783,7 @@ export default function App() {
   <div className="site-glow" />
       <header className="site-header">
   <div className="header-main-row">
-  <button className="brand" onClick={() => { setQuery(''); setSection('home'); setWatchItem(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }} aria-label="Go to Incursion home"><b>Incursion</b><span className="brand-subtitle">{universeName} timeline</span></button>
+  <button className="brand" onClick={() => { setQuery(''); setSection('home'); setWatchItem(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }} aria-label="Go to Incursion home"><b>Incursion</b></button>
   <div className="header-quick-actions" aria-label="Quick viewing controls">
   <div className="header-phase-menu">
   <button ref={phaseButtonRef} className={`header-phase-btn ${phaseFilter !== 'All' ? 'active' : ''}`} onClick={() => { const rect = phaseButtonRef.current?.getBoundingClientRect(); if (rect) setPhaseMenuPosition({ top: rect.bottom + 7, left: rect.left }); setPhaseMenuOpen(open => !open); }} aria-expanded={phaseMenuOpen} aria-haspopup="listbox">
@@ -804,6 +804,8 @@ export default function App() {
   </div>
   <div className="universe-tabs" role="tablist" aria-label="Universe">
   <button className={universe === 'marvel' ? 'active' : ''} onClick={() => { setUniverse('marvel'); setHeroIndex(0); }}>Marvel</button>
+  <button className={universe === 'sony' ? 'active' : ''} onClick={() => { setUniverse('sony'); setHeroIndex(0); }}>Sony</button>
+  <button className={universe === 'xmen' ? 'active' : ''} onClick={() => { setUniverse('xmen'); setHeroIndex(0); }}>X-Men</button>
   <button className={universe === 'dc' ? 'active' : ''} onClick={() => { setUniverse('dc'); setHeroIndex(0); }}>DC</button>
   </div>
         <div className="header-search">

@@ -18,6 +18,6 @@ export default defineConfig({
     },
   },
   server: {
-    allowedHosts: 'all',
+    allowedHosts: ['sb-5e8wvwn37i7m.vercel.run', 'localhost', '127.0.0.1'],
   },
 })
