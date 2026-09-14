@@ -665,6 +665,11 @@ export default function App() {
   };
   const setStatus = (item, status) => updateAction(item, { status });
   const toggleWatched = (item) => setStatus(item, item.userStatus === 'watched' ? 'unwatched' : 'watched');
+  const togglePhaseWatched = (phase) => {
+    const phaseItems = allItems.filter(item => item.universe === universe && String(item.phase) === String(phase));
+    const shouldWatch = phaseItems.some(item => item.userStatus !== 'watched');
+    phaseItems.forEach(item => setStatus(item, shouldWatch ? 'watched' : 'unwatched'));
+  };
   const toggleBookmark = (item) => updateAction(item, { bookmarked: !(actions[mediaKey(item)]?.bookmarked || actions[item.id]?.bookmarked) });
   const selectItem = (item) => {
     setSelected(item);
@@ -772,14 +777,18 @@ export default function App() {
   <div className="site-glow" />
       <header className="site-header">
   <div className="header-main-row">
-  <button className="brand" onClick={() => { setQuery(''); setSection('home'); setWatchItem(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }} aria-label={`Go to ${universeName} Viewing Order home`}><b>{universe === 'marvel' ? 'MCU Viewing Order' : `${universeName} Viewing Order`}</b></button>
+  <button className="brand" onClick={() => { setQuery(''); setSection('home'); setWatchItem(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }} aria-label="Go to Incursion home"><b>Incursion</b><span className="brand-subtitle">{universeName} timeline</span></button>
   <div className="header-quick-actions" aria-label="Quick viewing controls">
   <div className="header-phase-menu">
   <button ref={phaseButtonRef} className={`header-phase-btn ${phaseFilter !== 'All' ? 'active' : ''}`} onClick={() => { const rect = phaseButtonRef.current?.getBoundingClientRect(); if (rect) setPhaseMenuPosition({ top: rect.bottom + 7, left: rect.left }); setPhaseMenuOpen(open => !open); }} aria-expanded={phaseMenuOpen} aria-haspopup="listbox">
   <ListFilter size={14} /> <span>{phaseFilter === 'All' ? 'Phase' : `Phase ${phaseFilter}`}</span><ChevronDown size={13} />
   </button>
   {phaseMenuOpen && <div className="header-phase-dropdown" style={{ top: phaseMenuPosition.top, left: phaseMenuPosition.left }} role="listbox" aria-label="Select phase">
-  {['All', ...new Set(allItems.filter(item => item.universe === universe && item.phase).map(item => item.phase))].map(phase => <button key={phase} className={String(phaseFilter) === String(phase) ? 'selected' : ''} onClick={() => { setPhaseFilter(phase); setPhaseMenuOpen(false); }} role="option" aria-selected={String(phaseFilter) === String(phase)}>{phase === 'All' ? 'All phases' : `Phase ${phase}`}</button>)}
+  {['All', ...new Set(allItems.filter(item => item.universe === universe && item.phase).map(item => item.phase))].map(phase => {
+    const phaseItems = phase === 'All' ? [] : allItems.filter(item => item.universe === universe && String(item.phase) === String(phase));
+    const phaseWatched = phaseItems.length > 0 && phaseItems.every(item => item.userStatus === 'watched');
+    return <div key={phase} className="phase-menu-row"><button className={String(phaseFilter) === String(phase) ? 'selected' : ''} onClick={() => { setPhaseFilter(phase); setPhaseMenuOpen(false); }} role="option" aria-selected={String(phaseFilter) === String(phase)}>{phase === 'All' ? 'All phases' : `Phase ${phase}`}</button>{phase !== 'All' && <input type="checkbox" checked={phaseWatched} onChange={() => togglePhaseWatched(phase)} aria-label={`Mark all of Phase ${phase} as watched`} />}</div>;
+  })}
   </div>}
   </div>
   {(() => { const watchingItem = activeItems.find(item => item.userStatus === 'watching'); return watchingItem && <button className="header-status-pill watching" onClick={() => selectItem(watchingItem)} title={`Open current: ${watchingItem.title}`}><Clock size={13} /><span className="header-pill-label"><small>Watching</small><b>{watchingItem.title}</b></span></button>; })()}
@@ -1009,7 +1018,7 @@ function MovieCard({ item, setSelected, cycleStatus, setStatus, toggleBookmark, 
     <div className="card-body"><button className="title-button" onClick={() => setSelected(item)}>{item.title} <span className="phase-badge">Phase {item.phase || '—'}</span></button>{guidance && <button className="warning-info-button" onClick={() => onWarning(item)} aria-label={`Show viewing guidance for ${item.title}`}><Info size={13} /></button>}<span>{item.year} · {runtimeLabel(item.runtime, item.type)}{item.userStatus === 'watching' && item.watchedDuration > 30000 ? ` · ${watchTimeLabel(item)}` : ''}{item.releaseStatus === 'upcoming' && item.releaseDate ? <span className="card-release-badge">{new Date(item.releaseDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span> : ''}{item.releaseStatus === 'upcoming' && !item.releaseDate ? <span className="card-release-badge">Upcoming</span> : ''}{item.releaseStatus === 'announced' ? <span className="card-release-badge announced">Announced</span> : ''}</span>
         <div className="card-ratings-line">{item.rating && <span className="list-rating"><Star size={9} fill="currentColor" />{Number(item.rating).toFixed(1)}</span>}{item.imdbRating && <span className="list-rating list-rating-imdb">★{item.imdbRating}</span>}{item.tomatoRating && <span className={`list-rating list-rating-tomato ${getTomatoTier(item.tomatoRating).cls}`}>{getTomatoTier(item.tomatoRating).emoji}{item.tomatoRating}</span>}{item.metaRating && <span className="list-rating list-rating-meta">M{parseInt(item.metaRating)}</span>}{!(item.rating || item.imdbRating || item.tomatoRating || item.metaRating) && <span className="list-rating list-rating-na">N/A</span>}</div>
     </div>
-    <div className="card-actions"><button onClick={() => playTrailer(item)} className="trailer-chip" aria-label={`Play ${item.title} trailer`}><Clapperboard size={16} /><span>Trailer</span></button><StatusSelect item={item} setStatus={setStatus} compact /><button onClick={() => toggleBookmark(item)} className={`bookmark-chip ${item.bookmarked ? 'saved' : ''}`} aria-label={item.bookmarked ? 'Remove bookmark' : 'Bookmark title'}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button></div>
+    <div className="card-actions"><button onClick={() => playTrailer(item)} className="trailer-chip" aria-label={`Play ${item.title} trailer`}><Clapperboard size={16} /><span>Trailer</span></button><button onClick={() => toggleBookmark(item)} className={`bookmark-chip ${item.bookmarked ? 'saved' : ''}`} aria-label={item.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /><span>Save</span></button><button onClick={() => setStatus(item, item.userStatus === 'watched' ? 'unwatched' : 'watched')} className={`watched-chip ${item.userStatus === 'watched' ? 'watched' : ''}`} aria-label={item.userStatus === 'watched' ? 'Mark as unwatched' : 'Mark as watched'}><Check size={18} /></button></div>
   </article>;
 }
 

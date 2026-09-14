@@ -117,7 +117,7 @@ const drawThemeMotif = (ctx, canvas, theme) => {
 };
 
 const drawThemeStamp = (ctx, { x, y, theme, fontFamily, scale = 1 }) => {
-  const label = `${theme.accentIcon || '★'} ${theme.stamp || theme.label || 'MCU Viewing Order'}`;
+  const label = `${theme.accentIcon || '★'} ${theme.stamp || theme.label || 'Incursion'}`;
   ctx.save();
   ctx.font = `900 ${Math.round(18 * scale)}px ${fontFamily}`;
   const w = Math.min(520, Math.max(220, ctx.measureText(label).width + 44));
@@ -170,7 +170,7 @@ const drawWatermark = (ctx, canvas, fontFamily, theme) => {
   ctx.save();
   ctx.fillStyle = 'rgba(255,255,255,0.46)';
   ctx.font = `800 22px ${fontFamily}`;
-  ctx.fillText('MCU Viewing Order', 74, canvas.height - 64);
+  ctx.fillText('Incursion', 74, canvas.height - 64);
   ctx.fillStyle = withAlpha(theme.accent, 0.8);
   ctx.beginPath();
   ctx.arc(canvas.width - 76, canvas.height - 72, 16, 0, Math.PI * 2);
