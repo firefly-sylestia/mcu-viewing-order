@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 
 const SITE_URL = 'https://mcu-viewing-order.vercel.app'
-const SITE_NAME = 'MCU Viewing Order'
+const SITE_NAME = 'Incursion'
 
 const pageMeta = {
   home: { title: 'MCU Viewing Order | Marvel, DC, X-Men & Sony Timeline Guide', description: 'Find the best viewing order for Marvel, DC, X-Men, and Sony superhero films and series. Track what you have watched and explore connected timelines.' },
