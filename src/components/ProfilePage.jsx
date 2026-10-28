@@ -3,6 +3,11 @@ import { Play, Bookmark, RotateCcw, Clock, Check, X, Pencil, Trophy, LogIn, LogO
 import { getHapticsEnabled, setHapticsEnabled, hapticsSupported, hapticTap, hapticSuccess } from '../utils/haptics';
 
 const UI_VARIANT_KEY = 'ui-variant';
+const UI_VARIANTS = [
+  { id: 'classic', label: 'Classic' },
+  { id: 'fresh', label: 'Fresh' },
+  { id: 'control', label: 'Control' },
+];
 
 function useUiVariant() {
   const [variant, setVariantState] = useState(() => {
@@ -13,6 +18,7 @@ function useUiVariant() {
   const setVariant = (next) => {
     document.documentElement.setAttribute('data-ui', next);
     try { localStorage.setItem(UI_VARIANT_KEY, next); } catch {}
+    window.dispatchEvent(new CustomEvent('ui-variant-changed', { detail: next }));
     setVariantState(next);
   };
 
@@ -304,25 +310,26 @@ function SettingsPanel({ profileName, setProfileName, user, configured, onLogin,
             </span>
           </button>
         </div>
-        <div className="settings-row">
+        <div className="settings-row settings-row-stacked">
           <div className="settings-row-label">
             <span className="settings-row-icon"><Sparkles size={18} /></span>
             <div>
-              <strong>New interface</strong>
-              <small>{variant === 'fresh' ? 'Fresh layout (default)' : 'Classic layout'}</small>
+              <strong>Interface</strong>
+              <small>{UI_VARIANTS.find(option => option.id === variant)?.label || 'Fresh'} layout</small>
             </div>
           </div>
-          <button
-            className="theme-toggle"
-            onClick={() => setVariant(variant === 'fresh' ? 'classic' : 'fresh')}
-            aria-label={`Switch to ${variant === 'fresh' ? 'classic' : 'new'} interface`}
-          >
-            <span className={`theme-toggle-track ${variant === 'fresh' ? 'dark' : 'light'}`}>
-              <span className="theme-toggle-thumb">
-                {variant === 'fresh' ? <Sparkles size={14} /> : <LayoutGrid size={14} />}
-              </span>
-            </span>
-          </button>
+          <div className="variant-switch" role="group" aria-label="Interface layout">
+            {UI_VARIANTS.map(option => (
+              <button
+                key={option.id}
+                className={variant === option.id ? 'active' : ''}
+                aria-pressed={variant === option.id}
+                onClick={() => { hapticTap(); setVariant(option.id); }}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="settings-row">
           <div className="settings-row-label">
@@ -537,14 +544,13 @@ function MovieCard({ item, setSelected, cycleStatus, setStatus, toggleBookmark, 
       </div>
       <div className="card-actions">
         <button
-          onClick={() => playTrailer(item)}
-          className="trailer-chip"
-          aria-label={`Play ${item.title} trailer`}
+          onClick={() => setStatus(item, item.userStatus === 'watched' ? 'unwatched' : 'watched')}
+          className={`watch-chip ${item.userStatus === 'watched' ? 'watched' : ''}`}
+          aria-label={item.userStatus === 'watched' ? `Mark ${item.title} as unwatched` : `Mark ${item.title} as watched`}
+          aria-pressed={item.userStatus === 'watched'}
         >
-          <Clapperboard size={16} />
-          <span>Trailer</span>
+          {item.userStatus === 'watched' ? <><Check size={16} /><span>Watched</span></> : <><Play size={16} /><span>Watch</span></>}
         </button>
-        <StatusSelect item={item} setStatus={setStatus} compact />
         <button
           onClick={() => toggleBookmark(item)}
           className={`bookmark-chip ${item.bookmarked ? 'saved' : ''}`}
