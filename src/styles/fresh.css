@@ -195,8 +195,7 @@
 
 /* ── Home: rails, section chrome, cards ──────────────────────────────────── */
 :root .web-rail,
-:root .rail-card,
-:root .continue-card {
+:root .rail-card {
   max-width: 1280px;
   margin: 20px auto;
   padding: 26px;
@@ -205,6 +204,9 @@
   background: var(--fx-surface);
   box-shadow: var(--fx-shadow-md);
 }
+/* `.continue-card` is a card, not a section — it must not inherit rail chrome. */
+:root .continue-card { padding: 9px; border-radius: var(--fx-r-md); background: var(--fx-surface-2); box-shadow: var(--fx-shadow-sm); }
+:root .continue-card .card-body { padding: 10px 2px 4px; }
 :root .rail-card { margin-top: 20px; }
 :root .section-title h2 { color: var(--fx-text); letter-spacing: -.02em; }
 :root .section-title > span,
@@ -680,7 +682,6 @@
   :root .bottom-nav { border-radius: 22px; }
   :root .web-rail,
   :root .rail-card,
-  :root .continue-card,
   [data-ui="fresh"] .analytics-panel,
   [data-ui="fresh"] .list-section { padding: 18px; border-radius: 22px; margin: 14px auto; }
   :root .movie-card { padding: 7px; border-radius: 16px; }
@@ -742,7 +743,6 @@
 
 :root[data-theme="light"] .web-rail,
 :root[data-theme="light"] .rail-card,
-:root[data-theme="light"] .continue-card,
 :root[data-theme="light"] .analytics-panel,
 :root[data-theme="light"] .list-section {
   border: 0;
@@ -1837,8 +1837,7 @@
 
 /* Editorial rails: rules and whitespace instead of cards. */
 [data-ui="control"] .web-rail,
-[data-ui="control"] .rail-card,
-[data-ui="control"] .continue-card {
+[data-ui="control"] .rail-card {
   background: transparent;
   box-shadow: none;
   border-radius: 0;
@@ -1974,7 +1973,99 @@
 }
 
 /* ===========================================================================
-   14. RATINGS + BUTTON METRICS
+   15. LIST TOOLBAR + CONTINUE WATCHING ACTIONS
+   =========================================================================== */
+:root .list-section { gap: 14px; }
+:root .list-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px 18px;
+  flex-wrap: wrap;
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+:root .list-heading > div:first-child { display: grid; gap: 7px; min-width: 0; max-width: 62ch; }
+:root .list-heading h2 { margin: 0; }
+:root .list-intro { margin: 0; font-size: 13px; line-height: 1.5; color: var(--fx-muted); }
+:root .list-summary {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  min-width: 0;
+  padding: 9px 16px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--fx-surface-2);
+  box-shadow: var(--fx-shadow-sm);
+}
+:root .list-summary strong { font-size: 17px; line-height: 1; color: var(--fx-text); }
+:root .list-summary span { font-size: 10.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--fx-muted); }
+
+/* One toolbar row: count on the left, page + view switch on the right. */
+:root .list-results-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 14px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--fx-surface-2);
+  box-shadow: var(--fx-shadow-sm);
+  color: var(--fx-muted);
+  font-size: 12.5px;
+}
+:root .list-results-count { font-weight: 700; color: var(--fx-muted-strong); }
+:root .list-results-actions { display: flex; align-items: center; gap: 12px; margin-left: auto; }
+:root .list-page-indicator { font-size: 12px; font-weight: 700; color: var(--fx-muted); white-space: nowrap; }
+:root .list-view-toggle {
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--fx-surface);
+  box-shadow: var(--fx-shadow-sm);
+}
+:root .list-view-toggle button {
+  height: 30px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--fx-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+:root .list-view-toggle button:hover { color: var(--fx-text); }
+:root .list-view-toggle button.active { background: var(--fx-accent); color: #fff; box-shadow: 0 8px 18px -12px var(--fx-accent); }
+:root[data-theme="light"] .list-summary { background: #f7f9fc; box-shadow: 0 1px 2px rgba(16, 24, 40, .06); }
+:root[data-theme="light"] .list-summary strong { color: #10141b; }
+:root[data-theme="light"] .list-summary span { color: #6b7583; }
+:root[data-theme="light"] .list-intro { color: #6b7583; }
+:root[data-theme="light"] .list-results-bar { background: #f7f9fc; color: #6b7583; box-shadow: 0 1px 2px rgba(16, 24, 40, .06); }
+:root[data-theme="light"] .list-results-count { color: #4c5665; }
+:root[data-theme="light"] .list-page-indicator { color: #6b7583; }
+:root[data-theme="light"] .list-view-toggle { background: #fff; box-shadow: 0 1px 2px rgba(16, 24, 40, .08); }
+:root[data-theme="light"] .list-view-toggle button { color: #5c6675; }
+:root[data-theme="light"] .list-view-toggle button.active { background: var(--fx-accent); color: #fff; }
+
+/* Continue Watching cards use the same two-control strip as every other card. */
+:root .continue-card .card-actions { grid-template-columns: minmax(0, 1fr) 40px; gap: 8px; }
+:root .continue-card .card-actions .resume-chip {
+  background: var(--fx-accent) !important;
+  color: #fff !important;
+  box-shadow: 0 12px 24px -16px var(--fx-accent);
+}
+:root .continue-card .card-actions .resume-chip:hover { filter: brightness(1.07); color: #fff !important; }
+:root .continue-card .card-actions .bookmark-chip { align-self: center; }
+:root[data-theme="light"] .continue-card .card-actions .resume-chip { background: var(--fx-accent) !important; color: #fff !important; }
+
+/* ===========================================================================
+   16. RATINGS + BUTTON METRICS
    =========================================================================== */
 :root .rating-skeleton {
   display: inline-block;
