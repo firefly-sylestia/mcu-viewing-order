@@ -162,6 +162,7 @@ export default function App() {
   const [externalSearchResults, setExternalSearchResults] = useState([]);
   const [externalSearchLoading, setExternalSearchLoading] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [sortOpen, setSortOpen] = useState(false);
   const [selected, setSelected] = useState(null);
   const [genre, setGenre] = useState(saved.genre || 'All');
   const [rating, setRating] = useState(saved.rating || 0);
@@ -814,12 +815,12 @@ export default function App() {
   })}
   </div>}
   </div>
-  <button className={`header-sort-btn ${sortBy !== 'order' ? 'active' : ''}`} onClick={() => setFiltersOpen(true)} aria-haspopup="dialog" title={`Sorted by ${SORT_LABELS[sortBy]} ${sortDirection === 'asc' ? '↑' : '↓'} — tap to change`}>
+  <button className={`header-sort-btn ${sortBy !== 'order' ? 'active' : ''}`} onClick={() => { setFiltersOpen(false); setSortOpen(true); }} aria-haspopup="dialog" title={`Sorted by ${SORT_LABELS[sortBy]} ${sortDirection === 'asc' ? '↑' : '↓'} — tap to change`}>
     <ArrowUpDown size={15} />
     <span className="header-sort-label">{SORT_LABELS[sortBy]}</span>
     <small className="header-sort-arrow">{sortDirection === 'asc' ? '↑' : '↓'}</small>
   </button>
-  <button className={`header-filter-btn ${activeFilterCount > 0 ? 'active' : ''}`} onClick={() => setFiltersOpen(true)} aria-haspopup="dialog" aria-label={`Open filters${activeFilterCount ? `, ${activeFilterCount} active` : ''}`}>
+  <button className={`header-filter-btn ${activeFilterCount > 0 ? 'active' : ''}`} onClick={() => { setSortOpen(false); setFiltersOpen(true); }} aria-haspopup="dialog" aria-label={`Open filters${activeFilterCount ? `, ${activeFilterCount} active` : ''}`}>
     <SlidersHorizontal size={15} />
     <span className="header-filter-label">Filters</span>
     {activeFilterCount > 0 && <b className="header-filter-count">{activeFilterCount}</b>}
@@ -919,7 +920,8 @@ export default function App() {
 
       {selectedItem && <DetailView item={selectedItem} onClose={() => selectItem(null)} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={startWatchWithConfirm} onStartWatchFromRoadmap={startWatchFromRoadmap} activeItems={roadmapItems} />}
       {trailer && <TrailerModal trailer={trailer} onClose={() => setTrailer(null)} />}
-      {filtersOpen && <Filters genre={genre} setGenre={setGenre} rating={rating} setRating={setRating} ageRatingFilter={ageRatingFilter} setAgeRatingFilter={setAgeRatingFilter} sortBy={sortBy} setSortBy={setSortBy} sortDirection={sortDirection} setSortDirection={setSortDirection} universe={universe} typeFilter={typeFilter} setTypeFilter={setTypeFilter} genres={genres} count={activeItems.length} onClose={() => setFiltersOpen(false)} />}
+      {filtersOpen && <Filters genre={genre} setGenre={setGenre} rating={rating} setRating={setRating} ageRatingFilter={ageRatingFilter} setAgeRatingFilter={setAgeRatingFilter} universe={universe} typeFilter={typeFilter} setTypeFilter={setTypeFilter} genres={genres} count={activeItems.length} onClose={() => setFiltersOpen(false)} />}
+      {sortOpen && <SortSheet sortBy={sortBy} setSortBy={setSortBy} sortDirection={sortDirection} setSortDirection={setSortDirection} count={activeItems.length} onClose={() => setSortOpen(false)} />}
       {authOpen && <AuthModal onClose={() => setAuthOpen(false)} onLogin={login} onSignup={signup} onGoogleSignIn={googleSignIn} onAnonymousSignIn={anonymousSignIn} onResetPassword={resetPassword} />}
       {watchConfirmItem && <WatchConfirmDialog item={watchConfirmItem.item} onConfirm={confirmWatch} onDismiss={(skipFuture) => dismissWatchConfirm(skipFuture)} />}
       <Footer />
@@ -2276,24 +2278,21 @@ const saveServerPref = (tmdbId, server) => {
 
 const AGE_RATINGS = ['PG-13', 'R', 'TV-14', 'TV-PG', 'TV-MA', 'Not Rated'];
 
-function Filters({ genre, setGenre, rating, setRating, ageRatingFilter, setAgeRatingFilter, sortBy, setSortBy, sortDirection, setSortDirection, universe, typeFilter, setTypeFilter, genres, count, onClose }) {
-  const SORT_OPTIONS = [
+const SORT_OPTIONS = [
   { value: 'order', label: 'Viewing Order' },
   { value: 'chronological', label: 'Original Chronological' },
   { value: 'doomsday-secret-wars', label: 'Doomsday → Secret Wars' },
   { value: 'essential', label: 'Essential Only' },
   { value: 'rating', label: 'TMDB Rating' },
-    { value: 'imdb', label: 'IMDb Rating' },
-    { value: 'tomato', label: 'Rotten Tomatoes' },
-    { value: 'meta', label: 'Metacritic' },
-    { value: 'popularity', label: 'Popularity' },
-    { value: 'year', label: 'Release Year' },
-    { value: 'title', label: 'Title A–Z' },
-  ];
-  const TYPE_OPTIONS = ['All', 'Movies', 'Series'];
-  const activeFilters = [genre !== 'All', rating > 0, ageRatingFilter !== 'All', typeFilter !== 'All', sortBy !== 'order'].filter(Boolean).length;
-  const resetFilters = () => { setGenre('All'); setRating(0); setAgeRatingFilter('All'); setTypeFilter('All'); setSortBy('order'); setSortDirection('desc'); };
+  { value: 'imdb', label: 'IMDb Rating' },
+  { value: 'tomato', label: 'Rotten Tomatoes' },
+  { value: 'meta', label: 'Metacritic' },
+  { value: 'popularity', label: 'Popularity' },
+  { value: 'year', label: 'Release Year' },
+  { value: 'title', label: 'Title A–Z' },
+];
 
+function Sheet({ titleId, eyebrow, title, meta, onClose, children, footer }) {
   useEffect(() => {
     const onKey = (event) => { if (event.key === 'Escape') onClose(); };
     document.addEventListener('keydown', onKey);
@@ -2303,33 +2302,41 @@ function Filters({ genre, setGenre, rating, setRating, ageRatingFilter, setAgeRa
   }, [onClose]);
 
   return <div className="filter-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-  <aside className="filter-screen web-filter" role="dialog" aria-modal="true" aria-labelledby="filter-dialog-title">
-    <div className="filter-head">
-      <div className="filter-head-copy">
-        <p className="eyebrow">Refine the timeline</p>
-        <h2 id="filter-dialog-title">Filters &amp; sorting</h2>
-        <span className="filter-head-meta">{count} titles match</span>
-      </div>
-      <button className="filter-close-btn" onClick={onClose} aria-label="Close filters"><X size={18} /></button>
-    </div>
-
-    <div className="filter-body">
-  {universe === 'marvel' && <p className="filter-hint">Use Sort by to switch between the original release order, chronological order, or the focused Doomsday → Secret Wars path.</p>}
-
-      <section className="filter-section">
-        <div className="filter-section-header"><h3>Sort by</h3><div className="sort-direction-toggle" role="group" aria-label="Sort direction">
-          <button className={sortDirection === 'desc' ? 'active' : ''} onClick={() => setSortDirection('desc')} title="Highest first">↓</button>
-          <button className={sortDirection === 'asc' ? 'active' : ''} onClick={() => setSortDirection('asc')} title="Lowest first">↑</button>
-        </div></div>
-        <div className="filter-sort-grid">
-          {SORT_OPTIONS.map(opt => (
-            <button key={opt.value} className={`filter-sort-chip ${sortBy === opt.value ? 'selected' : ''}`} onClick={() => setSortBy(opt.value)}>
-              {opt.label}
-              {sortBy === opt.value && <Check size={14} />}
-            </button>
-          ))}
+    <aside className="filter-screen web-filter" role="dialog" aria-modal="true" aria-labelledby={titleId}>
+      <div className="filter-head">
+        <div className="filter-head-copy">
+          <p className="eyebrow">{eyebrow}</p>
+          <h2 id={titleId}>{title}</h2>
+          <span className="filter-head-meta">{meta}</span>
         </div>
-      </section>
+        <button className="filter-close-btn" onClick={onClose} aria-label="Close"><X size={18} /></button>
+      </div>
+      <div className="filter-body">{children}</div>
+      <div className="filter-footer">{footer}</div>
+    </aside>
+  </div>;
+}
+
+function Filters({ genre, setGenre, rating, setRating, ageRatingFilter, setAgeRatingFilter, universe, typeFilter, setTypeFilter, genres, count, onClose }) {
+  const TYPE_OPTIONS = ['All', 'Movies', 'Series'];
+  const activeFilters = [genre !== 'All', rating > 0, ageRatingFilter !== 'All', typeFilter !== 'All'].filter(Boolean).length;
+  const resetFilters = () => { setGenre('All'); setRating(0); setAgeRatingFilter('All'); setTypeFilter('All'); };
+
+  return <Sheet
+    titleId="filter-dialog-title"
+    eyebrow="Narrow the list"
+    title="Filters"
+    meta={`${count} titles match`}
+    onClose={onClose}
+    footer={<>
+      <button className="filter-clear-btn" onClick={resetFilters} disabled={activeFilters === 0}>
+        <RotateCcw size={14} />
+        {activeFilters > 0 ? `Reset ${activeFilters}` : 'Reset'}
+      </button>
+      <button className="filter-results-btn" onClick={onClose}>Show {count} results</button>
+    </>}
+  >
+    {universe === 'marvel' && <p className="filter-hint">Filter by format, genre, rating or age rating. Phase switching lives in the header.</p>}
 
       <section className="filter-section">
         <h3>Type</h3>
@@ -2366,17 +2373,43 @@ function Filters({ genre, setGenre, rating, setRating, ageRatingFilter, setAgeRa
           ))}
         </div>
       </section>
-    </div>
+  </Sheet>;
+}
 
-    <div className="filter-footer">
-      <button className="filter-clear-btn" onClick={resetFilters} disabled={activeFilters === 0}>
+function SortSheet({ sortBy, setSortBy, sortDirection, setSortDirection, count, onClose }) {
+  const isDefault = sortBy === 'order' && sortDirection === 'asc';
+  return <Sheet
+    titleId="sort-dialog-title"
+    eyebrow="Choose the order"
+    title="Sort list"
+    meta={`${count} titles in view`}
+    onClose={onClose}
+    footer={<>
+      <button className="filter-clear-btn" onClick={() => { setSortBy('order'); setSortDirection('asc'); }} disabled={isDefault}>
         <RotateCcw size={14} />
-        {activeFilters > 0 ? `Reset ${activeFilters}` : 'Reset'}
+        Default
       </button>
       <button className="filter-results-btn" onClick={onClose}>Show {count} results</button>
-    </div>
-  </aside>
-  </div>;
+    </>}
+  >
+    <section className="filter-section">
+      <div className="filter-section-header">
+        <h3>Sort by</h3>
+        <div className="sort-direction-toggle" role="group" aria-label="Sort direction">
+          <button className={sortDirection === 'asc' ? 'active' : ''} onClick={() => setSortDirection('asc')} title="Ascending">↑</button>
+          <button className={sortDirection === 'desc' ? 'active' : ''} onClick={() => setSortDirection('desc')} title="Descending">↓</button>
+        </div>
+      </div>
+      <div className="filter-sort-grid">
+        {SORT_OPTIONS.map(opt => (
+          <button key={opt.value} className={`filter-sort-chip ${sortBy === opt.value ? 'selected' : ''}`} onClick={() => setSortBy(opt.value)}>
+            {opt.label}
+            {sortBy === opt.value && <Check size={14} />}
+          </button>
+        ))}
+      </div>
+    </section>
+  </Sheet>;
 }
 
 /* ── Watch confirmation dialog ─────────────────────────────────────────────── */

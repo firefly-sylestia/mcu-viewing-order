@@ -5263,3 +5263,83 @@ button { border: 0; color: inherit; cursor: pointer; }
 :root[data-theme="light"] .filter-body .filter-chip,
 :root[data-theme="light"] .filter-body .filter-sort-chip { background: rgba(0,0,0,.03); border-color: rgba(0,0,0,.07); color: rgba(0,0,0,.65); }
 :root[data-theme="light"] .filter-body .filter-section h3 { color: rgba(0,0,0,.42); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Borderless chrome: spacing and fills instead of outlines
+   ═══════════════════════════════════════════════════════════════════════════ */
+.site-header { border-bottom: 0; padding: 16px 2px 18px; margin-bottom: 12px; box-shadow: 0 22px 46px -30px rgba(0,0,0,.95); }
+.header-top { gap: 18px; }
+.header-bar { gap: 12px; }
+.universe-tabs { border: 0; padding: 4px; gap: 4px; background: rgba(255,255,255,.05); border-radius: 16px; }
+.universe-tabs button { border-radius: 12px; padding: 9px 16px; }
+.header-bar .header-search { border: 0; height: 44px; background: rgba(255,255,255,.055); }
+.header-bar .header-search:focus-within { border: 0; background: rgba(255,255,255,.1); box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand-accent,#da1e37) 32%, transparent); }
+.header-tools .header-phase-btn,
+.header-sort-btn,
+.header-filter-btn { border: 0; background: rgba(255,255,255,.06); }
+.header-tools .header-phase-btn:hover,
+.header-sort-btn:hover,
+.header-filter-btn:hover { border: 0; background: rgba(255,255,255,.12); }
+.header-tools .header-phase-btn.active,
+.header-sort-btn.active,
+.header-filter-btn.active { border: 0; box-shadow: none; background: color-mix(in srgb, var(--brand-accent,#da1e37) 24%, rgba(255,255,255,.03)); }
+.header-quick-actions .header-status-pill { border: 0; background: rgba(255,255,255,.06); }
+.header-quick-actions .header-status-pill.watching { background: rgba(245,158,11,.13); }
+.header-quick-actions .header-status-pill.next { background: rgba(143,211,255,.13); }
+.header-phase-dropdown { border: 0; gap: 4px; padding: 10px; box-shadow: 0 30px 60px rgba(0,0,0,.6); }
+.phase-menu-title { margin: 2px 6px 8px; }
+
+/* ── Card actions: one compact row, no empty grid tracks ── */
+.movie-card .card-actions { display: grid; grid-template-columns: minmax(0, 1fr) 38px 38px; gap: 6px; align-items: center; margin-top: 8px; }
+.movie-card .card-actions button { height: 38px; min-height: 38px; border: 0; border-radius: 12px; }
+.movie-card .card-actions .trailer-chip { grid-column: auto; width: auto; padding: 0 10px; gap: 7px; background: rgba(255,255,255,.06); color: rgba(255,255,255,.75); font-size: 11px; font-weight: 800; }
+.movie-card .card-actions .trailer-chip:hover { background: rgba(255,255,255,.12); color: #fff; }
+.movie-card .card-actions .bookmark-chip,
+.movie-card .card-actions .watched-chip { width: 38px; min-width: 38px; padding: 0; display: inline-flex; align-items: center; justify-content: center; background: rgba(255,255,255,.06) !important; color: rgba(255,255,255,.55) !important; }
+.movie-card .card-actions .bookmark-chip:hover,
+.movie-card .card-actions .watched-chip:hover { filter: brightness(1.25); }
+.movie-card .card-actions .bookmark-chip.saved { background: rgba(125,170,255,.2) !important; border: 0 !important; color: #cfe0ff !important; }
+.movie-card .card-actions .watched-chip.watched { background: rgba(46,204,113,.2) !important; border: 0 !important; color: #b6f2c8 !important; }
+
+/* ── List actions: four aligned controls, flat tick state ── */
+.list-row .list-actions { display: grid; grid-template-columns: auto minmax(112px, 1fr) 38px 38px; gap: 8px; align-items: center; }
+.list-row .list-actions > button { height: 38px; min-height: 38px; border: 0; border-radius: 12px; background: rgba(255,255,255,.06) !important; }
+.list-row .list-actions .list-trailer { padding: 0 14px; background: var(--brand-accent) !important; color: #fff; font-size: 12px; font-weight: 800; }
+.list-row .list-actions .status-select { width: 100%; min-width: 0; }
+.list-row .list-actions .status-trigger { width: 100%; }
+.list-row .list-actions .list-bookmark,
+.list-row .list-actions .list-watched { width: 38px; flex: 0 0 38px; padding: 0; display: grid; place-items: center; color: rgba(255,255,255,.55) !important; }
+.list-row .list-actions .list-bookmark:hover,
+.list-row .list-actions .list-watched:hover { filter: brightness(1.25); }
+
+/* no outlines anywhere on the action rows, whatever the universe theme adds */
+.movie-site .movie-card .card-actions .trailer-chip,
+.movie-site .movie-card .card-actions .bookmark-chip,
+.movie-site .movie-card .card-actions .watched-chip,
+.movie-site .list-row .list-actions .list-trailer,
+.movie-site .list-row .list-actions .list-bookmark,
+.movie-site .list-row .list-actions .list-watched { border: 0 !important; }
+.list-row .list-actions .list-bookmark.saved { background: rgba(125,170,255,.2) !important; border: 0 !important; color: #cfe0ff !important; }
+.list-row .list-actions .list-watched.watched { background: rgba(46,204,113,.2) !important; border: 0 !important; color: #b6f2c8 !important; box-shadow: none !important; }
+
+/* ── Dialogs: borderless sheets ── */
+.filter-overlay .filter-screen.web-filter { border: 0; box-shadow: 0 44px 110px rgba(0,0,0,.7); }
+.filter-head { border-bottom: 0; padding-bottom: 10px; }
+.filter-footer { border-top: 0; }
+.filter-footer .filter-clear-btn { border: 0; background: rgba(255,255,255,.06); }
+.filter-body .filter-chip,
+.filter-body .filter-sort-chip,
+.filter-body .sort-direction-toggle { border: 0; background: rgba(255,255,255,.05); }
+.filter-body .filter-chip.selected,
+.filter-body .filter-sort-chip.selected { background: color-mix(in srgb, var(--brand-accent,#da1e37) 22%, rgba(255,255,255,.02)); }
+
+@media (max-width: 620px) {
+  .movie-card .card-actions { grid-template-columns: minmax(0, 1fr) 34px 34px; gap: 5px; }
+  .movie-card .card-actions .bookmark-chip,
+  .movie-card .card-actions .watched-chip { width: 34px; min-width: 34px; height: 34px; min-height: 34px; }
+  .list-row .list-actions { grid-template-columns: minmax(0, 1fr) minmax(96px, 1.1fr) 36px 36px; gap: 6px; }
+  .list-row .list-actions .list-trailer { padding: 0 10px; }
+  .list-row .list-actions .list-trailer span { display: none; }
+  .list-row .list-actions .list-bookmark,
+  .list-row .list-actions .list-watched { width: 36px; flex-basis: 36px; }
+}
