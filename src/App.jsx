@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Search, SlidersHorizontal, Home, Bookmark, Play, UserRound, X, ArrowLeft, Star, BarChart3, Check, Clock, ListFilter, RotateCcw, ChevronLeft, ChevronRight, ChevronDown, Calendar, Timer, Sparkles, LogOut, Cloud, Download, Camera, Info, ShieldAlert, Clapperboard } from 'lucide-react';
+import { Search, SlidersHorizontal, Home, Bookmark, Play, UserRound, X, ArrowLeft, Star, BarChart3, Check, Clock, ListFilter, RotateCcw, ChevronLeft, ChevronRight, ChevronDown, Calendar, Timer, Sparkles, LogOut, Cloud, Download, Camera, Info, ShieldAlert, Clapperboard, ArrowUpDown } from 'lucide-react';
 import { RAW } from './data/mcuData';
 import { DC_RAW } from './data/dcData';
 import { XMEN_RAW } from './data/xmenData';
@@ -771,7 +771,7 @@ export default function App() {
   const universeName = universe === 'marvel' ? 'MCU' : universe === 'xmen' ? 'X-Men' : universe === 'sony' ? 'Sony' : 'DC';
   const universeAccent = universe === 'marvel' ? '#da1e37' : universe === 'xmen' ? '#a0a0ac' : universe === 'sony' ? '#b51f2f' : '#2f80ed';
   const selectedTitle = selected?.title || safeWatchItem?.item?.title || '';
-  const pageLabel = section === 'home' ? 'Home' : section === 'list' ? 'Browse titles' : section === 'analytics' ? 'Analytics' : section === 'profile' ? 'Profile' : section === 'watch' ? 'Now watching' : 'Title details';
+  const activeFilterCount = [genre !== 'All', rating > 0, ageRatingFilter !== 'All', typeFilter !== 'All'].filter(Boolean).length;
 
   if (window.location.pathname !== '/') return <NotFoundPage onHome={() => { window.location.hash = 'home'; window.history.pushState(null, '', '/#home'); window.location.reload(); }} />;
 
@@ -779,17 +779,33 @@ export default function App() {
   <>
   <SeoHead section={section} selectedTitle={selectedTitle} />
   <main className={`movie-site universe-${universe}`} style={{ '--brand-accent': universeAccent, '--accent': universeAccent, '--theme-accent': universeAccent }}>
-  <nav className="seo-breadcrumbs" aria-label="Breadcrumb"><a href="#home">Home</a><span aria-hidden="true">/</span><span aria-current="page">{pageLabel}</span></nav>
   <div className="site-glow" />
       <header className="site-header">
-  <div className="header-main-row">
-  <button className="brand" onClick={() => { setQuery(''); setSection('home'); setWatchItem(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }} aria-label="Go to Incursion home"><b>Incursion</b></button>
+  <div className="header-top">
+  <button className="brand" onClick={() => { setQuery(''); setSection('home'); setWatchItem(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }} aria-label="Go to Incursion home"><b>Incursion</b><small>{universeName} timeline</small></button>
   <div className="header-quick-actions" aria-label="Quick viewing controls">
+  {(() => { const watchingItem = activeItems.find(item => item.userStatus === 'watching'); return watchingItem && <button className="header-status-pill watching" onClick={() => selectItem(watchingItem)} title={`Open current: ${watchingItem.title}`}><Clock size={13} /><span className="header-pill-label"><small>Watching</small><b>{watchingItem.title}</b></span></button>; })()}
+  {nextUp && <button className="header-status-pill next" onClick={() => selectItem(nextUp)} title={`Open next: ${nextUp.title}`}><Play size={12} fill="currentColor" /><span className="header-pill-label"><small>Next</small><b>{nextUp.title}</b></span></button>}
+  </div>
+  </div>
+  <div className="header-bar">
+  <div className="universe-tabs" role="tablist" aria-label="Universe">
+  {[['marvel', 'Marvel'], ['sony', 'Sony'], ['xmen', 'X-Men'], ['dc', 'DC']].map(([key, label]) => (
+    <button key={key} data-universe={key} role="tab" aria-selected={universe === key} className={universe === key ? 'active' : ''} onClick={() => { setUniverse(key); setHeroIndex(0); }}><span className="universe-dot" aria-hidden="true" />{label}</button>
+  ))}
+  </div>
+        <div className="header-search">
+          <Search size={18} />
+          <input value={query} onChange={e => setQuery(e.target.value)} placeholder={`Search ${universe === 'marvel' ? 'Marvel' : universe === 'xmen' ? 'X-Men' : universe === 'sony' ? 'Sony' : 'DC'} titles & TMDB…`} aria-label="Search titles" />
+          {query && <button className="search-clear" onClick={() => setQuery('')} aria-label="Clear search"><X size={16} /></button>}
+        </div>
+        <div className="header-tools">
   <div className="header-phase-menu">
   <button ref={phaseButtonRef} className={`header-phase-btn ${phaseFilter !== 'All' ? 'active' : ''}`} onClick={() => { const rect = phaseButtonRef.current?.getBoundingClientRect(); if (rect) setPhaseMenuPosition({ top: rect.bottom + 7, left: rect.left }); setPhaseMenuOpen(open => !open); }} aria-expanded={phaseMenuOpen} aria-haspopup="listbox">
-  <ListFilter size={14} /> <span>{phaseFilter === 'All' ? 'Phase' : `Phase ${phaseFilter}`}</span><ChevronDown size={13} />
+  <ListFilter size={14} /> <span>{phaseFilter === 'All' ? 'All phases' : `Phase ${phaseFilter}`}</span><ChevronDown size={13} />
   </button>
   {phaseMenuOpen && <div className="header-phase-dropdown" style={{ top: phaseMenuPosition.top, left: phaseMenuPosition.left }} role="listbox" aria-label="Select phase">
+  <p className="phase-menu-title">Jump to phase</p>
   {['All', ...new Set(allItems.filter(item => item.universe === universe && item.phase).map(item => item.phase))].map(phase => {
     const phaseItems = phase === 'All' ? [] : allItems.filter(item => item.universe === universe && String(item.phase) === String(phase)).map(enrichItem);
     const phaseWatched = phaseItems.length > 0 && phaseItems.every(item => item.userStatus === 'watched');
@@ -798,29 +814,18 @@ export default function App() {
   })}
   </div>}
   </div>
-  {(() => { const watchingItem = activeItems.find(item => item.userStatus === 'watching'); return watchingItem && <button className="header-status-pill watching" onClick={() => selectItem(watchingItem)} title={`Open current: ${watchingItem.title}`}><Clock size={13} /><span className="header-pill-label"><small>Watching</small><b>{watchingItem.title}</b></span></button>; })()}
-  {nextUp && <button className="header-status-pill next" onClick={() => selectItem(nextUp)} title={`Open next: ${nextUp.title}`}><Play size={12} fill="currentColor" /><span className="header-pill-label"><small>Next</small><b>{nextUp.title}</b></span></button>}
-  </div>
-  </div>
-  <div className="universe-tabs" role="tablist" aria-label="Universe">
-  <button className={universe === 'marvel' ? 'active' : ''} onClick={() => { setUniverse('marvel'); setHeroIndex(0); }}>Marvel</button>
-  <button className={universe === 'sony' ? 'active' : ''} onClick={() => { setUniverse('sony'); setHeroIndex(0); }}>Sony</button>
-  <button className={universe === 'xmen' ? 'active' : ''} onClick={() => { setUniverse('xmen'); setHeroIndex(0); }}>X-Men</button>
-  <button className={universe === 'dc' ? 'active' : ''} onClick={() => { setUniverse('dc'); setHeroIndex(0); }}>DC</button>
-  </div>
-        <div className="header-search">
-          <Search size={18} />
-          <input value={query} onChange={e => setQuery(e.target.value)} placeholder={`Search ${universe === 'marvel' ? 'Marvel' : universe === 'xmen' ? 'X-Men' : universe === 'sony' ? 'Sony' : 'DC'} titles & TMDB…`} />
-          {query && <button className="search-clear" onClick={() => setQuery('')}><X size={16} /></button>}
-          {sortBy !== 'order' && (
-            <button className="header-sort-chip" onClick={() => setFiltersOpen(true)} title={`Sorted by ${SORT_LABELS[sortBy]} ${sortDirection === 'asc' ? '↑' : '↓'} — tap to change`}>
-              {SORT_LABELS[sortBy]}
-              <span className="header-sort-arrow">{sortDirection === 'asc' ? '↑' : '↓'}</span>
-            </button>
-          )}
-          <button className="header-filter-btn" onClick={() => setFiltersOpen(true)} aria-label="Open filters"><SlidersHorizontal size={18} /></button>
+  <button className={`header-sort-btn ${sortBy !== 'order' ? 'active' : ''}`} onClick={() => setFiltersOpen(true)} aria-haspopup="dialog" title={`Sorted by ${SORT_LABELS[sortBy]} ${sortDirection === 'asc' ? '↑' : '↓'} — tap to change`}>
+    <ArrowUpDown size={15} />
+    <span className="header-sort-label">{SORT_LABELS[sortBy]}</span>
+    <small className="header-sort-arrow">{sortDirection === 'asc' ? '↑' : '↓'}</small>
+  </button>
+  <button className={`header-filter-btn ${activeFilterCount > 0 ? 'active' : ''}`} onClick={() => setFiltersOpen(true)} aria-haspopup="dialog" aria-label={`Open filters${activeFilterCount ? `, ${activeFilterCount} active` : ''}`}>
+    <SlidersHorizontal size={15} />
+    <span className="header-filter-label">Filters</span>
+    {activeFilterCount > 0 && <b className="header-filter-count">{activeFilterCount}</b>}
+  </button>
         </div>
-
+  </div>
       </header>
 
       {section === 'home' && !adBlockerDismissed && <AdBlockerDialog onDismiss={() => { setAdBlockerDismissed(true); localStorage.setItem('adblocker-dismissed', '1'); }} />}
@@ -828,7 +833,6 @@ export default function App() {
         <section className="hero-layout">
           <TopCarousel items={heroItems} featured={featured} heroIndex={heroIndex} setHeroIndex={setHeroIndex} setSelected={selectItem} />
         </section>
-        <SuggestionStrip nextUp={nextUp} stats={stats} setSelected={selectItem} playTrailer={playTrailer} />
         <MovieRail title="Up next" items={activeItems.filter(i => i.userStatus === 'unwatched').slice(0, 10)} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} scrollable variant="upnext" />
         <MovieRail title="Essential picks" items={activeItems.filter(i => i.essential)} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} paginated gridControls />
         <MovieRail title="Recently watched" items={activeItems.filter(i => i.userStatus === 'watched').slice(-24).reverse()} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} empty="Mark titles as watched to see them here." paginated gridControls />
@@ -1022,7 +1026,12 @@ function MovieCard({ item, setSelected, cycleStatus, setStatus, toggleBookmark, 
     <button className="poster-button" onClick={() => setSelected(item)}>
       <PosterArt item={item} />
     </button>
-    <div className="card-body"><button className="title-button" onClick={() => setSelected(item)}>{item.title} <span className="phase-badge">Phase {item.phase || '—'}</span></button>{guidance && <button className="warning-info-button" onClick={() => onWarning(item)} aria-label={`Show viewing guidance for ${item.title}`}><Info size={13} /></button>}<span>{item.year} · {runtimeLabel(item.runtime, item.type)}{item.userStatus === 'watching' && item.watchedDuration > 30000 ? ` · ${watchTimeLabel(item)}` : ''}{item.releaseStatus === 'upcoming' && item.releaseDate ? <span className="card-release-badge">{new Date(item.releaseDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span> : ''}{item.releaseStatus === 'upcoming' && !item.releaseDate ? <span className="card-release-badge">Upcoming</span> : ''}{item.releaseStatus === 'announced' ? <span className="card-release-badge announced">Announced</span> : ''}</span>
+    <div className="card-body">
+      <div className="card-title-row">
+        <button className="title-button" onClick={() => setSelected(item)} title={item.title}>{item.title}</button>
+        {guidance && <button className="warning-info-button" onClick={() => onWarning(item)} aria-label={`Show viewing guidance for ${item.title}`} title="Viewing guidance"><Info size={12} /></button>}
+      </div>
+      <div className="card-meta-row"><span className="card-meta-phase">Phase {item.phase || '—'}</span><span className="card-meta-text">{item.year} · {runtimeLabel(item.runtime, item.type)}{item.userStatus === 'watching' && item.watchedDuration > 30000 ? ` · ${watchTimeLabel(item)}` : ''}{item.releaseStatus === 'upcoming' && item.releaseDate ? <span className="card-release-badge">{new Date(item.releaseDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span> : ''}{item.releaseStatus === 'upcoming' && !item.releaseDate ? <span className="card-release-badge">Upcoming</span> : ''}{item.releaseStatus === 'announced' ? <span className="card-release-badge announced">Announced</span> : ''}</span></div>
         <div className="card-ratings-line">{item.rating && <span className="list-rating"><Star size={9} fill="currentColor" />{Number(item.rating).toFixed(1)}</span>}{item.imdbRating && <span className="list-rating list-rating-imdb">★{item.imdbRating}</span>}{item.tomatoRating && <span className={`list-rating list-rating-tomato ${getTomatoTier(item.tomatoRating).cls}`}>{getTomatoTier(item.tomatoRating).emoji}{item.tomatoRating}</span>}{item.metaRating && <span className="list-rating list-rating-meta">M{parseInt(item.metaRating)}</span>}{!(item.rating || item.imdbRating || item.tomatoRating || item.metaRating) && <span className="list-rating list-rating-na">N/A</span>}</div>
     </div>
     <div className="card-actions"><button onClick={() => playTrailer(item)} className="trailer-chip" aria-label={`Play ${item.title} trailer`}><Clapperboard size={16} /><span>Trailer</span></button><button onClick={() => toggleBookmark(item)} className={`bookmark-chip ${item.bookmarked ? 'saved' : ''}`} aria-label={item.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button><button onClick={() => setStatus(item, item.userStatus === 'watched' ? 'unwatched' : 'watched')} className={`watched-chip ${item.userStatus === 'watched' ? 'watched' : ''}`} aria-label={item.userStatus === 'watched' ? 'Mark as unwatched' : 'Mark as watched'}><Check size={18} /></button></div>
@@ -1229,14 +1238,6 @@ function RatingChips({ item }) {
       {!tmdb && !imdb && !tomato && !meta && <span className="detail-rating"><Star size={15} fill="currentColor" /> N/A</span>}
     </>
   );
-}
-
-function SuggestionStrip({ nextUp, stats, setSelected, playTrailer }) {
-  if (!nextUp) return null;
-  return <section className="suggestion-strip" style={{ '--accent': nextUp.accent }}>
-    <div><p className="eyebrow">Smart suggestion</p><h2>Next up: {nextUp.title}</h2><span>{stats.percent}% complete · {stats.watched} watched · {stats.bookmarked} saved</span></div>
-    <div className="suggestion-actions"><button onClick={() => playTrailer(nextUp)}><Clapperboard size={16} /> Trailer</button><button onClick={() => setSelected(nextUp)}>Details</button></div>
-  </section>;
 }
 
 function AnalyticsPanel({ stats, large = false }) {
@@ -2291,11 +2292,25 @@ function Filters({ genre, setGenre, rating, setRating, ageRatingFilter, setAgeRa
   ];
   const TYPE_OPTIONS = ['All', 'Movies', 'Series'];
   const activeFilters = [genre !== 'All', rating > 0, ageRatingFilter !== 'All', typeFilter !== 'All', sortBy !== 'order'].filter(Boolean).length;
-  return <aside className="filter-screen web-filter">
+  const resetFilters = () => { setGenre('All'); setRating(0); setAgeRatingFilter('All'); setTypeFilter('All'); setSortBy('order'); setSortDirection('desc'); };
+
+  useEffect(() => {
+    const onKey = (event) => { if (event.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', onKey);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = previousOverflow; };
+  }, [onClose]);
+
+  return <div className="filter-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+  <aside className="filter-screen web-filter" role="dialog" aria-modal="true" aria-labelledby="filter-dialog-title">
     <div className="filter-head">
-      <button className="filter-clear-btn" onClick={() => { setGenre('All'); setRating(0); setAgeRatingFilter('All'); setTypeFilter('All'); setSortBy('order'); setSortDirection('desc'); }} disabled={activeFilters === 0}>Clear All{activeFilters > 0 && <span>{activeFilters}</span>}</button>
-      <div className="filter-head-center"><b>Filters & Sorting</b><span>{count} results</span></div>
-      <button className="filter-close-btn" onClick={onClose} aria-label="Close filters"><X size={20} /></button>
+      <div className="filter-head-copy">
+        <p className="eyebrow">Refine the timeline</p>
+        <h2 id="filter-dialog-title">Filters &amp; sorting</h2>
+        <span className="filter-head-meta">{count} titles match</span>
+      </div>
+      <button className="filter-close-btn" onClick={onClose} aria-label="Close filters"><X size={18} /></button>
     </div>
 
     <div className="filter-body">
@@ -2354,9 +2369,14 @@ function Filters({ genre, setGenre, rating, setRating, ageRatingFilter, setAgeRa
     </div>
 
     <div className="filter-footer">
+      <button className="filter-clear-btn" onClick={resetFilters} disabled={activeFilters === 0}>
+        <RotateCcw size={14} />
+        {activeFilters > 0 ? `Reset ${activeFilters}` : 'Reset'}
+      </button>
       <button className="filter-results-btn" onClick={onClose}>Show {count} results</button>
     </div>
-  </aside>;
+  </aside>
+  </div>;
 }
 
 /* ── Watch confirmation dialog ─────────────────────────────────────────────── */
