@@ -6,8 +6,8 @@ const UI_VARIANT_KEY = 'ui-variant';
 
 function useUiVariant() {
   const [variant, setVariantState] = useState(() => {
-    if (typeof window === 'undefined') return 'classic';
-    return localStorage.getItem(UI_VARIANT_KEY) || 'classic';
+    if (typeof window === 'undefined') return 'fresh';
+    return localStorage.getItem(UI_VARIANT_KEY) || 'fresh';
   });
 
   const setVariant = (next) => {
@@ -309,7 +309,7 @@ function SettingsPanel({ profileName, setProfileName, user, configured, onLogin,
             <span className="settings-row-icon"><Sparkles size={18} /></span>
             <div>
               <strong>New interface</strong>
-              <small>{variant === 'fresh' ? 'Fresh layout (preview)' : 'Classic layout'}</small>
+              <small>{variant === 'fresh' ? 'Fresh layout (default)' : 'Classic layout'}</small>
             </div>
           </div>
           <button

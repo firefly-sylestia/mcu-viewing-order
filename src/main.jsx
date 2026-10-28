@@ -13,6 +13,21 @@ Object.entries(motionCssVars).forEach(([key, value]) => {
   document.documentElement.style.setProperty(key, value)
 })
 
+// Apply persisted appearance before the first paint. Without this the light
+// palette (and the fresh interface) only kick in after Settings mounts, which
+// left the detail view and other overlays rendering with dark colours.
+const readStored = (key, fallback) => {
+  try {
+    return localStorage.getItem(key) || fallback
+  } catch {
+    return fallback
+  }
+}
+const storedTheme = readStored('theme', 'dark')
+document.documentElement.setAttribute('data-theme', storedTheme)
+document.documentElement.classList.toggle('dark', storedTheme !== 'light')
+document.documentElement.setAttribute('data-ui', readStored('ui-variant', 'fresh'))
+
 class AppErrorBoundary extends Component {
   constructor(props) {
     super(props)

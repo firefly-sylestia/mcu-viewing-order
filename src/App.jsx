@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Search, SlidersHorizontal, Home, Bookmark, Play, UserRound, X, ArrowLeft, Star, BarChart3, Check, Clock, ListFilter, RotateCcw, ChevronLeft, ChevronRight, ChevronDown, Calendar, Timer, Sparkles, LogOut, Cloud, Download, Camera, Info, ShieldAlert, Clapperboard, ArrowUpDown } from 'lucide-react';
+import { Search, SlidersHorizontal, Home, Bookmark, Play, UserRound, X, ArrowLeft, Star, BarChart3, Check, Clock, ListFilter, RotateCcw, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Calendar, Timer, Sparkles, LogOut, Cloud, Download, Camera, Info, ShieldAlert, Clapperboard, ArrowUpDown } from 'lucide-react';
 import { RAW } from './data/mcuData';
 import { DC_RAW } from './data/dcData';
 import { XMEN_RAW } from './data/xmenData';
@@ -169,7 +169,7 @@ export default function App() {
 
   // Interface variant (classic | fresh) is chosen in Settings; applied on the root.
   useEffect(() => {
-    try { document.documentElement.setAttribute('data-ui', localStorage.getItem('ui-variant') || 'classic'); } catch { document.documentElement.setAttribute('data-ui', 'classic'); }
+    try { document.documentElement.setAttribute('data-ui', localStorage.getItem('ui-variant') || 'fresh'); } catch { document.documentElement.setAttribute('data-ui', 'fresh'); }
   }, []);
   const [selected, setSelected] = useState(null);
   const [genre, setGenre] = useState(saved.genre || 'All');
@@ -1053,7 +1053,7 @@ function MovieCard({ item, setSelected, cycleStatus, setStatus, toggleBookmark, 
         {guidance && <button className="warning-info-button" onClick={() => onWarning(item)} aria-label={`Show viewing guidance for ${item.title}`} title="Viewing guidance"><Info size={12} /></button>}
       </div>
       <div className="card-meta-row"><span className="card-meta-phase">Phase {item.phase || '—'}</span><span className="card-meta-text">{item.year} · {runtimeLabel(item.runtime, item.type)}{item.userStatus === 'watching' && item.watchedDuration > 30000 ? ` · ${watchTimeLabel(item)}` : ''}{item.releaseStatus === 'upcoming' && item.releaseDate ? <span className="card-release-badge">{new Date(item.releaseDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span> : ''}{item.releaseStatus === 'upcoming' && !item.releaseDate ? <span className="card-release-badge">Upcoming</span> : ''}{item.releaseStatus === 'announced' ? <span className="card-release-badge announced">Announced</span> : ''}</span></div>
-        <div className="card-ratings-line">{item.rating && <span className="list-rating"><Star size={9} fill="currentColor" />{Number(item.rating).toFixed(1)}</span>}{item.imdbRating && <span className="list-rating list-rating-imdb">★{item.imdbRating}</span>}{item.tomatoRating && <span className={`list-rating list-rating-tomato ${getTomatoTier(item.tomatoRating).cls}`}>{getTomatoTier(item.tomatoRating).emoji}{item.tomatoRating}</span>}{item.metaRating && <span className="list-rating list-rating-meta">M{parseInt(item.metaRating)}</span>}{!(item.rating || item.imdbRating || item.tomatoRating || item.metaRating) && <span className="list-rating list-rating-na">N/A</span>}</div>
+        <div className="card-ratings-line">{item.rating && <span className="list-rating"><Star size={9} fill="currentColor" />{Number(item.rating).toFixed(1)}</span>}{item.imdbRating && <span className="list-rating list-rating-imdb">★{item.imdbRating}</span>}{item.tomatoRating && <span className={`list-rating list-rating-tomato ${getTomatoTier(item.tomatoRating).cls}`}>{getTomatoTier(item.tomatoRating).emoji}{item.tomatoRating}</span>}{item.metaRating && <span className="list-rating list-rating-meta">M{parseInt(item.metaRating)}</span>}{!(item.rating || item.imdbRating || item.tomatoRating || item.metaRating) && (item.tmdbId ? <span className="list-rating list-rating-loading" aria-label="Ratings loading"><span className="rating-skeleton" /></span> : <span className="list-rating list-rating-na">N/A</span>)}</div>
     </div>
     <div className="card-actions"><button onClick={() => playTrailer(item)} className="trailer-chip" aria-label={`Play ${item.title} trailer`}><Clapperboard size={16} /><span>Trailer</span></button><button onClick={() => toggleBookmark(item)} className={`bookmark-chip ${item.bookmarked ? 'saved' : ''}`} aria-label={item.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button><button onClick={() => setStatus(item, item.userStatus === 'watched' ? 'unwatched' : 'watched')} className={`watched-chip ${item.userStatus === 'watched' ? 'watched' : ''}`} aria-label={item.userStatus === 'watched' ? 'Mark as unwatched' : 'Mark as watched'} aria-pressed={item.userStatus === 'watched'}><Check size={18} /></button></div>
   </article>;
@@ -1079,7 +1079,7 @@ function ListSection({ items, sortKey, externalResults = [], externalLoading = f
     {viewMode === 'grid' ? <div key={`grid-${sortKey}`} className="movie-grid web-grid list-card-grid">{visibleItems.map((item, i) => <MovieCard key={item.id} item={item} setSelected={setSelected} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} onWarning={onWarning} style={{ animationDelay: `${i * 30}ms` }} />)}</div> : <div key={`list-${sortKey}`} className="list-grid">{visibleItems.map((item, index) => <article className="list-row" key={item.id} data-state={item.userStatus} data-saved={item.bookmarked ? 'true' : 'false'} style={{ '--accent': item.accent, animationDelay: `${index * 30}ms` }} onClick={() => { hapticTap(); setSelected(item); }} role="button" tabIndex={0} aria-label={`View ${item.title} details`} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(item); } }}>
       <span className="list-index">{String(firstItem + index + 1).padStart(2, '0')}</span>
       <div className="list-poster"><PosterArt item={item} /></div>
-      <div className="list-copy"><div className="list-title-line"><strong>{item.title}</strong><span className="phase-badge">Phase {item.phase || '—'}</span>{getTitleGuidance(item) && <button className="warning-info-button" onClick={(event) => { event.stopPropagation(); onWarning(item); }} aria-label={`Show viewing guidance for ${item.title}`}><Info size={13} /></button>}{item.essential && <span>Essential</span>}{item.userStatus !== 'unwatched' && <span className={`list-state ${item.userStatus}`}>{STATUS_LABELS[item.userStatus]}</span>}</div><div className="list-ratings-line">{item.rating && <span className="list-rating"><Star size={9} fill="currentColor" />{Number(item.rating).toFixed(1)}</span>}{item.imdbRating && <span className="list-rating list-rating-imdb">★{item.imdbRating}</span>}{item.tomatoRating && <span className={`list-rating list-rating-tomato ${getTomatoTier(item.tomatoRating).cls}`}>{getTomatoTier(item.tomatoRating).emoji}{item.tomatoRating}</span>}{item.metaRating && <span className="list-rating list-rating-meta">M{parseInt(item.metaRating)}</span>}{!(item.rating || item.imdbRating || item.tomatoRating || item.metaRating) && <span className="list-rating list-rating-na">N/A</span>}</div><span>{item.year} · {item.type} · {runtimeLabel(item.runtime, item.type)}</span><p>{item.desc || `${item.title} in the complete ${item.universe === 'marvel' ? 'MCU' : 'DC'} story timeline.`}</p><div className="list-tags">{(item.genres || []).slice(0,3).map(g => <span key={g}>{g}</span>)}</div></div>
+      <div className="list-copy"><div className="list-title-line"><strong>{item.title}</strong><span className="phase-badge">Phase {item.phase || '—'}</span>{getTitleGuidance(item) && <button className="warning-info-button" onClick={(event) => { event.stopPropagation(); onWarning(item); }} aria-label={`Show viewing guidance for ${item.title}`}><Info size={13} /></button>}{item.essential && <span>Essential</span>}{item.userStatus !== 'unwatched' && <span className={`list-state ${item.userStatus}`}>{STATUS_LABELS[item.userStatus]}</span>}</div><div className="list-ratings-line">{item.rating && <span className="list-rating"><Star size={9} fill="currentColor" />{Number(item.rating).toFixed(1)}</span>}{item.imdbRating && <span className="list-rating list-rating-imdb">★{item.imdbRating}</span>}{item.tomatoRating && <span className={`list-rating list-rating-tomato ${getTomatoTier(item.tomatoRating).cls}`}>{getTomatoTier(item.tomatoRating).emoji}{item.tomatoRating}</span>}{item.metaRating && <span className="list-rating list-rating-meta">M{parseInt(item.metaRating)}</span>}{!(item.rating || item.imdbRating || item.tomatoRating || item.metaRating) && (item.tmdbId ? <span className="list-rating list-rating-loading" aria-label="Ratings loading"><span className="rating-skeleton" /></span> : <span className="list-rating list-rating-na">N/A</span>)}</div><span>{item.year} · {item.type} · {runtimeLabel(item.runtime, item.type)}</span><p>{item.desc || `${item.title} in the complete ${item.universe === 'marvel' ? 'MCU' : 'DC'} story timeline.`}</p><div className="list-tags">{(item.genres || []).slice(0,3).map(g => <span key={g}>{g}</span>)}</div></div>
       <div className="list-actions" onClick={e => e.stopPropagation()}><button className="list-trailer" onClick={() => playTrailer(item)} aria-label={`Play ${item.title} trailer`}><Clapperboard size={16} /><span>Trailer</span></button><StatusSelect item={item} setStatus={setStatus} /><button className={`list-watched ${item.userStatus === 'watched' ? 'watched' : ''}`} onClick={() => setStatus(item, item.userStatus === 'watched' ? 'unwatched' : 'watched')} aria-label={item.userStatus === 'watched' ? 'Mark as unwatched' : 'Mark as watched'} aria-pressed={item.userStatus === 'watched'}><Check size={18} /></button><button className={`list-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Bookmark title'}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button></div>
     </article>)}</div>}
     {pageCount > 1 && <nav className="pagination" aria-label="Viewing list pages"><button onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} aria-label="Previous page"><ChevronLeft size={18} /></button>{Array.from({ length: pageCount }, (_, index) => index + 1).map(pageNumber => <button key={pageNumber} className={currentPage === pageNumber ? 'active' : ''} aria-current={currentPage === pageNumber ? 'page' : undefined} onClick={() => goToPage(pageNumber)}>{pageNumber}</button>)}<button onClick={() => goToPage(currentPage + 1)} disabled={currentPage === pageCount} aria-label="Next page"><ChevronRight size={18} /></button></nav>}
@@ -1258,7 +1258,9 @@ function RatingChips({ item }) {
       {imdb && <span className="detail-rating imdb-rating">★ {imdb}<small>IMDb</small></span>}
       {tomato && (() => { const t = getTomatoTier(tomato); return <span className={`detail-rating tomato-rating ${t.cls}`}>{t.emoji} {tomato}<small>{t.label}</small></span>; })()}
       {meta && <span className="detail-rating meta-rating">M {meta}<small>Meta</small></span>}
-      {!tmdb && !imdb && !tomato && !meta && <span className="detail-rating"><Star size={15} fill="currentColor" /> N/A</span>}
+      {!tmdb && !imdb && !tomato && !meta && (item.tmdbId
+        ? <span className="detail-rating is-loading" aria-label="Ratings loading"><span className="rating-skeleton" /><small>Loading</small></span>
+        : <span className="detail-rating is-empty"><Star size={15} fill="currentColor" /> N/A</span>)}
     </>
   );
 }
@@ -2340,8 +2342,9 @@ function Sheet({ titleId, eyebrow, title, meta, onClose, children, footer }) {
 
 function Filters({ genre, setGenre, rating, setRating, ageRatingFilter, setAgeRatingFilter, universe, typeFilter, setTypeFilter, genres, count, onClose }) {
   const TYPE_OPTIONS = ['All', 'Movies', 'Series'];
+  const RATING_OPTIONS = [{ value: 0, label: 'Any' }, { value: 6, label: '6+' }, { value: 7, label: '7+' }, { value: 8, label: '8+' }, { value: 9, label: '9+' }];
   const activeFilters = [genre !== 'All', rating > 0, ageRatingFilter !== 'All', typeFilter !== 'All'].filter(Boolean).length;
-  const resetFilters = () => { setGenre('All'); setRating(0); setAgeRatingFilter('All'); setTypeFilter('All'); };
+  const resetFilters = () => { hapticWarning(); setGenre('All'); setRating(0); setAgeRatingFilter('All'); setTypeFilter('All'); };
 
   return <Sheet
     titleId="filter-dialog-title"
@@ -2354,13 +2357,18 @@ function Filters({ genre, setGenre, rating, setRating, ageRatingFilter, setAgeRa
         <RotateCcw size={14} />
         {activeFilters > 0 ? `Reset ${activeFilters}` : 'Reset'}
       </button>
-      <button className="filter-results-btn" onClick={onClose}>Show {count} results</button>
+      <button className="filter-results-btn" onClick={onClose}><Check size={16} /> Show {count} results</button>
     </>}
   >
-    {universe === 'marvel' && <p className="filter-hint">Filter by format, genre, rating or age rating. Phase switching lives in the header.</p>}
+    <div className="filter-status-row">
+      <span className={`filter-status-pill ${activeFilters ? 'is-active' : ''}`}>
+        {activeFilters ? `${activeFilters} filter${activeFilters > 1 ? 's' : ''} active` : 'Showing everything'}
+      </span>
+      <span className="filter-status-hint">Phase and order live in the header</span>
+    </div>
 
-      <section className="filter-section">
-        <h3>Type</h3>
+      <section className="filter-card">
+        <div className="filter-card-head"><span className="filter-card-icon"><Clapperboard size={14} /></span><h3>Format</h3></div>
         <div className="filter-chip-row">
           {TYPE_OPTIONS.map(t => (
             <button key={t} className={`filter-chip ${typeFilter === t ? 'selected' : ''}`} onClick={() => { hapticTap(); setTypeFilter(t); }}>{t}</button>
@@ -2368,8 +2376,8 @@ function Filters({ genre, setGenre, rating, setRating, ageRatingFilter, setAgeRa
         </div>
       </section>
 
-      <section className="filter-section">
-        <h3>Genre</h3>
+      <section className="filter-card">
+        <div className="filter-card-head"><span className="filter-card-icon"><Sparkles size={14} /></span><h3>Genre</h3></div>
         <div className="filter-chip-row">
           {genres.map(g => (
             <button key={g} className={`filter-chip ${genre === g ? 'selected' : ''}`} onClick={() => { hapticTap(); setGenre(g === genre ? 'All' : g); }}>{g}</button>
@@ -2377,17 +2385,17 @@ function Filters({ genre, setGenre, rating, setRating, ageRatingFilter, setAgeRa
         </div>
       </section>
 
-      <section className="filter-section">
-        <h3>Minimum Rating</h3>
+      <section className="filter-card">
+        <div className="filter-card-head"><span className="filter-card-icon"><Star size={14} /></span><h3>Minimum rating</h3></div>
         <div className="filter-chip-row">
-          {[{ value: 0, label: 'Any' }, { value: 8, label: '8+' }, { value: 7, label: '7+' }, { value: 6, label: '6+' }].map(r => (
-            <button key={r.value} className={`filter-chip ${rating === r.value ? 'selected' : ''}`} onClick={() => { hapticTap(); setRating(r.value); }}>{r.label}</button>
+          {RATING_OPTIONS.map(r => (
+            <button key={r.value} className={`filter-chip filter-chip-star ${rating === r.value ? 'selected' : ''}`} aria-pressed={rating === r.value} onClick={() => { hapticTap(); setRating(r.value); }}>{r.value > 0 && <Star size={11} fill="currentColor" />}{r.label}</button>
           ))}
         </div>
       </section>
 
-      <section className="filter-section">
-        <h3>Age Rating</h3>
+      <section className="filter-card">
+        <div className="filter-card-head"><span className="filter-card-icon"><ShieldAlert size={14} /></span><h3>Age rating</h3></div>
         <div className="filter-chip-row">
           {[{ value: 'All', label: 'All' }, ...AGE_RATINGS.map(r => ({ value: r, label: r }))].map(a => (
             <button key={a.value} className={`filter-chip ${ageRatingFilter === a.value ? 'selected' : ''}`} onClick={() => { hapticTap(); setAgeRatingFilter(a.value); }}>{a.label}</button>
@@ -2410,26 +2418,27 @@ function SortSheet({ sortBy, setSortBy, sortDirection, setSortDirection, count, 
         <RotateCcw size={14} />
         Default
       </button>
-      <button className="filter-results-btn" onClick={onClose}>Show {count} results</button>
+      <button className="filter-results-btn" onClick={onClose}><Check size={16} /> Show {count} results</button>
     </>}
   >
-    <section className="filter-section">
-      <div className="filter-section-header">
-        <h3>Sort by</h3>
-        <div className="sort-direction-toggle" role="group" aria-label="Sort direction">
-          <button className={sortDirection === 'asc' ? 'active' : ''} onClick={() => setSortDirection('asc')} title="Ascending">↑</button>
-          <button className={sortDirection === 'desc' ? 'active' : ''} onClick={() => setSortDirection('desc')} title="Descending">↓</button>
-        </div>
-      </div>
-      <div className="filter-sort-grid">
-        {SORT_OPTIONS.map(opt => (
-          <button key={opt.value} className={`filter-sort-chip ${sortBy === opt.value ? 'selected' : ''}`} onClick={() => { hapticTap(); setSortBy(opt.value); }}>
-            {opt.label}
-            {sortBy === opt.value && <Check size={14} />}
-          </button>
-        ))}
-      </div>
-    </section>
+    <div className="sort-direction-bar" role="group" aria-label="Sort direction">
+      <button className={sortDirection === 'asc' ? 'active' : ''} aria-pressed={sortDirection === 'asc'} onClick={() => { hapticTap(); setSortDirection('asc'); }}>
+        <ChevronUp size={15} />
+        <span>Ascending</span>
+      </button>
+      <button className={sortDirection === 'desc' ? 'active' : ''} aria-pressed={sortDirection === 'desc'} onClick={() => { hapticTap(); setSortDirection('desc'); }}>
+        <ChevronDown size={15} />
+        <span>Descending</span>
+      </button>
+    </div>
+    <div className="sort-option-list">
+      {SORT_OPTIONS.map(opt => (
+        <button key={opt.value} className={`sort-option ${sortBy === opt.value ? 'selected' : ''}`} aria-pressed={sortBy === opt.value} onClick={() => { hapticTap(); setSortBy(opt.value); }}>
+          <span className="sort-option-label">{opt.label}</span>
+          {sortBy === opt.value ? <span className="sort-option-check"><Check size={13} /></span> : <span className="sort-option-mark" aria-hidden="true" />}
+        </button>
+      ))}
+    </div>
   </Sheet>;
 }
 
