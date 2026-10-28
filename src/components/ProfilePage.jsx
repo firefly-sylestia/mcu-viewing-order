@@ -1,5 +1,22 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, Bookmark, RotateCcw, Clock, Check, X, Pencil, Trophy, LogIn, LogOut, Cloud, RefreshCw, Sun, Moon, Settings, Upload, Download, Clapperboard } from 'lucide-react';
+import { Play, Bookmark, RotateCcw, Clock, Check, X, Pencil, Trophy, LogIn, LogOut, Cloud, RefreshCw, Sun, Moon, Settings, Upload, Download, Clapperboard, Sparkles, LayoutGrid } from 'lucide-react';
+
+const UI_VARIANT_KEY = 'ui-variant';
+
+function useUiVariant() {
+  const [variant, setVariantState] = useState(() => {
+    if (typeof window === 'undefined') return 'classic';
+    return localStorage.getItem(UI_VARIANT_KEY) || 'classic';
+  });
+
+  const setVariant = (next) => {
+    document.documentElement.setAttribute('data-ui', next);
+    try { localStorage.setItem(UI_VARIANT_KEY, next); } catch {}
+    setVariantState(next);
+  };
+
+  return { variant, setVariant };
+}
 
 function useAppTheme() {
   const [theme, setThemeState] = useState(() => {
@@ -240,6 +257,7 @@ function ProfileHeader({ universe, stats, profileName, setProfileName, user, con
 
 function SettingsPanel({ profileName, setProfileName, user, configured, onLogin, onLogout, universe, activeItems, setStatus, toggleBookmark, nativePlayer, setNativePlayer }) {
   const { theme, setTheme } = useAppTheme();
+  const { variant, setVariant } = useUiVariant();
   const [mounted, setMounted] = useState(false);
   const [draft, setDraft] = useState(profileName);
   const [editing, setEditing] = useState(false);
@@ -280,6 +298,26 @@ function SettingsPanel({ profileName, setProfileName, user, configured, onLogin,
             <span className={`theme-toggle-track ${theme === 'dark' ? 'dark' : 'light'}`}>
               <span className="theme-toggle-thumb">
                 {theme === 'dark' ? <Moon size={14} /> : <Sun size={14} />}
+              </span>
+            </span>
+          </button>
+        </div>
+        <div className="settings-row">
+          <div className="settings-row-label">
+            <span className="settings-row-icon"><Sparkles size={18} /></span>
+            <div>
+              <strong>New interface</strong>
+              <small>{variant === 'fresh' ? 'Fresh layout (preview)' : 'Classic layout'}</small>
+            </div>
+          </div>
+          <button
+            className="theme-toggle"
+            onClick={() => setVariant(variant === 'fresh' ? 'classic' : 'fresh')}
+            aria-label={`Switch to ${variant === 'fresh' ? 'classic' : 'new'} interface`}
+          >
+            <span className={`theme-toggle-track ${variant === 'fresh' ? 'dark' : 'light'}`}>
+              <span className="theme-toggle-thumb">
+                {variant === 'fresh' ? <Sparkles size={14} /> : <LayoutGrid size={14} />}
               </span>
             </span>
           </button>

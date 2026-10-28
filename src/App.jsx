@@ -17,6 +17,7 @@ import { configured as firebaseReady } from './firebase';
 import { getFromCache, setCache, clearExpiredCache } from './utils/mediaCache';
 import { buildDownloadUrl, buildPlayerUrl } from './utils/mediaProviders';
 import './index.css';
+import './styles/fresh.css';
 
 const STORAGE_KEY = 'cinematic-viewing-ui-state-v2';
 const VALID_HASHES = ['home', 'list', 'analytics', 'watch', 'profile', 'detail'];
@@ -163,6 +164,11 @@ export default function App() {
   const [externalSearchLoading, setExternalSearchLoading] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
+
+  // Interface variant (classic | fresh) is chosen in Settings; applied on the root.
+  useEffect(() => {
+    try { document.documentElement.setAttribute('data-ui', localStorage.getItem('ui-variant') || 'classic'); } catch { document.documentElement.setAttribute('data-ui', 'classic'); }
+  }, []);
   const [selected, setSelected] = useState(null);
   const [genre, setGenre] = useState(saved.genre || 'All');
   const [rating, setRating] = useState(saved.rating || 0);
