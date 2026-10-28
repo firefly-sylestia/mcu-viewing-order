@@ -16,6 +16,8 @@ import { useCloudSync } from './hooks/useCloudSync';
 import { configured as firebaseReady } from './firebase';
 import { getFromCache, setCache, clearExpiredCache } from './utils/mediaCache';
 import { buildDownloadUrl, buildPlayerUrl } from './utils/mediaProviders';
+import { apiUrl, assetUrl, isOffline } from './utils/apiBase';
+import { hapticTap, hapticSelect, hapticSuccess, hapticWarning } from './utils/haptics';
 import './index.css';
 import './styles/fresh.css';
 
@@ -90,7 +92,7 @@ const mediaKey = (item) => item?.external
 const posterFromManifest = (item, manifest) => {
   const value = manifest?.byId?.[String(item.id)] || manifest?.byTitle?.[item.title];
   if (!value) return '';
-  return value.startsWith('http') ? value : `/posters/${value}`;
+  return value.startsWith('http') ? value : assetUrl(`/posters/${value}`);
 };
 
 const getRoadmap = (item, items) => {
@@ -271,7 +273,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    fetch('/posters/posters.json', { cache: 'force-cache' })
+    fetch(assetUrl('posters/posters.json'), { cache: 'force-cache' })
       .then(response => response.ok ? response.json() : {})
       .then(data => setPosterMap(data || {}))
       .catch(() => setPosterMap({}));
@@ -388,7 +390,7 @@ export default function App() {
     setExternalSearchLoading(true);
     const timer = setTimeout(async () => {
       try {
-        const response = await fetch(`/api/tmdb/search?q=${encodeURIComponent(query)}`);
+        const response = await fetch(apiUrl(`/api/tmdb/search?q=${encodeURIComponent(query)}`));
         if (response.ok) {
           const data = await response.json();
           // Filter out results already in our database to avoid duplicates
@@ -419,6 +421,9 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    // Offline (or a flaky APK connection) — keep the bundled posters we already
+    // have instead of burning through requests and marking titles as failed.
+    if (isOffline()) return undefined;
     const missing = activeItems.filter(item => {
       const cached = item.tmdbId ? getFromCache(metadataCacheKey(item)) : null;
       return !item.poster && !cached && !posterFromManifest(item, posterMap) && !failedRef.current.has(item.id);
@@ -440,7 +445,7 @@ export default function App() {
         if (item.season) params.set('season', String(item.season));
         
         try {
-          const response = await fetch(`/api/tmdb/description?${params.toString()}`);
+          const response = await fetch(apiUrl(`/api/tmdb/description?${params.toString()}`));
           if (!response.ok) {
             console.warn(`[v0] Description endpoint failed for ${item.title}: ${response.status}`);
             return null;
@@ -455,7 +460,7 @@ export default function App() {
           // Fallback: search directly using search/multi endpoint which is great for TV series
           console.log(`[v0] Fallback search for ${item.title} (no poster from description)`);
           const searchParams = new URLSearchParams({ q: item.title });
-          const searchResponse = await fetch(`/api/tmdb/search?${searchParams.toString()}`);
+          const searchResponse = await fetch(apiUrl(`/api/tmdb/search?${searchParams.toString()}`));
           
           if (!searchResponse.ok) {
             console.warn(`[v0] Search fallback failed for ${item.title}`);
@@ -521,7 +526,7 @@ export default function App() {
               if (!hadImdb) {
                 const omdbParams = new URLSearchParams({ title: item.title, year: String(item.year || '') });
                 if (data.imdbId) omdbParams.set('imdbId', data.imdbId);
-                fetch(`/api/omdb/rating?${omdbParams.toString()}`)
+                fetch(apiUrl(`/api/omdb/rating?${omdbParams.toString()}`))
                   .then(r => r.json())
                   .then(omdb => {
                     if (omdb.rating || omdb.tomatoRating || omdb.metaRating) {
@@ -601,7 +606,7 @@ export default function App() {
           const cached = getFromCache(ck) || {};
           const omdbParams = new URLSearchParams({ title: item.title, year: String(item.year || '') });
           if (cached.imdbId) omdbParams.set('imdbId', cached.imdbId);
-          const r = await fetch(`/api/omdb/rating?${omdbParams.toString()}`);
+          const r = await fetch(apiUrl(`/api/omdb/rating?${omdbParams.toString()}`));
           // Mark as fetched immediately so rate-limited or empty responses don't cause
           // infinite retry loops within the same session. The next page load resets
           // omdbFetchedRef so un-cached items will be retried automatically.
@@ -670,7 +675,10 @@ export default function App() {
     const current = actions[mediaKey(item)]?.status || actions[item.id]?.status || 'unwatched';
     updateAction(item, { status: STATUS[(STATUS.indexOf(current) + 1) % STATUS.length] });
   };
-  const setStatus = (item, status) => updateAction(item, { status });
+  const setStatus = (item, status) => {
+    if (status === 'watched') hapticSuccess(); else hapticSelect();
+    updateAction(item, { status });
+  };
   const toggleWatched = (item) => setStatus(item, item.userStatus === 'watched' ? 'unwatched' : 'watched');
   const togglePhaseWatched = (phase) => {
   const phaseItems = allItems
@@ -683,7 +691,11 @@ export default function App() {
     return { ...next, [key]: { ...existing, status: shouldWatch ? 'watched' : 'unwatched' } };
   }, { ...prev }));
   };
-  const toggleBookmark = (item) => updateAction(item, { bookmarked: !(actions[mediaKey(item)]?.bookmarked || actions[item.id]?.bookmarked) });
+  const toggleBookmark = (item) => {
+    const next = !(actions[mediaKey(item)]?.bookmarked || actions[item.id]?.bookmarked);
+    if (next) hapticSuccess(); else hapticTap();
+    updateAction(item, { bookmarked: next });
+  };
   const selectItem = (item) => {
     setSelected(item);
     if (item) window.history.replaceState(null, '', `#detail/${slugifyPosterName(item.title)}`);
@@ -692,6 +704,7 @@ export default function App() {
   const selectedItem = selected ? activeItems.find(item => item.id === selected.id) || selected : null;
   const nextUp = activeItems.find(item => item.userStatus !== 'watched' && item.userStatus !== 'dropped') || activeItems[0];
   const playTrailer = (item) => {
+    hapticTap();
     const match = getTrailerByTitle(item.title);
     const youtubeId = match?.primary?.youtubeId || match?.youtubeId;
     const options = match?.options;
@@ -798,7 +811,7 @@ export default function App() {
   <div className="header-bar">
   <div className="universe-tabs" role="tablist" aria-label="Universe">
   {[['marvel', 'Marvel'], ['sony', 'Sony'], ['xmen', 'X-Men'], ['dc', 'DC']].map(([key, label]) => (
-    <button key={key} data-universe={key} role="tab" aria-selected={universe === key} className={universe === key ? 'active' : ''} onClick={() => { setUniverse(key); setHeroIndex(0); }}><span className="universe-dot" aria-hidden="true" />{label}</button>
+    <button key={key} data-universe={key} role="tab" aria-selected={universe === key} className={universe === key ? 'active' : ''} onClick={() => { hapticTap(); setUniverse(key); setHeroIndex(0); }}><span className="universe-dot" aria-hidden="true" />{label}</button>
   ))}
   </div>
         <div className="header-search">
@@ -821,12 +834,12 @@ export default function App() {
   })}
   </div>}
   </div>
-  <button className={`header-sort-btn ${sortBy !== 'order' ? 'active' : ''}`} onClick={() => { setFiltersOpen(false); setSortOpen(true); }} aria-haspopup="dialog" title={`Sorted by ${SORT_LABELS[sortBy]} ${sortDirection === 'asc' ? '↑' : '↓'} — tap to change`}>
+  <button className={`header-sort-btn ${sortBy !== 'order' ? 'active' : ''}`} onClick={() => { hapticTap(); setFiltersOpen(false); setSortOpen(true); }} aria-haspopup="dialog" title={`Sorted by ${SORT_LABELS[sortBy]} ${sortDirection === 'asc' ? '↑' : '↓'} — tap to change`}>
     <ArrowUpDown size={15} />
     <span className="header-sort-label">{SORT_LABELS[sortBy]}</span>
     <small className="header-sort-arrow">{sortDirection === 'asc' ? '↑' : '↓'}</small>
   </button>
-  <button className={`header-filter-btn ${activeFilterCount > 0 ? 'active' : ''}`} onClick={() => { setSortOpen(false); setFiltersOpen(true); }} aria-haspopup="dialog" aria-label={`Open filters${activeFilterCount ? `, ${activeFilterCount} active` : ''}`}>
+  <button className={`header-filter-btn ${activeFilterCount > 0 ? 'active' : ''}`} onClick={() => { hapticTap(); setSortOpen(false); setFiltersOpen(true); }} aria-haspopup="dialog" aria-label={`Open filters${activeFilterCount ? `, ${activeFilterCount} active` : ''}`}>
     <SlidersHorizontal size={15} />
     <span className="header-filter-label">Filters</span>
     {activeFilterCount > 0 && <b className="header-filter-count">{activeFilterCount}</b>}
@@ -917,11 +930,11 @@ export default function App() {
 
       {warningToast && <div className="app-warning-toast" role="status"><ShieldAlert size={16} /><span>{warningToast}</span><button onClick={() => setWarningToast('')} aria-label="Dismiss warning"><X size={14} /></button></div>}
   <nav className="bottom-nav" aria-label="Primary">
-        <button className={section === 'home' ? 'active' : ''} onClick={() => { setSection('home'); setWatchItem(null); }}><Home size={22} /><span>Home</span></button>
-        <button className={section === 'list' ? 'active' : ''} onClick={() => { setSection('list'); }}><ListFilter size={22} /><span>List</span></button>
-        <button className={section === 'analytics' ? 'active' : ''} onClick={() => { setSection('analytics'); }}><BarChart3 size={22} /><span>Stats</span></button>
-        <button className={section === 'watch' ? 'active' : ''} onClick={() => { setSection('watch'); }}><Play size={22} /><span>Watch</span></button>
-        <button className={section === 'profile' ? 'active' : ''} onClick={() => { setSection('profile'); }}><UserRound size={22} /><span>Profile</span></button>
+        <button className={section === 'home' ? 'active' : ''} onClick={() => { hapticTap(); setSection('home'); setWatchItem(null); }}><Home size={22} /><span>Home</span></button>
+        <button className={section === 'list' ? 'active' : ''} onClick={() => { hapticTap(); setSection('list'); }}><ListFilter size={22} /><span>List</span></button>
+        <button className={section === 'analytics' ? 'active' : ''} onClick={() => { hapticTap(); setSection('analytics'); }}><BarChart3 size={22} /><span>Stats</span></button>
+        <button className={section === 'watch' ? 'active' : ''} onClick={() => { hapticTap(); setSection('watch'); }}><Play size={22} /><span>Watch</span></button>
+        <button className={section === 'profile' ? 'active' : ''} onClick={() => { hapticTap(); setSection('profile'); }}><UserRound size={22} /><span>Profile</span></button>
       </nav>
 
       {selectedItem && <DetailView item={selectedItem} onClose={() => selectItem(null)} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={startWatchWithConfirm} onStartWatchFromRoadmap={startWatchFromRoadmap} activeItems={roadmapItems} />}
@@ -1042,7 +1055,7 @@ function MovieCard({ item, setSelected, cycleStatus, setStatus, toggleBookmark, 
       <div className="card-meta-row"><span className="card-meta-phase">Phase {item.phase || '—'}</span><span className="card-meta-text">{item.year} · {runtimeLabel(item.runtime, item.type)}{item.userStatus === 'watching' && item.watchedDuration > 30000 ? ` · ${watchTimeLabel(item)}` : ''}{item.releaseStatus === 'upcoming' && item.releaseDate ? <span className="card-release-badge">{new Date(item.releaseDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span> : ''}{item.releaseStatus === 'upcoming' && !item.releaseDate ? <span className="card-release-badge">Upcoming</span> : ''}{item.releaseStatus === 'announced' ? <span className="card-release-badge announced">Announced</span> : ''}</span></div>
         <div className="card-ratings-line">{item.rating && <span className="list-rating"><Star size={9} fill="currentColor" />{Number(item.rating).toFixed(1)}</span>}{item.imdbRating && <span className="list-rating list-rating-imdb">★{item.imdbRating}</span>}{item.tomatoRating && <span className={`list-rating list-rating-tomato ${getTomatoTier(item.tomatoRating).cls}`}>{getTomatoTier(item.tomatoRating).emoji}{item.tomatoRating}</span>}{item.metaRating && <span className="list-rating list-rating-meta">M{parseInt(item.metaRating)}</span>}{!(item.rating || item.imdbRating || item.tomatoRating || item.metaRating) && <span className="list-rating list-rating-na">N/A</span>}</div>
     </div>
-    <div className="card-actions"><button onClick={() => playTrailer(item)} className="trailer-chip" aria-label={`Play ${item.title} trailer`}><Clapperboard size={16} /><span>Trailer</span></button><button onClick={() => toggleBookmark(item)} className={`bookmark-chip ${item.bookmarked ? 'saved' : ''}`} aria-label={item.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button><button onClick={() => setStatus(item, item.userStatus === 'watched' ? 'unwatched' : 'watched')} className={`watched-chip ${item.userStatus === 'watched' ? 'watched' : ''}`} aria-label={item.userStatus === 'watched' ? 'Mark as unwatched' : 'Mark as watched'}><Check size={18} /></button></div>
+    <div className="card-actions"><button onClick={() => playTrailer(item)} className="trailer-chip" aria-label={`Play ${item.title} trailer`}><Clapperboard size={16} /><span>Trailer</span></button><button onClick={() => toggleBookmark(item)} className={`bookmark-chip ${item.bookmarked ? 'saved' : ''}`} aria-label={item.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button><button onClick={() => setStatus(item, item.userStatus === 'watched' ? 'unwatched' : 'watched')} className={`watched-chip ${item.userStatus === 'watched' ? 'watched' : ''}`} aria-label={item.userStatus === 'watched' ? 'Mark as unwatched' : 'Mark as watched'} aria-pressed={item.userStatus === 'watched'}><Check size={18} /></button></div>
   </article>;
 }
 
@@ -1062,12 +1075,12 @@ function ListSection({ items, sortKey, externalResults = [], externalLoading = f
 
   return <section className={`list-section ${viewMode === 'grid' ? 'is-grid-view' : 'is-list-view'}`}>
     <div className="list-heading"><div><p className="eyebrow">Every story, in order</p><h2>Complete viewing list</h2><p className="list-intro">Track every chapter, update your progress, and keep the next story within reach.</p></div><div className="list-summary"><strong>{items.length}</strong><span>titles</span></div></div>
-    <div className="list-results-bar"><span>Showing {items.length ? firstItem + 1 : 0}–{Math.min(firstItem + pageSize, items.length)} of {items.length}</span><div className="list-view-toggle" role="group" aria-label="List view mode"><span>Page {currentPage} of {pageCount}</span><button className={viewMode === 'list' ? 'active' : ''} onClick={() => setViewMode('list')}>List</button><button className={viewMode === 'grid' ? 'active' : ''} onClick={() => setViewMode('grid')}>Grid</button></div></div>
-    {viewMode === 'grid' ? <div key={`grid-${sortKey}`} className="movie-grid web-grid list-card-grid">{visibleItems.map((item, i) => <MovieCard key={item.id} item={item} setSelected={setSelected} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} onWarning={onWarning} style={{ animationDelay: `${i * 30}ms` }} />)}</div> : <div key={`list-${sortKey}`} className="list-grid">{visibleItems.map((item, index) => <article className="list-row" key={item.id} style={{ '--accent': item.accent, animationDelay: `${index * 30}ms` }} onClick={() => setSelected(item)} role="button" tabIndex={0} aria-label={`View ${item.title} details`} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(item); } }}>
+    <div className="list-results-bar"><span>Showing {items.length ? firstItem + 1 : 0}–{Math.min(firstItem + pageSize, items.length)} of {items.length}</span>      <div className="list-view-toggle" role="group" aria-label="List view mode"><span>Page {currentPage} of {pageCount}</span><button className={viewMode === 'list' ? 'active' : ''} onClick={() => { hapticTap(); setViewMode('list'); }}>List</button><button className={viewMode === 'grid' ? 'active' : ''} onClick={() => { hapticTap(); setViewMode('grid'); }}>Grid</button></div></div>
+    {viewMode === 'grid' ? <div key={`grid-${sortKey}`} className="movie-grid web-grid list-card-grid">{visibleItems.map((item, i) => <MovieCard key={item.id} item={item} setSelected={setSelected} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} onWarning={onWarning} style={{ animationDelay: `${i * 30}ms` }} />)}</div> : <div key={`list-${sortKey}`} className="list-grid">{visibleItems.map((item, index) => <article className="list-row" key={item.id} data-state={item.userStatus} data-saved={item.bookmarked ? 'true' : 'false'} style={{ '--accent': item.accent, animationDelay: `${index * 30}ms` }} onClick={() => { hapticTap(); setSelected(item); }} role="button" tabIndex={0} aria-label={`View ${item.title} details`} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(item); } }}>
       <span className="list-index">{String(firstItem + index + 1).padStart(2, '0')}</span>
-      <div className="list-poster"><img src={item.poster} alt={`${item.title} poster`} width="82" height="108" loading="lazy" /></div>
-      <div className="list-copy"><div className="list-title-line"><strong>{item.title}</strong><span className="phase-badge">Phase {item.phase || '—'}</span>{getTitleGuidance(item) && <button className="warning-info-button" onClick={(event) => { event.stopPropagation(); onWarning(item); }} aria-label={`Show viewing guidance for ${item.title}`}><Info size={13} /></button>}{item.essential && <span>Essential</span>}</div><div className="list-ratings-line">{item.rating && <span className="list-rating"><Star size={9} fill="currentColor" />{Number(item.rating).toFixed(1)}</span>}{item.imdbRating && <span className="list-rating list-rating-imdb">★{item.imdbRating}</span>}{item.tomatoRating && <span className={`list-rating list-rating-tomato ${getTomatoTier(item.tomatoRating).cls}`}>{getTomatoTier(item.tomatoRating).emoji}{item.tomatoRating}</span>}{item.metaRating && <span className="list-rating list-rating-meta">M{parseInt(item.metaRating)}</span>}{!(item.rating || item.imdbRating || item.tomatoRating || item.metaRating) && <span className="list-rating list-rating-na">N/A</span>}</div><span>{item.year} · {item.type} · {runtimeLabel(item.runtime, item.type)}</span><p>{item.desc || `${item.title} in the complete ${item.universe === 'marvel' ? 'MCU' : 'DC'} story timeline.`}</p><div className="list-tags">{(item.genres || []).slice(0,3).map(g => <span key={g}>{g}</span>)}</div></div>
-      <div className="list-actions" onClick={e => e.stopPropagation()}><button className="list-trailer" onClick={() => playTrailer(item)} aria-label={`Play ${item.title} trailer`}><Clapperboard size={16} /><span>Trailer</span></button><StatusSelect item={item} setStatus={setStatus} /><button className={`list-watched ${item.userStatus === 'watched' ? 'watched' : ''}`} onClick={() => setStatus(item, item.userStatus === 'watched' ? 'unwatched' : 'watched')} aria-label={item.userStatus === 'watched' ? 'Mark as unwatched' : 'Mark as watched'}><Check size={18} /></button><button className={`list-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Bookmark title'}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button></div>
+      <div className="list-poster"><PosterArt item={item} /></div>
+      <div className="list-copy"><div className="list-title-line"><strong>{item.title}</strong><span className="phase-badge">Phase {item.phase || '—'}</span>{getTitleGuidance(item) && <button className="warning-info-button" onClick={(event) => { event.stopPropagation(); onWarning(item); }} aria-label={`Show viewing guidance for ${item.title}`}><Info size={13} /></button>}{item.essential && <span>Essential</span>}{item.userStatus !== 'unwatched' && <span className={`list-state ${item.userStatus}`}>{STATUS_LABELS[item.userStatus]}</span>}</div><div className="list-ratings-line">{item.rating && <span className="list-rating"><Star size={9} fill="currentColor" />{Number(item.rating).toFixed(1)}</span>}{item.imdbRating && <span className="list-rating list-rating-imdb">★{item.imdbRating}</span>}{item.tomatoRating && <span className={`list-rating list-rating-tomato ${getTomatoTier(item.tomatoRating).cls}`}>{getTomatoTier(item.tomatoRating).emoji}{item.tomatoRating}</span>}{item.metaRating && <span className="list-rating list-rating-meta">M{parseInt(item.metaRating)}</span>}{!(item.rating || item.imdbRating || item.tomatoRating || item.metaRating) && <span className="list-rating list-rating-na">N/A</span>}</div><span>{item.year} · {item.type} · {runtimeLabel(item.runtime, item.type)}</span><p>{item.desc || `${item.title} in the complete ${item.universe === 'marvel' ? 'MCU' : 'DC'} story timeline.`}</p><div className="list-tags">{(item.genres || []).slice(0,3).map(g => <span key={g}>{g}</span>)}</div></div>
+      <div className="list-actions" onClick={e => e.stopPropagation()}><button className="list-trailer" onClick={() => playTrailer(item)} aria-label={`Play ${item.title} trailer`}><Clapperboard size={16} /><span>Trailer</span></button><StatusSelect item={item} setStatus={setStatus} /><button className={`list-watched ${item.userStatus === 'watched' ? 'watched' : ''}`} onClick={() => setStatus(item, item.userStatus === 'watched' ? 'unwatched' : 'watched')} aria-label={item.userStatus === 'watched' ? 'Mark as unwatched' : 'Mark as watched'} aria-pressed={item.userStatus === 'watched'}><Check size={18} /></button><button className={`list-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Bookmark title'}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button></div>
     </article>)}</div>}
     {pageCount > 1 && <nav className="pagination" aria-label="Viewing list pages"><button onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} aria-label="Previous page"><ChevronLeft size={18} /></button>{Array.from({ length: pageCount }, (_, index) => index + 1).map(pageNumber => <button key={pageNumber} className={currentPage === pageNumber ? 'active' : ''} aria-current={currentPage === pageNumber ? 'page' : undefined} onClick={() => goToPage(pageNumber)}>{pageNumber}</button>)}<button onClick={() => goToPage(currentPage + 1)} disabled={currentPage === pageCount} aria-label="Next page"><ChevronRight size={18} /></button></nav>}
     
@@ -1124,13 +1137,15 @@ function StatusSelect({ item, setStatus, compact = false }) {
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
   return <div className={`status-select ${item.userStatus} ${compact ? 'compact' : ''} ${open ? 'open' : ''}`} ref={ref}>
-    <button className="status-trigger" onClick={() => setOpen(!open)} aria-haspopup="listbox" aria-expanded={open}>
+    <button className="status-trigger" onClick={() => { hapticTap(); setOpen(!open); }} aria-haspopup="listbox" aria-expanded={open}>
+      <span className="status-dot" aria-hidden="true" />
       <span className="status-label">{triggerLabel}</span>
+      <ChevronDown size={13} className="status-chevron" aria-hidden="true" />
     </button>
     {open && <div className="status-dropdown" role="listbox" aria-label={`Set status for ${item.title}`}>
       {STATUS.map(status => {
         const Icon = STATUS_META[status].icon;
-        return <button key={status} className={`status-option ${status} ${item.userStatus === status ? 'active' : ''}`} role="option" aria-selected={item.userStatus === status} onClick={() => { setStatus(item, status); setOpen(false); }}>
+        return <button key={status} className={`status-option ${status} ${item.userStatus === status ? 'active' : ''}`} role="option" aria-selected={item.userStatus === status} onClick={() => { if (status === 'watched') hapticSuccess(); else hapticSelect(); setStatus(item, status); setOpen(false); }}>
           <Icon size={15} className="status-option-icon" />
           <span className="status-option-label">{STATUS_LABELS[status]}</span>
           {item.userStatus === status && <Check size={14} className="status-option-check" />}
@@ -1277,7 +1292,7 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, on
   useEffect(() => {
     if (item.type !== 'series' || !item.tmdbId) return;
     const season = item.season || 1;
-    fetch(`/api/tmdb/episodes?tmdbId=${item.tmdbId}&season=${season}`, { cache: 'force-cache' })
+    fetch(apiUrl(`/api/tmdb/episodes?tmdbId=${item.tmdbId}&season=${season}`), { cache: 'force-cache' })
       .then(response => response.ok ? response.json() : null)
       .then(data => {
         const available = (data?.episodes || []).filter(episode => !item.epStart || (episode.episode >= item.epStart && episode.episode <= (item.epEnd || Infinity)));
@@ -1632,7 +1647,7 @@ function ContinueWatching({ items, setSelected, setStatus, toggleBookmark, playT
   const handleResume = async (item) => {
     const params = new URLSearchParams({ title: item.title, year: String(item.year || '') });
     if (item.tmdbId) params.set('tmdbId', String(item.tmdbId));
-    const res = await fetch(`/api/tmdb/poster?${params.toString()}`);
+    const res = await fetch(apiUrl(`/api/tmdb/poster?${params.toString()}`));
     if (res.ok) {
       const data = await res.json();
       if (data.tmdbId) { onResume(item, data.tmdbId, data.mediaType === 'tv' ? 'tv' : 'movie'); return; }
@@ -1688,7 +1703,7 @@ function WatchBrowse({ activeItems, externalResults = [], externalLoading = fals
   const handleResume = async (item) => {
     const params = new URLSearchParams({ title: item.title, year: String(item.year || '') });
     if (item.tmdbId) params.set('tmdbId', String(item.tmdbId));
-    const res = await fetch(`/api/tmdb/poster?${params.toString()}`);
+    const res = await fetch(apiUrl(`/api/tmdb/poster?${params.toString()}`));
     if (res.ok) {
       const data = await res.json();
       if (data.tmdbId) { onStartWatch(item, data.tmdbId, data.mediaType === 'tv' ? 'tv' : 'movie'); return; }
@@ -1967,7 +1982,7 @@ const saveServerPref = (tmdbId, server) => {
     setEpisodeLoading(true);
     let cancelled = false;
     const season = currentItem.season || 1;
-    fetch(`/api/tmdb/episodes?tmdbId=${currentItem.tmdbId}&season=${season}`, { cache: 'force-cache' })
+    fetch(apiUrl(`/api/tmdb/episodes?tmdbId=${currentItem.tmdbId}&season=${season}`), { cache: 'force-cache' })
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (cancelled) return;
@@ -2083,7 +2098,7 @@ const saveServerPref = (tmdbId, server) => {
     setSwitching(true);
     try {
       const params = new URLSearchParams({ title: rec.title, year: String(rec.year || '') });
-      const res = await fetch(`/api/tmdb/poster?${params.toString()}`);
+      const res = await fetch(apiUrl(`/api/tmdb/poster?${params.toString()}`));
       if (res.ok) {
         const data = await res.json();
         if (data.tmdbId) { onStartWatch(rec, data.tmdbId, data.mediaType === 'tv' ? 'tv' : 'movie'); return; }
@@ -2348,7 +2363,7 @@ function Filters({ genre, setGenre, rating, setRating, ageRatingFilter, setAgeRa
         <h3>Type</h3>
         <div className="filter-chip-row">
           {TYPE_OPTIONS.map(t => (
-            <button key={t} className={`filter-chip ${typeFilter === t ? 'selected' : ''}`} onClick={() => setTypeFilter(t)}>{t}</button>
+            <button key={t} className={`filter-chip ${typeFilter === t ? 'selected' : ''}`} onClick={() => { hapticTap(); setTypeFilter(t); }}>{t}</button>
           ))}
         </div>
       </section>
@@ -2357,7 +2372,7 @@ function Filters({ genre, setGenre, rating, setRating, ageRatingFilter, setAgeRa
         <h3>Genre</h3>
         <div className="filter-chip-row">
           {genres.map(g => (
-            <button key={g} className={`filter-chip ${genre === g ? 'selected' : ''}`} onClick={() => setGenre(g === genre ? 'All' : g)}>{g}</button>
+            <button key={g} className={`filter-chip ${genre === g ? 'selected' : ''}`} onClick={() => { hapticTap(); setGenre(g === genre ? 'All' : g); }}>{g}</button>
           ))}
         </div>
       </section>
@@ -2366,7 +2381,7 @@ function Filters({ genre, setGenre, rating, setRating, ageRatingFilter, setAgeRa
         <h3>Minimum Rating</h3>
         <div className="filter-chip-row">
           {[{ value: 0, label: 'Any' }, { value: 8, label: '8+' }, { value: 7, label: '7+' }, { value: 6, label: '6+' }].map(r => (
-            <button key={r.value} className={`filter-chip ${rating === r.value ? 'selected' : ''}`} onClick={() => setRating(r.value)}>{r.label}</button>
+            <button key={r.value} className={`filter-chip ${rating === r.value ? 'selected' : ''}`} onClick={() => { hapticTap(); setRating(r.value); }}>{r.label}</button>
           ))}
         </div>
       </section>
@@ -2375,7 +2390,7 @@ function Filters({ genre, setGenre, rating, setRating, ageRatingFilter, setAgeRa
         <h3>Age Rating</h3>
         <div className="filter-chip-row">
           {[{ value: 'All', label: 'All' }, ...AGE_RATINGS.map(r => ({ value: r, label: r }))].map(a => (
-            <button key={a.value} className={`filter-chip ${ageRatingFilter === a.value ? 'selected' : ''}`} onClick={() => setAgeRatingFilter(a.value)}>{a.label}</button>
+            <button key={a.value} className={`filter-chip ${ageRatingFilter === a.value ? 'selected' : ''}`} onClick={() => { hapticTap(); setAgeRatingFilter(a.value); }}>{a.label}</button>
           ))}
         </div>
       </section>
@@ -2408,7 +2423,7 @@ function SortSheet({ sortBy, setSortBy, sortDirection, setSortDirection, count, 
       </div>
       <div className="filter-sort-grid">
         {SORT_OPTIONS.map(opt => (
-          <button key={opt.value} className={`filter-sort-chip ${sortBy === opt.value ? 'selected' : ''}`} onClick={() => setSortBy(opt.value)}>
+          <button key={opt.value} className={`filter-sort-chip ${sortBy === opt.value ? 'selected' : ''}`} onClick={() => { hapticTap(); setSortBy(opt.value); }}>
             {opt.label}
             {sortBy === opt.value && <Check size={14} />}
           </button>

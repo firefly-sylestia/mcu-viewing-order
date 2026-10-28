@@ -11,6 +11,8 @@
  * 4. Cache any successful result
  */
 
+import { apiUrl } from './apiBase';
+
 const CACHE_PREFIX = 'trailer_cache_';
 const EXPIRY_MS = 365 * 24 * 60 * 60 * 1000; // 1 year (trailer YouTube IDs are stable) // 7 days
 const KINOCHECK_BASE = 'https://api.kinocheck.com';
@@ -182,7 +184,7 @@ export const fetchTrailerFromApi = async (title, year, tmdbId) => {
     if (year) params.set('year', String(year));
     if (tmdbId) params.set('tmdbId', String(tmdbId));
 
-    const res = await fetch(`/api/kinocheck/trailer?${params.toString()}`);
+    const res = await fetch(apiUrl(`/api/kinocheck/trailer?${params.toString()}`));
     if (res.ok) {
       const data = await res.json();
       // Try to normalize the response — handles both serverless and proxy formats

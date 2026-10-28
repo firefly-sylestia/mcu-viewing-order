@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, Bookmark, RotateCcw, Clock, Check, X, Pencil, Trophy, LogIn, LogOut, Cloud, RefreshCw, Sun, Moon, Settings, Upload, Download, Clapperboard, Sparkles, LayoutGrid } from 'lucide-react';
+import { Play, Bookmark, RotateCcw, Clock, Check, X, Pencil, Trophy, LogIn, LogOut, Cloud, RefreshCw, Sun, Moon, Settings, Upload, Download, Clapperboard, Sparkles, LayoutGrid, Vibrate, ChevronDown } from 'lucide-react';
+import { getHapticsEnabled, setHapticsEnabled, hapticsSupported, hapticTap, hapticSuccess } from '../utils/haptics';
 
 const UI_VARIANT_KEY = 'ui-variant';
 
@@ -258,6 +259,7 @@ function ProfileHeader({ universe, stats, profileName, setProfileName, user, con
 function SettingsPanel({ profileName, setProfileName, user, configured, onLogin, onLogout, universe, activeItems, setStatus, toggleBookmark, nativePlayer, setNativePlayer }) {
   const { theme, setTheme } = useAppTheme();
   const { variant, setVariant } = useUiVariant();
+  const [hapticsOn, setHapticsOn] = useState(() => getHapticsEnabled());
   const [mounted, setMounted] = useState(false);
   const [draft, setDraft] = useState(profileName);
   const [editing, setEditing] = useState(false);
@@ -318,6 +320,27 @@ function SettingsPanel({ profileName, setProfileName, user, configured, onLogin,
             <span className={`theme-toggle-track ${variant === 'fresh' ? 'dark' : 'light'}`}>
               <span className="theme-toggle-thumb">
                 {variant === 'fresh' ? <Sparkles size={14} /> : <LayoutGrid size={14} />}
+              </span>
+            </span>
+          </button>
+        </div>
+        <div className="settings-row">
+          <div className="settings-row-label">
+            <span className="settings-row-icon"><Vibrate size={18} /></span>
+            <div>
+              <strong>Haptics</strong>
+              <small>{hapticsSupported ? (hapticsOn ? 'Tap feedback on' : 'Tap feedback off') : 'Not available on this device'}</small>
+            </div>
+          </div>
+          <button
+            className="theme-toggle"
+            onClick={() => setHapticsOn(setHapticsEnabled(!hapticsOn))}
+            aria-label={`Turn haptics ${hapticsOn ? 'off' : 'on'}`}
+            disabled={!hapticsSupported}
+          >
+            <span className={`theme-toggle-track ${hapticsOn ? 'dark' : 'light'}`}>
+              <span className="theme-toggle-thumb">
+                <Vibrate size={14} />
               </span>
             </span>
           </button>
@@ -598,11 +621,13 @@ function StatusSelect({ item, setStatus, compact = false }) {
     <div className={`status-select ${item.userStatus} ${compact ? 'compact' : ''} ${open ? 'open' : ''}`} ref={ref}>
       <button
         className="status-trigger"
-        onClick={() => setOpen(!open)}
+        onClick={() => { hapticTap(); setOpen(!open); }}
         aria-haspopup="listbox"
         aria-expanded={open}
       >
+        <span className="status-dot" aria-hidden="true" />
         <span className="status-label">{STATUS_LABELS[item.userStatus]}</span>
+        <ChevronDown size={13} className="status-chevron" aria-hidden="true" />
       </button>
       {open && (
         <div className="status-dropdown" role="listbox" aria-label={`Set status for ${item.title}`}>
@@ -616,6 +641,7 @@ function StatusSelect({ item, setStatus, compact = false }) {
                 role="option"
                 aria-selected={item.userStatus === status}
                 onClick={() => {
+                  if (status === 'watched') hapticSuccess(); else hapticTap();
                   setStatus(item, status);
                   setOpen(false);
                 }}

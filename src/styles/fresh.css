@@ -931,3 +931,295 @@
 :root[data-theme="light"] .dots button.active { background: #10141b; }
 :root[data-theme="light"] .stack-poster { box-shadow: 0 22px 46px -26px rgba(16, 24, 40, .42); }
 :root[data-theme="light"] .inline-trailer button { background: rgba(16, 20, 27, .78); color: #fff; }
+
+/* ===========================================================================
+   3. INTERACTION STATES — every toggle reads as pressed or unpressed
+   =========================================================================== */
+
+:root .movie-card .card-actions button,
+:root .list-row .list-actions > button,
+:root .status-trigger,
+:root .pagination button,
+:root .universe-tabs button,
+:root .list-view-toggle button {
+  transition: transform .14s ease, background .16s ease, color .16s ease, box-shadow .16s ease;
+}
+:root .movie-card .card-actions button:not(:disabled):active,
+:root .list-row .list-actions > button:not(:disabled):active,
+:root .status-trigger:active,
+:root .pagination button:not(:disabled):active,
+:root .universe-tabs button:active,
+:root .list-view-toggle button:active,
+:root .bottom-nav button:active { transform: scale(.94); }
+
+/* Watched — solid green fill, white tick. Applies to both interfaces. */
+:root .list-row .list-actions > button.list-watched.watched,
+:root .list-row .list-actions > button.list-watched[aria-pressed="true"],
+:root .movie-card .card-actions .watched-chip.watched,
+:root .movie-card .card-actions .watched-chip[aria-pressed="true"] {
+  background: linear-gradient(135deg, #14a35a 0%, #2cc472 100%) !important;
+  color: #fff !important;
+  border: 0 !important;
+  box-shadow: 0 10px 22px -12px rgba(34, 197, 94, .95), inset 0 0 0 1px rgba(255, 255, 255, .22) !important;
+}
+:root .list-watched.watched svg,
+:root .movie-card .card-actions .watched-chip.watched svg { stroke-width: 3.2; }
+
+/* Saved — solid blue fill, filled bookmark. */
+:root .list-row .list-actions > button.list-bookmark.saved,
+:root .movie-card .card-actions .bookmark-chip.saved {
+  background: linear-gradient(135deg, #2f6fe0 0%, #5a95f7 100%) !important;
+  color: #fff !important;
+  border: 0 !important;
+  box-shadow: 0 10px 22px -12px rgba(59, 130, 246, .95), inset 0 0 0 1px rgba(255, 255, 255, .2) !important;
+}
+
+/* Unpressed states stay quiet so the filled ones stand out. */
+:root .list-row .list-actions > button.list-watched:not(.watched),
+:root .movie-card .card-actions .watched-chip:not(.watched) {
+  background: var(--fx-surface-3) !important;
+  color: var(--fx-muted) !important;
+  box-shadow: none !important;
+}
+:root .list-row .list-actions > button.list-bookmark:not(.saved),
+:root .movie-card .card-actions .bookmark-chip:not(.saved) {
+  background: var(--fx-surface-3) !important;
+  color: var(--fx-muted) !important;
+  box-shadow: none !important;
+}
+
+/* ── Viewing status control: dot + label + chevron, tinted per state ────── */
+:root .status-trigger {
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 0 12px;
+  border: 0 !important;
+  border-radius: 12px;
+  background: var(--fx-surface-2);
+  color: var(--fx-muted-strong);
+  box-shadow: none;
+}
+:root .status-trigger .status-dot {
+  display: block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: .85;
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 18%, transparent);
+}
+:root .status-trigger .status-chevron { display: block; opacity: .7; }
+:root .status-select .status-label { flex: 1; min-width: 0; text-align: left; }
+:root .status-select.unwatched .status-trigger { background: var(--fx-surface-2); color: var(--fx-muted); }
+:root .status-select.watching .status-trigger { background: rgba(245, 158, 11, .16); color: #f2b95e; }
+:root .status-select.watched .status-trigger { background: rgba(34, 197, 94, .16); color: #64dd93; }
+:root .status-select.dropped .status-trigger { background: rgba(239, 68, 68, .16); color: #f08a8a; }
+:root .status-select.watched .status-trigger .status-dot { background: #2cc472; }
+:root .status-select.watching .status-trigger .status-dot { background: #f2b95e; }
+:root .status-select.dropped .status-trigger .status-dot { background: #ef4444; }
+:root .status-select.unwatched .status-trigger .status-dot { background: var(--fx-muted); }
+:root .status-select.open .status-trigger { box-shadow: 0 0 0 3px color-mix(in srgb, var(--fx-accent) 26%, transparent); }
+:root .status-dropdown {
+  border: 0 !important;
+  border-radius: var(--fx-r-md);
+  padding: 8px;
+  gap: 4px;
+  display: grid;
+  background: var(--fx-surface);
+  box-shadow: var(--fx-shadow-lg);
+}
+:root .status-menu-title {
+  margin: 4px 6px 8px;
+  font-size: 9.5px;
+  font-weight: 900;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--fx-muted);
+}
+:root .status-dropdown .status-option {
+  border: 0;
+  border-radius: 11px;
+  padding: 10px 11px;
+  background: transparent;
+  color: var(--fx-muted-strong);
+}
+:root .status-dropdown .status-option:hover { background: var(--fx-surface-2); color: var(--fx-text); }
+:root .status-dropdown .status-option.active {
+  background: color-mix(in srgb, var(--fx-accent) 16%, var(--fx-surface-2));
+  color: var(--fx-text);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fx-accent) 34%, transparent);
+}
+:root .status-dropdown .status-option.watched.active { background: rgba(34, 197, 94, .18); color: #7ce6a8; box-shadow: inset 0 0 0 1px rgba(34, 197, 94, .4); }
+:root .status-dropdown .status-option.watching.active { background: rgba(245, 158, 11, .18); color: #f6c471; box-shadow: inset 0 0 0 1px rgba(245, 158, 11, .4); }
+:root .status-dropdown .status-option.dropped.active { background: rgba(239, 68, 68, .18); color: #f5a2a2; box-shadow: inset 0 0 0 1px rgba(239, 68, 68, .4); }
+
+/* ===========================================================================
+   4. VIEWING LIST — restructured rows, state rail and readable metadata
+   =========================================================================== */
+
+:root .list-section { padding: clamp(18px, 2.4vw, 30px); }
+:root .list-results-bar { gap: 12px; flex-wrap: wrap; }
+
+:root .list-row {
+  grid-template-columns: 44px 78px minmax(0, 1fr) minmax(330px, auto);
+  gap: 16px;
+  align-items: center;
+  min-height: 132px;
+  padding: 14px 16px;
+  border: 0;
+  border-radius: var(--fx-r-md);
+  background: var(--fx-surface-2);
+  box-shadow: var(--fx-shadow-sm);
+  overflow: hidden;
+}
+:root .list-row::before {
+  content: '';
+  position: absolute;
+  inset: 12px auto 12px 0;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--accent, var(--fx-accent));
+  opacity: .28;
+  transition: width .18s ease, opacity .18s ease;
+}
+:root .list-row[data-state="watching"]::before { width: 4px; opacity: 1; background: linear-gradient(180deg, #f5b747, #d98a1c); }
+:root .list-row[data-state="watched"]::before { width: 4px; opacity: 1; background: linear-gradient(180deg, #2cc472, #14854a); }
+:root .list-row[data-state="dropped"]::before { width: 4px; opacity: 1; background: linear-gradient(180deg, #f26a6a, #b42c2c); }
+:root .list-row:hover::before { width: 5px; opacity: 1; }
+:root .list-row:hover { background: var(--fx-surface-3); }
+
+:root .list-index {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin-inline: auto;
+  border-radius: 12px;
+  background: var(--fx-surface-3);
+  color: var(--fx-muted-strong);
+  font-size: 12px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+:root .list-row[data-state="watched"] .list-index { background: rgba(34, 197, 94, .18); color: #63dd94; }
+
+:root .list-poster {
+  width: 78px;
+  height: 108px;
+  border-radius: 14px !important;
+  overflow: hidden;
+  background: var(--fx-surface-3);
+  box-shadow: var(--fx-shadow-sm);
+}
+:root .list-poster img { transform: scale(1); transition: transform .3s ease; }
+:root .list-row:hover .list-poster img { transform: scale(1.05); }
+:root .list-poster .fallback-poster { padding: 8px; text-align: center; align-content: center; }
+:root .list-poster .fallback-poster strong { font-size: 10px; line-height: 1.25; }
+
+:root .list-copy { gap: 6px; }
+:root .list-copy strong { font-size: 16px; letter-spacing: -.01em; }
+:root .list-title-line { gap: 7px; flex-wrap: wrap; }
+:root .list-title-line > span { border-radius: 999px; padding: 3px 9px; font-size: 10px; }
+:root .list-state {
+  border-radius: 999px;
+  padding: 3px 9px !important;
+  font-size: 9.5px !important;
+  font-weight: 900 !important;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+:root .list-state.watched { background: rgba(34, 197, 94, .18) !important; color: #66e09a !important; }
+:root .list-state.watching { background: rgba(245, 158, 11, .18) !important; color: #f5bf68 !important; }
+:root .list-state.dropped { background: rgba(239, 68, 68, .18) !important; color: #f39494 !important; }
+
+:root .list-ratings-line { display: flex; flex-wrap: wrap; gap: 5px; }
+:root .list-ratings-line .list-rating {
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 10.5px;
+  font-weight: 800;
+  background: var(--fx-surface-3);
+  color: var(--fx-muted-strong);
+}
+:root .list-ratings-line .list-rating-imdb { background: rgba(245, 197, 24, .16); color: #e8c249; }
+:root .list-ratings-line .list-rating-tomato { background: rgba(231, 76, 60, .16); color: #f08276; }
+:root .list-ratings-line .list-rating-meta { background: rgba(96, 165, 250, .16); color: #8ec2fb; }
+:root .list-copy > span { font-size: 12px; letter-spacing: .01em; }
+:root .list-copy > p { margin-top: 2px; font-size: 12.5px; }
+:root .list-tags { margin-top: 2px; }
+:root .list-tags span { border-radius: 999px; padding: 4px 10px; font-size: 10.5px; }
+
+/* Action strip: trailer stays primary, status pill keeps its width. */
+:root .list-row .list-actions { min-width: 0; gap: 8px; }
+:root .list-row .list-actions .list-trailer {
+  padding: 0 14px;
+  background: var(--fx-accent) !important;
+  color: #fff !important;
+  box-shadow: 0 10px 22px -14px var(--fx-accent);
+}
+:root .list-row .list-actions .list-trailer:hover { filter: brightness(1.1); }
+:root .list-row .list-actions .status-select { width: 100%; min-width: 118px; }
+:root .list-row .list-actions .status-trigger { width: 100%; height: 38px; min-height: 38px; font-size: 12px; }
+
+/* Grid view shares the card fills. */
+:root .list-card-grid .movie-card { background: var(--fx-surface-2); }
+:root .list-view-toggle button.active { background: var(--fx-accent); color: #fff; box-shadow: 0 8px 18px -12px var(--fx-accent); }
+:root .pagination button.active { background: var(--fx-accent); color: #fff; box-shadow: 0 10px 20px -12px var(--fx-accent); }
+
+/* ===========================================================================
+   5. LIGHT MODE — states that still read on white
+   =========================================================================== */
+:root[data-theme="light"] .status-select.unwatched .status-trigger { background: #f1f3f8; color: #5c6675; }
+:root[data-theme="light"] .status-select.watching .status-trigger { background: #fdf1dc; color: #8a5a08; }
+:root[data-theme="light"] .status-select.watched .status-trigger { background: #e2f7ea; color: #14713f; }
+:root[data-theme="light"] .status-select.dropped .status-trigger { background: #fdeaea; color: #a52121; }
+:root[data-theme="light"] .status-select.watched .status-trigger .status-dot { background: #1a9d59; }
+:root[data-theme="light"] .status-select.watching .status-trigger .status-dot { background: #c8860f; }
+:root[data-theme="light"] .status-select.dropped .status-trigger .status-dot { background: #cf3333; }
+:root[data-theme="light"] .status-dropdown { background: #fff; box-shadow: 0 30px 70px -30px rgba(16, 24, 40, .4); }
+:root[data-theme="light"] .status-menu-title { color: #7c8696; }
+:root[data-theme="light"] .status-dropdown .status-option { color: #4c5665; }
+:root[data-theme="light"] .status-dropdown .status-option:hover { background: #f1f3f8; color: #10141b; }
+:root[data-theme="light"] .status-dropdown .status-option.active { background: #f4e6e9; color: #10141b; box-shadow: inset 0 0 0 1px rgba(218, 30, 55, .28); }
+:root[data-theme="light"] .status-dropdown .status-option.watched.active { background: #e4f7ec; color: #12633a; box-shadow: inset 0 0 0 1px rgba(26, 157, 89, .34); }
+:root[data-theme="light"] .status-dropdown .status-option.watching.active { background: #fdf1dc; color: #7a5009; box-shadow: inset 0 0 0 1px rgba(200, 134, 15, .34); }
+:root[data-theme="light"] .status-dropdown .status-option.dropped.active { background: #fdeaea; color: #96201f; box-shadow: inset 0 0 0 1px rgba(207, 51, 51, .34); }
+:root[data-theme="light"] .list-row { background: #fff; box-shadow: 0 1px 2px rgba(16, 24, 40, .05), 0 14px 30px -24px rgba(16, 24, 40, .38); }
+:root[data-theme="light"] .list-row:hover { background: #f7f9fc; }
+:root[data-theme="light"] .list-index { background: #eef1f7; color: #4c5665; }
+:root[data-theme="light"] .list-row[data-state="watched"] .list-index { background: #e2f7ea; color: #14713f; }
+:root[data-theme="light"] .list-state.watched { background: #e2f7ea !important; color: #14713f !important; }
+:root[data-theme="light"] .list-state.watching { background: #fdf1dc !important; color: #8a5a08 !important; }
+:root[data-theme="light"] .list-state.dropped { background: #fdeaea !important; color: #a52121 !important; }
+:root[data-theme="light"] .list-ratings-line .list-rating { background: #eef1f7; color: #4c5665; }
+:root[data-theme="light"] .list-ratings-line .list-rating-imdb { background: #fdf3cf; color: #7d6306; }
+:root[data-theme="light"] .list-ratings-line .list-rating-tomato { background: #fdeae7; color: #a52f22; }
+:root[data-theme="light"] .list-ratings-line .list-rating-meta { background: #e6f0fe; color: #1c4f8a; }
+:root[data-theme="light"] .list-row .list-actions > button.list-watched:not(.watched),
+:root[data-theme="light"] .list-row .list-actions > button.list-bookmark:not(.saved) { background: #eef1f7 !important; color: #5c6675 !important; }
+:root[data-theme="light"] .movie-card .card-actions .watched-chip:not(.watched),
+:root[data-theme="light"] .movie-card .card-actions .bookmark-chip:not(.saved) { background: #eef1f7 !important; color: #5c6675 !important; }
+
+/* ===========================================================================
+   6. WIDE SCREENS — nothing in the header or filter sheet gets squashed
+   =========================================================================== */
+@media (min-width: 1061px) {
+  :root .header-bar { flex-wrap: nowrap; }
+  :root .site-header .header-tools { flex: 0 0 auto; min-width: 0; }
+  :root .header-tools .header-phase-btn,
+  :root .header-sort-btn,
+  :root .header-filter-btn { flex: 0 0 auto; min-width: max-content; }
+  :root .header-filter-label { white-space: nowrap; }
+  :root .header-sort-label { max-width: 168px; }
+  :root .filter-overlay .filter-screen.web-filter { width: min(100%, 880px); max-width: 880px; }
+}
+:root .filter-body .filter-chip,
+:root .filter-body .filter-sort-chip { flex: 0 0 auto; white-space: nowrap; }
+:root .filter-body .filter-sort-chip { min-height: 46px; }
+:root .filter-body .filter-chip-row { gap: 8px; }
+:root .filter-body .filter-chip.selected,
+:root .filter-body .filter-sort-chip.selected { background: var(--fx-accent); color: #fff; }
+:root .filter-body .filter-sort-chip.selected svg { color: #fff; }
+:root .filter-body .filter-chip:hover:not(.selected),
+:root .filter-body .filter-sort-chip:hover:not(.selected) { background: var(--fx-surface-3); color: var(--fx-text); }
+
