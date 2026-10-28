@@ -1683,8 +1683,17 @@
   :root .filter-footer { padding: 12px 18px calc(14px + env(safe-area-inset-bottom, 0px)); }
   :root .filter-footer .filter-clear-btn,
   :root .filter-footer .filter-results-btn { height: 48px; }
-  :root .bottom-nav { left: 12px; right: 12px; padding: 6px calc(6px + env(safe-area-inset-left, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)); }
-  :root .bottom-nav button { gap: 2px; font-size: 10.5px; }
+  /* Keep the pill centred (left:50% + translateX) — only lift it above the
+     home indicator and cap its width so all five items stay on screen. */
+  :root .bottom-nav {
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    max-width: calc(100vw - 20px);
+    padding: 6px;
+    gap: 2px;
+  }
+  :root .bottom-nav button { min-width: 0; flex: 1 1 0; padding: 8px 8px; gap: 2px; font-size: 10px; }
 }
 
 @media (max-width: 420px) {
