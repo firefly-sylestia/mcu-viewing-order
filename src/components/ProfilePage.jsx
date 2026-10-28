@@ -6,8 +6,10 @@ const UI_VARIANT_KEY = 'ui-variant';
 const UI_VARIANTS = [
   { id: 'classic', label: 'Classic' },
   { id: 'fresh', label: 'Fresh' },
-  { id: 'control', label: 'Control' },
+  // Kept for anyone already on it, but no longer offered in Settings.
+  { id: 'control', label: 'Control', hidden: true },
 ];
+const VISIBLE_UI_VARIANTS = UI_VARIANTS.filter(option => !option.hidden);
 
 function useUiVariant() {
   const [variant, setVariantState] = useState(() => {
@@ -319,7 +321,7 @@ function SettingsPanel({ profileName, setProfileName, user, configured, onLogin,
             </div>
           </div>
           <div className="variant-switch" role="group" aria-label="Interface layout">
-            {UI_VARIANTS.map(option => (
+            {VISIBLE_UI_VARIANTS.map(option => (
               <button
                 key={option.id}
                 className={variant === option.id ? 'active' : ''}
