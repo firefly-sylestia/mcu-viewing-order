@@ -1205,33 +1205,14 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
   const touchStartX = useRef(null);
   const didSwipe = useRef(false);
   const resumeTimer = useRef(null);
-  const [leavingId, setLeavingId] = useState(null);
-  const prevIndexRef = useRef(heroIndex);
   const [prevBg, setPrevBg] = useState(null);
   const prevBgIdRef = useRef(featured?.id ?? null);
-  const [dragging, setDragging] = useState(false);
-  const dragRef = useRef(0);
-  const stackRef = useRef(null);
   useEffect(() => () => window.clearTimeout(resumeTimer.current), []);
   useEffect(() => {
     if (!prevBg) return undefined;
     const timer = window.setTimeout(() => setPrevBg(null), 1000);
     return () => window.clearTimeout(timer);
   }, [prevBg]);
-  useEffect(() => {
-    if (!leavingId) return undefined;
-    const timer = window.setTimeout(() => setLeavingId(null), 1000);
-    return () => window.clearTimeout(timer);
-  }, [leavingId]);
-  // Resolve the outgoing poster while rendering so its exit class is committed
-  // in the same pass as the new index. An effect ran after React had already
-  // unmounted the poster, which is why it looked like an instant disappearance.
-  if (prevIndexRef.current !== heroIndex) {
-    const previous = items[prevIndexRef.current % Math.max(items.length, 1)];
-    prevIndexRef.current = heroIndex;
-    const current = items[heroIndex % Math.max(items.length, 1)];
-    if (previous && previous.id !== current?.id) setLeavingId(previous.id);
-  }
   // Keep the previous backdrop mounted underneath so the change is a crossfade,
   // not a hard swap while the new image decodes.
   if (prevBgIdRef.current !== (featured?.id ?? null)) {
@@ -1247,24 +1228,13 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
     window.clearTimeout(resumeTimer.current);
     touchStartX.current = event.touches[0]?.clientX ?? null;
     didSwipe.current = false;
-    setDragging(true);
     setPaused(true);
   };
-  const handleTouchMove = (event) => {
-    if (touchStartX.current === null) return;
-    const delta = (event.touches[0]?.clientX ?? touchStartX.current) - touchStartX.current;
-    dragRef.current = Math.max(-150, Math.min(150, delta));
-    if (stackRef.current) stackRef.current.style.transform = `translateX(${dragRef.current * 0.3}px)`;
-  };
   const handleTouchEnd = (event) => {
-    setDragging(false);
     if (touchStartX.current === null) return;
-    const delta = (event.changedTouches[0]?.clientX ?? touchStartX.current) - touchStartX.current;
+    const distance = (event.changedTouches[0]?.clientX ?? touchStartX.current) - touchStartX.current;
     touchStartX.current = null;
-    const distance = Math.abs(delta) >= Math.abs(dragRef.current) ? delta : dragRef.current;
-    dragRef.current = 0;
-    if (stackRef.current) stackRef.current.style.transform = '';
-    didSwipe.current = Math.abs(distance) > 44;
+    didSwipe.current = Math.abs(distance) > 46;
     if (didSwipe.current) move(distance < 0 ? 1 : -1);
     resumeTimer.current = window.setTimeout(() => setPaused(false), 4200);
   };
@@ -1290,7 +1260,7 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
     }
   };
 
-  return <section className="top-carousel" style={{ '--accent': featured?.accent || '#9a4a4a' }} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocusCapture={() => setPaused(true)} onBlurCapture={() => setPaused(false)} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} onTouchCancel={handleTouchEnd}>
+  return <section className="top-carousel" style={{ '--accent': featured?.accent || '#9a4a4a' }} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocusCapture={() => setPaused(true)} onBlurCapture={() => setPaused(false)} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onTouchCancel={handleTouchEnd}>
     <div className="carousel-backdrops" aria-hidden="true">
       {prevBg?.poster && <img className="carousel-backdrop is-previous" src={prevBg.poster} alt="" width="300" height="450" referrerPolicy="no-referrer" />}
       {featured?.poster && <img key={featured.id} className="carousel-backdrop is-current" src={featured.poster} alt="" width="300" height="450" referrerPolicy="no-referrer" />}
@@ -1298,8 +1268,8 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
     <div className="carousel-backdrop-shade" aria-hidden="true" />
     <div className="feature-heading"><div><p className="eyebrow">{featured?.universe === 'marvel' ? 'Marvel Cinematic Universe' : featured?.universe === 'xmen' ? 'X-Men Universe' : featured?.universe === 'sony' ? 'Sony Spider-Man Universe' : 'DC Universe'} · Featured</p><h2>Top movies</h2></div><button className="feature-detail" onClick={() => setSelected(featured)}>View details</button></div>
     <div className="feature-stage">
-      <div ref={stackRef} className={`poster-stack smooth-stack${dragging ? ' is-dragging' : ''}`}>
-        {inlineTrailer ? <div className="inline-trailer"><iframe src={inlineTrailer} title={`${featured.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={() => setInlineTrailer(null)} aria-label="Close trailer"><X size={20} /></button></div> : items.map((item, rawIndex) => { const offset = (rawIndex - heroIndex + items.length) % items.length; const isLeaving = leavingId === item.id && offset >= 3; if (offset > 3 && !isLeaving) return null; return <button key={item.id} aria-label={offset ? `Show ${item.title}` : `View ${item.title} details`} aria-hidden={offset === 3 || isLeaving ? 'true' : undefined} tabIndex={offset === 3 || isLeaving ? -1 : 0} className={`stack-poster ${isLeaving ? 'poster-exit' : `poster-${offset}`}`} onClick={() => selectPoster(item, rawIndex, offset)} style={{ '--accent': item.accent }}><PosterArt item={item} loading="eager" fetchPriority={offset === 0 ? 'high' : 'auto'} /></button>; })}
+      <div className="poster-stack smooth-stack">
+        {inlineTrailer ? <div className="inline-trailer"><iframe src={inlineTrailer} title={`${featured.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={() => setInlineTrailer(null)} aria-label="Close trailer"><X size={20} /></button></div> : items.map((item, rawIndex) => { const offset = (rawIndex - heroIndex + items.length) % items.length; if (offset > 3) return null; return <button key={item.id} aria-label={offset ? `Show ${item.title}` : `View ${item.title} details`} aria-hidden={offset === 3 ? 'true' : undefined} tabIndex={offset === 3 ? -1 : 0} className={`stack-poster poster-${offset}`} onClick={() => selectPoster(item, rawIndex, offset)} style={{ '--accent': item.accent }}><PosterArt item={item} loading="eager" fetchPriority={offset === 0 ? 'high' : 'auto'} /></button>; })}
       </div>
       <div className="feature-copy" key={featured?.id}>
         <div className="feature-kicker"><span>{featured?.year}</span><span>{runtimeLabel(featured?.runtime, featured?.type)}</span><span>{featured?.rating} rating</span></div>

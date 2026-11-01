@@ -3318,12 +3318,7 @@
 :root .movie-site .carousel-backdrop.is-previous { z-index: -2; animation: none; opacity: .42; }
 :root .movie-site .carousel-backdrop.is-current { z-index: -1; animation: carouselBackdropIn .95s cubic-bezier(.22, .8, .2, 1) both; }
 :root .movie-site .poster-stack { transition: transform .5s cubic-bezier(.22, .8, .2, 1); }
-:root .movie-site .poster-stack.is-dragging { transition: none; }
 :root .movie-site .top-carousel { touch-action: pan-y; }
-@media (prefers-reduced-motion: reduce) {
-  :root .movie-site .carousel-backdrop.is-current { animation: none; }
-  :root .movie-site .poster-stack { transition: none; }
-}
 
 /* ── Detail dialog: cinematic, borderless, phone-safe ───────────────────── */
 :root .detail-overlay {
@@ -3656,4 +3651,40 @@
   :root .unb-item { flex: 0 0 auto; grid-template-columns: 30px minmax(0, 118px); grid-auto-rows: auto; row-gap: 6px; width: 150px; }
   :root .unb-item-index, :root .unb-item-arrow { display: none; }
   :root .unb-item-poster { width: 30px; height: 42px; }
+}
+
+
+/* ===========================================================================
+   25. READABLE DETAIL FACTS + ACCENT-FILLED HERO EYEBROW
+   =========================================================================== */
+:root .detail-facts > div { color: #ffffff; }
+:root .detail-facts > div span {
+  color: rgba(255, 255, 255, .56);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+:root .detail-facts > div strong {
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: -.01em;
+}
+:root .detail-facts > div svg { color: rgba(255, 255, 255, .6); }
+:root[data-theme="light"] .detail-facts > div { color: #10141b; background: #f4f7fc; }
+:root[data-theme="light"] .detail-facts > div span { color: #6b7583; }
+:root[data-theme="light"] .detail-facts > div strong { color: #10141b; }
+:root[data-theme="light"] .detail-facts > div svg { color: #8a94a2; }
+
+/* The featured universe line takes the accent instead of sitting grey. */
+:root .top-carousel .feature-heading .eyebrow,
+:root .top-carousel .feature-heading .eyebrow span {
+  color: color-mix(in srgb, var(--accent, #da1e37) 62%, #ffffff);
+  font-weight: 800;
+  letter-spacing: .14em;
+}
+:root[data-theme="light"] .top-carousel .feature-heading .eyebrow,
+:root[data-theme="light"] .top-carousel .feature-heading .eyebrow span {
+  color: color-mix(in srgb, var(--accent, #da1e37) 72%, #10141b);
 }
