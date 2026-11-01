@@ -242,9 +242,12 @@ export default function App() {
     if (event.pointerType === 'mouse' && event.button !== 0) return;
     navPointerStart.current = { x: event.clientX, y: event.clientY };
     const startIndex = navIndexOf(event.clientX);
+    const pointerId = event.pointerId;
     clearNavHoldTimer();
-    try { event.currentTarget.setPointerCapture(event.pointerId); } catch (error) { /* capture is optional */ }
     navHoldTimer.current = window.setTimeout(() => {
+      // Capture only once the hold is real: capturing on pointerdown retargets
+      // the click to the nav and swallowed every plain tap.
+      try { navRef.current?.setPointerCapture(pointerId); } catch (error) { /* capture is optional */ }
       navDragRef.current = true;
       navHoldIndexRef.current = startIndex;
       setNavHoldIndex(startIndex);
@@ -287,6 +290,40 @@ export default function App() {
   useEffect(() => {
     if (!WATCH_ENABLED && section === 'watch') setSection('home');
   }, [section]);
+  // :active sticks on touch hardware, so the press glow is driven by pointer
+  // events with a hard cleanup: it always fades back on release.
+  useEffect(() => {
+    let pressed = null;
+    let timer = null;
+    const release = () => {
+      if (timer) { window.clearTimeout(timer); timer = null; }
+      if (!pressed) return;
+      const node = pressed;
+      pressed = null;
+      node.classList.remove('is-pressed');
+    };
+    const handleDown = (event) => {
+      const target = event.target;
+      if (!target || typeof target.closest !== 'function') return;
+      const node = target.closest('button, a, [role="button"], .movie-card, .list-row');
+      if (!node || node.disabled) return;
+      release();
+      pressed = node;
+      node.classList.add('is-pressed');
+      timer = window.setTimeout(release, 520);
+    };
+    document.addEventListener('pointerdown', handleDown, true);
+    document.addEventListener('pointerup', release, true);
+    document.addEventListener('pointercancel', release, true);
+    window.addEventListener('blur', release);
+    return () => {
+      document.removeEventListener('pointerdown', handleDown, true);
+      document.removeEventListener('pointerup', release, true);
+      document.removeEventListener('pointercancel', release, true);
+      window.removeEventListener('blur', release);
+      if (timer) window.clearTimeout(timer);
+    };
+  }, []);
   const [actions, setActions] = useState(saved.actions || {});
   const [posterMap, setPosterMap] = useState({});
   const [omdbVersion, setOmdbVersion] = useState(0);
@@ -805,6 +842,21 @@ export default function App() {
     else window.history.replaceState(null, '', `#${section}`);
   };
   const selectedItem = selected ? activeItems.find(item => item.id === selected.id) || selected : null;
+  // Freeze the page behind the detail dialog while it is open (declared here
+  // because it depends on selectedItem, which does not exist higher up).
+  useEffect(() => {
+    if (!selectedItem) return undefined;
+    const body = document.body;
+    const previousOverflow = body.style.overflow;
+    const previousPadding = body.style.paddingRight;
+    const gutter = window.innerWidth - document.documentElement.clientWidth;
+    body.style.overflow = 'hidden';
+    if (gutter > 0) body.style.paddingRight = `${gutter}px`;
+    return () => {
+      body.style.overflow = previousOverflow;
+      body.style.paddingRight = previousPadding;
+    };
+  }, [selectedItem]);
   const nextUp = activeItems.find(item => item.userStatus !== 'watched' && item.userStatus !== 'dropped') || activeItems[0];
   const playTrailer = (item) => {
     hapticTap();
@@ -1155,7 +1207,17 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
   const resumeTimer = useRef(null);
   const [leavingId, setLeavingId] = useState(null);
   const prevIndexRef = useRef(heroIndex);
+  const [prevBg, setPrevBg] = useState(null);
+  const prevBgIdRef = useRef(featured?.id ?? null);
+  const [dragging, setDragging] = useState(false);
+  const dragRef = useRef(0);
+  const stackRef = useRef(null);
   useEffect(() => () => window.clearTimeout(resumeTimer.current), []);
+  useEffect(() => {
+    if (!prevBg) return undefined;
+    const timer = window.setTimeout(() => setPrevBg(null), 1000);
+    return () => window.clearTimeout(timer);
+  }, [prevBg]);
   useEffect(() => {
     if (!leavingId) return undefined;
     const timer = window.setTimeout(() => setLeavingId(null), 1000);
@@ -1170,16 +1232,39 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
     const current = items[heroIndex % Math.max(items.length, 1)];
     if (previous && previous.id !== current?.id) setLeavingId(previous.id);
   }
+  // Keep the previous backdrop mounted underneath so the change is a crossfade,
+  // not a hard swap while the new image decodes.
+  if (prevBgIdRef.current !== (featured?.id ?? null)) {
+    const previous = items.find((entry) => entry.id === prevBgIdRef.current);
+    prevBgIdRef.current = featured?.id ?? null;
+    if (previous?.poster) setPrevBg(previous);
+  }
   const move = (dir) => {
     setInlineTrailer(null);
     setHeroIndex((heroIndex + dir + items.length) % Math.max(items.length, 1));
   };
-  const handleTouchStart = (event) => { window.clearTimeout(resumeTimer.current); touchStartX.current = event.touches[0]?.clientX ?? null; didSwipe.current = false; setPaused(true); };
-  const handleTouchEnd = (event) => {
+  const handleTouchStart = (event) => {
+    window.clearTimeout(resumeTimer.current);
+    touchStartX.current = event.touches[0]?.clientX ?? null;
+    didSwipe.current = false;
+    setDragging(true);
+    setPaused(true);
+  };
+  const handleTouchMove = (event) => {
     if (touchStartX.current === null) return;
-    const distance = (event.changedTouches[0]?.clientX ?? touchStartX.current) - touchStartX.current;
+    const delta = (event.touches[0]?.clientX ?? touchStartX.current) - touchStartX.current;
+    dragRef.current = Math.max(-150, Math.min(150, delta));
+    if (stackRef.current) stackRef.current.style.transform = `translateX(${dragRef.current * 0.3}px)`;
+  };
+  const handleTouchEnd = (event) => {
+    setDragging(false);
+    if (touchStartX.current === null) return;
+    const delta = (event.changedTouches[0]?.clientX ?? touchStartX.current) - touchStartX.current;
     touchStartX.current = null;
-    didSwipe.current = Math.abs(distance) > 42;
+    const distance = Math.abs(delta) >= Math.abs(dragRef.current) ? delta : dragRef.current;
+    dragRef.current = 0;
+    if (stackRef.current) stackRef.current.style.transform = '';
+    didSwipe.current = Math.abs(distance) > 44;
     if (didSwipe.current) move(distance < 0 ? 1 : -1);
     resumeTimer.current = window.setTimeout(() => setPaused(false), 4200);
   };
@@ -1205,12 +1290,15 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
     }
   };
 
-  return <section className="top-carousel" style={{ '--accent': featured?.accent || '#9a4a4a' }} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocusCapture={() => setPaused(true)} onBlurCapture={() => setPaused(false)} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
-    {featured?.poster && <img key={featured.id} className="carousel-backdrop" src={featured.poster} alt="" aria-hidden="true" width="300" height="450" referrerPolicy="no-referrer" />}
+  return <section className="top-carousel" style={{ '--accent': featured?.accent || '#9a4a4a' }} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocusCapture={() => setPaused(true)} onBlurCapture={() => setPaused(false)} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} onTouchCancel={handleTouchEnd}>
+    <div className="carousel-backdrops" aria-hidden="true">
+      {prevBg?.poster && <img className="carousel-backdrop is-previous" src={prevBg.poster} alt="" width="300" height="450" referrerPolicy="no-referrer" />}
+      {featured?.poster && <img key={featured.id} className="carousel-backdrop is-current" src={featured.poster} alt="" width="300" height="450" referrerPolicy="no-referrer" />}
+    </div>
     <div className="carousel-backdrop-shade" aria-hidden="true" />
     <div className="feature-heading"><div><p className="eyebrow">{featured?.universe === 'marvel' ? 'Marvel Cinematic Universe' : featured?.universe === 'xmen' ? 'X-Men Universe' : featured?.universe === 'sony' ? 'Sony Spider-Man Universe' : 'DC Universe'} · Featured</p><h2>Top movies</h2></div><button className="feature-detail" onClick={() => setSelected(featured)}>View details</button></div>
     <div className="feature-stage">
-      <div className="poster-stack smooth-stack">
+      <div ref={stackRef} className={`poster-stack smooth-stack${dragging ? ' is-dragging' : ''}`}>
         {inlineTrailer ? <div className="inline-trailer"><iframe src={inlineTrailer} title={`${featured.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={() => setInlineTrailer(null)} aria-label="Close trailer"><X size={20} /></button></div> : items.map((item, rawIndex) => { const offset = (rawIndex - heroIndex + items.length) % items.length; const isLeaving = leavingId === item.id && offset >= 3; if (offset > 3 && !isLeaving) return null; return <button key={item.id} aria-label={offset ? `Show ${item.title}` : `View ${item.title} details`} aria-hidden={offset === 3 || isLeaving ? 'true' : undefined} tabIndex={offset === 3 || isLeaving ? -1 : 0} className={`stack-poster ${isLeaving ? 'poster-exit' : `poster-${offset}`}`} onClick={() => selectPoster(item, rawIndex, offset)} style={{ '--accent': item.accent }}><PosterArt item={item} loading="eager" fetchPriority={offset === 0 ? 'high' : 'auto'} /></button>; })}
       </div>
       <div className="feature-copy">
