@@ -1032,7 +1032,7 @@ export default function App() {
           <TopCarousel items={heroItems} featured={featured} heroIndex={heroIndex} setHeroIndex={setHeroIndex} setSelected={selectItem} />
         </section>
         <UpNextBoard items={activeItems.filter(i => i.userStatus === 'unwatched').slice(0, 10)} setSelected={selectItem} onStart={(item) => startWatchWithConfirm(item, item.tmdbId || null, item.type === 'series' ? 'tv' : 'movie')} />
-        <MovieRail title="Essential picks" items={activeItems.filter(i => i.essential)} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} paginated gridControls />
+        <EssentialPicks items={activeItems.filter(i => i.essential)} setSelected={selectItem} />
         <MovieRail title="Recently watched" items={activeItems.filter(i => i.userStatus === 'watched').slice(-24).reverse()} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} empty="Mark titles as watched to see them here." paginated gridControls />
         {activeItems.filter(i => i.userStatus === 'watching').length > 0 &&          <ContinueWatching items={activeItems.filter(i => i.userStatus === 'watching')} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} onResume={startWatchWithConfirm} />}
         {externalTrackedItems.length > 0 && (
@@ -1214,7 +1214,7 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
   useEffect(() => () => window.clearTimeout(resumeTimer.current), []);
   useEffect(() => {
     if (!leavingId) return undefined;
-    const timer = window.setTimeout(() => setLeavingId(null), 1150);
+    const timer = window.setTimeout(() => setLeavingId(null), 880);
     return () => window.clearTimeout(timer);
   }, [leavingId]);
   // Resolve the outgoing poster during render so its exit class lands in the
@@ -1284,10 +1284,12 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
       <div className="poster-stack smooth-stack">
         {inlineTrailer ? <div className="inline-trailer"><iframe src={inlineTrailer} title={`${featured.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={() => setInlineTrailer(null)} aria-label="Close trailer"><X size={20} /></button></div> : items.map((item, rawIndex) => { const offset = (rawIndex - heroIndex + items.length) % items.length; const isLeaving = leavingId === item.id && offset >= 3; if (offset > 3 && !isLeaving) return null; return <button key={item.id} aria-label={offset ? `Show ${item.title}` : `View ${item.title} details`} aria-hidden={offset === 3 || isLeaving ? 'true' : undefined} tabIndex={offset === 3 || isLeaving ? -1 : 0} className={`stack-poster ${isLeaving ? 'poster-exit' : `poster-${offset}`}`} onClick={() => selectPoster(item, rawIndex, offset)} style={{ '--accent': item.accent }}><PosterArt item={item} loading="eager" fetchPriority={offset === 0 ? 'high' : 'auto'} /></button>; })}
       </div>
-      <div className="feature-copy" key={featured?.id}>
-        <div className="feature-kicker"><span>{featured?.year}</span><span>{runtimeLabel(featured?.runtime, featured?.type)}</span><span>{featured?.rating} rating</span></div>
-        <h1>{featured?.title}</h1>
-        <p>{featured?.desc || `Follow ${featured?.title} in the complete ${featured?.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} viewing order.`}</p>
+      <div className="feature-copy">
+        <div className="feature-text" key={featured?.id}>
+          <div className="feature-kicker"><span>{featured?.year}</span><span>{runtimeLabel(featured?.runtime, featured?.type)}</span><span>{featured?.rating} rating</span></div>
+          <h1>{featured?.title}</h1>
+          <p key={featured?.id} className="feature-desc">{featured?.desc || `Follow ${featured?.title} in the complete ${featured?.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} viewing order.`}</p>
+        </div>
         <div className="feature-footer"><button className="feature-play" onClick={showTrailer}><Clapperboard size={18} /> Watch trailer</button><div className="chips">{featured?.genres.slice(0, 3).map(g => <span key={g}>{g}</span>)}</div></div>
       </div>
     </div>
@@ -1302,6 +1304,45 @@ function PosterArt({ item, loading: loadingProp = 'lazy', fetchPriority: fetchPr
   </> : <FallbackPoster item={item} />;
 }
 function FallbackPoster({ item, hidden = false }) { return <div className="fallback-poster" hidden={hidden}><strong>{item.title}</strong><span>{item.year}</span></div>; }
+
+function EssentialPicks({ items, setSelected }) {
+  if (!items.length) return null;
+  const [lead, ...rest] = items;
+  const stateIcon = (item) => item.userStatus === 'watched'
+    ? <Check size={14} />
+    : item.userStatus === 'watching' ? <Clock size={14} /> : null;
+  return <section className="essential-picks">
+    <header className="ep-head">
+      <div>
+        <p className="ep-eyebrow">The short list</p>
+        <h2>Essential picks</h2>
+        <p className="ep-sub">The films that carry the story. Watch these and the plot still holds.</p>
+      </div>
+      <span className="ep-count">{items.length} must-watch</span>
+    </header>
+    <div className="ep-body">
+      <button className="ep-lead" onClick={() => setSelected(lead)} style={{ '--accent': lead.accent }}>
+        <span className="ep-lead-poster"><PosterArt item={lead} /></span>
+        <span className="ep-lead-copy">
+          <span className="ep-rank">Start here</span>
+          <strong className="ep-lead-title">{lead.title}</strong>
+          <small className="ep-lead-meta">{lead.year} · {runtimeLabel(lead.runtime, lead.type)} · {lead.type === 'series' ? 'Series' : 'Film'}</small>
+          {lead.desc && <span className="ep-lead-desc">{lead.desc}</span>}
+        </span>
+      </button>
+      <ol className="ep-list">
+        {rest.map((item, index) => <li key={item.id}>
+          <button onClick={() => setSelected(item)} style={{ '--accent': item.accent }} className={item.userStatus === 'watched' ? 'is-watched' : ''}>
+            <span className="ep-num">{String(index + 2).padStart(2, '0')}</span>
+            <span className="ep-thumb">{item.poster ? <img src={item.poster} alt="" loading="lazy" referrerPolicy="no-referrer" /> : <FallbackPoster item={item} />}</span>
+            <span className="ep-copy"><strong>{item.title}</strong><small>{item.year} · {runtimeLabel(item.runtime, item.type)}</small></span>
+            <span className="ep-state">{stateIcon(item)}</span>
+          </button>
+        </li>)}
+      </ol>
+    </div>
+  </section>;
+}
 
 function MovieRail({ title, items, setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, empty, scrollable, paginated, gridControls = false, variant = 'default' }) {
   const pageSize = 12;
@@ -1616,6 +1657,22 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, on
   const [isTrailerExpanded, setIsTrailerExpanded] = useState(false);
   const [searchSheet, setSearchSheet] = useState(false);
   const grabStartRef = useRef(null);
+  React.useEffect(() => {
+    const finish = (event) => {
+      const start = grabStartRef.current;
+      if (!start) return;
+      grabStartRef.current = null;
+      start.modal?.classList.remove('is-dragging');
+      start.modal?.style.setProperty('--sheet-drag', '0px');
+      if (event.type === 'pointerup' && start.delta > 96) onClose();
+    };
+    document.addEventListener('pointerup', finish);
+    document.addEventListener('pointercancel', finish);
+    return () => {
+      document.removeEventListener('pointerup', finish);
+      document.removeEventListener('pointercancel', finish);
+    };
+  }, [onClose]);
   // Spoilers stop shouting once the prerequisite is already watched.
   const prereqWatched = useMemo(() => {
     if (!guidance || !Array.isArray(activeItems) || !activeItems.length) return false;
@@ -1672,224 +1729,219 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, on
     setSnapError(null);
     try {
       const scale = 2;
-      const W = 1040, H = 780, R = 28;
-      const pad = 52, gap = 48, posterW = 300, posterH = 450;
-      const contentX = pad + posterW + gap;
+      const W = 1000, H = 560, R = 28, pad = 44, gap = 40;
+      const posterW = 272, posterH = 408;
+      const light = document.documentElement.getAttribute('data-theme') === 'light';
+      const ink = light ? '#10141b' : '#ffffff';
+      const muted = light ? '#54606f' : '#a7b1c0';
+      const surface = light ? '#ffffff' : '#0d1015';
+      const tile = light ? 'rgba(16, 24, 40, .05)' : 'rgba(255, 255, 255, .05)';
+      const accent = light ? (item.accent || '#da1e37') : lightenHex(item.accent || '#da1e37', 0.72);
+
+      let poster = null;
+      if (item.poster) {
+        try {
+          const resp = await fetch(item.poster);
+          if (resp.ok) {
+            const blobUrl = URL.createObjectURL(await resp.blob());
+            poster = await new Promise((resolve) => {
+              const img = new Image();
+              img.onload = () => resolve(img);
+              img.onerror = () => resolve(null);
+              img.src = blobUrl;
+            });
+            URL.revokeObjectURL(blobUrl);
+          }
+        } catch { /* poster is optional */ }
+      }
+
       const canvas = document.createElement('canvas');
       canvas.width = W * scale;
       canvas.height = H * scale;
       const ctx = canvas.getContext('2d');
       ctx.scale(scale, scale);
 
-      // ── Card background ──
-      ctx.fillStyle = '#111419';
+      // Base card, then the same blurred poster backdrop the dialog uses.
+      ctx.fillStyle = surface;
       ctx.beginPath(); ctx.roundRect(0, 0, W, H, R); ctx.fill();
-
-      // ── Poster backdrop — rich dark gradient only (matching CSS shade)
-      const shade = ctx.createLinearGradient(W * 0.3, 0, W, H);
-      shade.addColorStop(0, 'rgba(10,12,17,0.92)');
-      shade.addColorStop(0.5, 'rgba(10,12,17,0.95)');
-      shade.addColorStop(1, 'rgba(10,12,17,0.98)');
+      ctx.save();
+      ctx.beginPath(); ctx.roundRect(0, 0, W, H, R); ctx.clip();
+      if (poster) {
+        const iw = poster.naturalWidth || poster.width, ih = poster.naturalHeight || poster.height;
+        const ratio = Math.max((W * 1.25) / iw, (H * 1.25) / ih);
+        const dw = iw * ratio, dh = ih * ratio;
+        ctx.globalAlpha = light ? 0.3 : 0.55;
+        if ('filter' in ctx) ctx.filter = 'blur(46px) saturate(1.9) brightness(.92)';
+        ctx.drawImage(poster, (W - dw) / 2, (H - dh) / 2 - H * 0.1, dw, dh);
+        if ('filter' in ctx) ctx.filter = 'none';
+        ctx.globalAlpha = 1;
+      }
+      const shade = ctx.createLinearGradient(W * 0.32, 0, W, H);
+      if (light) {
+        shade.addColorStop(0, 'rgba(255, 255, 255, .93)');
+        shade.addColorStop(0.55, 'rgba(255, 255, 255, .955)');
+        shade.addColorStop(1, 'rgba(255, 255, 255, .985)');
+      } else {
+        shade.addColorStop(0, 'rgba(13, 16, 21, .86)');
+        shade.addColorStop(0.5, 'rgba(13, 16, 21, .93)');
+        shade.addColorStop(1, 'rgba(13, 16, 21, .975)');
+      }
       ctx.fillStyle = shade;
       ctx.fillRect(0, 0, W, H);
+      ctx.restore();
 
-      // Load poster via fetch+blob to avoid CORS tainting
-      let bgImg = null;
-      if (item.poster) {
-        try {
-          const resp = await fetch(item.poster);
-          if (resp.ok) {
-            const blob = await resp.blob();
-            const blobUrl = URL.createObjectURL(blob);
-            bgImg = await new Promise((resolve) => {
-              const i = new Image();
-              i.onload = () => resolve(i);
-              i.onerror = () => resolve(null);
-              i.src = blobUrl;
-            });
-            URL.revokeObjectURL(blobUrl);
-          }
-        } catch { /* poster failed silently */ }
-      }
-
-      // ── Poster ──
+      // Poster, matching the dialog's rounded poster block.
       const px = pad, py = pad;
-      // Soft shadow matching CSS box-shadow: 0 24px 60px rgba(0,0,0,.5)
-      [3, 2, 1].forEach(layer => {
-        ctx.fillStyle = `rgba(0,0,0,${0.12 * layer})`;
-        ctx.beginPath(); ctx.roundRect(px + 6 * layer, py + 8 * layer, posterW, posterH, 22); ctx.fill();
-      });
-      if (bgImg) {
-        ctx.save();
-        ctx.beginPath(); ctx.roundRect(px, py, posterW, posterH, 22); ctx.clip();
-        const iw = bgImg.naturalWidth || bgImg.width, ih = bgImg.naturalHeight || bgImg.height;
-        const s = Math.max(posterW / iw, posterH / ih);
-        const sw = posterW / s, sh = posterH / s;
-        ctx.drawImage(bgImg, (iw - sw) / 2, (ih - sh) / 2, sw, sh, px, py, posterW, posterH);
-        ctx.restore();
+      ctx.save();
+      ctx.beginPath(); ctx.roundRect(px, py, posterW, posterH, 20); ctx.clip();
+      if (poster) {
+        const iw = poster.naturalWidth || poster.width, ih = poster.naturalHeight || poster.height;
+        const ratio = Math.max(posterW / iw, posterH / ih);
+        const sw = posterW / ratio, sh = posterH / ratio;
+        ctx.drawImage(poster, (iw - sw) / 2, (ih - sh) / 2, sw, sh, px, py, posterW, posterH);
       } else {
-        // Fallback poster area
-        ctx.fillStyle = 'rgba(255,255,255,0.04)';
-        ctx.beginPath(); ctx.roundRect(px, py, posterW, posterH, 22); ctx.fill();
-        ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-        ctx.beginPath(); ctx.roundRect(px, py, posterW, posterH, 22); ctx.stroke();
+        ctx.fillStyle = tile;
+        ctx.fillRect(px, py, posterW, posterH);
       }
+      ctx.restore();
 
-      const a = item.accent || '#da1e37';
+      const cx = px + posterW + gap;
+      const cw = W - pad - cx;
+      const wrap = (text, font, maxWidth, maxLines) => {
+        ctx.font = font;
+        const words = String(text).split(/\s+/).filter(Boolean);
+        const lines = [];
+        let line = '';
+        for (const word of words) {
+          const attempt = line ? `${line} ${word}` : word;
+          if (ctx.measureText(attempt).width <= maxWidth) { line = attempt; continue; }
+          if (line) lines.push(line);
+          line = word;
+          if (lines.length === maxLines) break;
+        }
+        if (line && lines.length < maxLines) lines.push(line);
+        if (lines.length === maxLines) {
+          let last = lines[maxLines - 1];
+          while (last.length > 1 && ctx.measureText(`${last}…`).width > maxWidth) last = last.slice(0, -1);
+          lines[maxLines - 1] = `${last.trim()}…`;
+        }
+        return lines;
+      };
 
-      // ── Kicker ──
-      const uLabel = (item.universe === 'marvel' ? 'Marvel Cinematic Universe' : item.universe === 'xmen' ? 'X-Men Universe' : 'DC Universe').toUpperCase();
-      const orderLabel = '#' + String(item.order || item.id).padStart(2, '0');
-      ctx.font = '900 11px Inter, sans-serif';
-      // Lighten accent matching CSS color-mix(in srgb, var(--brand-accent) 72%, #ffffff)
-      const kickerAccent = lightenHex(item.accent || '#da1e37', 0.72);
-      ctx.fillStyle = kickerAccent;
-      ctx.fillText(uLabel, contentX, pad + 16);
-      const orderW = ctx.measureText(orderLabel).width;
-      ctx.fillText(orderLabel, W - pad - orderW, pad + 16);
-      ctx.globalAlpha = 1;
+      const universeLabel = item.universe === 'marvel' ? 'Marvel Cinematic Universe' : item.universe === 'xmen' ? 'X-Men Universe' : item.universe === 'sony' ? 'Sony Spider-Man Universe' : 'DC Universe';
+      const chapter = `#${String(item.order || item.id).padStart(2, '0')}`;
 
-      // ── Title ──
-      ctx.fillStyle = '#fff';
-      const title = item.title || '';
-      let titleSize = 62;
-      while (titleSize > 32) {
-        ctx.font = `900 ${titleSize}px Inter, sans-serif`;
-        if (ctx.measureText(title).width <= (W - contentX - pad)) break;
+      let y = py + 16;
+      ctx.font = '800 10.5px Inter, sans-serif';
+      ctx.fillStyle = light ? '#3b4553' : '#c3ccd8';
+      ctx.fillText(universeLabel.toUpperCase(), cx, y);
+      const chapterWidth = ctx.measureText(chapter).width;
+      ctx.fillStyle = accent;
+      ctx.fillText(chapter, W - pad - chapterWidth, y);
+      y += 16;
+
+      let titleSize = 54;
+      const titleFont = (size) => `900 ${size}px Inter, sans-serif`;
+      while (titleSize > 28) {
+        ctx.font = titleFont(titleSize);
+        const lines = wrap(item.title || '', titleFont(titleSize), cw, 2);
+        if (lines.length < 2 && ctx.measureText(item.title || '').width <= cw) break;
+        if (lines.length === 2 && ctx.measureText(lines[1].replace('…', '')).width < cw * 0.92) break;
         titleSize -= 2;
       }
-      const titleLines = [];
-      let rem = title;
-      while (rem && titleLines.length < 2) {
-        let cut = rem.length;
-        while (cut > 0 && ctx.measureText(rem.slice(0, cut)).width > (W - contentX - pad)) cut--;
-        if (cut === 0) cut = rem.length;
-        titleLines.push(rem.slice(0, cut));
-        rem = rem.slice(cut).trim();
+      ctx.font = titleFont(titleSize);
+      ctx.fillStyle = ink;
+      const titleLines = wrap(item.title || '', titleFont(titleSize), cw, 2);
+      titleLines.forEach((line, index) => {
+        y += titleSize * (index === 0 ? 0.92 : 1.04);
+        ctx.fillText(line, cx, y);
+      });
+      y += 26;
+
+      ctx.font = '600 13px Inter, sans-serif';
+      ctx.fillStyle = muted;
+      const metaBits = [item.year, runtimeLabel(item.runtime, item.type), item.type === 'series' ? 'Series' : 'Film'];
+      if (item.phase) metaBits.push(`Phase ${item.phase}`);
+      const meta = wrap(metaBits.filter(Boolean).join('  ·  '), '600 13px Inter, sans-serif', cw, 1)[0] || '';
+      ctx.fillText(meta, cx, y);
+
+      const ratings = [
+        item.rating && { value: Number(item.rating).toFixed(1), label: 'TMDB', color: '#f2c94c' },
+        item.imdbRating && { value: item.imdbRating, label: 'IMDb', color: '#f5c518' },
+        item.tomatoRating && { value: item.tomatoRating, label: 'Tomato', color: getTomatoTier(item.tomatoRating).cls === 'rotten' ? '#4ade80' : '#e74c3c' },
+        item.metaRating && { value: String(parseInt(item.metaRating)), label: 'Meta', color: '#f59e0b' },
+      ].filter(Boolean);
+      if (ratings.length) {
+        y += 24;
+        let rx = cx;
+        for (const rating of ratings) {
+          ctx.font = '700 13px Inter, sans-serif';
+          const valueWidth = ctx.measureText(rating.value).width;
+          ctx.font = '600 10.5px Inter, sans-serif';
+          const labelWidth = ctx.measureText(rating.label.toUpperCase()).width;
+          const width = valueWidth + 5 + labelWidth;
+          if (rx + width > cx + cw) break;
+          ctx.font = '700 13px Inter, sans-serif';
+          ctx.fillStyle = rating.color;
+          ctx.fillText(rating.value, rx, y);
+          ctx.font = '600 10.5px Inter, sans-serif';
+          ctx.fillStyle = muted;
+          ctx.fillText(rating.label.toUpperCase(), rx + valueWidth + 5, y - 1);
+          rx += width + 18;
+        }
       }
-      titleLines.forEach((line, i) => {
-        ctx.fillText(line, contentX, pad + 54 + i * (titleSize * 0.96));
+
+      const factsHeight = 68;
+      const factsTop = H - pad - 26 - 12 - factsHeight;
+      y += 14;
+      const desc = item.desc || `Follow ${item.title} in the complete ${universeLabel} viewing order.`;
+      const descFont = '400 13.5px Inter, sans-serif';
+      const descLineHeight = 22;
+      const descLines = Math.max(1, Math.floor((factsTop - 14 - y) / descLineHeight));
+      ctx.font = descFont;
+      ctx.fillStyle = muted;
+      wrap(desc, descFont, cw, descLines).forEach((line) => {
+        y += descLineHeight;
+        ctx.fillText(line, cx, y);
       });
 
-      // ── Rating chips ──
-      let chipX = contentX, chipY = pad + 54 + titleLines.length * (titleSize * 0.96) + 22;
-      const drawChip = (label, sub, color, emoji = '') => {
-        const text = emoji ? `${emoji} ${label}` : label;
-        ctx.font = 'bold 11px Inter, sans-serif';
-        const tw = ctx.measureText(text).width + 8;
-        ctx.font = '9px Inter, sans-serif';
-        const sw = ctx.measureText(sub).width;
-        const cw = Math.max(tw, sw) + 20, ch = 44;
-        if (chipX + cw > W - pad) { chipX = contentX; chipY += 56; }
-        // Chip bg
-        ctx.fillStyle = 'rgba(255,255,255,0.045)';
-        ctx.beginPath(); ctx.roundRect(chipX, chipY, cw, ch, 16); ctx.fill();
-        ctx.strokeStyle = 'rgba(255,255,255,0.12)';
-        ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.roundRect(chipX, chipY, cw, ch, 16); ctx.stroke();
-        // Value
-        ctx.fillStyle = color;
-        ctx.font = 'bold 12px Inter, sans-serif';
-        ctx.fillText(text, chipX + 10, chipY + 18);
-        // Sub-label
-        ctx.fillStyle = '#777d86';
-        ctx.font = '9px Inter, sans-serif';
-        ctx.fillText(sub, chipX + 10, chipY + 34);
-        chipX += cw + 7;
-      };
-      const drawGenreChip = (g) => {
-        ctx.font = '11px Inter, sans-serif';
-        const cw = ctx.measureText(g).width + 20, ch = 44;
-        if (chipX + cw > W - pad) { chipX = contentX; chipY += 56; }
-        ctx.fillStyle = 'rgba(255,255,255,0.045)';
-        ctx.beginPath(); ctx.roundRect(chipX, chipY, cw, ch, 16); ctx.fill();
-        ctx.strokeStyle = 'rgba(255,255,255,0.12)';
-        ctx.beginPath(); ctx.roundRect(chipX, chipY, cw, ch, 16); ctx.stroke();
-        ctx.fillStyle = '#b4b8bf';
-        ctx.fillText(g, chipX + 10, chipY + 28);
-        chipX += cw + 7;
-      };
-      if (item.rating) drawChip(Number(item.rating).toFixed(1), 'TMDB', '#f2c94c', '★');
-      if (item.imdbRating) drawChip(item.imdbRating, 'IMDb', '#f5c518');
-      if (item.tomatoRating) {
-        const t = getTomatoTier(item.tomatoRating);
-        drawChip(item.tomatoRating, t.label, t.cls === 'certified-fresh' ? '#4ade80' : t.cls === 'fresh' ? '#e74c3c' : '#22c55e', t.emoji);
-      }
-      if (item.metaRating) drawChip(String(parseInt(item.metaRating)), 'Meta', '#f59e0b', 'M');
-      if (!item.rating && !item.imdbRating && !item.tomatoRating && !item.metaRating) drawChip('N/A', 'No ratings', '#6b7280', '—');
-      (item.genres || []).slice(0, 3).forEach(g => drawGenreChip(g));
-
-      // ── Description ──
-      const descY = chipY + 68;
-      ctx.fillStyle = '#a3a8b0';
-      const desc = item.desc || `Follow ${item.title} in the complete ${item.universe === 'marvel' ? 'Marvel Cinematic Universe' : item.universe === 'xmen' ? 'X-Men Universe' : 'DC Universe'} viewing order.`;
-      let descSize = 15;
-      ctx.font = `${descSize}px Inter, sans-serif`;
-      const descWords = desc.split(' ');
-      let descLine = '', dy = descY, maxDescW = W - contentX - pad, lh = Math.round(descSize * 1.65);
-      const descMaxY = H - pad - 130;
-      for (const w of descWords) {
-        const test = descLine ? descLine + ' ' + w : w;
-        if (ctx.measureText(test).width > maxDescW) {
-          ctx.fillText(descLine, contentX, dy);
-          descLine = w;
-          dy += lh;
-          if (dy > descMaxY) break;
-        } else { descLine = test; }
-      }
-      if (descLine && dy <= descMaxY) {
-        if (dy + lh > descMaxY) descLine = descLine.replace(/[\s,.!?]+$/, '') + '…';
-        ctx.fillText(descLine, contentX, dy);
-      }
-
-      // Track actual last rendered line Y (if loop broke, dy was incremented past limit)
-      let descBottom = dy > descMaxY && descLine ? dy - lh : dy;
-
-      // ── Facts grid ──
-      const maxFactsY = H - pad - 120;
-      const factsY = Math.min(Math.max(descBottom + 24, posterH + pad + 16), maxFactsY);
       const facts = [
-        { icon: '🗓', label: 'RELEASE YEAR', value: String(item.year) },
-        { icon: '⏱', label: 'RUNTIME', value: runtimeLabel(item.runtime, item.type) },
-        { icon: '✨', label: 'FORMAT', value: item.type === 'series' ? 'Series' : 'Film' },
+        { label: 'PHASE', value: item.phase ? `Phase ${item.phase}` : '—' },
+        { label: 'STATUS', value: STATUS_LABELS[item.userStatus] || 'Unwatched' },
+        { label: 'ORDER', value: `#${String(item.order || item.id).padStart(2, '0')} in the saga` },
       ];
-      const factW = (W - pad * 2 - 16) / 3;
-      facts.forEach((f, i) => {
-        const fx = pad + i * (factW + 8), fy = factsY, fh = 84;
-        ctx.fillStyle = 'rgba(255,255,255,0.045)';
-        ctx.beginPath(); ctx.roundRect(fx, fy, factW, fh, 15); ctx.fill();
-        ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-        ctx.beginPath(); ctx.roundRect(fx, fy, factW, fh, 15); ctx.stroke();
-        ctx.fillStyle = a;
-        ctx.font = '18px Inter, sans-serif';
-        ctx.fillText(f.icon, fx + 14, fy + 38);
-        ctx.fillStyle = '#777d86';
-        ctx.font = '10px Inter, sans-serif';
-        ctx.fillText(f.label, fx + 14, fy + 58);
-        ctx.fillStyle = '#f1f2f4';
-        ctx.font = 'bold 13px Inter, sans-serif';
-        ctx.fillText(f.value, fx + 14, fy + 76);
+      const factW = (cw - 16) / 3;
+      facts.forEach((fact, index) => {
+        const fx = cx + index * (factW + 8);
+        ctx.fillStyle = tile;
+        ctx.beginPath(); ctx.roundRect(fx, factsTop, factW, factsHeight, 14); ctx.fill();
+        ctx.fillStyle = light ? '#7c8698' : '#8690a0';
+        ctx.font = '700 9px Inter, sans-serif';
+        ctx.fillText(fact.label, fx + 12, factsTop + 22);
+        ctx.fillStyle = ink;
+        ctx.font = '800 12.5px Inter, sans-serif';
+        ctx.fillText(wrap(fact.value, '800 12.5px Inter, sans-serif', factW - 24, 1)[0], fx + 12, factsTop + 44);
       });
 
-      // ── Footer ──
-      const footY = H - pad - 20;
-      ctx.fillStyle = 'rgba(255,255,255,0.06)';
-      ctx.fillRect(pad, footY - 10, W - pad * 2, 1);
-      ctx.fillStyle = '#555';
-      ctx.font = '600 11px Inter, sans-serif';
-      ctx.fillText(`${uLabel.replace(/ .*/, '')} Viewing Order`, pad, footY + 10);
-      ctx.fillStyle = a;
-      ctx.beginPath(); ctx.arc(W - pad - 10, footY + 4, 6, 0, Math.PI * 2); ctx.fill();
+      const footY = H - pad;
+      ctx.strokeStyle = light ? 'rgba(16, 24, 40, .1)' : 'rgba(255, 255, 255, .08)';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(pad, footY - 26); ctx.lineTo(W - pad, footY - 26); ctx.stroke();
+      ctx.font = '700 10.5px Inter, sans-serif';
+      ctx.fillStyle = light ? '#7c8698' : '#7d8794';
+      ctx.fillText(`${universeLabel.replace(/ .*/, '')} viewing order · ${item.year || ''}`.trim(), pad, footY - 6);
+      ctx.fillStyle = accent;
+      ctx.beginPath(); ctx.arc(W - pad - 4, footY - 10, 4, 0, Math.PI * 2); ctx.fill();
 
       const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
       if (blob) {
         const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${slugifyPosterName(item.title)}-card.png`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${slugifyPosterName(item.title)}-card.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
         URL.revokeObjectURL(url);
       }
     } catch (err) {
@@ -1911,7 +1963,6 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, on
   return <div className="detail-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
     <article role="dialog" aria-modal="true" aria-labelledby="detail-title" style={{ '--accent': item.accent }} className="detail-modal">
       {item.poster && <div className="detail-bg" aria-hidden="true"><img className="detail-backdrop" src={item.poster} alt="" /><div className="detail-backdrop-shade" /></div>}
-      <button className="detail-close" onClick={onClose} aria-label="Close details"><X size={21} /></button>
       <span
         className="detail-grabber"
         aria-hidden="true"
@@ -1943,6 +1994,7 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, on
         }}
       />
       <div className="detail-modal-scroll" ref={modalRef}>
+      <div className="detail-close-dock"><button className="detail-close" onClick={onClose} aria-label="Close details"><X size={21} /></button></div>
       <div className={`detail-layout${isTrailerExpanded ? ' has-trailer' : ''}`}>
         <div className="detail-media">
           <div className={`detail-poster${isTrailerExpanded ? ' is-expanded' : ''}`}>
