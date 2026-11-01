@@ -26,7 +26,7 @@ const MaskLogo = ({ file, width, height }) => (
 
 export const UNIVERSE_LOGOS = {
   marvel: <ImageLogo file="marvel-logo.svg" height={16} />,
-  sony: <MaskLogo file="sony-logo.svg" width={58} height={10} />,
-  xmen: <MaskLogo file="xmen-logo.svg" width={16} height={15} />,
+  sony: <MaskLogo file="sony-logo.svg" width={60} height={11} />,
+  xmen: <MaskLogo file="xmen-logo.svg" width={22} height={20} />,
   dc: <ImageLogo file="dc-logo.svg" height={16} />,
 };

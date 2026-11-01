@@ -44,6 +44,7 @@ const dcPalette = ['#061226', '#08204a', '#0b3a78', '#0d4f9c', '#1367c8', '#2f80
 const xmenPalette = ['#6a6a7a', '#828294', '#9a9aa8', '#b0b0ba', '#c4c4cc', '#d8d8de'];
 const sonyPalette = ['#7d1829', '#9e1d32', '#b51f2f', '#c94c3b', '#d9573f', '#e05b3f'];
 
+const NAV_ORDER = ['home', 'list', 'analytics', 'watch', 'profile'];
 const SORT_LABELS = { order: 'Order', phase: 'Phase', rating: 'Rating', imdb: 'IMDb', tomato: 'Tomato', meta: 'Meta', popularity: 'Popular', year: 'Year', title: 'Title', essential: 'Essential' };
 const universeFullName = (value) => value === 'marvel' ? 'Marvel Cinematic Universe' : value === 'xmen' ? 'X-Men Universe' : value === 'sony' ? 'Sony Spider-Man Universe' : 'DC Universe';
 const universeShortName = (value) => value === 'marvel' ? 'MCU' : value === 'xmen' ? 'X-Men' : value === 'sony' ? 'Sony' : 'DC';
@@ -949,7 +950,8 @@ export default function App() {
       {section === 'watch' && !safeWatchItem && <WatchBrowse activeItems={activeItems} externalResults={externalSearchResults} externalLoading={externalSearchLoading} actions={actions} query={query} onStartWatch={startWatchWithConfirm} onPlayExternal={onPlayExternal} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} />}
 
       {warningToast && <div className="app-warning-toast" role="status"><ShieldAlert size={16} /><span>{warningToast}</span><button onClick={() => setWarningToast('')} aria-label="Dismiss warning"><X size={14} /></button></div>}
-  <nav className="bottom-nav" aria-label="Primary">
+  <nav className="bottom-nav" aria-label="Primary" style={{ '--nav-index': Math.max(0, NAV_ORDER.indexOf(section)) }}>
+        <span className="nav-blob" aria-hidden="true" />
         <button className={section === 'home' ? 'active' : ''} onClick={() => { hapticTap(); setSection('home'); setWatchItem(null); }}><Home size={22} /><span>Home</span></button>
         <button className={section === 'list' ? 'active' : ''} onClick={() => { hapticTap(); setSection('list'); }}><ListFilter size={22} /><span>List</span></button>
         <button className={section === 'analytics' ? 'active' : ''} onClick={() => { hapticTap(); setSection('analytics'); }}><BarChart3 size={22} /><span>Stats</span></button>
@@ -1040,15 +1042,19 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
   const prevIndexRef = useRef(heroIndex);
   useEffect(() => () => window.clearTimeout(resumeTimer.current), []);
   useEffect(() => {
-    const previousIndex = prevIndexRef.current;
-    if (previousIndex === heroIndex) return undefined;
-    prevIndexRef.current = heroIndex;
-    const previous = items[previousIndex % Math.max(items.length, 1)];
-    if (!previous) return undefined;
-    setLeavingId(previous.id);
-    const timer = window.setTimeout(() => setLeavingId(null), 640);
+    if (!leavingId) return undefined;
+    const timer = window.setTimeout(() => setLeavingId(null), 1000);
     return () => window.clearTimeout(timer);
-  }, [heroIndex, items.length]);
+  }, [leavingId]);
+  // Resolve the outgoing poster while rendering so its exit class is committed
+  // in the same pass as the new index. An effect ran after React had already
+  // unmounted the poster, which is why it looked like an instant disappearance.
+  if (prevIndexRef.current !== heroIndex) {
+    const previous = items[prevIndexRef.current % Math.max(items.length, 1)];
+    prevIndexRef.current = heroIndex;
+    const current = items[heroIndex % Math.max(items.length, 1)];
+    if (previous && previous.id !== current?.id) setLeavingId(previous.id);
+  }
   const move = (dir) => {
     setInlineTrailer(null);
     setHeroIndex((heroIndex + dir + items.length) % Math.max(items.length, 1));
@@ -1070,7 +1076,7 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
 
   useEffect(() => {
     if (paused || inlineTrailer || items.length < 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
-    const timer = window.setTimeout(() => setHeroIndex((heroIndex + 1) % items.length), 3000);
+    const timer = window.setTimeout(() => setHeroIndex((heroIndex + 1) % items.length), 4800);
     return () => window.clearTimeout(timer);
   }, [heroIndex, inlineTrailer, items.length, paused, setHeroIndex]);
 
@@ -1090,7 +1096,7 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
     <div className="feature-heading"><div><p className="eyebrow">{featured?.universe === 'marvel' ? 'Marvel Cinematic Universe' : featured?.universe === 'xmen' ? 'X-Men Universe' : featured?.universe === 'sony' ? 'Sony Spider-Man Universe' : 'DC Universe'} · Featured</p><h2>Top movies</h2></div><button className="feature-detail" onClick={() => setSelected(featured)}>View details</button></div>
     <div className="feature-stage">
       <div className="poster-stack smooth-stack">
-        {inlineTrailer ? <div className="inline-trailer"><iframe src={inlineTrailer} title={`${featured.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={() => setInlineTrailer(null)} aria-label="Close trailer"><X size={20} /></button></div> : items.map((item, rawIndex) => { const offset = (rawIndex - heroIndex + items.length) % items.length; const isLeaving = leavingId === item.id && offset !== 0; if (offset > 3 && !isLeaving) return null; return <button key={item.id} aria-label={offset ? `Show ${item.title}` : `View ${item.title} details`} aria-hidden={offset === 3 || isLeaving ? 'true' : undefined} tabIndex={offset === 3 || isLeaving ? -1 : 0} className={`stack-poster ${isLeaving ? 'poster-exit' : `poster-${offset}`}`} onClick={() => selectPoster(item, rawIndex, offset)} style={{ '--accent': item.accent }}><PosterArt item={item} loading="eager" fetchPriority={offset === 0 ? 'high' : 'auto'} /></button>; })}
+        {inlineTrailer ? <div className="inline-trailer"><iframe src={inlineTrailer} title={`${featured.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={() => setInlineTrailer(null)} aria-label="Close trailer"><X size={20} /></button></div> : items.map((item, rawIndex) => { const offset = (rawIndex - heroIndex + items.length) % items.length; const isLeaving = leavingId === item.id && offset >= 3; if (offset > 3 && !isLeaving) return null; return <button key={item.id} aria-label={offset ? `Show ${item.title}` : `View ${item.title} details`} aria-hidden={offset === 3 || isLeaving ? 'true' : undefined} tabIndex={offset === 3 || isLeaving ? -1 : 0} className={`stack-poster ${isLeaving ? 'poster-exit' : `poster-${offset}`}`} onClick={() => selectPoster(item, rawIndex, offset)} style={{ '--accent': item.accent }}><PosterArt item={item} loading="eager" fetchPriority={offset === 0 ? 'high' : 'auto'} /></button>; })}
       </div>
       <div className="feature-copy">
         <div className="feature-kicker"><span>{featured?.year}</span><span>{runtimeLabel(featured?.runtime, featured?.type)}</span><span>{featured?.rating} rating</span></div>
@@ -1736,56 +1742,81 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, on
           <div className="detail-progress-actions"><StatusSelect item={item} setStatus={setStatus} /><button className={`detail-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={19} fill={item.bookmarked ? 'currentColor' : 'none'} /></button>
 </div><div className="detail-download-row">{item.type === 'series' && <EpisodeDropdown episodes={downloadEpisodes} selected={downloadEpisode} onSelect={setDownloadEpisode} season={item.season || 1} />}<button className="detail-download" onClick={handleDownloadClick} disabled={!item.tmdbId || (item.type === 'series' && !downloadEpisodes.length)} aria-label={`Download ${item.title}${item.type === 'series' ? ` episode ${downloadEpisode}` : ''}`}><Download size={18} /><span>Download</span></button><button className={`detail-snap${snapError ? ' snap-failed' : ''}`} onClick={snapCard} disabled={snapping} aria-label={`Snapshot ${item.title} as shareable card`}><Camera size={17} /><span>{snapping ? '…' : snapError || 'Snap'}</span></button></div>
           {itemRoadmap && (
-            <div className="detail-roadmap">
-              <div className="section-title"><h2>Viewing Roadmap</h2><button>{itemRoadmap.siblings.length} Parts</button></div>
-              <div className="roadmap-timeline">
-                {itemRoadmap.segments.map((seg, idx) => {
-                  if (seg.type === 'part') {
-                    const partNum = itemRoadmap.segments.filter((s, i) => s.type === 'part' && i <= idx).length;
-                    return (
-                      <div key={seg.item.id} role="button" tabIndex={0} aria-label={`Watch ${seg.item.title} (part ${partNum})`} title="Click to watch this part" className={`roadmap-part ${seg.isActive ? 'active' : ''} ${seg.item.userStatus === 'watched' ? 'watched' : ''}`} style={{ '--accent': seg.item.accent, cursor: 'pointer' }} onClick={() => onStartWatchFromRoadmap(seg.item, seg.item.tmdbId || null, seg.item.type === 'series' ? 'tv' : 'movie')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onStartWatchFromRoadmap(seg.item, seg.item.tmdbId || null, seg.item.type === 'series' ? 'tv' : 'movie'); } }}>
-                        <span className="roadmap-part-dot" />
-                        <div className="roadmap-part-poster">
-                          {seg.item.poster ? <img src={seg.item.poster} alt={seg.item.title} loading="lazy" /> : <FallbackPoster item={seg.item} />}
-                        </div>
-                        <div className="roadmap-part-info">
-                          <span className="roadmap-part-badge">{seg.item.userStatus === 'watched' ? 'Watched' : seg.isActive ? 'Now playing' : `Part ${partNum}`}{seg.item.season ? ` · Season ${seg.item.season}` : ''}</span>
-                          <span className="roadmap-part-name">{seg.item.title.replace(/^Agents of SHIELD S\d+ /, '')}</span>
-                          <span className="roadmap-part-meta">{seg.item.year} · {runtimeLabel(seg.item.runtime, seg.item.type)}</span>
-                        </div>
-                      </div>
-                    );
-                  } else {
-                    return (
-                      <div key={`int-${idx}`} className="roadmap-interstitial">
-                        <div className="roadmap-inter-header">
-                          <ChevronRight size={14} className="chevron" />
-                          <span>connected stories</span>
-                          <ChevronRight size={14} className="chevron" />
-                        </div>
-                        <div className="roadmap-inter-items">
-                          {seg.items.map(intItem => (
-                            <div key={intItem.id} role="button" tabIndex={0} aria-label={`Watch ${intItem.title}`} title="Click to watch this connected story" className="roadmap-inter-card" style={{ '--accent': intItem.accent, cursor: 'pointer' }} onClick={() => onStartWatchFromRoadmap(intItem, intItem.tmdbId || null, intItem.type === 'series' ? 'tv' : 'movie')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onStartWatchFromRoadmap(intItem, intItem.tmdbId || null, intItem.type === 'series' ? 'tv' : 'movie'); } }}>
-                              <div className="roadmap-inter-poster">                              {intItem.poster ? <img src={intItem.poster} alt={intItem.title} loading="lazy" /> : <FallbackPoster item={intItem} />}
-                            </div>
-                            <span className="roadmap-inter-title">{intItem.title}</span>
-                            {intItem.connectionNote && (
-                              <p className="connection-note"><Sparkles size={11} /><span>{intItem.connectionNote}</span></p>
-                            )}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    );}
-                  })}
-                </div>
-              </div>
-            )}
+            <RoadmapBoard
+              segments={itemRoadmap.segments}
+              complete={itemRoadmap.complete}
+              total={itemRoadmap.siblings.length}
+              title="Viewing roadmap"
+              eyebrow="Recommended sequence"
+              onPlay={(target) => onStartWatchFromRoadmap(target, target.tmdbId || null, target.type === 'series' ? 'tv' : 'movie')}
+            />
+          )}
           </div>
       </div>
       </div>
     </article>
   </div>;
+}
+/* Shared viewing roadmap: numbered timeline rail with branch chips. */
+function RoadmapBoard({ segments = [], complete = 0, total = 0, title = 'Viewing roadmap', eyebrow = 'Recommended sequence', onPlay, footer }) {
+  const steps = useMemo(() => {
+    const list = [];
+    segments.forEach((seg) => {
+      if (seg.type === 'part') {
+        list.push({ part: seg.item, isActive: Boolean(seg.isActive), branches: [] });
+      } else if (list.length) {
+        list[list.length - 1].branches.push(seg.items);
+      }
+    });
+    return list;
+  }, [segments]);
+  const percent = total ? Math.round((complete / total) * 100) : 0;
+
+  return <section className="rm-board">
+    <header className="rm-head">
+      <div className="rm-head-copy">
+        <p className="eyebrow">{eyebrow}</p>
+        <h2>{title}</h2>
+      </div>
+      <div className="rm-meter" aria-label={`${complete} of ${total} watched`}>
+        <span className="rm-meter-count"><b>{complete}</b>/{total} watched</span>
+        <span className="rm-meter-track"><span style={{ width: `${percent}%` }} /></span>
+      </div>
+    </header>
+    <ol className="rm-track">
+      {steps.map((step, index) => {
+        const item = step.part;
+        const watched = item.userStatus === 'watched';
+        return <li key={item.id} className={`rm-step${step.isActive ? ' is-active' : ''}${watched ? ' is-watched' : ''}`}>
+          <span className="rm-node" aria-hidden="true">{watched ? <Check size={13} /> : String(index + 1).padStart(2, '0')}</span>
+          <button type="button" className="rm-card" onClick={() => onPlay(item)} title={`Play ${item.title}`} style={{ '--accent': item.accent }}>
+            <span className="rm-poster">
+              {item.poster ? <img src={item.poster} alt="" loading="lazy" /> : <FallbackPoster item={item} />}
+            </span>
+            <span className="rm-copy">
+              <span className="rm-state">{step.isActive ? 'Now playing' : watched ? 'Watched' : `Chapter ${index + 1}`}{item.season ? ` · Season ${item.season}` : ''}</span>
+              <strong className="rm-title">{item.title.replace(/^Agents of SHIELD S\d+ /, '')}</strong>
+              <span className="rm-meta">{item.year} · {runtimeLabel(item.runtime, item.type)}</span>
+            </span>
+            <ChevronRight size={16} className="rm-arrow" aria-hidden="true" />
+          </button>
+          {step.branches.map((branch, branchIndex) => <div className="rm-branch" key={`branch-${index}-${branchIndex}`}>
+            <span className="rm-branch-label">Connected stories</span>
+            <div className="rm-branch-items">
+              {branch.map(intItem => <button type="button" key={intItem.id} className="rm-chip" onClick={() => onPlay(intItem)} style={{ '--accent': intItem.accent }} title={intItem.connectionNote || intItem.title}>
+                <span className="rm-chip-poster">{intItem.poster ? <img src={intItem.poster} alt="" loading="lazy" /> : null}</span>
+                <span className="rm-chip-copy">
+                  <strong>{intItem.title}</strong>
+                  {intItem.connectionNote ? <small>{intItem.connectionNote}</small> : null}
+                </span>
+              </button>)}
+            </div>
+          </div>)}
+        </li>;
+      })}
+    </ol>
+    {footer}
+  </section>;
 }
 function TrailerModal({ trailer, onClose }) {
   return <aside className="trailer-modal"><div><button className="trailer-close" onClick={onClose}><X /></button><h2>{trailer.title} trailer</h2><iframe src={trailer.url} title={`${trailer.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /></div></aside>;
@@ -2385,94 +2416,24 @@ const saveServerPref = (tmdbId, server) => {
       )}
       </aside>
       </div>
-      {roadmapInfo ? (
-        <section className="watch-roadmap">
-          <div className="section-title"><div><p className="eyebrow">Recommended sequence</p><h2>Viewing roadmap</h2></div><span className="roadmap-summary">{roadmapInfo.complete}/{roadmapInfo.siblings.length} parts watched</span></div>
-          <div className="roadmap-timeline">
-            {roadmapInfo.segments.map((seg, idx) => {
-              if (seg.type === 'part') {
-                const partNum = roadmapInfo.segments.filter((s, i) => s.type === 'part' && i <= idx).length;
-                return (
-                  <button
-                    key={seg.item.id}
-                    className={`roadmap-part ${seg.isActive ? 'active' : ''} ${seg.item.userStatus === 'watched' ? 'watched' : ''}`}
-                    onClick={() => handleSwitchItem(seg.item)}
-                    style={{ '--accent': seg.item.accent }}
-                  >
-                    <span className="roadmap-part-dot" />
-                    <div className="roadmap-part-poster">
-                      {seg.item.poster ? <img src={seg.item.poster} alt={seg.item.title} loading="lazy" /> : <FallbackPoster item={seg.item} />}
-                    </div>
-                    <div className="roadmap-part-info">
-                      <span className="roadmap-part-badge">{seg.item.userStatus === 'watched' ? 'Watched' : seg.isActive ? 'Now playing' : `Part ${partNum}`}{seg.item.season ? ` · Season ${seg.item.season}` : ''}</span>
-                      <span className="roadmap-part-name">{seg.item.title.replace(/^Agents of SHIELD S\d+ /, '')}</span>
-                      <span className="roadmap-part-meta">{seg.item.year} · {runtimeLabel(seg.item.runtime, seg.item.type)}</span>
-                    </div>
-                  </button>
-                );
-              } else {
-                return (
-                  <div key={`int-${idx}`} className="roadmap-interstitial">
-                    <div className="roadmap-inter-header">
-                      <ChevronRight size={14} className="chevron" />
-                      <span>connected stories</span>
-                      <ChevronRight size={14} className="chevron" />
-                    </div>
-                    <div className="roadmap-inter-items">
-                      {seg.items.map(intItem => (
-                        <button
-                          key={intItem.id}
-                          className="roadmap-inter-card"
-                          onClick={() => handleSwitchItem(intItem)}
-                          style={{ '--accent': intItem.accent }}
-                        >
-                          <div className="roadmap-inter-poster">
-                            {intItem.poster ? <img src={intItem.poster} alt={intItem.title} loading="lazy" /> : <FallbackPoster item={intItem} />}
-                          </div>
-                          <span className="roadmap-inter-title">{intItem.title}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                );
-              }
-            })}
-          </div>
-        </section>
-      ) : (
-        <section className="watch-roadmap">
-          <div className="section-title"><div><p className="eyebrow">Story context</p><h2>Viewing order</h2></div><span className="roadmap-summary">#{String(currentItem.order || currentItem.id).padStart(2, '0')} of {activeItems.length}</span></div>
-          <div className="roadmap-timeline">
-            {contextItems.map(item => (
-              <button
-                key={item.id}
-                className={`roadmap-part ${item.id === currentItem.id ? 'active' : ''} ${item.userStatus === 'watched' ? 'watched' : ''}`}
-                onClick={() => item.id !== currentItem.id && handleSwitchItem(item)}
-                style={{ '--accent': item.accent, cursor: item.id === currentItem.id ? 'default' : 'pointer' }}
-              >
-                <span className="roadmap-part-dot" />
-                <div className="roadmap-part-poster">
-                  {item.poster ? <img src={item.poster} alt={item.title} loading="lazy" /> : <FallbackPoster item={item} />}
-                </div>
-                <div className="roadmap-part-info">
-                  <span className="roadmap-part-badge">{item.userStatus === 'watched' ? 'Watched' : item.id === currentItem.id ? 'Now playing' : item.order < currentOrder ? 'Previous' : 'Next'}</span>
-                  <span className="roadmap-part-name">{item.title}</span>
-                  <span className="roadmap-part-meta">{item.year} · {runtimeLabel(item.runtime, item.type)}</span>
-                </div>
-              </button>
-            ))}
-          </div>
-          {activeItems.length > 5 && (
-            <button className="roadmap-expand-btn" onClick={() => setContextExpanded(!contextExpanded)}>
-              {contextExpanded ? 'Show less' : `View full timeline (${activeItems.length} titles)`}
-              <ChevronDown size={14} style={{ transform: contextExpanded ? 'rotate(180deg)' : 'none', transition: 'transform .2s ease' }} />
-            </button>
-          )}
-        </section>
-      )}
+      <RoadmapBoard
+        segments={roadmapInfo ? roadmapInfo.segments : contextItems.map(item => ({ type: 'part', item, isActive: item.id === currentItem.id }))}
+        complete={roadmapInfo ? roadmapInfo.complete : contextItems.filter(item => item.userStatus === 'watched').length}
+        total={roadmapInfo ? roadmapInfo.siblings.length : contextItems.length}
+        title={roadmapInfo ? 'Viewing roadmap' : 'Viewing order'}
+        eyebrow={roadmapInfo ? 'Recommended sequence' : 'Story context'}
+        onPlay={handleSwitchItem}
+        footer={!roadmapInfo && activeItems.length > 5 ? (
+          <button className="roadmap-expand-btn" onClick={() => setContextExpanded(!contextExpanded)}>
+            {contextExpanded ? 'Show less' : `View full timeline (${activeItems.length} titles)`}
+            <ChevronDown size={14} style={{ transform: contextExpanded ? 'rotate(180deg)' : 'none', transition: 'transform .2s ease' }} />
+          </button>
+        ) : null}
+      />
     </section>
   );
 }
+
 
 const AGE_RATINGS = ['PG-13', 'R', 'TV-14', 'TV-PG', 'TV-MA', 'Not Rated'];
 
