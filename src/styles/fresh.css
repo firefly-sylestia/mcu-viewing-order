@@ -3799,3 +3799,183 @@
 :root[data-theme="light"] .movie-site .feature-copy > p { color: #4c5665; }
 :root[data-theme="light"] .movie-site .feature-kicker { color: #3d4756; }
 :root[data-theme="light"] .movie-site .card-title-row .title-button { color: #10141b; }
+
+
+/* ===========================================================================
+   27. SEAMLESS HERO SWAP, BIG TRAILER, SEARCH SHEET, SMART SPOILERS
+   =========================================================================== */
+
+/* The outgoing backdrop stays at full strength, so there is nothing to "shift"
+   to when it is removed — the incoming image simply covers it. */
+:root .movie-site .carousel-backdrop.is-previous { opacity: .44; filter: blur(30px) saturate(1.25) brightness(.7); animation: none; }
+:root .movie-site .carousel-backdrop.is-current { animation-duration: 1.15s; }
+:root .movie-site .carousel-backdrops { background: #0a0c11; }
+
+/* Universe switching: no hard colour snap on chrome or glow. */
+:root .universe-tabs button[data-universe="sony"] { --uni: #2f6bd8; }
+:root .universe-tabs button,
+:root .movie-site .universe-tabs button {
+  transition: background-color .28s ease, color .28s ease, box-shadow .28s ease, transform .28s ease;
+}
+:root .site-glow { transition: opacity .5s ease, background .5s ease; }
+:root[data-theme="light"] .universe-tabs button[data-universe="sony"] { --uni: #2f6bd8; }
+
+/* Detail: the trailer takes the whole dialog instead of a poster-sized slot. */
+:root .detail-layout.has-trailer { grid-template-columns: minmax(0, 1fr); }
+:root .detail-layout.has-trailer .detail-media { position: static; display: block; }
+:root .detail-poster.is-expanded {
+  width: 100%;
+  max-width: none;
+  aspect-ratio: 16 / 9;
+  border-radius: 20px;
+  box-shadow: 0 30px 60px -34px rgba(0, 0, 0, .85);
+}
+:root .detail-poster.is-expanded::after { display: none; }
+:root .detail-inline-trailer { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; background: #06070a; }
+:root .detail-inline-trailer iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+:root .detail-inline-trailer button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(8, 10, 14, .72);
+  backdrop-filter: blur(8px);
+}
+@media (max-width: 720px) {
+  :root .detail-layout.has-trailer { grid-template-columns: minmax(0, 1fr); }
+  :root .detail-poster.is-expanded { width: 100%; border-radius: 16px; }
+}
+
+/* Sheet grip: drag the dialog down to dismiss, with real finger feedback. */
+:root .detail-modal {
+  translate: 0 var(--sheet-drag, 0px);
+  transition: translate .3s cubic-bezier(.22, .8, .2, 1);
+}
+:root .detail-modal.is-dragging { transition: none; }
+:root .detail-grabber {
+  position: absolute;
+  top: 9px;
+  left: 50%;
+  width: 46px;
+  height: 5px;
+  margin-left: -23px;
+  z-index: 6;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .26);
+  touch-action: none;
+  cursor: grab;
+}
+:root .detail-overlay,
+:root .detail-modal-scroll { overscroll-behavior: contain; }
+:root .detail-modal-scroll { -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+
+/* Spoiler that quietens down once the prerequisite is watched. */
+:root .detail-spoiler-warning.is-caught-up {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: rgba(255, 255, 255, .045);
+  color: #d3dbe7;
+  box-shadow: none;
+}
+:root .detail-spoiler-warning.is-caught-up summary {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 12px 14px;
+  list-style: none;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  color: #cfd8e4;
+}
+:root .detail-spoiler-warning.is-caught-up summary::-webkit-details-marker { display: none; }
+:root .detail-spoiler-warning.is-caught-up summary svg { color: #7fd6a4; flex: none; }
+:root .detail-spoiler-warning.is-caught-up summary .spoiler-chevron { margin-left: auto; color: rgba(255, 255, 255, .45); transition: transform .25s ease; }
+:root .detail-spoiler-warning.is-caught-up[open] summary .spoiler-chevron { transform: rotate(180deg); }
+:root .detail-spoiler-warning.is-caught-up p { margin: 0; padding: 0 14px 13px; font-size: 12.5px; line-height: 1.5; color: #a9b5c4; }
+:root[data-theme="light"] .detail-spoiler-warning.is-caught-up { background: #eef4ee; color: #22352a; }
+:root[data-theme="light"] .detail-spoiler-warning.is-caught-up summary { color: #22352a; }
+:root[data-theme="light"] .detail-spoiler-warning.is-caught-up p { color: #4d6157; }
+
+/* "Where to watch" sheet. */
+.search-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 260;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: radial-gradient(120% 90% at 50% 0%, rgba(24, 29, 40, .55), rgba(3, 4, 6, .88) 70%);
+  backdrop-filter: blur(14px) saturate(120%);
+  animation: detailVeil .24s ease both;
+}
+.search-sheet {
+  width: min(420px, 100%);
+  padding: 22px;
+  border-radius: 24px;
+  background: #11141b;
+  color: #eef1f6;
+  box-shadow: 0 40px 80px -40px rgba(0, 0, 0, .9);
+  animation: detailRise .3s cubic-bezier(.22, .8, .2, 1) both;
+}
+.search-sheet .eyebrow { margin: 0 0 6px; font-size: 9.5px; letter-spacing: .16em; text-transform: uppercase; color: #8e99aa; }
+.search-sheet h2 { margin: 0 0 16px; font-size: 19px; line-height: 1.22; letter-spacing: -.02em; }
+.search-links { display: grid; gap: 8px; }
+.search-links a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, .06);
+  color: #eef1f6;
+  text-decoration: none;
+  transition: background-color .2s ease, transform .2s ease;
+}
+.search-links a:hover { background: rgba(255, 255, 255, .11); transform: translateY(-1px); }
+.search-links strong { display: block; font-size: 13.5px; }
+.search-links small { display: block; margin-top: 2px; font-size: 11px; color: #9fabbd; }
+.search-links svg { color: #a9b5c6; flex: none; }
+.search-sheet-actions { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 16px; }
+.search-sheet-actions button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform .18s ease, filter .18s ease;
+}
+.search-primary { background: #eef1f6; color: #0d1016; }
+.search-secondary { padding: 0 18px; background: rgba(255, 255, 255, .08); color: #dfe5ee; }
+.search-sheet-actions button:active { transform: scale(.97); }
+:root[data-theme="light"] .search-sheet { background: #ffffff; color: #10141b; box-shadow: 0 40px 80px -40px rgba(16, 24, 40, .5); }
+:root[data-theme="light"] .search-sheet h2 { color: #10141b; }
+:root[data-theme="light"] .search-links a { background: #f2f5fa; color: #10141b; }
+:root[data-theme="light"] .search-links a:hover { background: #e8edf6; }
+:root[data-theme="light"] .search-links small { color: #5f6a79; }
+:root[data-theme="light"] .search-primary { background: #10141b; color: #fff; }
+:root[data-theme="light"] .search-secondary { background: #eef2f8; color: #25303f; }
+
+/* Screen-level hover so the page itself answers the cursor, not just buttons. */
+@media (hover: hover) {
+  :root .detail-actions-row > button:hover { transform: translateY(-1px); }
+  :root .unb-item:hover { transform: translateY(-1px); background: rgba(255, 255, 255, .075); }
+  :root .detail-facts > div:hover { background: rgba(255, 255, 255, .06); }
+  :root .header-status-pill:hover .header-pill-poster { transform: scale(1.05); }
+}
+:root .header-pill-poster { transition: transform .24s ease; }
+:root .detail-facts > div { transition: background-color .2s ease; }
+
+/* Accent-driven light around the hero eases instead of jumping on slide change. */
+:root .movie-site .top-carousel { transition: box-shadow .72s cubic-bezier(.22, .8, .2, 1); }
+:root .movie-site .stack-poster { transition: transform .68s cubic-bezier(.22, .8, .2, 1), opacity .52s ease, background-color .72s ease, box-shadow .22s ease; }

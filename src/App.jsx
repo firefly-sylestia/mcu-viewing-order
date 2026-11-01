@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Search, SlidersHorizontal, Home, Bookmark, Play, UserRound, X, ArrowLeft, Star, BarChart3, Check, Clock, ListFilter, RotateCcw, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Calendar, Timer, Sparkles, LogOut, Cloud, Download, Camera, Info, ShieldAlert, Clapperboard, ArrowUpDown } from 'lucide-react';
+import { Search, SlidersHorizontal, House, Bookmark, Play, UserRound, X, ArrowLeft, Star, BarChart3, Check, Clock, ListFilter, RotateCcw, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Calendar, Timer, Sparkles, LogOut, Cloud, Download, Camera, Info, ShieldAlert, Clapperboard, ArrowUpDown, ExternalLink } from 'lucide-react';
 import { RAW } from './data/mcuData';
 import { DC_RAW } from './data/dcData';
 import { XMEN_RAW } from './data/xmenData';
@@ -42,13 +42,13 @@ const STATUS_LABELS = { unwatched: 'Unwatched', watching: 'Watching', watched: '
 const marvelPalette = ['#641220', '#85182a', '#a11d33', '#b21e35', '#bd1f36', '#da1e37'];
 const dcPalette = ['#061226', '#08204a', '#0b3a78', '#0d4f9c', '#1367c8', '#2f80ed'];
 const xmenPalette = ['#6a6a7a', '#828294', '#9a9aa8', '#b0b0ba', '#c4c4cc', '#d8d8de'];
-const sonyPalette = ['#7d1829', '#9e1d32', '#b51f2f', '#c94c3b', '#d9573f', '#e05b3f'];
+const sonyPalette = ['#16305c', '#1b3f7a', '#1f4f96', '#245fb4', '#2c72cf', '#3b8ae6'];
 
 const NAV_ORDER = ['home', 'list', 'analytics', 'watch', 'profile'];
 // The watch page is parked for now: its tab and entry points are hidden, the code stays intact.
 const WATCH_ENABLED = false;
 const NAV_TAB_META = {
-  home: { label: 'Home', Icon: Home },
+  home: { label: 'Home', Icon: House },
   list: { label: 'List', Icon: ListFilter },
   analytics: { label: 'Stats', Icon: BarChart3 },
   watch: { label: 'Watch', Icon: Play },
@@ -950,7 +950,7 @@ export default function App() {
   };
 
   const universeName = universe === 'marvel' ? 'MCU' : universe === 'xmen' ? 'X-Men' : universe === 'sony' ? 'Sony' : 'DC';
-  const universeAccent = universe === 'marvel' ? '#da1e37' : universe === 'xmen' ? '#a0a0ac' : universe === 'sony' ? '#b51f2f' : '#2f80ed';
+  const universeAccent = universe === 'marvel' ? '#da1e37' : universe === 'xmen' ? '#a0a0ac' : universe === 'sony' ? '#2f6bd8' : '#2f80ed';
   const selectedTitle = selected?.title || safeWatchItem?.item?.title || '';
   const activeFilterCount = [genre !== 'All', rating > 0, ageRatingFilter !== 'All', typeFilter !== 'All'].filter(Boolean).length;
 
@@ -965,14 +965,16 @@ export default function App() {
   <div className="header-top">
   <button className="brand" onClick={() => { setQuery(''); setSection('home'); setWatchItem(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }} aria-label="Go to Incursion home"><b>Incursion</b><small>{universeName} timeline</small></button>
   <div className="header-quick-actions" aria-label="Quick viewing controls">
-  {(() => { const watchingItem = activeItems.find(item => item.userStatus === 'watching'); return watchingItem && <button className="header-status-pill watching" onClick={() => selectItem(watchingItem)} title={`Open current: ${watchingItem.title}`}>
-    <span className="header-pill-poster">{watchingItem.poster ? <img src={watchingItem.poster} alt="" loading="lazy" referrerPolicy="no-referrer" /> : <Clock size={15} />}</span>
-    <span className="header-pill-label"><small>Watching now</small><b>{watchingItem.title}</b><em>{elapsedPctLabel(watchingItem)} complete</em></span>
-  </button>; })()}
-  {nextUp && <button className="header-status-pill next" onClick={() => selectItem(nextUp)} title={`Open next: ${nextUp.title}`}>
-    <span className="header-pill-poster">{nextUp.poster ? <img src={nextUp.poster} alt="" loading="lazy" referrerPolicy="no-referrer" /> : <Play size={14} fill="currentColor" />}</span>
-    <span className="header-pill-label"><small>Up next</small><b>{nextUp.title}</b><em>{nextUp.year} · {runtimeLabel(nextUp.runtime, nextUp.type)}</em></span>
-  </button>}
+  {(() => {
+    // Exactly one quick card: whatever is playing now wins, otherwise the next title.
+    const watchingItem = activeItems.find(item => item.userStatus === 'watching');
+    const quickItem = watchingItem || nextUp;
+    if (!quickItem) return null;
+    return <button className={`header-status-pill ${watchingItem ? 'watching' : 'next'}`} onClick={() => selectItem(quickItem)} title={`Open ${watchingItem ? 'current' : 'next'}: ${quickItem.title}`}>
+      <span className="header-pill-poster">{quickItem.poster ? <img src={quickItem.poster} alt="" loading="lazy" referrerPolicy="no-referrer" /> : <Play size={14} fill="currentColor" />}</span>
+      <span className="header-pill-label"><small>{watchingItem ? 'Watching now' : 'Up next'}</small><b>{quickItem.title}</b><em>{watchingItem ? `${elapsedPctLabel(watchingItem)} complete` : `${quickItem.year} · ${runtimeLabel(quickItem.runtime, quickItem.type)}`}</em></span>
+    </button>;
+  })()}
   </div>
   </div>
   <div className="header-bar">
@@ -1205,14 +1207,25 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
   const touchStartX = useRef(null);
   const didSwipe = useRef(false);
   const resumeTimer = useRef(null);
+  const [leavingId, setLeavingId] = useState(null);
+  const prevIndexRef = useRef(heroIndex);
   const [prevBg, setPrevBg] = useState(null);
   const prevBgIdRef = useRef(featured?.id ?? null);
   useEffect(() => () => window.clearTimeout(resumeTimer.current), []);
   useEffect(() => {
-    if (!prevBg) return undefined;
-    const timer = window.setTimeout(() => setPrevBg(null), 1000);
+    if (!leavingId) return undefined;
+    const timer = window.setTimeout(() => setLeavingId(null), 1150);
     return () => window.clearTimeout(timer);
-  }, [prevBg]);
+  }, [leavingId]);
+  // Resolve the outgoing poster during render so its exit class lands in the
+  // same commit as the new index. The old backdrop is deliberately kept: it sits
+  // underneath the incoming one, which is why the colour change has no seam.
+  if (prevIndexRef.current !== heroIndex) {
+    const previous = items[prevIndexRef.current % Math.max(items.length, 1)];
+    prevIndexRef.current = heroIndex;
+    const current = items[heroIndex % Math.max(items.length, 1)];
+    if (previous && previous.id !== current?.id) setLeavingId(previous.id);
+  }
   // Keep the previous backdrop mounted underneath so the change is a crossfade,
   // not a hard swap while the new image decodes.
   if (prevBgIdRef.current !== (featured?.id ?? null)) {
@@ -1269,7 +1282,7 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
     <div className="feature-heading"><div><p className="eyebrow">{featured?.universe === 'marvel' ? 'Marvel Cinematic Universe' : featured?.universe === 'xmen' ? 'X-Men Universe' : featured?.universe === 'sony' ? 'Sony Spider-Man Universe' : 'DC Universe'} · Featured</p><h2>Top movies</h2></div><button className="feature-detail" onClick={() => setSelected(featured)}>View details</button></div>
     <div className="feature-stage">
       <div className="poster-stack smooth-stack">
-        {inlineTrailer ? <div className="inline-trailer"><iframe src={inlineTrailer} title={`${featured.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={() => setInlineTrailer(null)} aria-label="Close trailer"><X size={20} /></button></div> : items.map((item, rawIndex) => { const offset = (rawIndex - heroIndex + items.length) % items.length; if (offset > 3) return null; return <button key={item.id} aria-label={offset ? `Show ${item.title}` : `View ${item.title} details`} aria-hidden={offset === 3 ? 'true' : undefined} tabIndex={offset === 3 ? -1 : 0} className={`stack-poster poster-${offset}`} onClick={() => selectPoster(item, rawIndex, offset)} style={{ '--accent': item.accent }}><PosterArt item={item} loading="eager" fetchPriority={offset === 0 ? 'high' : 'auto'} /></button>; })}
+        {inlineTrailer ? <div className="inline-trailer"><iframe src={inlineTrailer} title={`${featured.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={() => setInlineTrailer(null)} aria-label="Close trailer"><X size={20} /></button></div> : items.map((item, rawIndex) => { const offset = (rawIndex - heroIndex + items.length) % items.length; const isLeaving = leavingId === item.id && offset >= 3; if (offset > 3 && !isLeaving) return null; return <button key={item.id} aria-label={offset ? `Show ${item.title}` : `View ${item.title} details`} aria-hidden={offset === 3 || isLeaving ? 'true' : undefined} tabIndex={offset === 3 || isLeaving ? -1 : 0} className={`stack-poster ${isLeaving ? 'poster-exit' : `poster-${offset}`}`} onClick={() => selectPoster(item, rawIndex, offset)} style={{ '--accent': item.accent }}><PosterArt item={item} loading="eager" fetchPriority={offset === 0 ? 'high' : 'auto'} /></button>; })}
       </div>
       <div className="feature-copy" key={featured?.id}>
         <div className="feature-kicker"><span>{featured?.year}</span><span>{runtimeLabel(featured?.runtime, featured?.type)}</span><span>{featured?.rating} rating</span></div>
@@ -1601,6 +1614,15 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, on
   const guidance = getTitleGuidance(item);
   const [inlineTrailer, setInlineTrailer] = useState(null);
   const [isTrailerExpanded, setIsTrailerExpanded] = useState(false);
+  const [searchSheet, setSearchSheet] = useState(false);
+  const grabStartRef = useRef(null);
+  // Spoilers stop shouting once the prerequisite is already watched.
+  const prereqWatched = useMemo(() => {
+    if (!guidance || !Array.isArray(activeItems) || !activeItems.length) return false;
+    const haystack = `${guidance.watchAfter || ''} ${guidance.note || ''}`.toLowerCase();
+    const matches = activeItems.filter(entry => entry?.title && entry.id !== item.id && haystack.includes(entry.title.toLowerCase()));
+    return matches.length > 0 && matches.every(entry => entry.userStatus === 'watched');
+  }, [guidance, activeItems, item.id]);
   const showTrailer = () => {
     const match = getTrailerByTitle(item.title);
     const id = match?.primary?.youtubeId || match?.youtubeId;
@@ -1887,9 +1909,39 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, on
   const itemRoadmap = useMemo(() => getRoadmap(item, activeItems), [activeItems, item]);
 
   return <div className="detail-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-    <article className="detail-modal" role="dialog" aria-modal="true" aria-labelledby="detail-title" style={{ '--accent': item.accent }}>
+    <article role="dialog" aria-modal="true" aria-labelledby="detail-title" style={{ '--accent': item.accent }} className="detail-modal">
       {item.poster && <div className="detail-bg" aria-hidden="true"><img className="detail-backdrop" src={item.poster} alt="" /><div className="detail-backdrop-shade" /></div>}
       <button className="detail-close" onClick={onClose} aria-label="Close details"><X size={21} /></button>
+      <span
+        className="detail-grabber"
+        aria-hidden="true"
+        onPointerDown={(event) => {
+          const modal = event.currentTarget.parentElement;
+          grabStartRef.current = { y: event.clientY, delta: 0, modal };
+          event.currentTarget.setPointerCapture?.(event.pointerId);
+          modal?.classList.add('is-dragging');
+        }}
+        onPointerMove={(event) => {
+          const start = grabStartRef.current;
+          if (!start) return;
+          start.delta = Math.min(Math.max(0, event.clientY - start.y), 170);
+          start.modal?.style.setProperty('--sheet-drag', `${start.delta}px`);
+        }}
+        onPointerUp={() => {
+          const start = grabStartRef.current;
+          if (!start) return;
+          grabStartRef.current = null;
+          start.modal?.classList.remove('is-dragging');
+          start.modal?.style.setProperty('--sheet-drag', '0px');
+          if (start.delta > 96) onClose();
+        }}
+        onPointerCancel={() => {
+          const start = grabStartRef.current;
+          grabStartRef.current = null;
+          start?.modal?.classList.remove('is-dragging');
+          start?.modal?.style.setProperty('--sheet-drag', '0px');
+        }}
+      />
       <div className="detail-modal-scroll" ref={modalRef}>
       <div className={`detail-layout${isTrailerExpanded ? ' has-trailer' : ''}`}>
         <div className="detail-media">
@@ -1902,13 +1954,18 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, on
         <div className="detail-content">
           {!isTrailerExpanded && (
             <div className="detail-actions-row">
-              <button className="detail-watch-now" onClick={() => onStartWatch(item, item.tmdbId, item.type === 'series' ? 'tv' : 'movie')} aria-label={`Watch ${item.title} now`}><Play size={18} /> Watch Now</button>
+              <button className="detail-watch-now" onClick={() => setSearchSheet(true)} aria-label={`Find where to watch ${item.title}`}><Play size={18} /> Watch Now</button>
               <button className="detail-trailer" onClick={showTrailer}><Clapperboard size={18} /> Watch trailer</button>
             </div>
           )}
           <div className="detail-kicker"><span>{universeFullName(item.universe)}</span><span>#{String(item.order || item.id).padStart(2, '0')}</span></div>
           <h1 id="detail-title">{item.title} <span className="phase-badge">Phase {item.phase || '—'}</span></h1>
-          {guidance && <div className="detail-spoiler-warning" role="alert"><ShieldAlert size={18} /><div><strong>{guidance.label}</strong><p>{guidance.note}</p></div></div>}
+          {guidance && (prereqWatched
+            ? <details className="detail-spoiler-warning is-caught-up">
+                <summary><Check size={16} /><span>{guidance.label} · prerequisites watched</span><ChevronDown size={14} className="spoiler-chevron" /></summary>
+                <p>{guidance.note}</p>
+              </details>
+            : <div className="detail-spoiler-warning" role="alert"><ShieldAlert size={18} /><div><strong>{guidance.label}</strong><p>{guidance.note}</p></div></div>)}
           <div className="detail-chips"><RatingChips item={item} />{(item.genres || []).slice(0,3).map(g => <span key={g}>{g}</span>)}</div>
           <p className="detail-description">{item.desc || `Follow ${item.title} in the complete ${item.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} viewing order.`}</p>
           <div className="detail-facts"><div><Calendar size={18} /><span>Release year</span><strong>{item.year}</strong></div><div><Timer size={18} /><span>Runtime</span><strong>{runtimeLabel(item.runtime, item.type)}</strong></div><div><Sparkles size={18} /><span>Format</span><strong>{item.type}</strong></div>{item.userStatus === 'watching' && item.watchedDuration > 30000 && <div><Clock size={18} /><span>Watched</span><strong>{watchTimeLabel(item)}</strong></div>}</div>
@@ -1927,7 +1984,40 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, on
           </div>
       </div>
       </div>
+      {searchSheet && <SearchLinksDialog
+        item={item}
+        onClose={() => setSearchSheet(false)}
+        onMarkWatching={() => { setSearchSheet(false); onStartWatch(item, item.tmdbId, item.type === 'series' ? 'tv' : 'movie'); }}
+      />}
     </article>
+  </div>;
+}
+
+/* Watch Now hands off to the web instead of pretending to stream in place. */
+function SearchLinksDialog({ item, onClose, onMarkWatching }) {
+  const query = encodeURIComponent(`${item.title} ${item.year || ''}`.trim());
+  const options = [
+    { key: 'youtube', label: 'YouTube', note: 'Official trailers and clips', href: `https://www.youtube.com/results?search_query=${encodeURIComponent(`${item.title} official trailer`)}` },
+    { key: 'justwatch', label: 'JustWatch', note: 'Which service streams it', href: `https://www.justwatch.com/us/search?q=${encodeURIComponent(item.title)}` },
+    { key: 'google', label: 'Google', note: 'Everywhere it is available', href: `https://www.google.com/search?q=${query}+where+to+watch` },
+  ];
+  return <div className="search-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+    <div className="search-sheet" role="dialog" aria-modal="true" aria-labelledby="search-sheet-title">
+      <header>
+        <p className="eyebrow">Playback lives elsewhere</p>
+        <h2 id="search-sheet-title">Where to watch {item.title}</h2>
+      </header>
+      <div className="search-links">
+        {options.map(option => <a key={option.key} href={option.href} target="_blank" rel="noopener noreferrer" onClick={onClose}>
+          <span><strong>{option.label}</strong><small>{option.note}</small></span>
+          <ExternalLink size={16} />
+        </a>)}
+      </div>
+      <div className="search-sheet-actions">
+        <button className="search-primary" onClick={onMarkWatching}>Mark as watching</button>
+        <button className="search-secondary" onClick={onClose}>Close</button>
+      </div>
+    </div>
   </div>;
 }
 /* Shared viewing roadmap: numbered timeline rail with branch chips. */
