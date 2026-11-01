@@ -4280,3 +4280,66 @@
 @media (min-width: 821px) {
   :root .movie-site .unb-queue-items { justify-content: space-between; }
 }
+
+/* ── Detail status menu: anchored to its own button, never off screen ───── */
+:root .detail-progress-actions { position: relative; }
+:root .detail-progress-actions .status-select {
+  position: relative;
+  min-width: 0;
+  max-width: 100%;
+}
+:root .detail-progress-actions .status-dropdown {
+  left: 0;
+  right: 0;
+  width: auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+
+/* ===========================================================================
+   30. STATUS BAR / GESTURE BAR SAFE AREAS (PACKAGED APP)
+   =========================================================================== */
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+/* Android WebView often reports no inset at all, so the packaged build gets a
+   guaranteed strip the height of a standard status bar. */
+:root.is-native {
+  --safe-top: max(env(safe-area-inset-top, 0px), 26px);
+  --safe-bottom: max(env(safe-area-inset-bottom, 0px), 10px);
+}
+
+/* The header still paints up to the top edge — its glass background covers the
+   status-bar strip — but its contents start below it. */
+:root .movie-site .site-header {
+  padding-top: calc(var(--safe-top) + 12px);
+}
+@media (max-width: 900px) {
+  :root .movie-site .site-header {
+    padding-top: calc(var(--safe-top) + 10px);
+  }
+}
+
+/* Nav and page padding clear the gesture bar. */
+:root .movie-site .bottom-nav {
+  bottom: calc(var(--safe-bottom) + 16px);
+}
+:root .movie-site {
+  padding-bottom: calc(var(--safe-bottom) + 100px);
+}
+
+/* Full-screen overlays keep their content inside the safe area too. */
+:root .detail-overlay {
+  padding-top: calc(var(--safe-top) + clamp(10px, 3vw, 30px));
+  padding-bottom: calc(var(--safe-bottom) + clamp(10px, 3vw, 30px));
+}
+:root .search-overlay {
+  padding-top: calc(var(--safe-top) + 18px);
+  padding-bottom: calc(var(--safe-bottom) + 18px);
+}
+:root .trailer-modal {
+  padding-top: calc(var(--safe-top) + 18px);
+  padding-bottom: calc(var(--safe-bottom) + 18px);
+}

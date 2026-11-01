@@ -28,6 +28,12 @@ document.documentElement.setAttribute('data-theme', storedTheme)
 document.documentElement.classList.toggle('dark', storedTheme !== 'light')
 document.documentElement.setAttribute('data-ui', readStored('ui-variant', 'fresh'))
 
+// The packaged Android/iOS build draws underneath the system status bar. Flag it
+// before the first paint so the shell can reserve that strip even on devices
+// where env(safe-area-inset-top) comes back as zero.
+const nativePlatform = window.Capacitor?.isNativePlatform?.() || window.Capacitor?.platform === 'android' || window.Capacitor?.platform === 'ios';
+if (nativePlatform) document.documentElement.classList.add('is-native');
+
 class AppErrorBoundary extends Component {
   constructor(props) {
     super(props)
