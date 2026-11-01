@@ -1036,7 +1036,19 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
   const touchStartX = useRef(null);
   const didSwipe = useRef(false);
   const resumeTimer = useRef(null);
+  const [leavingId, setLeavingId] = useState(null);
+  const prevIndexRef = useRef(heroIndex);
   useEffect(() => () => window.clearTimeout(resumeTimer.current), []);
+  useEffect(() => {
+    const previousIndex = prevIndexRef.current;
+    if (previousIndex === heroIndex) return undefined;
+    prevIndexRef.current = heroIndex;
+    const previous = items[previousIndex % Math.max(items.length, 1)];
+    if (!previous) return undefined;
+    setLeavingId(previous.id);
+    const timer = window.setTimeout(() => setLeavingId(null), 640);
+    return () => window.clearTimeout(timer);
+  }, [heroIndex, items.length]);
   const move = (dir) => {
     setInlineTrailer(null);
     setHeroIndex((heroIndex + dir + items.length) % Math.max(items.length, 1));
@@ -1078,7 +1090,7 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
     <div className="feature-heading"><div><p className="eyebrow">{featured?.universe === 'marvel' ? 'Marvel Cinematic Universe' : featured?.universe === 'xmen' ? 'X-Men Universe' : featured?.universe === 'sony' ? 'Sony Spider-Man Universe' : 'DC Universe'} · Featured</p><h2>Top movies</h2></div><button className="feature-detail" onClick={() => setSelected(featured)}>View details</button></div>
     <div className="feature-stage">
       <div className="poster-stack smooth-stack">
-        {inlineTrailer ? <div className="inline-trailer"><iframe src={inlineTrailer} title={`${featured.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={() => setInlineTrailer(null)} aria-label="Close trailer"><X size={20} /></button></div> : items.map((item, rawIndex) => { const offset = (rawIndex - heroIndex + items.length) % items.length; if (offset > 3) return null; return <button key={item.id} aria-label={offset ? `Show ${item.title}` : `View ${item.title} details`} aria-hidden={offset === 3 ? 'true' : undefined} tabIndex={offset === 3 ? -1 : 0} className={`stack-poster poster-${offset}`} onClick={() => selectPoster(item, rawIndex, offset)} style={{ '--accent': item.accent }}><PosterArt item={item} loading="eager" fetchPriority={offset === 0 ? 'high' : 'auto'} /></button>; })}
+        {inlineTrailer ? <div className="inline-trailer"><iframe src={inlineTrailer} title={`${featured.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={() => setInlineTrailer(null)} aria-label="Close trailer"><X size={20} /></button></div> : items.map((item, rawIndex) => { const offset = (rawIndex - heroIndex + items.length) % items.length; const isLeaving = leavingId === item.id && offset !== 0; if (offset > 3 && !isLeaving) return null; return <button key={item.id} aria-label={offset ? `Show ${item.title}` : `View ${item.title} details`} aria-hidden={offset === 3 || isLeaving ? 'true' : undefined} tabIndex={offset === 3 || isLeaving ? -1 : 0} className={`stack-poster ${isLeaving ? 'poster-exit' : `poster-${offset}`}`} onClick={() => selectPoster(item, rawIndex, offset)} style={{ '--accent': item.accent }}><PosterArt item={item} loading="eager" fetchPriority={offset === 0 ? 'high' : 'auto'} /></button>; })}
       </div>
       <div className="feature-copy">
         <div className="feature-kicker"><span>{featured?.year}</span><span>{runtimeLabel(featured?.runtime, featured?.type)}</span><span>{featured?.rating} rating</span></div>
@@ -1862,20 +1874,19 @@ function WatchBrowse({ activeItems, externalResults = [], externalLoading = fals
       <div className="wb-hero">
         <div className="wb-hero-bg" />
         <div className="wb-hero-content">
-          <div className="wb-hero-icon-ring">
-            <Play size={36} fill="currentColor" className="wb-hero-play" />
-          </div>
-          <h1>Ready to watch?</h1>
-          <p>Pick up where you left off or discover your next story.</p>
-          {nextWatch && (
-            <div className="wb-hero-actions">
+          <p className="wb-hero-eyebrow">Watch hub · {activeItems.length} titles tracked</p>
+          <h1>{nextWatch ? nextWatch.title : 'Ready to watch?'}</h1>
+          <p className="wb-hero-desc">{nextWatch ? (nextWatch.desc || nextWatch.overview || 'Continue the timeline from where you paused.') : 'Pick up where you left off or discover your next story.'}</p>
+          <div className="wb-hero-actions">
+            {nextWatch && (
               <button className="wb-hero-cta" onClick={() => handleResume(nextWatch)}>
                 <Play size={17} fill="currentColor" />
                 <span className="wb-hero-cta-label">{inProgress.length ? 'Resume' : 'Start watching'}</span>
                 <span className="wb-hero-cta-title">{nextWatch.title}</span>
               </button>
-            </div>
-          )}
+            )}
+            {nextWatch && <button className="wb-hero-secondary" onClick={() => setSelected(nextWatch)}>Details</button>}
+          </div>
           <div className="wb-hero-stats">
             <div className="wb-stat">
               <span className="wb-stat-value">{watched}</span>
@@ -1899,6 +1910,9 @@ function WatchBrowse({ activeItems, externalResults = [], externalLoading = fals
               <span className="wb-search-chip-count">{externalLoading ? 'searching…' : `${activeItems.length + externalResults.length} results`}</span>
             </div>
           )}
+        </div>
+        <div className="wb-hero-art">
+          {nextWatch && <PosterArt item={nextWatch} loading="eager" />}
         </div>
       </div>
 
@@ -2272,6 +2286,8 @@ const saveServerPref = (tmdbId, server) => {
           <button className="watch-toast-close" onClick={() => { setToast(''); setIframeTimedOut(false); }} aria-label="Dismiss"><X size={14} /></button>
         </div>
       )}
+      <div className="watch-theater">
+      <div className="watch-main">
       <div className="watch-stage">
       <div className="watch-player">
         {nativePlayer ? (
@@ -2309,7 +2325,6 @@ const saveServerPref = (tmdbId, server) => {
         <span className="watch-controlbar-server">{selectedServer}</span>
       </div>
       </div>
-      <div className="watch-detail-grid">
         <div className="watch-info">
         <p className="watch-eyebrow">Story details</p>
         <div className="watch-meta">
@@ -2327,6 +2342,8 @@ const saveServerPref = (tmdbId, server) => {
           {currentItem.userStatus !== 'watched' && <button onClick={() => { setStatus(currentItem, 'watched'); setToast('Marked as watched'); setTimeout(() => setToast(''), 2000); }} className="watch-action-btn mark-watched" aria-label="Mark as Watched"><Check size={18} /><span>Mark Watched</span></button>}
         </div>
         </div>
+      </div>
+      <aside className="watch-side">
         {isSeries && episodes.length > 0 && (
           <div className="watch-episode-picker">
             <div className="watch-episode-head">
@@ -2350,6 +2367,23 @@ const saveServerPref = (tmdbId, server) => {
             </div>
           </div>
         )}
+      {upNext.length > 0 && (
+        <div className="watch-upnext">
+          <h2>Up Next</h2>
+          <div className="watch-upnext-rail">
+            {upNext.map(rec => (
+              <button key={rec.id} className="watch-rec-card" onClick={() => handleSwitchItem(rec)} style={{ '--accent': rec.accent }}>
+                <div className="watch-rec-poster">
+                  {rec.poster ? <img src={rec.poster} alt={rec.title} width="200" height="284" loading="lazy" /> : <FallbackPoster item={rec} />}
+                </div>
+                <span>{rec.title}</span>
+                <small>{rec.year}</small>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      </aside>
       </div>
       {roadmapInfo ? (
         <section className="watch-roadmap">
@@ -2435,22 +2469,6 @@ const saveServerPref = (tmdbId, server) => {
             </button>
           )}
         </section>
-      )}
-      {upNext.length > 0 && (
-        <div className="watch-upnext">
-          <h2>Up Next</h2>
-          <div className="watch-upnext-rail">
-            {upNext.map(rec => (
-              <button key={rec.id} className="watch-rec-card" onClick={() => handleSwitchItem(rec)} style={{ '--accent': rec.accent }}>
-                <div className="watch-rec-poster">
-                  {rec.poster ? <img src={rec.poster} alt={rec.title} width="200" height="284" loading="lazy" /> : <FallbackPoster item={rec} />}
-                </div>
-                <span>{rec.title}</span>
-                <small>{rec.year}</small>
-              </button>
-            ))}
-          </div>
-        </div>
       )}
     </section>
   );

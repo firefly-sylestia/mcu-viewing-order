@@ -2329,7 +2329,7 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05);
 }
 
-:root .watch-stage { position: relative; max-width: 1180px; margin: clamp(14px, 2.4vw, 26px) auto 0; }
+:root .watch-stage { position: relative; max-width: none; margin: 0; }
 :root .watch-stage::before {
   content: '';
   position: absolute;
@@ -2423,17 +2423,16 @@
   text-transform: uppercase;
 }
 
-:root .watch-detail-grid {
-  max-width: 1180px;
-  margin: 16px auto 0;
+:root .watch-theater {
+  max-width: 1240px;
+  margin: clamp(14px, 2.4vw, 24px) auto 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 14px;
+  grid-template-columns: minmax(0, 1fr) 336px;
+  gap: 16px;
   align-items: start;
 }
-:root .watch-detail-grid:has(.watch-episode-picker) {
-  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
-}
+:root .watch-main { min-width: 0; }
+:root .watch-side { min-width: 0; display: grid; gap: 14px; align-content: start; }
 :root .watch-info,
 :root .watch-episode-picker {
   max-width: none;
@@ -2635,9 +2634,12 @@
 :root[data-theme="light"] .wb-density-toggle { background: #eef1f7; }
 :root[data-theme="light"] .wb-hero-cta { color: #fff; }
 
-@media (max-width: 900px) {
-  :root .watch-detail-grid,
-  :root .watch-detail-grid:has(.watch-episode-picker) { grid-template-columns: minmax(0, 1fr); }
+@media (max-width: 1080px) {
+  :root .watch-theater { grid-template-columns: minmax(0, 1fr); }
+  :root .watch-side { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+@media (max-width: 720px) {
+  :root .watch-side { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 640px) {
   :root .watch-page { padding-bottom: 110px; }
@@ -2661,3 +2663,264 @@
 
 
 
+
+
+/* ===========================================================================
+   19. REAL BRAND MARKS, READABLE LIST STATES, THEATER LAYOUT, MARQUEE HERO
+   =========================================================================== */
+
+/* ── Universe logos: real vector files ──────────────────────────────────── */
+:root .universe-tabs button .universe-logo-img {
+  display: block;
+  height: var(--logo-h, 16px);
+  width: auto;
+  max-width: 78px;
+}
+:root .universe-tabs button .universe-logo-mask {
+  display: block;
+  width: var(--logo-w, 16px);
+  height: var(--logo-h, 15px);
+  background-color: currentColor;
+  -webkit-mask: var(--logo-url) center / contain no-repeat;
+  mask: var(--logo-url) center / contain no-repeat;
+  transition: opacity .2s ease;
+}
+:root .universe-tabs button[data-universe="sony"] { min-width: 78px; }
+@media (max-width: 620px) {
+  :root .universe-tabs button .universe-logo-img { max-width: 62px; }
+  :root .universe-tabs button .universe-logo-mask { transform: scale(.9); }
+}
+
+/* ── Carousel: the poster that was in front animates out, never pops ────── */
+.smooth-stack .poster-exit {
+  transform: translateX(-14%) translate3d(0, 56px, -110px) rotate(-10deg) scale(.66);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+@media (hover: none) {
+  .smooth-stack .poster-exit:hover,
+  .smooth-stack .poster-exit {
+    transform: translateX(-14%) translate3d(0, 56px, -110px) rotate(-10deg) scale(.66);
+    opacity: 0;
+  }
+}
+@media (max-width: 600px) {
+  .smooth-stack .poster-exit,
+  .smooth-stack .poster-exit:hover {
+    opacity: 0 !important;
+    transform: translateX(-16%) translate3d(0, 44px, -40px) rotate(-8deg) scale(.68) !important;
+  }
+}
+
+/* ── List rows: watch/status controls that never blend into the row ─────── */
+:root .list-row .list-actions > button.list-watch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent, #da1e37) 16%, var(--fx-surface-3)) !important;
+  color: color-mix(in srgb, var(--accent, #da1e37) 30%, #ffffff) !important;
+  box-shadow: 0 10px 22px -16px color-mix(in srgb, var(--accent, #da1e37) 80%, transparent) !important;
+  font-weight: 800;
+  font-size: 12.5px;
+}
+:root .list-row .list-actions > button.list-watch:hover {
+  background: color-mix(in srgb, var(--accent, #da1e37) 26%, var(--fx-surface-3)) !important;
+  color: #fff !important;
+}
+:root .list-row .list-actions > button.list-watch.watched,
+:root .list-row .list-actions > button.list-watch[aria-pressed="true"] {
+  background: rgba(34, 197, 94, .16) !important;
+  color: #7ee2a8 !important;
+  box-shadow: 0 10px 22px -16px rgba(34, 197, 94, .85) !important;
+}
+:root .list-row .list-actions > button.list-watch.watched:hover {
+  background: rgba(34, 197, 94, .24) !important;
+  color: #9ff0c0 !important;
+}
+:root .list-row .list-watch.watched svg {
+  width: 21px;
+  height: 21px;
+  padding: 3px;
+  border-radius: 50%;
+  background: rgba(34, 197, 94, .22);
+  stroke-width: 3;
+}
+:root .list-row .list-actions .status-trigger {
+  background: var(--fx-surface-3);
+  color: var(--fx-text);
+}
+:root .list-row .list-actions .status-select.unwatched .status-trigger {
+  background: var(--fx-surface-3);
+  color: var(--fx-muted-strong);
+}
+:root .list-state {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+:root .list-state.watched { background: rgba(34, 197, 94, .16); color: #7ee2a8; }
+:root .list-state.watching { background: rgba(245, 158, 11, .16); color: #f2c07a; }
+:root .list-state.dropped { background: rgba(239, 68, 68, .16); color: #f09393; }
+
+:root[data-theme="light"] .list-row .list-actions > button.list-watch {
+  background: color-mix(in srgb, var(--accent, #da1e37) 10%, #ffffff) !important;
+  color: color-mix(in srgb, var(--accent, #da1e37) 82%, #10141b) !important;
+  box-shadow: 0 8px 18px -14px rgba(16, 24, 40, .45) !important;
+}
+:root[data-theme="light"] .list-row .list-actions > button.list-watch.watched,
+:root[data-theme="light"] .list-row .list-actions > button.list-watch[aria-pressed="true"] {
+  background: #e2f7ea !important;
+  color: #14713f !important;
+}
+:root[data-theme="light"] .list-row .list-watch.watched svg { background: rgba(20, 113, 63, .14); }
+:root[data-theme="light"] .list-row .list-actions .status-trigger,
+:root[data-theme="light"] .list-row .list-actions .status-select.unwatched .status-trigger {
+  background: #eef1f7;
+  color: #3d4756;
+}
+
+/* ── Watch theater: player + story on the left, queue + episodes on the right */
+:root .watch-side .watch-episode-picker,
+:root .watch-side .watch-upnext {
+  max-width: none;
+  margin: 0;
+  padding: 16px;
+  border-radius: 22px;
+  background: linear-gradient(150deg, #12141b, #0a0b10);
+  box-shadow: 0 34px 70px -56px #000, inset 0 1px 0 rgba(255, 255, 255, .04);
+}
+:root .watch-side .watch-upnext h2 { margin: 0 0 12px; font-size: 12px; letter-spacing: .16em; color: rgba(255, 255, 255, .45); }
+:root .watch-side .watch-upnext-rail {
+  flex-direction: column;
+  gap: 4px;
+  overflow: visible;
+  padding: 0;
+}
+:root .watch-side .watch-rec-card {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  column-gap: 10px;
+  align-items: center;
+  flex: 0 0 auto;
+  padding: 6px;
+  border-radius: 14px;
+}
+:root .watch-side .watch-rec-card:hover { background: rgba(255, 255, 255, .05); }
+:root .watch-side .watch-rec-poster {
+  grid-row: 1 / span 2;
+  width: 52px;
+  height: 74px;
+  margin: 0;
+  border-radius: 10px;
+}
+:root .watch-side .watch-rec-card > span {
+  grid-column: 2;
+  min-height: 0;
+  font-size: 12.5px;
+  line-height: 1.25;
+}
+:root .watch-side .watch-rec-card > small { grid-column: 2; font-size: 11px; }
+:root .watch-side .watch-episode-list { max-height: 300px; }
+
+:root[data-theme="light"] .watch-side .watch-episode-picker,
+:root[data-theme="light"] .watch-side .watch-upnext {
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(16, 24, 40, .05), 0 22px 48px -34px rgba(16, 24, 40, .35);
+}
+:root[data-theme="light"] .watch-side .watch-upnext h2 { color: #6b7583; }
+:root[data-theme="light"] .watch-side .watch-rec-card:hover { background: #f4f6fa; }
+
+/* ── Watch hub: editorial marquee with poster art ───────────────────────── */
+:root .wb-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(180px, 21vw, 270px);
+  align-items: center;
+  gap: clamp(16px, 3vw, 40px);
+  text-align: left;
+  padding: clamp(24px, 4vw, 46px);
+}
+:root .wb-hero-content { text-align: left; max-width: none; margin: 0; }
+:root .wb-hero-eyebrow {
+  margin: 0 0 10px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--brand-accent, #da1e37) 55%, #ffffff);
+}
+:root .wb-hero h1 {
+  margin: 0 0 12px;
+  font-size: clamp(26px, 3.8vw, 46px);
+  line-height: 1.04;
+  letter-spacing: -.025em;
+  text-wrap: balance;
+}
+:root .wb-hero-desc {
+  margin: 0 0 18px;
+  max-width: 58ch;
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, .62);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+:root .wb-hero-actions { justify-content: flex-start; margin: 0 0 20px; gap: 10px; flex-wrap: wrap; }
+:root .wb-hero-secondary {
+  height: 42px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .08);
+  color: #fff;
+  font-weight: 800;
+  font-size: 13px;
+  transition: background .18s ease, translate .18s ease, scale .16s ease;
+}
+:root .wb-hero-secondary:hover { background: rgba(255, 255, 255, .15); translate: 0 -2px; }
+:root .wb-hero-secondary:active { scale: .97; }
+:root .wb-hero-stats { margin: 0; max-width: none; justify-content: flex-start; }
+:root .wb-hero-art { position: relative; justify-self: center; width: 100%; max-width: 270px; z-index: 0; }
+:root .wb-hero-art img,
+:root .wb-hero-art .fallback-poster {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  height: auto;
+  object-fit: cover;
+  display: block;
+  border-radius: 20px;
+  box-shadow: 0 34px 70px -38px #000, 0 0 52px -24px color-mix(in srgb, var(--brand-accent, #da1e37) 70%, transparent);
+  transform: rotate(2.5deg);
+}
+:root .wb-hero-art::after {
+  content: '';
+  position: absolute;
+  inset: 12% -8% -10% 8%;
+  z-index: -1;
+  border-radius: 30px;
+  background: radial-gradient(60% 60% at 50% 50%, color-mix(in srgb, var(--brand-accent, #da1e37) 55%, transparent), transparent 72%);
+  filter: blur(38px);
+  opacity: .55;
+}
+:root[data-theme="light"] .wb-hero h1 { color: #10141b; }
+:root[data-theme="light"] .wb-hero-eyebrow { color: var(--brand-accent, #da1e37); }
+:root[data-theme="light"] .wb-hero-desc { color: #5a6473; }
+:root[data-theme="light"] .wb-hero-secondary { background: #eef1f7; color: #232833; }
+:root[data-theme="light"] .wb-hero-secondary:hover { background: #e4e9f2; }
+
+@media (max-width: 820px) {
+  :root .wb-hero { grid-template-columns: minmax(0, 1fr); padding: 24px 18px; }
+  :root .wb-hero-art { display: none; }
+}
