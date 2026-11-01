@@ -3688,3 +3688,114 @@
 :root[data-theme="light"] .top-carousel .feature-heading .eyebrow span {
   color: color-mix(in srgb, var(--accent, #da1e37) 72%, #10141b);
 }
+
+
+/* ===========================================================================
+   26. PILL NAV, TWO-LINE HEADER TITLE, UP NEXT INK, UI TEXT PASS
+   =========================================================================== */
+
+/* Nav: short pill instead of a tall slab — no squish, real pill radius. */
+:root .movie-site .bottom-nav {
+  padding: 6px;
+  min-height: 0;
+  border-radius: 999px;
+  --nav-gap: 5px;
+}
+:root .movie-site .bottom-nav .nav-blob {
+  top: 6px;
+  bottom: 6px;
+  left: 6px;
+  border-radius: 999px;
+  width: calc((100% - 12px - (var(--nav-count, 5) - 1) * var(--nav-gap)) / var(--nav-count, 5));
+}
+:root .movie-site .bottom-nav button { padding: 9px 8px; gap: 4px; border-radius: 999px; }
+:root .movie-site .bottom-nav button span { font-size: 10.5px; line-height: 1; }
+:root .movie-site .bottom-nav button svg { width: 21px; height: 21px; }
+:root .movie-site { padding-bottom: 92px; }
+@media (max-width: 420px) {
+  :root .movie-site .bottom-nav { padding: 5px; --nav-gap: 4px; }
+  :root .movie-site .bottom-nav .nav-blob {
+    top: 5px;
+    bottom: 5px;
+    left: 5px;
+    width: calc((100% - 10px - (var(--nav-count, 5) - 1) * var(--nav-gap)) / var(--nav-count, 5));
+  }
+  :root .movie-site .bottom-nav button { padding: 8px 5px; }
+  :root .movie-site .bottom-nav button svg { width: 20px; height: 20px; }
+  :root .movie-site { padding-bottom: 84px; }
+}
+
+/* Header up-next card: two-line title boxed inside the poster height. */
+:root .movie-site .header-quick-actions .header-status-pill {
+  height: 56px;
+  padding: 4px 14px 4px 4px;
+  border-radius: 16px;
+  gap: 9px;
+  max-width: min(300px, 50vw);
+}
+:root .movie-site .header-status-pill .header-pill-poster { width: 34px; height: 46px; border-radius: 12px; }
+:root .movie-site .header-status-pill .header-pill-label { gap: 2px; overflow: hidden; justify-content: center; }
+:root .movie-site .header-status-pill .header-pill-label small { font-size: 8px; letter-spacing: .15em; line-height: 1.1; }
+:root .movie-site .header-status-pill .header-pill-label b {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  white-space: normal;
+  overflow: hidden;
+  max-width: 186px;
+  max-height: calc(2 * 1.16em);
+  font-size: 11.5px;
+  line-height: 1.16;
+}
+:root .movie-site .header-status-pill .header-pill-label em { display: none; }
+@media (max-width: 720px) {
+  :root .movie-site .header-quick-actions .header-status-pill { height: 48px; padding: 3px 10px 3px 3px; gap: 7px; border-radius: 14px; }
+  :root .movie-site .header-status-pill .header-pill-poster { width: 27px; height: 38px; border-radius: 10px; }
+  :root .movie-site .header-status-pill .header-pill-label b { max-width: 104px; font-size: 10.5px; }
+}
+
+/* Up next: brighter, higher-contrast ink on the spotlight and queue. */
+:root .unb-lead { background: color-mix(in srgb, var(--accent, #da1e37) 12%, rgba(15, 18, 25, .92)); }
+:root .unb-chapter { color: color-mix(in srgb, var(--accent, #da1e37) 42%, #ffffff); }
+:root .unb-title { color: #ffffff; }
+:root .unb-meta { color: #b8c2d1; }
+:root .unb-desc { color: #c6cedb; }
+:root .unb-count { color: #a9b3c2; }
+:root .unb-queue-label { color: #97a3b4; }
+:root .unb-item { background: rgba(255, 255, 255, .05); }
+:root .unb-item-index { color: #8d99ab; }
+:root .unb-item-copy strong { color: #f1f4fa; }
+:root .unb-item-copy small { color: #a4afbf; }
+:root .unb-detail { color: #e8edf5; background: rgba(255, 255, 255, .1); }
+:root[data-theme="light"] .unb-lead { background: color-mix(in srgb, var(--accent, #da1e37) 8%, #f4f7fc); }
+:root[data-theme="light"] .unb-chapter { color: color-mix(in srgb, var(--accent, #da1e37) 78%, #10141b); }
+:root[data-theme="light"] .unb-title { color: #0e1218; }
+:root[data-theme="light"] .unb-meta { color: #4f5a6a; }
+:root[data-theme="light"] .unb-desc { color: #55606f; }
+:root[data-theme="light"] .unb-count { color: #5c6675; }
+:root[data-theme="light"] .unb-queue-label { color: #6b7583; }
+:root[data-theme="light"] .unb-item { background: #f3f6fb; }
+:root[data-theme="light"] .unb-item-copy strong { color: #10141b; }
+:root[data-theme="light"] .unb-item-copy small { color: #67717f; }
+:root[data-theme="light"] .unb-detail { color: #25303f; background: #e9eef7; }
+
+/* Overall text pass: one muted ink for labels, one body ink for copy. */
+:root .movie-site .eyebrow,
+:root .movie-site .section-title span,
+:root .movie-site .card-meta-text,
+:root .movie-site .list-copy p,
+:root .movie-site .empty-state,
+:root .movie-site .rm-meta,
+:root .movie-site .unb-meta { color: #a7b1c0; }
+:root .movie-site .feature-copy > p { color: #c2cad7; }
+:root .movie-site .feature-kicker { color: #cfd6e0; }
+:root .movie-site .card-title-row .title-button { color: #eef1f6; }
+:root[data-theme="light"] .movie-site .eyebrow,
+:root[data-theme="light"] .movie-site .section-title span,
+:root[data-theme="light"] .movie-site .card-meta-text,
+:root[data-theme="light"] .movie-site .list-copy p,
+:root[data-theme="light"] .movie-site .empty-state,
+:root[data-theme="light"] .movie-site .rm-meta { color: #5c6675; }
+:root[data-theme="light"] .movie-site .feature-copy > p { color: #4c5665; }
+:root[data-theme="light"] .movie-site .feature-kicker { color: #3d4756; }
+:root[data-theme="light"] .movie-site .card-title-row .title-button { color: #10141b; }
