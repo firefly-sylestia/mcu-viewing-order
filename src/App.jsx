@@ -816,8 +816,14 @@ export default function App() {
   <div className="header-top">
   <button className="brand" onClick={() => { setQuery(''); setSection('home'); setWatchItem(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }} aria-label="Go to Incursion home"><b>Incursion</b><small>{universeName} timeline</small></button>
   <div className="header-quick-actions" aria-label="Quick viewing controls">
-  {(() => { const watchingItem = activeItems.find(item => item.userStatus === 'watching'); return watchingItem && <button className="header-status-pill watching" onClick={() => selectItem(watchingItem)} title={`Open current: ${watchingItem.title}`}><Clock size={13} /><span className="header-pill-label"><small>Watching</small><b>{watchingItem.title}</b></span></button>; })()}
-  {nextUp && <button className="header-status-pill next" onClick={() => selectItem(nextUp)} title={`Open next: ${nextUp.title}`}><Play size={12} fill="currentColor" /><span className="header-pill-label"><small>Next</small><b>{nextUp.title}</b></span></button>}
+  {(() => { const watchingItem = activeItems.find(item => item.userStatus === 'watching'); return watchingItem && <button className="header-status-pill watching" onClick={() => selectItem(watchingItem)} title={`Open current: ${watchingItem.title}`}>
+    <span className="header-pill-poster">{watchingItem.poster ? <img src={watchingItem.poster} alt="" loading="lazy" referrerPolicy="no-referrer" /> : <Clock size={15} />}</span>
+    <span className="header-pill-label"><small>Watching now</small><b>{watchingItem.title}</b><em>{elapsedPctLabel(watchingItem)} complete</em></span>
+  </button>; })()}
+  {nextUp && <button className="header-status-pill next" onClick={() => selectItem(nextUp)} title={`Open next: ${nextUp.title}`}>
+    <span className="header-pill-poster">{nextUp.poster ? <img src={nextUp.poster} alt="" loading="lazy" referrerPolicy="no-referrer" /> : <Play size={14} fill="currentColor" />}</span>
+    <span className="header-pill-label"><small>Up next</small><b>{nextUp.title}</b><em>{nextUp.year} · {runtimeLabel(nextUp.runtime, nextUp.type)}</em></span>
+  </button>}
   </div>
   </div>
   <div className="header-bar">

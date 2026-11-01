@@ -3136,3 +3136,92 @@
   .rm-poster { width: 44px; height: 62px; }
   .rm-arrow { display: none; }
 }
+
+
+/* ===========================================================================
+   21. HEADER "UP NEXT" CARD — poster, title and meta instead of a text chip
+   =========================================================================== */
+:root .movie-site .header-quick-actions .header-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 54px;
+  padding: 5px 16px 5px 5px;
+  border-radius: 16px;
+  background: var(--fx-surface-2);
+  color: var(--fx-text);
+  box-shadow: 0 16px 32px -28px rgba(0, 0, 0, .9), inset 0 1px 0 rgba(255, 255, 255, .04);
+  max-width: min(320px, 48vw);
+  overflow: hidden;
+  transition: translate .22s ease, box-shadow .22s ease, background .2s ease;
+}
+:root .movie-site .header-quick-actions .header-status-pill:hover { translate: 0 -2px; }
+:root .movie-site .header-status-pill .header-pill-poster {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 44px;
+  border-radius: 11px;
+  overflow: hidden;
+  background: var(--fx-surface-3);
+  color: color-mix(in srgb, var(--fx-text) 60%, transparent);
+  box-shadow: 0 8px 18px -14px rgba(0, 0, 0, .9);
+}
+:root .movie-site .header-status-pill .header-pill-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
+:root .movie-site .header-status-pill .header-pill-label { display: grid; gap: 1px; min-width: 0; text-align: left; }
+:root .movie-site .header-status-pill .header-pill-label small {
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: .16em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  color: var(--fx-muted);
+  opacity: 1;
+}
+:root .movie-site .header-status-pill.next .header-pill-label small { color: #7fb6ff; }
+:root .movie-site .header-status-pill.watching .header-pill-label small { color: #f0b866; }
+:root .movie-site .header-status-pill .header-pill-label b {
+  display: block;
+  max-width: 190px;
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: -.01em;
+  color: var(--fx-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+:root .movie-site .header-status-pill .header-pill-label em {
+  display: block;
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--fx-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+:root .movie-site .header-status-pill.next:hover {
+  box-shadow: 0 20px 36px -26px rgba(0, 0, 0, .95), 0 0 26px -14px rgba(96, 165, 250, .8);
+}
+:root .movie-site .header-status-pill.watching:hover {
+  box-shadow: 0 20px 36px -26px rgba(0, 0, 0, .95), 0 0 26px -14px rgba(245, 158, 11, .8);
+}
+:root[data-theme="light"] .movie-site .header-quick-actions .header-status-pill {
+  background: #ffffff;
+  color: #10141b;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, .06), 0 14px 30px -26px rgba(16, 24, 40, .45);
+}
+:root[data-theme="light"] .movie-site .header-status-pill .header-pill-poster { background: #eef1f7; color: #5c6675; }
+:root[data-theme="light"] .movie-site .header-status-pill .header-pill-label b { color: #10141b; }
+:root[data-theme="light"] .movie-site .header-status-pill .header-pill-label small,
+:root[data-theme="light"] .movie-site .header-status-pill .header-pill-label em { color: #6b7583; }
+:root[data-theme="light"] .movie-site .header-status-pill.next .header-pill-label small { color: #2f6fbf; }
+:root[data-theme="light"] .movie-site .header-status-pill.watching .header-pill-label small { color: #a06a10; }
+@media (max-width: 720px) {
+  :root .movie-site .header-quick-actions .header-status-pill { height: 46px; padding: 4px 10px 4px 4px; border-radius: 14px; gap: 8px; max-width: 46vw; }
+  :root .movie-site .header-status-pill .header-pill-poster { width: 28px; height: 38px; border-radius: 9px; }
+  :root .movie-site .header-status-pill .header-pill-label em { display: none; }
+  :root .movie-site .header-status-pill .header-pill-label b { max-width: 108px; font-size: 11.5px; }
+}
