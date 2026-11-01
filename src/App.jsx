@@ -1029,7 +1029,7 @@ export default function App() {
         <section className="hero-layout">
           <TopCarousel items={heroItems} featured={featured} heroIndex={heroIndex} setHeroIndex={setHeroIndex} setSelected={selectItem} />
         </section>
-        <MovieRail title="Up next" items={activeItems.filter(i => i.userStatus === 'unwatched').slice(0, 10)} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} scrollable variant="upnext" />
+        <UpNextBoard items={activeItems.filter(i => i.userStatus === 'unwatched').slice(0, 10)} setSelected={selectItem} onStart={(item) => startWatchWithConfirm(item, item.tmdbId || null, item.type === 'series' ? 'tv' : 'movie')} />
         <MovieRail title="Essential picks" items={activeItems.filter(i => i.essential)} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} paginated gridControls />
         <MovieRail title="Recently watched" items={activeItems.filter(i => i.userStatus === 'watched').slice(-24).reverse()} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} empty="Mark titles as watched to see them here." paginated gridControls />
         {activeItems.filter(i => i.userStatus === 'watching').length > 0 &&          <ContinueWatching items={activeItems.filter(i => i.userStatus === 'watching')} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} onResume={startWatchWithConfirm} />}
@@ -1301,7 +1301,7 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
       <div ref={stackRef} className={`poster-stack smooth-stack${dragging ? ' is-dragging' : ''}`}>
         {inlineTrailer ? <div className="inline-trailer"><iframe src={inlineTrailer} title={`${featured.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={() => setInlineTrailer(null)} aria-label="Close trailer"><X size={20} /></button></div> : items.map((item, rawIndex) => { const offset = (rawIndex - heroIndex + items.length) % items.length; const isLeaving = leavingId === item.id && offset >= 3; if (offset > 3 && !isLeaving) return null; return <button key={item.id} aria-label={offset ? `Show ${item.title}` : `View ${item.title} details`} aria-hidden={offset === 3 || isLeaving ? 'true' : undefined} tabIndex={offset === 3 || isLeaving ? -1 : 0} className={`stack-poster ${isLeaving ? 'poster-exit' : `poster-${offset}`}`} onClick={() => selectPoster(item, rawIndex, offset)} style={{ '--accent': item.accent }}><PosterArt item={item} loading="eager" fetchPriority={offset === 0 ? 'high' : 'auto'} /></button>; })}
       </div>
-      <div className="feature-copy">
+      <div className="feature-copy" key={featured?.id}>
         <div className="feature-kicker"><span>{featured?.year}</span><span>{runtimeLabel(featured?.runtime, featured?.type)}</span><span>{featured?.rating} rating</span></div>
         <h1>{featured?.title}</h1>
         <p>{featured?.desc || `Follow ${featured?.title} in the complete ${featured?.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} viewing order.`}</p>
@@ -2019,6 +2019,48 @@ function RoadmapBoard({ segments = [], complete = 0, total = 0, title = 'Viewing
       })}
     </ol>
     {footer}
+  </section>;
+}
+/* Up next: one spotlight chapter plus the queue behind it, instead of a card grid. */
+function UpNextBoard({ items = [], setSelected, onStart }) {
+  if (!items.length) return null;
+  const [lead, ...queue] = items;
+  return <section className="unb-board">
+    <header className="unb-head">
+      <div>
+        <p className="unb-eyebrow">Up next</p>
+        <h2>Continue the timeline</h2>
+      </div>
+      <span className="unb-count">{items.length} unwatched</span>
+    </header>
+    <div className="unb-body">
+      <article className="unb-lead" style={{ '--accent': lead.accent }}>
+        <button className="unb-poster" onClick={() => setSelected(lead)} aria-label={`Open ${lead.title}`}>
+          <PosterArt item={lead} />
+        </button>
+        <div className="unb-lead-copy">
+          <span className="unb-chapter">{universeShortName(lead.universe)} · Chapter {String(lead.order || lead.id).padStart(2, '0')}</span>
+          <button className="unb-title" onClick={() => setSelected(lead)}>{lead.title}</button>
+          <span className="unb-meta">{lead.year} · {runtimeLabel(lead.runtime, lead.type)} · {lead.type === 'series' ? 'Series' : 'Film'}</span>
+          {lead.desc && <p className="unb-desc">{lead.desc}</p>}
+          <div className="unb-actions">
+            <button className="unb-start" onClick={() => onStart(lead)}><Play size={15} fill="currentColor" /> Start</button>
+            <button className="unb-detail" onClick={() => setSelected(lead)}><Info size={15} /> Details</button>
+          </div>
+        </div>
+      </article>
+      {queue.length > 0 && <div className="unb-queue">
+        <p className="unb-queue-label">Then</p>
+        <div className="unb-queue-items">
+          {queue.map((item, index) => <button key={item.id} className="unb-item" onClick={() => setSelected(item)} style={{ '--accent': item.accent }}>
+            <span className="unb-item-index">{String(index + 1).padStart(2, '0')}</span>
+            <span className="unb-item-poster">{item.poster ? <img src={item.poster} alt="" loading="lazy" referrerPolicy="no-referrer" /> : <FallbackPoster item={item} />}</span>
+            <span className="unb-item-copy"><strong>{item.title}</strong><small>{item.year} · {runtimeLabel(item.runtime, item.type)}</small></span>
+            <ChevronRight size={15} className="unb-item-arrow" aria-hidden="true" />
+          </button>)}
+        </div>
+      </div>}
+    </div>
   </section>;
 }
 function TrailerModal({ trailer, onClose }) {
