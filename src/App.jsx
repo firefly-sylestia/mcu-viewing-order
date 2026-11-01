@@ -1032,7 +1032,7 @@ export default function App() {
           <TopCarousel items={heroItems} featured={featured} heroIndex={heroIndex} setHeroIndex={setHeroIndex} setSelected={selectItem} />
         </section>
         <UpNextBoard items={activeItems.filter(i => i.userStatus === 'unwatched').slice(0, 10)} setSelected={selectItem} onStart={(item) => startWatchWithConfirm(item, item.tmdbId || null, item.type === 'series' ? 'tv' : 'movie')} />
-        <EssentialPicks items={activeItems.filter(i => i.essential)} setSelected={selectItem} />
+        <MovieRail title="Essential picks" items={activeItems.filter(i => i.essential)} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} paginated gridControls />
         <MovieRail title="Recently watched" items={activeItems.filter(i => i.userStatus === 'watched').slice(-24).reverse()} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} empty="Mark titles as watched to see them here." paginated gridControls />
         {activeItems.filter(i => i.userStatus === 'watching').length > 0 &&          <ContinueWatching items={activeItems.filter(i => i.userStatus === 'watching')} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} onResume={startWatchWithConfirm} />}
         {externalTrackedItems.length > 0 && (
@@ -1304,45 +1304,6 @@ function PosterArt({ item, loading: loadingProp = 'lazy', fetchPriority: fetchPr
   </> : <FallbackPoster item={item} />;
 }
 function FallbackPoster({ item, hidden = false }) { return <div className="fallback-poster" hidden={hidden}><strong>{item.title}</strong><span>{item.year}</span></div>; }
-
-function EssentialPicks({ items, setSelected }) {
-  if (!items.length) return null;
-  const [lead, ...rest] = items;
-  const stateIcon = (item) => item.userStatus === 'watched'
-    ? <Check size={14} />
-    : item.userStatus === 'watching' ? <Clock size={14} /> : null;
-  return <section className="essential-picks">
-    <header className="ep-head">
-      <div>
-        <p className="ep-eyebrow">The short list</p>
-        <h2>Essential picks</h2>
-        <p className="ep-sub">The films that carry the story. Watch these and the plot still holds.</p>
-      </div>
-      <span className="ep-count">{items.length} must-watch</span>
-    </header>
-    <div className="ep-body">
-      <button className="ep-lead" onClick={() => setSelected(lead)} style={{ '--accent': lead.accent }}>
-        <span className="ep-lead-poster"><PosterArt item={lead} /></span>
-        <span className="ep-lead-copy">
-          <span className="ep-rank">Start here</span>
-          <strong className="ep-lead-title">{lead.title}</strong>
-          <small className="ep-lead-meta">{lead.year} · {runtimeLabel(lead.runtime, lead.type)} · {lead.type === 'series' ? 'Series' : 'Film'}</small>
-          {lead.desc && <span className="ep-lead-desc">{lead.desc}</span>}
-        </span>
-      </button>
-      <ol className="ep-list">
-        {rest.map((item, index) => <li key={item.id}>
-          <button onClick={() => setSelected(item)} style={{ '--accent': item.accent }} className={item.userStatus === 'watched' ? 'is-watched' : ''}>
-            <span className="ep-num">{String(index + 2).padStart(2, '0')}</span>
-            <span className="ep-thumb">{item.poster ? <img src={item.poster} alt="" loading="lazy" referrerPolicy="no-referrer" /> : <FallbackPoster item={item} />}</span>
-            <span className="ep-copy"><strong>{item.title}</strong><small>{item.year} · {runtimeLabel(item.runtime, item.type)}</small></span>
-            <span className="ep-state">{stateIcon(item)}</span>
-          </button>
-        </li>)}
-      </ol>
-    </div>
-  </section>;
-}
 
 function MovieRail({ title, items, setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, empty, scrollable, paginated, gridControls = false, variant = 'default' }) {
   const pageSize = 12;
@@ -2136,7 +2097,8 @@ function RoadmapBoard({ segments = [], complete = 0, total = 0, title = 'Viewing
 /* Up next: one spotlight chapter plus the queue behind it, instead of a card grid. */
 function UpNextBoard({ items = [], setSelected, onStart }) {
   if (!items.length) return null;
-  const [lead, ...queue] = items;
+  const [lead, ...rest] = items;
+  const queue = rest.slice(0, 3);
   return <section className="unb-board">
     <header className="unb-head">
       <div>
@@ -2162,7 +2124,7 @@ function UpNextBoard({ items = [], setSelected, onStart }) {
         </div>
       </article>
       {queue.length > 0 && <div className="unb-queue">
-        <p className="unb-queue-label">Then</p>
+        <p className="unb-queue-label">Then{rest.length > queue.length ? ` · +${rest.length - queue.length} more` : ''}</p>
         <div className="unb-queue-items">
           {queue.map((item, index) => <button key={item.id} className="unb-item" onClick={() => setSelected(item)} style={{ '--accent': item.accent }}>
             <span className="unb-item-index">{String(index + 1).padStart(2, '0')}</span>
