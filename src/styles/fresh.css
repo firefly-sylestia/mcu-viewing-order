@@ -3225,3 +3225,58 @@
   :root .movie-site .header-status-pill .header-pill-label em { display: none; }
   :root .movie-site .header-status-pill .header-pill-label b { max-width: 108px; font-size: 11.5px; }
 }
+
+
+/* ===========================================================================
+   22. ROOMIER NAV + HOLD-AND-DRAG SWITCHING + LARGER X-MEN PILL
+   =========================================================================== */
+:root .movie-site .bottom-nav {
+  grid-template-columns: repeat(var(--nav-count, 5), minmax(0, 1fr));
+  gap: 0;
+  padding: 8px;
+  min-height: 64px;
+  border-radius: 26px;
+  overflow: visible;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+:root .movie-site .bottom-nav .nav-blob {
+  top: 8px;
+  bottom: 8px;
+  left: 8px;
+  width: calc((100% - 16px) / var(--nav-count, 5));
+  transition: transform var(--nav-dur, .58s) cubic-bezier(.32, 1.22, .46, 1), background .3s ease, box-shadow .3s ease, filter .2s ease;
+  will-change: transform;
+}
+:root .movie-site .bottom-nav button {
+  padding: 11px 6px;
+  gap: 4px;
+  touch-action: pan-y;
+}
+:root .movie-site .bottom-nav button span {
+  font-size: 11.5px;
+  font-weight: 650;
+  letter-spacing: .01em;
+}
+:root .movie-site .bottom-nav[data-holding="true"] .nav-blob {
+  transform: translateX(calc(var(--nav-index) * 100%)) translateY(-7px) scale(1.05, 1.14);
+  box-shadow: 0 22px 44px -18px color-mix(in srgb, var(--accent, #da1e37) 88%, transparent),
+    0 0 34px -6px color-mix(in srgb, var(--accent, #da1e37) 62%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, .24);
+  filter: brightness(1.12) saturate(1.08);
+}
+:root .movie-site .bottom-nav[data-holding="true"] button { color: rgba(255, 255, 255, .66); }
+:root .movie-site .bottom-nav[data-holding="true"] button.active { color: #fff !important; }
+:root[data-theme="light"] .movie-site .bottom-nav[data-holding="true"] button { color: #6b7583; }
+:root[data-theme="light"] .movie-site .bottom-nav[data-holding="true"] button.active { color: #fff !important; }
+@media (max-width: 420px) {
+  :root .movie-site .bottom-nav { padding: 7px; min-height: 62px; border-radius: 24px; }
+  :root .movie-site .bottom-nav .nav-blob { top: 7px; bottom: 7px; left: 7px; width: calc((100% - 14px) / var(--nav-count, 5)); }
+  :root .movie-site .bottom-nav button { padding: 10px 4px; }
+  :root .movie-site .bottom-nav button span { font-size: 10.5px; }
+}
+
+/* X-Men mark was still reading smaller than its neighbours */
+:root .universe-tabs button[data-universe="xmen"] { min-width: 78px; }
+:root .universe-tabs button[data-universe="xmen"] .universe-logo-mask { transform: scale(1.08); }

@@ -45,6 +45,16 @@ const xmenPalette = ['#6a6a7a', '#828294', '#9a9aa8', '#b0b0ba', '#c4c4cc', '#d8
 const sonyPalette = ['#7d1829', '#9e1d32', '#b51f2f', '#c94c3b', '#d9573f', '#e05b3f'];
 
 const NAV_ORDER = ['home', 'list', 'analytics', 'watch', 'profile'];
+// The watch page is parked for now: its tab and entry points are hidden, the code stays intact.
+const WATCH_ENABLED = false;
+const NAV_TAB_META = {
+  home: { label: 'Home', Icon: Home },
+  list: { label: 'List', Icon: ListFilter },
+  analytics: { label: 'Stats', Icon: BarChart3 },
+  watch: { label: 'Watch', Icon: Play },
+  profile: { label: 'Profile', Icon: UserRound },
+};
+const NAV_VISIBLE = NAV_ORDER.filter((id) => WATCH_ENABLED || id !== 'watch');
 const SORT_LABELS = { order: 'Order', phase: 'Phase', rating: 'Rating', imdb: 'IMDb', tomato: 'Tomato', meta: 'Meta', popularity: 'Popular', year: 'Year', title: 'Title', essential: 'Essential' };
 const universeFullName = (value) => value === 'marvel' ? 'Marvel Cinematic Universe' : value === 'xmen' ? 'X-Men Universe' : value === 'sony' ? 'Sony Spider-Man Universe' : 'DC Universe';
 const universeShortName = (value) => value === 'marvel' ? 'MCU' : value === 'xmen' ? 'X-Men' : value === 'sony' ? 'Sony' : 'DC';
@@ -196,6 +206,87 @@ export default function App() {
   const [typeFilter, setTypeFilter] = useState(saved.typeFilter || 'All');
   const [heroIndex, setHeroIndex] = useState(saved.heroIndex || 0);
   const [section, setSection] = useState(parseHash().section || saved.section || 'home');
+  const [navHoldIndex, setNavHoldIndex] = useState(null);
+  const [navHolding, setNavHolding] = useState(false);
+  const navRef = useRef(null);
+  const navHoldTimer = useRef(null);
+  const navDragRef = useRef(false);
+  const navHoldIndexRef = useRef(null);
+  const navSwallowClick = useRef(false);
+  const navPointerStart = useRef(null);
+  const navIndexOf = (clientX) => {
+    const nav = navRef.current;
+    if (!nav) return 0;
+    const buttons = Array.from(nav.querySelectorAll('button'));
+    let best = 0;
+    let bestDistance = Infinity;
+    buttons.forEach((button, i) => {
+      const rect = button.getBoundingClientRect();
+      const distance = Math.abs(clientX - (rect.left + rect.width / 2));
+      if (distance < bestDistance) { bestDistance = distance; best = i; }
+    });
+    return best;
+  };
+  const clearNavHoldTimer = () => {
+    if (navHoldTimer.current) { window.clearTimeout(navHoldTimer.current); navHoldTimer.current = null; }
+  };
+  const resetNavHold = () => {
+    clearNavHoldTimer();
+    navPointerStart.current = null;
+    navDragRef.current = false;
+    navHoldIndexRef.current = null;
+    setNavHoldIndex(null);
+    setNavHolding(false);
+  };
+  const handleNavPointerDown = (event) => {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    navPointerStart.current = { x: event.clientX, y: event.clientY };
+    const startIndex = navIndexOf(event.clientX);
+    clearNavHoldTimer();
+    try { event.currentTarget.setPointerCapture(event.pointerId); } catch (error) { /* capture is optional */ }
+    navHoldTimer.current = window.setTimeout(() => {
+      navDragRef.current = true;
+      navHoldIndexRef.current = startIndex;
+      setNavHoldIndex(startIndex);
+      setNavHolding(true);
+      hapticTap();
+    }, 190);
+  };
+  const handleNavPointerMove = (event) => {
+    if (!navDragRef.current) {
+      const start = navPointerStart.current;
+      if (start && Math.abs(event.clientX - start.x) > 12) clearNavHoldTimer();
+      return;
+    }
+    event.preventDefault();
+    const index = navIndexOf(event.clientX);
+    if (navHoldIndexRef.current !== index) {
+      navHoldIndexRef.current = index;
+      setNavHoldIndex(index);
+      hapticTap();
+    }
+  };
+  const handleNavPointerUp = (event) => {
+    const wasHolding = navDragRef.current;
+    clearNavHoldTimer();
+    navPointerStart.current = null;
+    if (!wasHolding) return;
+    const index = navHoldIndexRef.current ?? navIndexOf(event.clientX);
+    navSwallowClick.current = true;
+    window.setTimeout(() => { navSwallowClick.current = false; }, 80);
+    resetNavHold();
+    const target = NAV_VISIBLE[index];
+    if (target) { setSection(target); if (target === 'home') setWatchItem(null); }
+  };
+  const handleNavClick = (id) => {
+    if (navSwallowClick.current) return;
+    hapticTap();
+    setSection(id);
+    if (id === 'home') setWatchItem(null);
+  };
+  useEffect(() => {
+    if (!WATCH_ENABLED && section === 'watch') setSection('home');
+  }, [section]);
   const [actions, setActions] = useState(saved.actions || {});
   const [posterMap, setPosterMap] = useState({});
   const [omdbVersion, setOmdbVersion] = useState(0);
@@ -730,6 +821,12 @@ export default function App() {
   };
   const resetFilters = () => { setQuery(''); setGenre('All'); setRating(0); setAgeRatingFilter('All'); setPhaseFilter('All'); setTypeFilter('All'); setSortBy('order'); setSortDirection('asc'); };
   const handleStartWatch = useCallback((item, tmdbId, mediaType) => {
+    if (!WATCH_ENABLED) {
+      setStatus(item, 'watching');
+      updateAction(item, { watchStartedAt: Date.now() });
+      setSelected(item);
+      return;
+    }
     setWatchItem({ item, tmdbId, mediaType });
     setStatus(item, 'watching');
     updateAction(item, { watchStartedAt: Date.now() });
@@ -952,17 +1049,29 @@ export default function App() {
       {section === 'list' && <ListSection items={activeItems} sortKey={`${sortBy}-${sortDirection}`} externalResults={externalSearchResults} externalLoading={externalSearchLoading} query={query} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} onPlayExternal={onPlayExternal} onWarning={showWarningToast} />}
       {section === 'analytics' && <><AnalyticsPanel stats={stats} large /><MovieRail title="In progress" items={activeItems.filter(i => i.userStatus === 'watching')} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} /></>}
             {section === 'profile' && <ProfilePage stats={stats} activeItems={activeItems} universe={universe} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} conflict={conflict} onResolveRemote={resolveUseRemote} onResolveLocal={resolveKeepLocal} syncToast={toast} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} />}
-      {section === 'watch' && safeWatchItem && <WatchPage watchItem={safeWatchItem} activeItems={roadmapItems} onBack={() => { setWatchItem(null); window.history.replaceState(null, '', '#watch'); }} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={startWatchWithConfirm} updateAction={updateAction} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} />}
-      {section === 'watch' && !safeWatchItem && <WatchBrowse activeItems={activeItems} externalResults={externalSearchResults} externalLoading={externalSearchLoading} actions={actions} query={query} onStartWatch={startWatchWithConfirm} onPlayExternal={onPlayExternal} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} />}
+      {WATCH_ENABLED && section === 'watch' && safeWatchItem && <WatchPage watchItem={safeWatchItem} activeItems={roadmapItems} onBack={() => { setWatchItem(null); window.history.replaceState(null, '', '#watch'); }} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={startWatchWithConfirm} updateAction={updateAction} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} />}
+      {WATCH_ENABLED && section === 'watch' && !safeWatchItem && <WatchBrowse activeItems={activeItems} externalResults={externalSearchResults} externalLoading={externalSearchLoading} actions={actions} query={query} onStartWatch={startWatchWithConfirm} onPlayExternal={onPlayExternal} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} />}
 
       {warningToast && <div className="app-warning-toast" role="status"><ShieldAlert size={16} /><span>{warningToast}</span><button onClick={() => setWarningToast('')} aria-label="Dismiss warning"><X size={14} /></button></div>}
-  <nav className="bottom-nav" aria-label="Primary" style={{ '--nav-index': Math.max(0, NAV_ORDER.indexOf(section)) }}>
+  <nav
+        ref={navRef}
+        className="bottom-nav"
+        aria-label="Primary"
+        data-holding={navHolding ? 'true' : 'false'}
+        style={{ '--nav-index': navHoldIndex ?? Math.max(0, NAV_VISIBLE.indexOf(section)), '--nav-count': NAV_VISIBLE.length, '--nav-dur': navHolding ? '90ms' : '.58s' }}
+        onPointerDown={handleNavPointerDown}
+        onPointerMove={handleNavPointerMove}
+        onPointerUp={handleNavPointerUp}
+        onPointerCancel={resetNavHold}
+        onContextMenu={(event) => { if (navHolding) event.preventDefault(); }}
+      >
         <span className="nav-blob" aria-hidden="true" />
-        <button className={section === 'home' ? 'active' : ''} onClick={() => { hapticTap(); setSection('home'); setWatchItem(null); }}><Home size={22} /><span>Home</span></button>
-        <button className={section === 'list' ? 'active' : ''} onClick={() => { hapticTap(); setSection('list'); }}><ListFilter size={22} /><span>List</span></button>
-        <button className={section === 'analytics' ? 'active' : ''} onClick={() => { hapticTap(); setSection('analytics'); }}><BarChart3 size={22} /><span>Stats</span></button>
-        <button className={section === 'watch' ? 'active' : ''} onClick={() => { hapticTap(); setSection('watch'); }}><Play size={22} /><span>Watch</span></button>
-        <button className={section === 'profile' ? 'active' : ''} onClick={() => { hapticTap(); setSection('profile'); }}><UserRound size={22} /><span>Profile</span></button>
+        {NAV_VISIBLE.map((id) => {
+          const { label, Icon } = NAV_TAB_META[id];
+          return <button key={id} className={section === id ? 'active' : ''} aria-current={section === id ? 'page' : undefined} onClick={() => handleNavClick(id)}>
+            <Icon size={22} /><span>{label}</span>
+          </button>;
+        })}
       </nav>
 
       {selectedItem && <DetailView item={selectedItem} onClose={() => selectItem(null)} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={startWatchWithConfirm} onStartWatchFromRoadmap={startWatchFromRoadmap} activeItems={roadmapItems} />}
