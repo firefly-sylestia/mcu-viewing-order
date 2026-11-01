@@ -2089,4 +2089,575 @@
 :root .pagination button { min-width: 38px; height: 38px; }
 :root .filter-footer .filter-results-btn svg { flex-shrink: 0; }
 
+/* ===========================================================================
+   18. ALIVE — brand logos, borderless elevation, mouse + touch feedback
+   =========================================================================== */
+
+.sr-only {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Every surface is borderless. Separation comes from fill, shadow and glow. */
+:root .movie-site,
+:root .movie-site * { border-color: transparent !important; }
+
+:root .movie-site :where(button, a, input, select, [tabindex]):focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #da1e37) 52%, transparent);
+}
+
+/* ── Universe switcher: brand marks instead of text pills ─────────────────── */
+:root .universe-tabs {
+  gap: 2px;
+  padding: 4px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--fx-surface-2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), 0 12px 26px -22px rgba(0, 0, 0, .9);
+}
+:root .universe-tabs button,
+:root .movie-site .universe-tabs button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--fx-muted);
+  box-shadow: none;
+}
+:root .universe-tabs button .universe-logo {
+  display: inline-flex;
+  align-items: center;
+  transition: transform .24s cubic-bezier(.2, .8, .2, 1), filter .24s ease;
+}
+:root .universe-tabs button .universe-logo svg { height: 15px; width: auto; display: block; }
+:root .universe-tabs button[data-universe="marvel"] .universe-logo svg { height: 17px; }
+:root .universe-tabs button[data-universe="sony"] .universe-logo svg { height: 14px; }
+:root .universe-tabs button:hover { background: var(--fx-surface-3); color: var(--fx-text); }
+:root .universe-tabs button:hover .universe-logo { transform: translateY(-1px) scale(1.05); }
+:root .universe-tabs button.active,
+:root .movie-site .universe-tabs button.active {
+  color: #fff;
+  background: color-mix(in srgb, var(--uni) 34%, var(--fx-surface));
+  box-shadow:
+    0 12px 26px -18px var(--uni),
+    0 0 28px -8px color-mix(in srgb, var(--uni) 62%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, .14);
+}
+:root .universe-tabs button.active .universe-logo {
+  filter: drop-shadow(0 2px 7px color-mix(in srgb, var(--uni) 70%, transparent));
+}
+
+:root[data-theme="light"] .universe-tabs {
+  background: #eef1f7;
+  box-shadow: inset 0 1px 2px rgba(16, 24, 40, .05);
+}
+:root[data-theme="light"] .universe-tabs button,
+:root[data-theme="light"] .movie-site .universe-tabs button {
+  color: #5f6b7a;
+  background: transparent;
+  box-shadow: none;
+}
+:root[data-theme="light"] .universe-tabs button:hover { background: #e4e9f2; color: #10141b; }
+:root[data-theme="light"] .universe-tabs button.active,
+:root[data-theme="light"] .movie-site .universe-tabs button.active {
+  color: color-mix(in srgb, var(--uni) 80%, #10141b);
+  background: #fff;
+  box-shadow: 0 10px 22px -16px rgba(16, 24, 40, .55);
+}
+:root[data-theme="light"] .universe-tabs button.active .universe-logo {
+  filter: drop-shadow(0 3px 6px color-mix(in srgb, var(--uni) 45%, transparent));
+}
+
+@media (max-width: 560px) {
+  :root .universe-tabs button { min-width: 0; padding: 0 10px; }
+  :root .universe-tabs button .universe-logo svg { height: 14px; }
+  :root .universe-tabs button[data-universe="marvel"] .universe-logo svg { height: 15px; }
+}
+
+/* ── Hero carousel: soft exit for the far poster + glow on hover/press ───── */
+:root .top-carousel {
+  box-shadow: 0 34px 80px -46px rgba(0, 0, 0, .9), 0 0 70px -42px color-mix(in srgb, var(--accent, #da1e37) 60%, transparent);
+}
+:root[data-theme="light"] .top-carousel {
+  box-shadow: 0 2px 6px rgba(16, 24, 40, .05), 0 30px 60px -34px rgba(16, 24, 40, .34), 0 0 60px -40px color-mix(in srgb, var(--accent, #da1e37) 45%, transparent);
+}
+
+.smooth-stack .poster-3 {
+  transform: translateX(148%) translate3d(0, 74px, -120px) rotate(14deg) scale(.6);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.smooth-stack .stack-poster {
+  transition: transform .54s cubic-bezier(.22, .8, .2, 1), opacity .46s ease, box-shadow .34s ease, filter .34s ease;
+}
+.smooth-stack .stack-poster:hover {
+  filter: brightness(1.1) saturate(1.04);
+  box-shadow: 0 26px 60px -24px rgba(0, 0, 0, .8), 0 0 46px -12px color-mix(in srgb, var(--accent, #da1e37) 68%, transparent);
+}
+.smooth-stack .stack-poster:active {
+  filter: brightness(1.14);
+  box-shadow: 0 0 50px -8px color-mix(in srgb, var(--accent, #da1e37) 82%, transparent);
+}
+@media (hover: none) {
+  .smooth-stack .poster-0:hover { transform: translateX(14%) translate3d(0, 0, 50px) scale(1); }
+  .smooth-stack .poster-1:hover { transform: translateX(70%) translate3d(0, 26px, 0) rotate(6deg) scale(.89); opacity: .9; }
+  .smooth-stack .poster-2:hover { transform: translateX(109%) translate3d(0, 52px, -30px) rotate(10deg) scale(.78); opacity: .68; }
+  .smooth-stack .poster-3:hover { transform: translateX(148%) translate3d(0, 74px, -120px) rotate(14deg) scale(.6); opacity: 0; }
+}
+@media (max-width: 600px) {
+  .smooth-stack .poster-3,
+  .smooth-stack .poster-3:hover { opacity: 0 !important; transform: translateX(150%) translate3d(0, 58px, -60px) rotate(12deg) scale(.62) !important; }
+}
+
+:root .carousel-nav {
+  border: 0;
+  background: rgba(10, 10, 12, .62);
+  box-shadow: 0 18px 40px -22px rgba(0, 0, 0, .85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+:root .carousel-nav > button {
+  color: rgba(255, 255, 255, .85);
+  transition: background .18s ease, color .18s ease, scale .18s ease, box-shadow .18s ease;
+}
+:root .carousel-nav > button:hover {
+  background: color-mix(in srgb, var(--accent, #da1e37) 48%, transparent);
+  color: #fff;
+  box-shadow: 0 0 20px -4px color-mix(in srgb, var(--accent, #da1e37) 85%, transparent);
+}
+:root .carousel-nav > button:active { scale: .92; }
+:root .dots button { background: rgba(255, 255, 255, .3); transition: width .24s ease, background .24s ease, box-shadow .24s ease; }
+:root .dots button:hover { background: rgba(255, 255, 255, .55); }
+:root .dots button.active {
+  background: var(--accent, #fff);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--accent, #da1e37) 70%, transparent);
+}
+:root[data-theme="light"] .carousel-nav { background: rgba(255, 255, 255, .88); box-shadow: 0 18px 34px -24px rgba(16, 24, 40, .5); }
+:root[data-theme="light"] .carousel-nav > button { color: #2a3140; }
+:root[data-theme="light"] .carousel-nav > button:hover { color: #10141b; }
+:root[data-theme="light"] .dots button { background: rgba(16, 24, 40, .22); }
+:root[data-theme="light"] .dots button:hover { background: rgba(16, 24, 40, .38); }
+
+/* ── Cards feel physical on both pointer types ───────────────────────────── */
+:root .movie-card,
+:root .wb-card {
+  transition: translate .3s cubic-bezier(.2, .8, .2, 1), box-shadow .3s ease, background-color .3s ease;
+}
+:root .movie-card .poster-button img { transition: transform .55s cubic-bezier(.2, .8, .2, 1); }
+:root .movie-card .card-actions button,
+:root .wb-card button { transition: background .16s ease, color .16s ease, scale .14s ease, box-shadow .16s ease; }
+:root .movie-card .card-actions button:not(:disabled):active,
+:root .wb-card button:not(:disabled):active { scale: .94; }
+@media (hover: hover) and (pointer: fine) {
+  :root .movie-card:hover,
+  :root .wb-card:hover {
+    translate: 0 -6px;
+    box-shadow: 0 30px 60px -38px rgba(0, 0, 0, .9), 0 0 36px -18px color-mix(in srgb, var(--accent, #da1e37) 72%, transparent);
+  }
+  :root .movie-card:hover .poster-button img { transform: scale(1.05); }
+  :root .movie-card .title-button:hover { color: color-mix(in srgb, var(--accent, #da1e37) 65%, #fff); }
+}
+:root .movie-card:active,
+:root .wb-card:active { scale: .986; }
+
+/* ── Watch page: cinematic stage, two-column detail, episode panel ───────── */
+:root .watch-page {
+  min-height: 100svh;
+  padding: 0 clamp(10px, 3vw, 26px) 130px;
+  background:
+    radial-gradient(820px 460px at 50% -6%, color-mix(in srgb, var(--accent, #da1e37) 26%, transparent), transparent 72%),
+    #050507;
+  color: #fff;
+}
+:root .watch-header {
+  position: sticky;
+  top: 0;
+  z-index: 24;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 2px;
+  border: 0;
+  background: color-mix(in srgb, #050507 76%, transparent);
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+  box-shadow: 0 26px 46px -38px #000;
+}
+:root .watch-header > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .07);
+  color: rgba(255, 255, 255, .78);
+  font-weight: 800;
+  font-size: 13px;
+  transition: background .18s ease, color .18s ease, box-shadow .18s ease;
+}
+:root .watch-header > button:hover {
+  background: rgba(255, 255, 255, .13);
+  color: #fff;
+  box-shadow: 0 0 22px -8px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+:root .watch-header h1 { font-size: clamp(17px, 2.4vw, 24px); letter-spacing: -.01em; }
+:root .watch-kicker { color: color-mix(in srgb, var(--accent) 65%, #fff); }
+:root .watch-server-select {
+  border: 0;
+  border-radius: 999px;
+  padding: 6px 6px 6px 14px;
+  background: rgba(255, 255, 255, .06);
+  color: rgba(255, 255, 255, .6);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05);
+}
+
+:root .watch-stage { position: relative; max-width: 1180px; margin: clamp(14px, 2.4vw, 26px) auto 0; }
+:root .watch-stage::before {
+  content: '';
+  position: absolute;
+  inset: -3% 0 -8%;
+  z-index: 0;
+  border-radius: 34px;
+  background: radial-gradient(62% 62% at 50% 40%, color-mix(in srgb, var(--accent) 48%, transparent), transparent 72%);
+  filter: blur(52px);
+  opacity: .5;
+  pointer-events: none;
+}
+:root .watch-player {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  aspect-ratio: 16 / 9;
+  border: 0;
+  border-radius: 24px;
+  overflow: hidden;
+  background: #000;
+  box-shadow: 0 50px 100px -62px #000, 0 18px 46px -30px rgba(0, 0, 0, .9);
+}
+:root .watch-progress-bar {
+  position: relative;
+  z-index: 1;
+  max-width: none;
+  height: 6px;
+  margin: 10px auto 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .09);
+  overflow: hidden;
+}
+:root .watch-progress-bar span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 55%, #fff), var(--accent));
+  box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 70%, transparent);
+  transition: width 1s linear;
+}
+:root .watch-controlbar {
+  max-width: 1180px;
+  margin: 12px auto 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 2px;
+}
+:root .watch-restart-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 13px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .07);
+  color: rgba(255, 255, 255, .75);
+  font-size: 12px;
+  font-weight: 800;
+  transition: background .16s ease, color .16s ease, box-shadow .16s ease, scale .16s ease;
+}
+:root .watch-restart-btn:hover {
+  background: rgba(255, 255, 255, .14);
+  color: #fff;
+  box-shadow: 0 0 20px -8px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+:root .watch-restart-btn:active { scale: .95; }
+:root .watch-controlbar-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+:root .watch-controlbar-chip {
+  padding: 6px 11px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .05);
+  color: rgba(255, 255, 255, .55);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+:root .watch-controlbar-server {
+  margin-left: auto;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: color-mix(in srgb, var(--accent) 35%, #fff);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+:root .watch-detail-grid {
+  max-width: 1180px;
+  margin: 16px auto 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+:root .watch-detail-grid:has(.watch-episode-picker) {
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+}
+:root .watch-info,
+:root .watch-episode-picker {
+  max-width: none;
+  margin: 0;
+  padding: clamp(16px, 2.2vw, 24px);
+  border-radius: 22px;
+  background: linear-gradient(150deg, #12141b, #0a0b10);
+  box-shadow: 0 34px 70px -56px #000, inset 0 1px 0 rgba(255, 255, 255, .04);
+}
+:root .watch-eyebrow {
+  margin: 0 0 10px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--accent) 45%, rgba(255, 255, 255, .45));
+}
+:root .watch-info .watch-desc { max-width: none; }
+:root .watch-actions .watch-action-btn { border: 0; background: rgba(255, 255, 255, .06); }
+:root .watch-action-btn:hover { background: rgba(255, 255, 255, .12); }
+:root .watch-age-badge { border: 0; background: rgba(255, 255, 255, .1); }
+
+:root .watch-episode-picker { display: flex; flex-direction: column; gap: 10px; }
+:root .watch-episode-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+:root .watch-episode-head h2 { margin: 0; font-size: 15px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; }
+:root .watch-episode-head span { font-size: 11px; font-weight: 800; color: rgba(255, 255, 255, .45); }
+:root .watch-episode-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 330px;
+  overflow-y: auto;
+  padding: 4px;
+  border: 0;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, .02);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .03);
+}
+:root .watch-episode-row {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) 22px;
+  gap: 8px;
+  padding: 10px 11px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: rgba(255, 255, 255, .62);
+  font-size: 13px;
+  text-align: left;
+  transition: background .16s ease, color .16s ease, box-shadow .18s ease;
+}
+:root .watch-episode-row:hover { background: rgba(255, 255, 255, .05); color: #fff; }
+:root .watch-episode-row.selected {
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+  color: #fff;
+  padding-left: 11px;
+  box-shadow: inset 3px 0 0 var(--accent), 0 10px 22px -18px var(--accent);
+}
+:root .watch-episode-row.watched .watch-ep-title { color: rgba(255, 255, 255, .35); }
+
+:root .watch-upnext { max-width: 1180px; margin: 26px auto 0; padding: 0; }
+:root .watch-upnext h2 { font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: rgba(255, 255, 255, .45); }
+:root .watch-upnext-rail { gap: 14px; padding: 6px 2px 12px; }
+:root .watch-rec-card { flex: 0 0 150px; transition: translate .26s ease, scale .16s ease; }
+:root .watch-rec-card:hover { translate: 0 -6px; }
+:root .watch-rec-card:active { scale: .97; }
+:root .watch-rec-poster {
+  width: 150px;
+  height: 212px;
+  border-radius: 16px;
+  box-shadow: 0 22px 44px -30px #000;
+  transition: box-shadow .26s ease;
+}
+:root .watch-rec-card:hover .watch-rec-poster {
+  box-shadow: 0 26px 50px -26px #000, 0 0 28px -12px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+
+:root .watch-roadmap { max-width: 1180px; margin: 26px auto 0; }
+:root .roadmap-part,
+:root .roadmap-inter-card { transition: translate .26s ease, box-shadow .26s ease, background-color .26s ease; }
+@media (hover: hover) and (pointer: fine) {
+  :root .roadmap-part:hover,
+  :root .roadmap-inter-card:hover {
+    translate: 0 -4px;
+    box-shadow: 0 24px 44px -32px rgba(0, 0, 0, .9), 0 0 26px -14px color-mix(in srgb, var(--accent, #da1e37) 70%, transparent);
+  }
+}
+:root .roadmap-part:active,
+:root .roadmap-inter-card:active { scale: .985; }
+
+:root[data-theme="light"] .watch-page {
+  background:
+    radial-gradient(820px 460px at 50% -6%, color-mix(in srgb, var(--accent, #da1e37) 14%, transparent), transparent 72%),
+    #eef1f6;
+  color: #10141b;
+}
+:root[data-theme="light"] .watch-header {
+  background: rgba(255, 255, 255, .84);
+  box-shadow: 0 22px 44px -36px rgba(16, 24, 40, .45);
+}
+:root[data-theme="light"] .watch-header > button { background: #eef1f7; color: #3d4756; }
+:root[data-theme="light"] .watch-header h1 { color: #10141b; }
+:root[data-theme="light"] .watch-kicker { color: var(--accent); }
+:root[data-theme="light"] .watch-server-select { background: #eef1f7; color: #4c5665; }
+:root[data-theme="light"] .watch-info,
+:root[data-theme="light"] .watch-episode-picker {
+  background: #fff;
+  color: #10141b;
+  box-shadow: 0 2px 6px rgba(16, 24, 40, .05), 0 22px 48px -34px rgba(16, 24, 40, .35);
+}
+:root[data-theme="light"] .watch-meta,
+:root[data-theme="light"] .watch-desc { color: #4c5665; }
+:root[data-theme="light"] .watch-eyebrow { color: var(--accent); }
+:root[data-theme="light"] .watch-controlbar-chip { background: rgba(16, 24, 40, .05); color: #5c6675; }
+:root[data-theme="light"] .watch-restart-btn { background: #eef1f7; color: #3d4756; }
+:root[data-theme="light"] .watch-episode-head span { color: #6b7583; }
+:root[data-theme="light"] .watch-episode-list { background: rgba(16, 24, 40, .03); }
+:root[data-theme="light"] .watch-episode-row { color: #55606f; }
+:root[data-theme="light"] .watch-episode-row:hover { background: rgba(16, 24, 40, .05); color: #10141b; }
+:root[data-theme="light"] .watch-episode-row.selected {
+  background: color-mix(in srgb, var(--accent) 12%, #fff);
+  color: #10141b;
+}
+:root[data-theme="light"] .watch-episode-row.watched .watch-ep-title { color: #9aa4b2; }
+:root[data-theme="light"] .watch-upnext h2 { color: #6b7583; }
+:root[data-theme="light"] .watch-rec-card > span { color: #10141b; }
+:root[data-theme="light"] .watch-rec-card > small { color: #7c8696; }
+:root[data-theme="light"] .watch-action-btn { background: rgba(16, 24, 40, .05); color: #3d4756; }
+:root[data-theme="light"] .watch-age-badge { background: rgba(16, 24, 40, .07); color: #3d4756; }
+
+/* ── Watch browse: editorial hero with a single clear start action ───────── */
+:root .watch-browse { max-width: 1240px; margin: 0 auto; }
+:root .wb-hero {
+  margin: 0 auto 10px;
+  padding: clamp(30px, 6vh, 58px) clamp(16px, 3vw, 32px) clamp(26px, 5vh, 46px);
+  border-radius: 30px;
+  background:
+    radial-gradient(560px 280px at 50% 0%, color-mix(in srgb, var(--brand-accent, #da1e37) 18%, transparent), transparent 74%),
+    linear-gradient(180deg, rgba(255, 255, 255, .04), rgba(255, 255, 255, .01));
+  box-shadow: 0 44px 90px -70px #000, inset 0 1px 0 rgba(255, 255, 255, .05);
+}
+:root .wb-hero h1 { letter-spacing: -.015em; }
+:root .wb-hero-actions { display: flex; justify-content: center; margin: 2px 0 22px; }
+:root .wb-hero-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  max-width: 100%;
+  padding: 11px 20px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--brand-accent, #da1e37);
+  color: #fff;
+  font-weight: 800;
+  font-size: 13px;
+  box-shadow: 0 20px 38px -20px color-mix(in srgb, var(--brand-accent, #da1e37) 90%, transparent);
+  transition: translate .2s ease, box-shadow .2s ease, filter .2s ease, scale .16s ease;
+}
+:root .wb-hero-cta:hover {
+  translate: 0 -2px;
+  filter: brightness(1.07);
+  box-shadow: 0 26px 46px -20px color-mix(in srgb, var(--brand-accent, #da1e37) 95%, transparent);
+}
+:root .wb-hero-cta:active { scale: .97; }
+:root .wb-hero-cta-label { white-space: nowrap; }
+:root .wb-hero-cta-title {
+  max-width: 230px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+  opacity: .85;
+}
+:root .wb-card {
+  border: 0;
+  border-radius: 18px;
+  background: linear-gradient(160deg, #111319, #0a0b10);
+  box-shadow: 0 22px 44px -36px #000;
+}
+:root .wb-card-media { border-radius: 18px 18px 0 0; }
+:root .wb-section-head h2 { letter-spacing: .01em; }
+:root .wb-density-toggle {
+  border: 0;
+  background: rgba(255, 255, 255, .05);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04);
+}
+:root .wb-density-toggle button { transition: background .16s ease, color .16s ease, scale .14s ease; }
+:root .wb-density-toggle button:active { scale: .93; }
+:root[data-theme="light"] .wb-hero {
+  background:
+    radial-gradient(560px 280px at 50% 0%, color-mix(in srgb, var(--brand-accent, #da1e37) 12%, transparent), transparent 74%),
+    #fff;
+  box-shadow: 0 2px 6px rgba(16, 24, 40, .05), 0 26px 60px -44px rgba(16, 24, 40, .4);
+}
+:root[data-theme="light"] .wb-card {
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(16, 24, 40, .05), 0 18px 40px -32px rgba(16, 24, 40, .4);
+}
+:root[data-theme="light"] .wb-density-toggle { background: #eef1f7; }
+:root[data-theme="light"] .wb-hero-cta { color: #fff; }
+
+@media (max-width: 900px) {
+  :root .watch-detail-grid,
+  :root .watch-detail-grid:has(.watch-episode-picker) { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 640px) {
+  :root .watch-page { padding-bottom: 110px; }
+  :root .watch-stage { margin-top: 10px; }
+  :root .watch-player { border-radius: 16px; aspect-ratio: 16 / 10; }
+  :root .watch-header { gap: 8px; }
+  :root .watch-header > button { height: 36px; padding: 0 10px; }
+  :root .watch-header > button span { display: none; }
+  :root .watch-controlbar-server { margin-left: 0; }
+  :root .watch-rec-card { flex: 0 0 116px; }
+  :root .watch-rec-poster { width: 116px; height: 164px; }
+  :root .wb-hero { border-radius: 22px; }
+  :root .wb-hero-cta-title { max-width: 130px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  :root .movie-card,
+  :root .wb-card,
+  :root .stack-poster,
+  :root .watch-rec-card { transition: none !important; }
+}
+
+
 

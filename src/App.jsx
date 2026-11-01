@@ -18,6 +18,7 @@ import { getFromCache, setCache, clearExpiredCache } from './utils/mediaCache';
 import { buildDownloadUrl, buildPlayerUrl } from './utils/mediaProviders';
 import { apiUrl, assetUrl, isOffline } from './utils/apiBase';
 import { hapticTap, hapticSelect, hapticSuccess, hapticWarning } from './utils/haptics';
+import { UNIVERSE_LOGOS } from './constants/logos';
 import './index.css';
 import './styles/fresh.css';
 
@@ -44,6 +45,8 @@ const xmenPalette = ['#6a6a7a', '#828294', '#9a9aa8', '#b0b0ba', '#c4c4cc', '#d8
 const sonyPalette = ['#7d1829', '#9e1d32', '#b51f2f', '#c94c3b', '#d9573f', '#e05b3f'];
 
 const SORT_LABELS = { order: 'Order', phase: 'Phase', rating: 'Rating', imdb: 'IMDb', tomato: 'Tomato', meta: 'Meta', popularity: 'Popular', year: 'Year', title: 'Title', essential: 'Essential' };
+const universeFullName = (value) => value === 'marvel' ? 'Marvel Cinematic Universe' : value === 'xmen' ? 'X-Men Universe' : value === 'sony' ? 'Sony Spider-Man Universe' : 'DC Universe';
+const universeShortName = (value) => value === 'marvel' ? 'MCU' : value === 'xmen' ? 'X-Men' : value === 'sony' ? 'Sony' : 'DC';
 const runtimeLabel = (minutes = 0, type = 'film') => {
   if (!minutes) return type === 'series' ? 'Series' : 'TBA';
   const h = Math.floor(minutes / 60);
@@ -819,7 +822,7 @@ export default function App() {
   <div className="header-bar">
   <div className="universe-tabs" role="tablist" aria-label="Universe">
   {[['marvel', 'Marvel'], ['sony', 'Sony'], ['xmen', 'X-Men'], ['dc', 'DC']].map(([key, label]) => (
-    <button key={key} data-universe={key} role="tab" aria-selected={universe === key} className={universe === key ? 'active' : ''} onClick={() => { hapticTap(); setUniverse(key); setHeroIndex(0); }}><span className="universe-dot" aria-hidden="true" />{label}</button>
+    <button key={key} data-universe={key} role="tab" aria-selected={universe === key} aria-label={`${label} universe`} title={`${label} universe`} className={universe === key ? 'active' : ''} onClick={() => { hapticTap(); setUniverse(key); setHeroIndex(0); }}><span className="universe-logo" aria-hidden="true">{UNIVERSE_LOGOS[key]}</span><span className="sr-only">{label}</span></button>
   ))}
   </div>
         <div className="header-search">
@@ -1032,17 +1035,20 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
   const [inlineTrailer, setInlineTrailer] = useState(null);
   const touchStartX = useRef(null);
   const didSwipe = useRef(false);
+  const resumeTimer = useRef(null);
+  useEffect(() => () => window.clearTimeout(resumeTimer.current), []);
   const move = (dir) => {
     setInlineTrailer(null);
     setHeroIndex((heroIndex + dir + items.length) % Math.max(items.length, 1));
   };
-  const handleTouchStart = (event) => { touchStartX.current = event.touches[0]?.clientX ?? null; didSwipe.current = false; };
+  const handleTouchStart = (event) => { window.clearTimeout(resumeTimer.current); touchStartX.current = event.touches[0]?.clientX ?? null; didSwipe.current = false; setPaused(true); };
   const handleTouchEnd = (event) => {
     if (touchStartX.current === null) return;
     const distance = (event.changedTouches[0]?.clientX ?? touchStartX.current) - touchStartX.current;
     touchStartX.current = null;
     didSwipe.current = Math.abs(distance) > 42;
     if (didSwipe.current) move(distance < 0 ? 1 : -1);
+    resumeTimer.current = window.setTimeout(() => setPaused(false), 4200);
   };
   const selectPoster = (item, rawIndex, offset) => {
     if (didSwipe.current) { didSwipe.current = false; return; }
@@ -1072,7 +1078,7 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
     <div className="feature-heading"><div><p className="eyebrow">{featured?.universe === 'marvel' ? 'Marvel Cinematic Universe' : featured?.universe === 'xmen' ? 'X-Men Universe' : featured?.universe === 'sony' ? 'Sony Spider-Man Universe' : 'DC Universe'} · Featured</p><h2>Top movies</h2></div><button className="feature-detail" onClick={() => setSelected(featured)}>View details</button></div>
     <div className="feature-stage">
       <div className="poster-stack smooth-stack">
-        {inlineTrailer ? <div className="inline-trailer"><iframe src={inlineTrailer} title={`${featured.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={() => setInlineTrailer(null)} aria-label="Close trailer"><X size={20} /></button></div> : items.map((item, rawIndex) => { const offset = (rawIndex - heroIndex + items.length) % items.length; if (offset > 2) return null; return <button key={item.id} aria-label={offset ? `Show ${item.title}` : `View ${item.title} details`} className={`stack-poster poster-${offset}`} onClick={() => selectPoster(item, rawIndex, offset)} style={{ '--accent': item.accent }}><PosterArt item={item} loading="eager" fetchPriority={offset === 0 ? 'high' : 'auto'} /></button>; })}
+        {inlineTrailer ? <div className="inline-trailer"><iframe src={inlineTrailer} title={`${featured.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={() => setInlineTrailer(null)} aria-label="Close trailer"><X size={20} /></button></div> : items.map((item, rawIndex) => { const offset = (rawIndex - heroIndex + items.length) % items.length; if (offset > 3) return null; return <button key={item.id} aria-label={offset ? `Show ${item.title}` : `View ${item.title} details`} aria-hidden={offset === 3 ? 'true' : undefined} tabIndex={offset === 3 ? -1 : 0} className={`stack-poster poster-${offset}`} onClick={() => selectPoster(item, rawIndex, offset)} style={{ '--accent': item.accent }}><PosterArt item={item} loading="eager" fetchPriority={offset === 0 ? 'high' : 'auto'} /></button>; })}
       </div>
       <div className="feature-copy">
         <div className="feature-kicker"><span>{featured?.year}</span><span>{runtimeLabel(featured?.runtime, featured?.type)}</span><span>{featured?.rating} rating</span></div>
@@ -1709,7 +1715,7 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, on
               <button className="detail-trailer" onClick={showTrailer}><Clapperboard size={18} /> Watch trailer</button>
             </div>
           )}
-          <div className="detail-kicker"><span>{item.universe === 'marvel' ? 'Marvel Cinematic Universe' : item.universe === 'xmen' ? 'X-Men Universe' : 'DC Universe'}</span><span>#{String(item.order || item.id).padStart(2, '0')}</span></div>
+          <div className="detail-kicker"><span>{universeFullName(item.universe)}</span><span>#{String(item.order || item.id).padStart(2, '0')}</span></div>
           <h1 id="detail-title">{item.title} <span className="phase-badge">Phase {item.phase || '—'}</span></h1>
           {guidance && <div className="detail-spoiler-warning" role="alert"><ShieldAlert size={18} /><div><strong>{guidance.label}</strong><p>{guidance.note}</p></div></div>}
           <div className="detail-chips"><RatingChips item={item} />{(item.genres || []).slice(0,3).map(g => <span key={g}>{g}</span>)}</div>
@@ -1754,9 +1760,6 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, on
                             {intItem.connectionNote && (
                               <p className="connection-note"><Sparkles size={11} /><span>{intItem.connectionNote}</span></p>
                             )}
-                              {intItem.connectionNote && (
-                                <p className="connection-note"><Sparkles size={11} /><span>{intItem.connectionNote}</span></p>
-                              )}
                             </div>
                           ))}
                         </div>
@@ -1829,6 +1832,7 @@ function WatchBrowse({ activeItems, externalResults = [], externalLoading = fals
   const currentUpNextPage = Math.min(upNextPage, upNextPageCount);
   const upNext = allUpNext.slice((currentUpNextPage - 1) * pageSize, currentUpNextPage * pageSize);
   const watched = activeItems.filter(i => i.userStatus === 'watched').length;
+  const nextWatch = inProgress[0] || allUpNext[0] || null;
   const total = activeItems.length || 1;
   const pct = Math.round((watched / total) * 100);
   useEffect(() => { setUpNextPage(1); }, [allUpNext.length]);
@@ -1863,6 +1867,15 @@ function WatchBrowse({ activeItems, externalResults = [], externalLoading = fals
           </div>
           <h1>Ready to watch?</h1>
           <p>Pick up where you left off or discover your next story.</p>
+          {nextWatch && (
+            <div className="wb-hero-actions">
+              <button className="wb-hero-cta" onClick={() => handleResume(nextWatch)}>
+                <Play size={17} fill="currentColor" />
+                <span className="wb-hero-cta-label">{inProgress.length ? 'Resume' : 'Start watching'}</span>
+                <span className="wb-hero-cta-title">{nextWatch.title}</span>
+              </button>
+            </div>
+          )}
           <div className="wb-hero-stats">
             <div className="wb-stat">
               <span className="wb-stat-value">{watched}</span>
@@ -2244,7 +2257,7 @@ const saveServerPref = (tmdbId, server) => {
       <header className="watch-header">
         <button onClick={handleBack} aria-label="Back to browsing"><ChevronLeft size={22} /> <span>Back</span></button>
         <div>
-          <span className="watch-kicker">{currentItem.universe === 'marvel' ? 'MCU' : 'DC'} · #{String(currentItem.order || currentItem.id).padStart(2, '0')}</span>
+          <span className="watch-kicker">{universeShortName(currentItem.universe)} · #{String(currentItem.order || currentItem.id).padStart(2, '0')}</span>
           <h1>{currentItem.title}</h1>
         </div>
         <div className="watch-server-select">
@@ -2259,6 +2272,7 @@ const saveServerPref = (tmdbId, server) => {
           <button className="watch-toast-close" onClick={() => { setToast(''); setIframeTimedOut(false); }} aria-label="Dismiss"><X size={14} /></button>
         </div>
       )}
+      <div className="watch-stage">
       <div className="watch-player">
         {nativePlayer ? (
           <div className="watch-native-launch">
@@ -2281,33 +2295,62 @@ const saveServerPref = (tmdbId, server) => {
         )}
       </div>
       <div className="watch-progress-bar"><span style={{ width: `${progress}%` }} /></div>
-      {!nativePlayer && (
-        <div className="watch-player-controls">
+      <div className="watch-controlbar">
+        {!nativePlayer && (
           <button className="watch-restart-btn" onClick={() => { setRestartCounter(c => c + 1); setToast(''); setIframeTimedOut(false); }} title="Restart from beginning">
             <RotateCcw size={13} /> Restart
           </button>
+        )}
+        <div className="watch-controlbar-meta">
+          {isSeries && <span className="watch-controlbar-chip">S{currentItem.season || 1} · E{selectedEpisode}</span>}
+          <span className="watch-controlbar-chip">{Math.round(progress)}% watched</span>
+          {roadmapInfo && <span className="watch-controlbar-chip">{roadmapInfo.complete}/{roadmapInfo.siblings.length} parts</span>}
         </div>
-      )}
-      {isSeries && episodes.length > 0 && (
-        <div className="watch-episode-picker">
-          <span className="watch-episode-label">{episodeLoading ? 'Loading...' : `${watchedInRange.length}/${episodeRangeTotal} watched`}</span>
-          <div className="watch-episode-list">
-            {episodes.map(ep => {
-              const isWatched = watchedEpisodes.includes(ep.episode);
-              const isSelected = selectedEpisode === ep.episode;
-              return <button
-                key={ep.episode}
-                className={`watch-episode-row ${isWatched ? 'watched' : ''} ${isSelected ? 'selected' : ''}`}
-                onClick={() => { setSelectedEpisode(ep.episode); toggleEpisode(ep.episode); }}
-              >
-                <span className="watch-ep-num">{String(ep.episode).padStart(2, '0')}</span>
-                <span className="watch-ep-title">{ep.title}</span>
-                <span className="watch-ep-check">{isWatched ? <Check size={15} /> : <Play size={15} />}</span>
-              </button>;
-            })}
+        <span className="watch-controlbar-server">{selectedServer}</span>
+      </div>
+      </div>
+      <div className="watch-detail-grid">
+        <div className="watch-info">
+        <p className="watch-eyebrow">Story details</p>
+        <div className="watch-meta">
+          <span>{currentItem.year}</span>
+          <span>·</span>
+          <span>{runtimeLabel(currentItem.runtime, currentItem.type)}</span>
+          <span>·</span>
+          <span className="watch-rating"><Star size={14} fill="currentColor" /> {currentItem.rating?.toFixed ? currentItem.rating.toFixed(1) : (currentItem.rating ?? 'N/A')}</span>
+        </div>
+        <p className="watch-desc">{currentItem.desc || `Watch ${currentItem.title} in the complete ${currentItem.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} viewing order.`}</p>
+        <div className="watch-actions">
+          <StatusSelect item={currentItem} setStatus={setStatus} />
+          <button onClick={() => toggleBookmark(currentItem)} className={`watch-action-btn ${currentItem.bookmarked ? 'saved' : ''}`} aria-label={currentItem.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={18} fill={currentItem.bookmarked ? 'currentColor' : 'none'} /></button>
+          <span className="watch-age-badge">{currentItem.ageRating || (currentItem.type === 'series' ? 'TV-14' : 'PG-13')}</span>
+          {currentItem.userStatus !== 'watched' && <button onClick={() => { setStatus(currentItem, 'watched'); setToast('Marked as watched'); setTimeout(() => setToast(''), 2000); }} className="watch-action-btn mark-watched" aria-label="Mark as Watched"><Check size={18} /><span>Mark Watched</span></button>}
+        </div>
+        </div>
+        {isSeries && episodes.length > 0 && (
+          <div className="watch-episode-picker">
+            <div className="watch-episode-head">
+              <h2>Episodes</h2>
+              <span>{episodeLoading ? 'Loading…' : `${watchedInRange.length}/${episodeRangeTotal} watched`}</span>
+            </div>
+            <div className="watch-episode-list">
+              {episodes.map(ep => {
+                const isWatched = watchedEpisodes.includes(ep.episode);
+                const isSelected = selectedEpisode === ep.episode;
+                return <button
+                  key={ep.episode}
+                  className={`watch-episode-row ${isWatched ? 'watched' : ''} ${isSelected ? 'selected' : ''}`}
+                  onClick={() => { setSelectedEpisode(ep.episode); toggleEpisode(ep.episode); }}
+                >
+                  <span className="watch-ep-num">{String(ep.episode).padStart(2, '0')}</span>
+                  <span className="watch-ep-title">{ep.title}</span>
+                  <span className="watch-ep-check">{isWatched ? <Check size={15} /> : <Play size={15} />}</span>
+                </button>;
+              })}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
       {roadmapInfo ? (
         <section className="watch-roadmap">
           <div className="section-title"><div><p className="eyebrow">Recommended sequence</p><h2>Viewing roadmap</h2></div><span className="roadmap-summary">{roadmapInfo.complete}/{roadmapInfo.siblings.length} parts watched</span></div>
@@ -2393,22 +2436,6 @@ const saveServerPref = (tmdbId, server) => {
           )}
         </section>
       )}
-      <div className="watch-info">
-        <div className="watch-meta">
-          <span>{currentItem.year}</span>
-          <span>·</span>
-          <span>{runtimeLabel(currentItem.runtime, currentItem.type)}</span>
-          <span>·</span>
-          <span className="watch-rating"><Star size={14} fill="currentColor" /> {currentItem.rating?.toFixed ? currentItem.rating.toFixed(1) : (currentItem.rating ?? 'N/A')}</span>
-        </div>
-        <p className="watch-desc">{currentItem.desc || `Watch ${currentItem.title} in the complete ${currentItem.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} viewing order.`}</p>
-        <div className="watch-actions">
-          <StatusSelect item={currentItem} setStatus={setStatus} />
-          <button onClick={() => toggleBookmark(currentItem)} className={`watch-action-btn ${currentItem.bookmarked ? 'saved' : ''}`} aria-label={currentItem.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={18} fill={currentItem.bookmarked ? 'currentColor' : 'none'} /></button>
-          <span className="watch-age-badge">{currentItem.ageRating || (currentItem.type === 'series' ? 'TV-14' : 'PG-13')}</span>
-          {currentItem.userStatus !== 'watched' && <button onClick={() => { setStatus(currentItem, 'watched'); setToast('Marked as watched'); setTimeout(() => setToast(''), 2000); }} className="watch-action-btn mark-watched" aria-label="Mark as Watched"><Check size={18} /><span>Mark Watched</span></button>}
-        </div>
-      </div>
       {upNext.length > 0 && (
         <div className="watch-upnext">
           <h2>Up Next</h2>
