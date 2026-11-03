@@ -5904,3 +5904,20 @@ button { border: 0; color: inherit; cursor: pointer; }
     filter: blur(18px) saturate(1.06) brightness(1.08);
   }
 }
+
+
+/* Gesture input selects the next/previous poster; it must not drag the
+   carousel layout or its backdrop with the finger. The normal poster-stack
+   and backdrop crossfade animations remain intact after the gesture. */
+.movie-site .top-carousel .carousel-backdrops {
+  transform: none !important;
+  transition: none !important;
+}
+.movie-site .top-carousel .poster-stack {
+  transform: none !important;
+  transition: none !important;
+}
+.movie-site .top-carousel[data-dragging="true"] .poster-stack,
+.movie-site .top-carousel[data-dragging="true"] .carousel-backdrops {
+  transition: none !important;
+}
