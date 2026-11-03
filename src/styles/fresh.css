@@ -4343,3 +4343,13 @@
   padding-top: calc(var(--safe-top) + 18px);
   padding-bottom: calc(var(--safe-bottom) + 18px);
 }
+
+
+/* Featured carousel text-shadow preference. The trailer action is always clean. */
+:root[data-carousel-text-shadow="off"] .movie-site .top-carousel .feature-copy,
+:root[data-carousel-text-shadow="off"] .movie-site .top-carousel .feature-copy * {
+  text-shadow: none !important;
+}
+.movie-site .top-carousel .feature-copy .feature-play {
+  text-shadow: none !important;
+}
