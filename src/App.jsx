@@ -595,33 +595,48 @@ export default function App() {
         if (item.season) params.set('season', String(item.season));
         
         try {
+          // First try the stored TMDB ID. If that ID is stale or invalid, retry
+          // by title/year instead of marking the title as permanently poster-less.
+          let data = null;
           const response = await fetch(apiUrl(`/api/tmdb/description?${params.toString()}`));
-          if (!response.ok) {
-            console.warn(`[v0] Description endpoint failed for ${item.title}: ${response.status}`);
-            return null;
+          if (response.ok) data = await response.json();
+
+          if ((!data?.success || !data?.poster) && item.tmdbId) {
+            const titleParams = new URLSearchParams({
+              title: item.title,
+              year: String(item.year || ''),
+              mediaType: item.type === 'series' ? 'tv' : 'movie',
+            });
+            if (item.season) titleParams.set('season', String(item.season));
+            const titleResponse = await fetch(apiUrl(`/api/tmdb/description?${titleParams.toString()}`));
+            if (titleResponse.ok) {
+              const titleData = await titleResponse.json();
+              if (titleData?.success && titleData?.poster) data = titleData;
+            }
           }
-          
-          const data = await response.json();
-          // If description finds a result with poster, return it
-          if (data.success && data.poster) {
-            return data;
-          }
-          
-          // Fallback: search directly using search/multi endpoint which is great for TV series
+
+          if (data?.success && data?.poster) return data;
+
+          // Final fallback: use TMDB multi-search and choose the matching media
+          // type/year rather than blindly taking the first result.
           console.log(`[v0] Fallback search for ${item.title} (no poster from description)`);
           const searchParams = new URLSearchParams({ q: item.title });
           const searchResponse = await fetch(apiUrl(`/api/tmdb/search?${searchParams.toString()}`));
-          
           if (!searchResponse.ok) {
-            console.warn(`[v0] Search fallback failed for ${item.title}`);
+            console.warn(`[v0] Search fallback failed for ${item.title}: ${searchResponse.status}`);
             return null;
           }
-          
+
           const searchData = await searchResponse.json();
           const results = searchData.results || [];
-          
-          if (results.length > 0) {
-            const result = results[0]; // Take first result (already sorted by relevance)
+          const expectedType = item.type === 'series' ? 'tv' : 'movie';
+          const typed = results.filter(result => result.type === expectedType);
+          const exactYear = typed.find(result => String(result.year || '') === String(item.year || ''));
+          const normalizedTitle = value => String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+          const exactTitle = typed.find(result => normalizedTitle(result.title) === normalizedTitle(item.title.replace(/\s+S\d+$/i, '')));
+          const result = exactYear || exactTitle || typed[0] || results[0];
+
+          if (result?.poster) {
             console.log(`[v0] Found poster via search fallback for ${item.title}`);
             return {
               success: true,
@@ -631,9 +646,10 @@ export default function App() {
               rating: result.rating,
               releaseDate: result.year,
               mediaType: result.type,
+              tmdbId: result.id,
             };
           }
-          
+
           return null;
         } catch (err) {
           console.error(`[v0] Poster fetch error for ${item.title}:`, err.message);
@@ -654,7 +670,7 @@ export default function App() {
               if (data.rating) updates[`rating_${item.id}`] = Number(data.rating);
               
               // Cache the metadata - use provided tmdbId or item's tmdbId
-              const cacheKey = metadataCacheKey({ tmdbId: data.tmdbId || item.tmdbId, season: item.season });
+              const cacheKey = metadataCacheKey({ tmdbId: item.tmdbId || data.tmdbId, season: item.season });
               if (cacheKey) {
                 const existing = getFromCache(cacheKey) || {};
                 const hadImdb = !!existing.imdbRating;
