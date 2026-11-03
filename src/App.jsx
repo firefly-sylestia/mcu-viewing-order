@@ -1202,6 +1202,12 @@ function ControlOverview({ stats, items, nextUp, universeLabel, onOpen, onStart,
 }
 
 function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) {
+  const [swipeAnimationEnabled, setSwipeAnimationEnabled] = useState(() => { try { return localStorage.getItem('carousel-swipe-animation') === '1'; } catch { return false; } });
+  useEffect(() => {
+    const onSwipeAnimationChange = (event) => setSwipeAnimationEnabled(Boolean(event.detail));
+    window.addEventListener('carousel-swipe-animation-changed', onSwipeAnimationChange);
+    return () => window.removeEventListener('carousel-swipe-animation-changed', onSwipeAnimationChange);
+  }, []);
   const [paused, setPaused] = useState(false);
   const [inlineTrailer, setInlineTrailer] = useState(null);
   const touchStartX = useRef(null);
@@ -1243,11 +1249,24 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
     didSwipe.current = false;
     setPaused(true);
   };
+  const handleTouchMove = (event) => {
+    if (!swipeAnimationEnabled || touchStartX.current === null) return;
+    const distance = (event.touches[0]?.clientX ?? touchStartX.current) - touchStartX.current;
+    if (Math.abs(distance) < 3) return;
+    const section = event.currentTarget;
+    section.dataset.swipePreview = 'true';
+    section.dataset.swipeDirection = distance < 0 ? 'next' : 'previous';
+    section.style.setProperty('--swipe-shift', `${Math.max(-150, Math.min(150, distance))}px`);
+  };
   const handleTouchEnd = (event) => {
     if (touchStartX.current === null) return;
     const distance = (event.changedTouches[0]?.clientX ?? touchStartX.current) - touchStartX.current;
     touchStartX.current = null;
     didSwipe.current = Math.abs(distance) > 46;
+    const section = event.currentTarget;
+    section.removeAttribute('data-swipe-preview');
+    section.removeAttribute('data-swipe-direction');
+    section.style.removeProperty('--swipe-shift');
     if (didSwipe.current) move(distance < 0 ? 1 : -1);
     resumeTimer.current = window.setTimeout(() => setPaused(false), 4200);
   };
@@ -1273,7 +1292,7 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
     }
   };
 
-  return <section className="top-carousel" style={{ '--accent': featured?.accent || '#9a4a4a' }} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocusCapture={() => setPaused(true)} onBlurCapture={() => setPaused(false)} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onTouchCancel={handleTouchEnd}>
+  return <section className="top-carousel" style={{ '--accent': featured?.accent || '#9a4a4a' }} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocusCapture={() => setPaused(true)} onBlurCapture={() => setPaused(false)} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} onTouchCancel={handleTouchEnd}>
     <div className="carousel-backdrops" aria-hidden="true">
       {prevBg?.poster && <img className="carousel-backdrop is-previous" src={prevBg.poster} alt="" width="300" height="450" referrerPolicy="no-referrer" />}
       {featured?.poster && <img key={featured.id} className="carousel-backdrop is-current" src={featured.poster} alt="" width="300" height="450" referrerPolicy="no-referrer" />}
