@@ -6174,3 +6174,10 @@ button { border: 0; color: inherit; cursor: pointer; }
   background: transparent !important;
   color: inherit !important;
 }
+
+
+/* Restore the subtle light lift on the black carousel description. */
+:root[data-theme="light"] .movie-site .top-carousel .feature-copy .feature-desc {
+  color: #000 !important;
+  text-shadow: 0 1px 0 rgba(255,255,255,.95), 0 0 3px rgba(255,255,255,.78) !important;
+}
