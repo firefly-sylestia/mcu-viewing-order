@@ -5634,3 +5634,71 @@ button { border: 0; color: inherit; cursor: pointer; }
     width: calc((100% - 10px - (var(--nav-count, 5) - 1) * 2px) / var(--nav-count, 5)) !important;
   }
 }
+
+
+/* ── Poster-forward hero + lighter glass surfaces ───────────────────────── */
+/* The hero tint lives on .top-carousel::after (not the image element). */
+.movie-site .top-carousel {
+  background: rgba(14, 16, 22, .28) !important;
+}
+.movie-site .top-carousel::before {
+  opacity: .46 !important;
+  filter: blur(30px) saturate(.92) !important;
+}
+.movie-site .top-carousel::after {
+  background: linear-gradient(110deg, rgba(7, 10, 18, .34), rgba(7, 10, 18, .18)) !important;
+}
+:root[data-theme="light"] .movie-site .top-carousel {
+  background: rgba(247, 250, 255, .20) !important;
+}
+:root[data-theme="light"] .movie-site .top-carousel::before {
+  opacity: .42 !important;
+  filter: blur(30px) saturate(.86) brightness(1.08) !important;
+}
+:root[data-theme="light"] .movie-site .top-carousel::after {
+  background: linear-gradient(110deg, rgba(246, 249, 255, .30), rgba(250, 252, 255, .14)) !important;
+}
+
+/* More see-through glass dock; retain blur while tightening the control group. */
+:root .movie-site .bottom-nav {
+  width: min(370px, calc(100vw - 40px)) !important;
+  gap: 1px !important;
+  --nav-gap: 1px !important;
+  background: rgba(13, 16, 22, .38) !important;
+  border-color: rgba(255, 255, 255, .09) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .12) !important;
+  backdrop-filter: blur(24px) saturate(155%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(155%) !important;
+}
+:root .movie-site .bottom-nav .nav-blob {
+  width: calc((100% - 10px - (var(--nav-count, 5) - 1) * 1px) / var(--nav-count, 5)) !important;
+  left: calc(4px + var(--nav-index, 0) * ((100% - 10px + 1px) / var(--nav-count, 5))) !important;
+}
+:root .movie-site .bottom-nav button {
+  min-height: 34px !important;
+  padding: 2px 1px !important;
+}
+:root .movie-site .bottom-nav button svg { width: 15px !important; height: 15px !important; }
+:root .movie-site .bottom-nav button span { font-size: 8.5px !important; }
+:root[data-theme="light"] .movie-site .bottom-nav {
+  background: rgba(250, 252, 255, .34) !important;
+  border-color: rgba(126, 148, 180, .12) !important;
+  box-shadow: 0 6px 20px rgba(80, 102, 136, .08) !important;
+  backdrop-filter: blur(24px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(150%) !important;
+}
+:root[data-theme="light"] .movie-site .bottom-nav .nav-blob {
+  background: rgba(220, 233, 250, .58) !important;
+  border-color: rgba(130, 158, 197, .14) !important;
+}
+@media (max-width: 560px) {
+  :root .movie-site .bottom-nav {
+    width: calc(100vw - 40px) !important;
+    gap: 1px !important;
+    --nav-gap: 1px !important;
+  }
+  :root .movie-site .bottom-nav .nav-blob {
+    width: calc((100% - 10px - (var(--nav-count, 5) - 1) * 1px) / var(--nav-count, 5)) !important;
+    left: calc(4px + var(--nav-index, 0) * ((100% - 10px + 1px) / var(--nav-count, 5))) !important;
+  }
+}
