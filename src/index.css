@@ -5931,7 +5931,9 @@ button { border: 0; color: inherit; cursor: pointer; }
   transition-timing-function: cubic-bezier(.22, 1, .36, 1) !important;
 }
 
-/* Keep every bottom-navigation icon black in light mode, including inactive tabs. */
+/* Keep bottom-navigation icons and labels black in light mode, active or inactive. */
+:root[data-theme="light"] .movie-site .bottom-nav button,
+:root[data-theme="light"] .movie-site .bottom-nav button span,
 :root[data-theme="light"] .movie-site .bottom-nav button svg {
   color: #000 !important;
   stroke: #000 !important;
