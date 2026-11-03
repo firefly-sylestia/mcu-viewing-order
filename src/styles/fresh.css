@@ -4348,10 +4348,10 @@
 /* Featured carousel text-shadow preference. The trailer action is always clean. */
 :root[data-carousel-text-shadow="off"] .top-carousel .feature-copy,
 :root[data-carousel-text-shadow="off"] .top-carousel .feature-copy *,
-:root[data-theme="light"][data-carousel-text-shadow="off"] .top-carousel .feature-copy * {
+:root[data-theme="light"][data-carousel-text-shadow="off"] .top-carousel .feature-copy.feature-copy * {
   text-shadow: none !important;
 }
 .top-carousel .feature-copy .feature-play,
-:root[data-theme="light"] .top-carousel .feature-copy .feature-play {
+:root[data-theme="light"] .top-carousel .feature-copy .feature-play.feature-play {
   text-shadow: none !important;
 }
