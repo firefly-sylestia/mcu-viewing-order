@@ -743,12 +743,14 @@ export default function App() {
       if (omdbFetchedRef.current.has(ck)) return false;
       const cached = getFromCache(ck);
       return !cached || (!cached.imdbRating && !cached.tomatoRating && !cached.metaRating);
-    }).slice(0, 12);
+    }).slice(0, 24);
     if (!needRatings.length) return;
     let cancelled = false;
     const fetchOmdbBatch = async (idx) => {
       if (cancelled || idx >= needRatings.length) return;
-      const batch = needRatings.slice(idx, idx + 2);
+      // A little more parallelism makes visible ratings populate quickly without
+      // flooding the OMDb proxy with one request per title at once.
+      const batch = needRatings.slice(idx, idx + 6);
       await Promise.allSettled(batch.map(async (item) => {
         const ck = metadataCacheKey(item) || `omdb:${item.id}`;
         try {
@@ -769,7 +771,7 @@ export default function App() {
           }
         } catch {}
       }));
-      if (!cancelled) { setOmdbVersion(v => v + 1); setTimeout(() => fetchOmdbBatch(idx + 2), 500); }
+      if (!cancelled) { setOmdbVersion(v => v + 1); fetchOmdbBatch(idx + 6); }
     };
     fetchOmdbBatch(0);
     return () => { cancelled = true; };
@@ -1328,10 +1330,33 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
 }
 
 function PosterArt({ item, loading: loadingProp = 'lazy', fetchPriority: fetchPriorityProp = 'auto' }) {
-  return item.poster ? <>
-    <img src={item.poster} alt={`${item.title} poster`} width="300" height="450" loading={loadingProp} fetchPriority={fetchPriorityProp} referrerPolicy="no-referrer" onError={e => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling?.removeAttribute('hidden'); }} />
-    <FallbackPoster item={item} hidden />
-  </> : <FallbackPoster item={item} />;
+  const [retryAttempt, setRetryAttempt] = useState(0);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    setRetryAttempt(0);
+    setFailed(false);
+  }, [item.poster]);
+
+  if (!item.poster || failed) return <FallbackPoster item={item} />;
+
+  const src = retryAttempt
+    ? `${item.poster}${item.poster.includes('?') ? '&' : '?'}poster_retry=${retryAttempt}`
+    : item.poster;
+
+  return <img
+    src={src}
+    alt={`${item.title} poster`}
+    width="300"
+    height="450"
+    loading={loadingProp}
+    fetchPriority={fetchPriorityProp}
+    referrerPolicy="no-referrer"
+    onError={() => {
+      if (retryAttempt < 1) setRetryAttempt(1);
+      else setFailed(true);
+    }}
+  />;
 }
 function FallbackPoster({ item, hidden = false }) { return <div className="fallback-poster" hidden={hidden}><strong>{item.title}</strong><span>{item.year}</span></div>; }
 
