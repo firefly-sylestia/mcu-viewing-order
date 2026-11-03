@@ -356,10 +356,6 @@ function SettingsPanel({ profileName, setProfileName, user, configured, onLogin,
         </div>
       </div>
 
-      <div className="settings-group">
-        <h3 className="settings-group-title">Motion</h3>
-      </div>
-
       {/* Player Mode */}
       <div className="settings-group">
         <h3 className="settings-group-title">Playback</h3>
