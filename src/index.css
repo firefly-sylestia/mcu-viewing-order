@@ -5926,6 +5926,15 @@ button { border: 0; color: inherit; cursor: pointer; }
 /* Manual gestures use the normal poster-stack animation with a shorter
    duration. The automatic carousel keeps its original timing. */
 .movie-site .top-carousel[data-fast-swipe="true"] .smooth-stack .stack-poster {
-  transition-duration: .24s !important;
+  /* 0.368s is 1.25x the normal 0.46s transition speed. */
+  transition-duration: .368s !important;
   transition-timing-function: cubic-bezier(.22, 1, .36, 1) !important;
+}
+
+/* Keep every bottom-navigation icon black in light mode, including inactive tabs. */
+:root[data-theme="light"] .movie-site .bottom-nav button svg {
+  color: #000 !important;
+  stroke: #000 !important;
+  mix-blend-mode: normal !important;
+  opacity: 1 !important;
 }
