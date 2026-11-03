@@ -1204,7 +1204,7 @@ function ControlOverview({ stats, items, nextUp, universeLabel, onOpen, onStart,
 function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) {
   const [paused, setPaused] = useState(false);
   const [inlineTrailer, setInlineTrailer] = useState(null);
-  const touchStartX = useRef(null);
+  const touchStartPoint = useRef(null);
   const didSwipe = useRef(false);
   const resumeTimer = useRef(null);
   const [leavingId, setLeavingId] = useState(null);
@@ -1239,22 +1239,36 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
   };
   const handleTouchStart = (event) => {
     window.clearTimeout(resumeTimer.current);
-    touchStartX.current = event.touches[0]?.clientX ?? null;
+    const touch = event.touches[0];
+    touchStartPoint.current = touch ? { x: touch.clientX, y: touch.clientY } : null;
     didSwipe.current = false;
     setPaused(true);
   };
   const handleTouchEnd = (event) => {
-    if (touchStartX.current === null) return;
-    const distance = (event.changedTouches[0]?.clientX ?? touchStartX.current) - touchStartX.current;
-    touchStartX.current = null;
-    didSwipe.current = Math.abs(distance) > 46;
-    const section = event.currentTarget;
-    if (didSwipe.current) {
-      // Use the regular carousel transition, but shorten it for a manual gesture.
+    const start = touchStartPoint.current;
+    const touch = event.changedTouches[0];
+    touchStartPoint.current = null;
+    if (!start || !touch) return;
+    const deltaX = touch.clientX - start.x;
+    const deltaY = touch.clientY - start.y;
+    const horizontalDistance = Math.abs(deltaX);
+    const verticalDistance = Math.abs(deltaY);
+    // Only accept a clear horizontal gesture (within roughly 34 degrees).
+    // Vertical or diagonal scrolling should never change the featured poster.
+    const isHorizontalSwipe = horizontalDistance > 46 && horizontalDistance >= verticalDistance * 1.5;
+    didSwipe.current = isHorizontalSwipe;
+    if (isHorizontalSwipe) {
+      const section = event.currentTarget;
+      // Use the regular carousel transition, but shorten it slightly for a manual gesture.
       section.dataset.fastSwipe = 'true';
       window.setTimeout(() => section.removeAttribute('data-fast-swipe'), 420);
-      move(distance < 0 ? 1 : -1);
+      move(deltaX < 0 ? 1 : -1);
     }
+    resumeTimer.current = window.setTimeout(() => setPaused(false), 4200);
+  };
+  const handleTouchCancel = () => {
+    touchStartPoint.current = null;
+    didSwipe.current = false;
     resumeTimer.current = window.setTimeout(() => setPaused(false), 4200);
   };
   const selectPoster = (item, rawIndex, offset) => {
@@ -1279,7 +1293,7 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
     }
   };
 
-  return <section className="top-carousel" style={{ '--accent': featured?.accent || '#9a4a4a' }} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocusCapture={() => setPaused(true)} onBlurCapture={() => setPaused(false)} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onTouchCancel={handleTouchEnd}>
+  return <section className="top-carousel" style={{ '--accent': featured?.accent || '#9a4a4a' }} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocusCapture={() => setPaused(true)} onBlurCapture={() => setPaused(false)} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onTouchCancel={handleTouchCancel}>
     <div className="carousel-backdrops" aria-hidden="true">
       {prevBg?.poster && <img className="carousel-backdrop is-previous" src={prevBg.poster} alt="" width="300" height="450" referrerPolicy="no-referrer" />}
       {featured?.poster && <img key={featured.id} className="carousel-backdrop is-current" src={featured.poster} alt="" width="300" height="450" referrerPolicy="no-referrer" />}
