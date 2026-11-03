@@ -5792,3 +5792,63 @@ button { border: 0; color: inherit; cursor: pointer; }
 :root .movie-site .bottom-nav button:not(.active) svg {
   stroke: #fff !important;
 }
+
+
+/* ── Correct carousel backdrop layer + theme-aware navigation colors ────── */
+/* The visible artwork is the .carousel-backdrop image; ::before is disabled. */
+.movie-site .top-carousel {
+  background: #111 !important;
+}
+.movie-site .top-carousel .carousel-backdrop {
+  opacity: .78 !important;
+  filter: blur(24px) saturate(1.18) brightness(.96) !important;
+}
+.movie-site .top-carousel .carousel-backdrop-shade {
+  background: rgba(5, 8, 14, .18) !important;
+}
+.movie-site .top-carousel .carousel-backdrop.is-previous {
+  opacity: .0 !important;
+}
+:root[data-theme="light"] .movie-site .top-carousel {
+  background: #edf3fb !important;
+}
+:root[data-theme="light"] .movie-site .top-carousel .carousel-backdrop {
+  opacity: .76 !important;
+  filter: blur(24px) saturate(1.08) brightness(1.08) !important;
+}
+:root[data-theme="light"] .movie-site .top-carousel .carousel-backdrop-shade {
+  background: linear-gradient(115deg, rgba(237, 244, 255, .42), rgba(248, 250, 255, .30)) !important;
+}
+
+/* Remove blend-mode: it does not sample the nav's backdrop reliably.
+   Use a deliberate high-contrast foreground for each theme instead. */
+:root .movie-site .bottom-nav button:not(.active),
+:root .movie-site .bottom-nav button:not(.active) svg,
+:root .movie-site .bottom-nav button:not(.active) span {
+  color: #f7f9ff !important;
+  opacity: 1 !important;
+  mix-blend-mode: normal !important;
+}
+:root .movie-site .bottom-nav button:not(.active) svg {
+  stroke: #f7f9ff !important;
+}
+:root[data-theme="light"] .movie-site .bottom-nav button:not(.active),
+:root[data-theme="light"] .movie-site .bottom-nav button:not(.active) svg,
+:root[data-theme="light"] .movie-site .bottom-nav button:not(.active) span {
+  color: #24364f !important;
+  opacity: 1 !important;
+  mix-blend-mode: normal !important;
+}
+:root[data-theme="light"] .movie-site .bottom-nav button:not(.active) svg {
+  stroke: #24364f !important;
+}
+@media (max-width: 560px) {
+  .movie-site .top-carousel .carousel-backdrop {
+    filter: blur(22px) saturate(1.14) brightness(.96) !important;
+    opacity: .78 !important;
+  }
+  :root[data-theme="light"] .movie-site .top-carousel .carousel-backdrop {
+    filter: blur(22px) saturate(1.06) brightness(1.08) !important;
+    opacity: .76 !important;
+  }
+}
