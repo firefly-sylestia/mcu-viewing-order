@@ -268,7 +268,7 @@ function SettingsPanel({ profileName, setProfileName, user, configured, onLogin,
   const { theme, setTheme } = useAppTheme();
   const { variant, setVariant } = useUiVariant();
   const [hapticsOn, setHapticsOn] = useState(() => getHapticsEnabled());
-  const [swipeAnimationOn, setSwipeAnimationOn] = useState(() => { try { return localStorage.getItem('carousel-swipe-animation') === '1'; } catch { return false; } });
+  const [swipeAnimationOn, setSwipeAnimationOn] = useState(() => { try { return localStorage.getItem('carousel-swipe-animation') !== '0'; } catch { return true; } });
   const [mounted, setMounted] = useState(false);
   const [draft, setDraft] = useState(profileName);
   const [editing, setEditing] = useState(false);
