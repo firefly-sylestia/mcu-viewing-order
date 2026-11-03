@@ -6069,7 +6069,7 @@ button { border: 0; color: inherit; cursor: pointer; }
 }
 
 
-/* ── Featured carousel typography: stronger metadata + black/white contrast ─ */
+/* ── Featured carousel typography: theme-aware contrast ─ */
 .movie-site .top-carousel .feature-kicker {
   font-size: clamp(14px, 1.15vw, 16px) !important;
   font-weight: 650 !important;
@@ -6079,18 +6079,42 @@ button { border: 0; color: inherit; cursor: pointer; }
   font-size: inherit !important;
   font-weight: inherit !important;
 }
-.movie-site .top-carousel .feature-copy,
-.movie-site .top-carousel .feature-copy h1,
-.movie-site .top-carousel .feature-copy p,
-.movie-site .top-carousel .feature-copy .feature-kicker,
-.movie-site .top-carousel .feature-copy .feature-kicker span,
-.movie-site .top-carousel .feature-copy .feature-footer,
-.movie-site .top-carousel .feature-copy .feature-footer button,
-.movie-site .top-carousel .feature-copy .chips,
-.movie-site .top-carousel .feature-copy .chips span {
+
+/* Pure black with a crisp white lift is a LIGHT THEME treatment only. */
+:root[data-theme="light"] .movie-site .top-carousel .feature-copy,
+:root[data-theme="light"] .movie-site .top-carousel .feature-copy h1,
+:root[data-theme="light"] .movie-site .top-carousel .feature-copy p,
+:root[data-theme="light"] .movie-site .top-carousel .feature-copy .feature-kicker,
+:root[data-theme="light"] .movie-site .top-carousel .feature-copy .feature-kicker span,
+:root[data-theme="light"] .movie-site .top-carousel .feature-copy .feature-footer,
+:root[data-theme="light"] .movie-site .top-carousel .feature-copy .feature-footer button,
+:root[data-theme="light"] .movie-site .top-carousel .feature-copy .chips,
+:root[data-theme="light"] .movie-site .top-carousel .feature-copy .chips span {
   color: #000 !important;
   text-shadow: 0 1px 0 rgba(255,255,255,.95), 0 0 3px rgba(255,255,255,.78) !important;
 }
-.movie-site .top-carousel .feature-copy .feature-play {
+:root[data-theme="light"] .movie-site .top-carousel .feature-copy .feature-play {
   border-color: rgba(0,0,0,.34) !important;
+}
+
+/* Preserve the original light text treatment in dark mode. */
+:root:not([data-theme="light"]) .movie-site .top-carousel .feature-copy {
+  color: var(--text) !important;
+  text-shadow: none !important;
+}
+:root:not([data-theme="light"]) .movie-site .top-carousel .feature-copy h1 {
+  color: var(--text-h) !important;
+  text-shadow: none !important;
+}
+:root:not([data-theme="light"]) .movie-site .top-carousel .feature-copy p,
+:root:not([data-theme="light"]) .movie-site .top-carousel .feature-copy .feature-kicker,
+:root:not([data-theme="light"]) .movie-site .top-carousel .feature-copy .feature-kicker span,
+:root:not([data-theme="light"]) .movie-site .top-carousel .feature-copy .chips,
+:root:not([data-theme="light"]) .movie-site .top-carousel .feature-copy .chips span {
+  color: var(--text-dim) !important;
+  text-shadow: none !important;
+}
+:root:not([data-theme="light"]) .movie-site .top-carousel .feature-copy .feature-play {
+  color: #fff !important;
+  text-shadow: none !important;
 }
