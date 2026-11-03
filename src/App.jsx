@@ -1257,16 +1257,26 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
     const section = event.currentTarget;
     const progress = Math.min(Math.abs(distance) / Math.max(section.getBoundingClientRect().width, 1), 1);
     const direction = distance < 0 ? 'next' : 'previous';
+    const isMobile = window.matchMedia('(max-width: 560px)').matches;
+    const firstX = isMobile ? 4 : 14;
+    const incomingProgress = direction === 'next' ? Math.max(0, Math.min((progress - 0.5) * 2, 1)) : progress;
     setSwipeDirection(direction);
     section.dataset.swipePreview = 'true';
     section.dataset.swipeDirection = direction;
     section.style.setProperty('--swipe-progress', progress.toFixed(3));
+    section.style.setProperty('--swipe-first-x', firstX + '%');
     section.style.setProperty('--swipe-out-scale', (1 - progress * .42).toFixed(3));
-    section.style.setProperty('--swipe-in-x', (direction === 'next' ? 70 - progress * 56 : -42 + progress * 56).toFixed(2) + '%');
-    section.style.setProperty('--swipe-in-y', (26 - progress * 26).toFixed(2) + 'px');
-    section.style.setProperty('--swipe-in-rotate', (direction === 'next' ? 6 - progress * 6 : -6 + progress * 6).toFixed(2) + 'deg');
-    section.style.setProperty('--swipe-in-scale', (.89 + progress * .11).toFixed(3));
-    section.style.setProperty('--swipe-in-opacity', (.9 + progress * .1).toFixed(3));
+    if (direction === 'next') {
+      const startX = isMobile ? 59 : 70;
+      section.style.setProperty('--swipe-in-x', (startX - incomingProgress * (startX - firstX)).toFixed(2) + '%');
+      section.style.setProperty('--swipe-in-y', (isMobile ? 22 : 26) * (1 - incomingProgress) + 'px');
+      section.style.setProperty('--swipe-in-rotate', (6 * (1 - incomingProgress)).toFixed(2) + 'deg');
+      section.style.setProperty('--swipe-in-scale', (.89 + incomingProgress * .11).toFixed(3));
+      section.style.setProperty('--swipe-in-opacity', (.9 + incomingProgress * .1).toFixed(3));
+    } else {
+      section.style.setProperty('--swipe-in-scale', (.72 + incomingProgress * .28).toFixed(3));
+      section.style.setProperty('--swipe-in-opacity', (.12 + incomingProgress * .88).toFixed(3));
+    }
   };
   const handleTouchEnd = (event) => {
     if (touchStartX.current === null) return;
@@ -1276,7 +1286,7 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
     const section = event.currentTarget;
     section.removeAttribute('data-swipe-preview');
     section.removeAttribute('data-swipe-direction');
-    section.style.removeProperty('--swipe-shift');
+    ['--swipe-shift', '--swipe-progress', '--swipe-first-x', '--swipe-out-scale', '--swipe-in-x', '--swipe-in-y', '--swipe-in-rotate', '--swipe-in-scale', '--swipe-in-opacity'].forEach((property) => section.style.removeProperty(property));
     if (didSwipe.current) move(distance < 0 ? 1 : -1);
     resumeTimer.current = window.setTimeout(() => setPaused(false), 4200);
   };
