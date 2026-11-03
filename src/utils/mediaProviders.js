@@ -9,7 +9,7 @@ export const buildPlayerUrl = ({ provider, mediaType, tmdbId, title, season = 1,
     const path = type === 'tv' && episode
       ? `tv/${identifier}/${season}/${episode}`
       : `${type}/${identifier}`;
-    return `https://video.moviepire.sc/embed/${path}?${params.toString()}`;
+    return `https://moviepire.sc/embed/${path}?${params.toString()}`;
   }
 
   // Videasy params per their official docs
@@ -24,7 +24,7 @@ export const buildDownloadUrl = ({ mediaType, tmdbId, season = 1, episode }) => 
   if (!tmdbId) return '';
   if (mediaType === 'tv') {
     if (!episode) return '';
-    return `https://video.moviepire.sc/download/tv/${tmdbId}/${season}/${episode}`;
+    return `https://moviepire.sc/download/tv/${tmdbId}/${season}/${episode}`;
   }
-  return `https://video.moviepire.sc/download/movie/${tmdbId}`;
+  return `https://moviepire.sc/download/movie/${tmdbId}`;
 };
