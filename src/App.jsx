@@ -447,8 +447,11 @@ export default function App() {
       if (cached.voteCount) voteCount = cached.voteCount;
     }
     
-    if ([134, 143].includes(Number(item.id))) poster = posterFromManifest(item, posterMap) || poster;
-    else if (!poster) poster = posterFromManifest(item, posterMap);
+    // Prefer bundled artwork whenever the manifest has it. Cached TMDB URLs can
+    // be stale, slower, or unavailable; all mapped local poster files are shipped
+    // with the app and should render immediately (including Sony's Raimi films).
+    const bundledPoster = posterFromManifest(item, posterMap);
+    if (bundledPoster) poster = bundledPoster;
 
     const key = mediaKey(item);
     const action = actions[key] || actions[item.id] || {};
