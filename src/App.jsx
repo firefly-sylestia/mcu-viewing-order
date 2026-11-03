@@ -1241,25 +1241,12 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
     window.clearTimeout(resumeTimer.current);
     touchStartX.current = event.touches[0]?.clientX ?? null;
     didSwipe.current = false;
-    event.currentTarget.dataset.dragging = 'true';
-    event.currentTarget.style.setProperty('--carousel-drag-x', '0px');
-    event.currentTarget.style.setProperty('--carousel-backdrop-drag-x', '0px');
     setPaused(true);
-  };
-  const handleTouchMove = (event) => {
-    if (touchStartX.current === null) return;
-    const currentX = event.touches[0]?.clientX ?? touchStartX.current;
-    const delta = Math.max(-112, Math.min(112, currentX - touchStartX.current));
-    event.currentTarget.style.setProperty('--carousel-drag-x', `${delta}px`);
-    event.currentTarget.style.setProperty('--carousel-backdrop-drag-x', `${delta * 0.16}px`);
   };
   const handleTouchEnd = (event) => {
     if (touchStartX.current === null) return;
     const distance = (event.changedTouches[0]?.clientX ?? touchStartX.current) - touchStartX.current;
     touchStartX.current = null;
-    event.currentTarget.dataset.dragging = 'false';
-    event.currentTarget.style.setProperty('--carousel-drag-x', '0px');
-    event.currentTarget.style.setProperty('--carousel-backdrop-drag-x', '0px');
     didSwipe.current = Math.abs(distance) > 46;
     if (didSwipe.current) move(distance < 0 ? 1 : -1);
     resumeTimer.current = window.setTimeout(() => setPaused(false), 4200);
@@ -1286,7 +1273,7 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
     }
   };
 
-  return <section className="top-carousel" style={{ '--accent': featured?.accent || '#9a4a4a' }} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocusCapture={() => setPaused(true)} onBlurCapture={() => setPaused(false)} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} onTouchCancel={handleTouchEnd}>
+  return <section className="top-carousel" style={{ '--accent': featured?.accent || '#9a4a4a' }} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocusCapture={() => setPaused(true)} onBlurCapture={() => setPaused(false)} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onTouchCancel={handleTouchEnd}>
     <div className="carousel-backdrops" aria-hidden="true">
       {prevBg?.poster && <img className="carousel-backdrop is-previous" src={prevBg.poster} alt="" width="300" height="450" referrerPolicy="no-referrer" />}
       {featured?.poster && <img key={featured.id} className="carousel-backdrop is-current" src={featured.poster} alt="" width="300" height="450" referrerPolicy="no-referrer" />}
