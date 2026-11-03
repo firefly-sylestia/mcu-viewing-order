@@ -5929,26 +5929,21 @@ button { border: 0; color: inherit; cursor: pointer; }
   transition: none !important;
 }
 .movie-site .top-carousel[data-swipe-preview="true"] .smooth-stack .poster-0 {
-  /* Keep the exact resting transform and its original center-bottom anchor.
-     The independent scale property prevents translation drift while shrinking. */
-  transform-origin: 50% 100% !important;
-  transform: translateX(var(--swipe-first-x, 14%)) translate3d(0,0,50px) scale(1) !important;
-  scale: var(--swipe-out-scale, 1) !important;
+  transform-origin: left center !important;
+  transform: translateX(var(--swipe-first-x, 14%)) translate3d(0,0,50px) scale(var(--swipe-out-scale, 1)) !important;
   opacity: calc(1 - var(--swipe-progress, 0)) !important;
 }
-/* Finger moves right: bring the next card from the stack after halfway. */
+/* Next: keep the second poster stacked until halfway, then bring it forward. */
 .movie-site .top-carousel[data-swipe-preview="true"][data-swipe-direction="next"] .smooth-stack .poster-1 {
-  transform-origin: 50% 100% !important;
+  transform-origin: left center !important;
   transform: translateX(var(--swipe-in-x)) translate3d(0,var(--swipe-in-y),0) rotate(var(--swipe-in-rotate)) scale(var(--swipe-in-scale)) !important;
   opacity: var(--swipe-in-opacity) !important;
   z-index: 4 !important;
 }
-/* Finger moves left: maximise the previous card from the first poster's exact
-   resting position, without entering from the side. */
+/* Previous: grow the previous poster in place, directly over the first poster area. */
 .movie-site .top-carousel[data-swipe-preview="true"][data-swipe-direction="previous"] .smooth-stack .poster-previous-preview {
-  transform-origin: 50% 100% !important;
-  transform: translateX(var(--swipe-first-x, 14%)) translate3d(0,0,50px) scale(1) !important;
-  scale: var(--swipe-in-scale) !important;
+  transform-origin: left center !important;
+  transform: translateX(var(--swipe-first-x, 14%)) translate3d(0,0,50px) scale(var(--swipe-in-scale)) !important;
   opacity: var(--swipe-in-opacity) !important;
   z-index: 4 !important;
 }
