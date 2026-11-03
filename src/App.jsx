@@ -1208,6 +1208,7 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
     window.addEventListener('carousel-swipe-animation-changed', onSwipeAnimationChange);
     return () => window.removeEventListener('carousel-swipe-animation-changed', onSwipeAnimationChange);
   }, []);
+  const [swipeDirection, setSwipeDirection] = useState(null);
   const [paused, setPaused] = useState(false);
   const [inlineTrailer, setInlineTrailer] = useState(null);
   const touchStartX = useRef(null);
@@ -1255,9 +1256,17 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
     if (Math.abs(distance) < 3) return;
     const section = event.currentTarget;
     const progress = Math.min(Math.abs(distance) / Math.max(section.getBoundingClientRect().width, 1), 1);
+    const direction = distance < 0 ? 'next' : 'previous';
+    setSwipeDirection(direction);
     section.dataset.swipePreview = 'true';
-    section.dataset.swipeDirection = distance < 0 ? 'next' : 'previous';
+    section.dataset.swipeDirection = direction;
     section.style.setProperty('--swipe-progress', progress.toFixed(3));
+    section.style.setProperty('--swipe-out-scale', (1 - progress * .42).toFixed(3));
+    section.style.setProperty('--swipe-in-x', (direction === 'next' ? 70 - progress * 56 : -42 + progress * 56).toFixed(2) + '%');
+    section.style.setProperty('--swipe-in-y', (26 - progress * 26).toFixed(2) + 'px');
+    section.style.setProperty('--swipe-in-rotate', (direction === 'next' ? 6 - progress * 6 : -6 + progress * 6).toFixed(2) + 'deg');
+    section.style.setProperty('--swipe-in-scale', (.89 + progress * .11).toFixed(3));
+    section.style.setProperty('--swipe-in-opacity', (.9 + progress * .1).toFixed(3));
   };
   const handleTouchEnd = (event) => {
     if (touchStartX.current === null) return;
@@ -1302,7 +1311,7 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
     <div className="feature-heading"><div><p className="eyebrow">{featured?.universe === 'marvel' ? 'Marvel Cinematic Universe' : featured?.universe === 'xmen' ? 'X-Men Universe' : featured?.universe === 'sony' ? 'Sony Spider-Man Universe' : 'DC Universe'} · Featured</p><h2>Top movies</h2></div><button className="feature-detail" onClick={() => setSelected(featured)}>View details</button></div>
     <div className="feature-stage">
       <div className="poster-stack smooth-stack">
-        {inlineTrailer ? <div className="inline-trailer"><iframe src={inlineTrailer} title={`${featured.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={() => setInlineTrailer(null)} aria-label="Close trailer"><X size={20} /></button></div> : items.map((item, rawIndex) => { const offset = (rawIndex - heroIndex + items.length) % items.length; const isLeaving = leavingId === item.id && offset >= 3; const isPreviousPreview = swipeAnimationEnabled && offset === items.length - 1 && items.length > 1; if (offset > 3 && !isLeaving && !isPreviousPreview) return null; const posterClass = isLeaving ? 'poster-exit' : isPreviousPreview ? 'poster-previous-preview' : `poster-${offset}`; return <button key={item.id} aria-label={offset ? `Show ${item.title}` : `View ${item.title} details`} aria-hidden={offset === 3 || isLeaving || isPreviousPreview ? 'true' : undefined} tabIndex={offset === 3 || isLeaving || isPreviousPreview ? -1 : 0} className={`stack-poster ${posterClass}`} onClick={() => selectPoster(item, rawIndex, offset)} style={{ '--accent': item.accent }}><PosterArt item={item} loading="eager" fetchPriority={offset === 0 ? 'high' : 'auto'} /></button>; })}
+        {inlineTrailer ? <div className="inline-trailer"><iframe src={inlineTrailer} title={`${featured.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={() => setInlineTrailer(null)} aria-label="Close trailer"><X size={20} /></button></div> : items.map((item, rawIndex) => { const offset = (rawIndex - heroIndex + items.length) % items.length; const isLeaving = leavingId === item.id && offset >= 3; const isPreviousPreview = swipeAnimationEnabled && swipeDirection === 'previous' && offset === items.length - 1 && items.length > 1; if (offset > 3 && !isLeaving && !isPreviousPreview) return null; const posterClass = isLeaving ? 'poster-exit' : isPreviousPreview ? 'poster-previous-preview' : `poster-${offset}`; return <button key={item.id} aria-label={offset ? `Show ${item.title}` : `View ${item.title} details`} aria-hidden={offset === 3 || isLeaving || isPreviousPreview ? 'true' : undefined} tabIndex={offset === 3 || isLeaving || isPreviousPreview ? -1 : 0} className={`stack-poster ${posterClass}`} onClick={() => selectPoster(item, rawIndex, offset)} style={{ '--accent': item.accent }}><PosterArt item={item} loading="eager" fetchPriority={offset === 0 ? 'high' : 'auto'} /></button>; })}
       </div>
       <div className="feature-copy">
         <div className="feature-text" key={featured?.id}>
