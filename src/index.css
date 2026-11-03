@@ -5343,3 +5343,96 @@ button { border: 0; color: inherit; cursor: pointer; }
   .list-row .list-actions .list-bookmark,
   .list-row .list-actions .list-watched { width: 36px; flex-basis: 36px; }
 }
+
+
+/* ── Navigation refinement: compact, quiet, and glow-free ───────────────── */
+:root .movie-site .bottom-nav {
+  width: min(460px, calc(100vw - 28px));
+  min-height: 0;
+  padding: 5px;
+  gap: 4px;
+  --nav-gap: 4px;
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 999px;
+  background: rgba(16, 18, 22, .96);
+  box-shadow: 0 8px 26px rgba(0, 0, 0, .24);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+:root .movie-site .bottom-nav .nav-blob {
+  top: 5px;
+  bottom: 5px;
+  left: 5px;
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .10);
+  box-shadow: none;
+  filter: none;
+  transition: transform .24s ease, background .18s ease;
+}
+:root .movie-site .bottom-nav button {
+  min-width: 0;
+  min-height: 40px;
+  padding: 6px 5px;
+  gap: 2px;
+  border: 0;
+  border-radius: 999px;
+  color: rgba(255, 255, 255, .58);
+  transition: color .18s ease, background .18s ease;
+}
+:root .movie-site .bottom-nav button:hover {
+  color: rgba(255, 255, 255, .88);
+  background: rgba(255, 255, 255, .04);
+  transform: none;
+}
+:root .movie-site .bottom-nav button.active {
+  color: #fff !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+:root .movie-site .bottom-nav button span {
+  font-size: 9.5px;
+  line-height: 1;
+  letter-spacing: 0;
+}
+:root .movie-site .bottom-nav button svg {
+  width: 18px;
+  height: 18px;
+}
+:root .movie-site .bottom-nav[data-holding="true"] .nav-blob {
+  transform: translateX(calc(var(--nav-index) * (100% + var(--nav-gap)))) !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+:root[data-theme="light"] .movie-site .bottom-nav {
+  border-color: rgba(16, 24, 40, .08);
+  background: rgba(255, 255, 255, .96);
+  box-shadow: 0 8px 26px rgba(16, 24, 40, .12);
+}
+:root[data-theme="light"] .movie-site .bottom-nav .nav-blob {
+  border-color: rgba(16, 24, 40, .06);
+  background: #edf0f4;
+  box-shadow: none;
+}
+:root[data-theme="light"] .movie-site .bottom-nav button { color: #687282; }
+:root[data-theme="light"] .movie-site .bottom-nav button:hover {
+  color: #202938;
+  background: rgba(16, 24, 40, .035);
+}
+:root[data-theme="light"] .movie-site .bottom-nav button.active { color: #18202b !important; }
+@media (max-width: 560px) {
+  :root .movie-site .bottom-nav {
+    width: calc(100vw - 24px);
+    min-height: 0;
+    padding: 4px;
+    --nav-gap: 3px;
+  }
+  :root .movie-site .bottom-nav .nav-blob { top: 4px; bottom: 4px; left: 4px; }
+  :root .movie-site .bottom-nav button {
+    min-height: 38px;
+    padding: 5px 3px;
+    gap: 2px;
+  }
+  :root .movie-site .bottom-nav button span { font-size: 9px; }
+  :root .movie-site .bottom-nav button svg { width: 17px; height: 17px; }
+}
