@@ -5966,3 +5966,23 @@ button { border: 0; color: inherit; cursor: pointer; }
 :root[data-theme="light"] .movie-site .top-carousel .feature-detail {
   text-shadow: 0 1px 0 rgba(255, 255, 255, .30) !important;
 }
+
+
+/* ── Cleaner poster-first carousel layout ────────────────────────────────── */
+/* The heading is removed; reserve its former vertical space so the featured
+   title and year/runtime row stay anchored below the poster stack. */
+.movie-site .top-carousel .feature-stage {
+  padding-top: 64px !important;
+  box-sizing: content-box !important;
+}
+.movie-site .top-carousel .poster-stack {
+  position: relative !important;
+  top: -18px !important;
+}
+.movie-site .top-carousel .feature-copy {
+  position: relative !important;
+  z-index: 8 !important;
+}
+.movie-site .top-carousel .poster-stack {
+  z-index: 2 !important;
+}
