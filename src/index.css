@@ -5563,3 +5563,74 @@ button { border: 0; color: inherit; cursor: pointer; }
   }
   :root .movie-site .bottom-nav button { min-height: 35px !important; }
 }
+
+
+/* ── Navigation alignment correction ────────────────────────────────────── */
+/* Keep the indicator aligned to the actual grid tracks at every viewport size. */
+:root .movie-site .bottom-nav {
+  position: fixed !important;
+  display: grid !important;
+  grid-template-columns: repeat(var(--nav-count, 5), minmax(0, 1fr)) !important;
+  grid-auto-flow: column;
+  align-items: stretch !important;
+  justify-items: stretch !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  isolation: isolate;
+}
+:root .movie-site .bottom-nav .nav-blob {
+  position: absolute !important;
+  z-index: 0 !important;
+  pointer-events: none !important;
+  box-sizing: border-box !important;
+  top: 4px !important;
+  bottom: 4px !important;
+  left: calc(4px + var(--nav-index, 0) * ((100% - 10px + var(--nav-gap, 2px)) / var(--nav-count, 5))) !important;
+  width: calc((100% - 10px - (var(--nav-count, 5) - 1) * var(--nav-gap, 2px)) / var(--nav-count, 5)) !important;
+  height: auto !important;
+  transform: none !important;
+  transition: left var(--nav-dur, .58s) cubic-bezier(.22, 1, .36, 1), background .18s ease !important;
+  border-radius: 999px !important;
+}
+:root .movie-site .bottom-nav button {
+  position: relative !important;
+  z-index: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-direction: column !important;
+  min-width: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 35px !important;
+  padding: 3px 2px !important;
+  margin: 0 !important;
+  gap: 1px !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+:root .movie-site .bottom-nav button.active {
+  color: #fff !important;
+  background: transparent !important;
+}
+:root .movie-site .bottom-nav[data-holding="true"] .nav-blob {
+  transition-duration: 90ms !important;
+}
+:root[data-theme="light"] .movie-site .bottom-nav button.active {
+  color: #263b58 !important;
+}
+@media (max-width: 560px) {
+  :root .movie-site .bottom-nav {
+    width: calc(100vw - 36px) !important;
+    padding: 4px !important;
+    --nav-gap: 2px !important;
+  }
+  :root .movie-site .bottom-nav .nav-blob {
+    top: 4px !important;
+    bottom: 4px !important;
+    left: calc(4px + var(--nav-index, 0) * ((100% - 10px + 2px) / var(--nav-count, 5))) !important;
+    width: calc((100% - 10px - (var(--nav-count, 5) - 1) * 2px) / var(--nav-count, 5)) !important;
+  }
+}
