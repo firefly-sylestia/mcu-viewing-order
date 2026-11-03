@@ -5794,75 +5794,16 @@ button { border: 0; color: inherit; cursor: pointer; }
 }
 
 
-/* ── Correct carousel backdrop layer + theme-aware navigation colors ────── */
-/* The visible artwork is the .carousel-backdrop image; ::before is disabled. */
-.movie-site .top-carousel {
-  background: #111 !important;
-}
-.movie-site .top-carousel .carousel-backdrop {
-  opacity: .78 !important;
-  filter: blur(24px) saturate(1.18) brightness(.96) !important;
-}
-.movie-site .top-carousel .carousel-backdrop-shade {
-  background: rgba(5, 8, 14, .18) !important;
-}
-.movie-site .top-carousel .carousel-backdrop.is-previous {
-  opacity: .0 !important;
-}
-:root[data-theme="light"] .movie-site .top-carousel {
-  background: #edf3fb !important;
-}
-:root[data-theme="light"] .movie-site .top-carousel .carousel-backdrop {
-  opacity: .76 !important;
-  filter: blur(24px) saturate(1.08) brightness(1.08) !important;
-}
-:root[data-theme="light"] .movie-site .top-carousel .carousel-backdrop-shade {
-  background: linear-gradient(115deg, rgba(237, 244, 255, .42), rgba(248, 250, 255, .30)) !important;
-}
-
-/* Remove blend-mode: it does not sample the nav's backdrop reliably.
-   Use a deliberate high-contrast foreground for each theme instead. */
-:root .movie-site .bottom-nav button:not(.active),
-:root .movie-site .bottom-nav button:not(.active) svg,
-:root .movie-site .bottom-nav button:not(.active) span {
-  color: #f7f9ff !important;
-  opacity: 1 !important;
-  mix-blend-mode: normal !important;
-}
-:root .movie-site .bottom-nav button:not(.active) svg {
-  stroke: #f7f9ff !important;
-}
-:root[data-theme="light"] .movie-site .bottom-nav button:not(.active),
-:root[data-theme="light"] .movie-site .bottom-nav button:not(.active) svg,
-:root[data-theme="light"] .movie-site .bottom-nav button:not(.active) span {
-  color: #24364f !important;
-  opacity: 1 !important;
-  mix-blend-mode: normal !important;
-}
-:root[data-theme="light"] .movie-site .bottom-nav button:not(.active) svg {
-  stroke: #24364f !important;
-}
-@media (max-width: 560px) {
-  .movie-site .top-carousel .carousel-backdrop {
-    filter: blur(22px) saturate(1.14) brightness(.96) !important;
-    opacity: .78 !important;
-  }
-  :root[data-theme="light"] .movie-site .top-carousel .carousel-backdrop {
-    filter: blur(22px) saturate(1.06) brightness(1.08) !important;
-    opacity: .76 !important;
-  }
-}
 
 
 /* ── Carousel readability, smooth poster crossfade and responsive dragging ─ */
-/* Light mode needs its own foreground palette over the pale poster tint. */
+/* Light mode foreground palette over the pale poster tint. */
 :root[data-theme="light"] .movie-site .top-carousel .feature-heading h2,
 :root[data-theme="light"] .movie-site .top-carousel .feature-copy h1 {
   color: #17243a !important;
   text-shadow: 0 1px 0 rgba(255,255,255,.30) !important;
 }
-:root[data-theme="light"] .movie-site .top-carousel .feature-copy .feature-desc,
-:root[data-theme="light"] .movie-site .top-carousel .feature-copy > p {
+:root[data-theme="light"] .movie-site .top-carousel .feature-copy .feature-desc {
   color: #34445c !important;
 }
 :root[data-theme="light"] .movie-site .top-carousel .feature-kicker,
@@ -5878,7 +5819,8 @@ button { border: 0; color: inherit; cursor: pointer; }
   border-color: rgba(67, 91, 125, .18) !important;
 }
 
-/* Keep both poster layers composited; crossfade the outgoing and incoming art. */
+/* Actual poster images, not the disabled pseudo-elements. Avoid expensive
+   blur repainting; animate only composited opacity and transform properties. */
 .movie-site .top-carousel .carousel-backdrops {
   position: absolute;
   inset: 0;
@@ -5890,21 +5832,21 @@ button { border: 0; color: inherit; cursor: pointer; }
   contain: paint;
 }
 .movie-site .top-carousel .carousel-backdrop {
-  opacity: .78 !important;
-  filter: blur(18px) saturate(1.14) brightness(.98) !important;
+  opacity: .78;
+  filter: blur(18px) saturate(1.14) brightness(.98);
   transform: translate3d(0,0,0) scale(1.08);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   will-change: opacity, transform;
-  animation: none !important;
+  animation: none;
 }
 .movie-site .top-carousel .carousel-backdrop.is-previous {
-  opacity: 0 !important;
-  animation: carouselPosterFadeOut .62s cubic-bezier(.22, 1, .36, 1) both !important;
+  opacity: .78;
+  animation: carouselPosterFadeOut .62s cubic-bezier(.22, 1, .36, 1) both;
 }
 .movie-site .top-carousel .carousel-backdrop.is-current {
-  opacity: .78 !important;
-  animation: carouselPosterFadeIn .72s cubic-bezier(.22, 1, .36, 1) both !important;
+  opacity: .78;
+  animation: carouselPosterFadeIn .72s cubic-bezier(.22, 1, .36, 1) both;
 }
 @keyframes carouselPosterFadeIn {
   from { opacity: 0; transform: translate3d(0,0,0) scale(1.12); }
@@ -5919,14 +5861,14 @@ button { border: 0; color: inherit; cursor: pointer; }
   transition: background .5s ease !important;
 }
 :root[data-theme="light"] .movie-site .top-carousel .carousel-backdrop {
-  opacity: .76 !important;
-  filter: blur(18px) saturate(1.08) brightness(1.08) !important;
+  opacity: .76;
+  filter: blur(18px) saturate(1.08) brightness(1.08);
 }
 :root[data-theme="light"] .movie-site .top-carousel .carousel-backdrop.is-current {
-  animation-name: carouselPosterFadeInLight !important;
+  animation-name: carouselPosterFadeInLight;
 }
 :root[data-theme="light"] .movie-site .top-carousel .carousel-backdrop.is-previous {
-  animation-name: carouselPosterFadeOutLight !important;
+  animation-name: carouselPosterFadeOutLight;
 }
 @keyframes carouselPosterFadeInLight {
   from { opacity: 0; transform: translate3d(0,0,0) scale(1.12); }
@@ -5956,9 +5898,9 @@ button { border: 0; color: inherit; cursor: pointer; }
 }
 @media (max-width: 560px) {
   .movie-site .top-carousel .carousel-backdrop {
-    filter: blur(18px) saturate(1.12) brightness(.98) !important;
+    filter: blur(18px) saturate(1.12) brightness(.98);
   }
   :root[data-theme="light"] .movie-site .top-carousel .carousel-backdrop {
-    filter: blur(18px) saturate(1.06) brightness(1.08) !important;
+    filter: blur(18px) saturate(1.06) brightness(1.08);
   }
 }
