@@ -1256,7 +1256,7 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
     if (Math.abs(distance) < 3) return;
     const section = event.currentTarget;
     const progress = Math.min(Math.abs(distance) / Math.max(section.getBoundingClientRect().width, 1), 1);
-    const direction = distance < 0 ? 'previous' : 'next';
+    const direction = distance < 0 ? 'next' : 'previous';
     const isMobile = window.matchMedia('(max-width: 560px)').matches;
     const firstX = isMobile ? 4 : 14;
     const incomingProgress = direction === 'next' ? Math.max(0, Math.min((progress - 0.5) * 2, 1)) : progress;
@@ -1287,7 +1287,7 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
     section.removeAttribute('data-swipe-preview');
     section.removeAttribute('data-swipe-direction');
     ['--swipe-shift', '--swipe-progress', '--swipe-first-x', '--swipe-out-scale', '--swipe-in-x', '--swipe-in-y', '--swipe-in-rotate', '--swipe-in-scale', '--swipe-in-opacity'].forEach((property) => section.style.removeProperty(property));
-    if (didSwipe.current) move(distance < 0 ? -1 : 1);
+    if (didSwipe.current) move(distance < 0 ? 1 : -1);
     resumeTimer.current = window.setTimeout(() => setPaused(false), 4200);
   };
   const selectPoster = (item, rawIndex, offset) => {
