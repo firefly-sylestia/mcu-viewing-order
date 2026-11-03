@@ -5921,3 +5921,24 @@ button { border: 0; color: inherit; cursor: pointer; }
 .movie-site .top-carousel[data-dragging="true"] .carousel-backdrops {
   transition: none !important;
 }
+
+
+/* Swipe scrubbing is opt-in and affects only the poster cards, never the
+   hero copy, controls, layout or backdrop. */
+.movie-site .top-carousel[data-swipe-preview="true"] .smooth-stack .stack-poster {
+  transition: none !important;
+}
+.movie-site .top-carousel[data-swipe-preview="true"][data-swipe-direction="next"] .smooth-stack .poster-0 {
+  transform: translateX(calc(14% + var(--swipe-shift, 0px))) translate3d(0,0,50px) scale(1) !important;
+}
+.movie-site .top-carousel[data-swipe-preview="true"][data-swipe-direction="next"] .smooth-stack .poster-1 {
+  transform: translateX(calc(70% + var(--swipe-shift, 0px) - 56%)) translate3d(0,26px,0) rotate(2deg) scale(.96) !important;
+  opacity: 1 !important;
+}
+.movie-site .top-carousel[data-swipe-preview="true"][data-swipe-direction="previous"] .smooth-stack .poster-0 {
+  transform: translateX(calc(14% + var(--swipe-shift, 0px))) translate3d(0,0,50px) scale(1) !important;
+}
+.movie-site .top-carousel[data-swipe-preview="true"][data-swipe-direction="previous"] .smooth-stack .poster-2 {
+  transform: translateX(calc(109% + var(--swipe-shift, 0px) + 55%)) translate3d(0,52px,-30px) rotate(4deg) scale(.94) !important;
+  opacity: .95 !important;
+}
