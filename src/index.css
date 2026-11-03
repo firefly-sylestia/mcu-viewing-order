@@ -5852,3 +5852,113 @@ button { border: 0; color: inherit; cursor: pointer; }
     opacity: .76 !important;
   }
 }
+
+
+/* ── Carousel readability, smooth poster crossfade and responsive dragging ─ */
+/* Light mode needs its own foreground palette over the pale poster tint. */
+:root[data-theme="light"] .movie-site .top-carousel .feature-heading h2,
+:root[data-theme="light"] .movie-site .top-carousel .feature-copy h1 {
+  color: #17243a !important;
+  text-shadow: 0 1px 0 rgba(255,255,255,.30) !important;
+}
+:root[data-theme="light"] .movie-site .top-carousel .feature-copy .feature-desc,
+:root[data-theme="light"] .movie-site .top-carousel .feature-copy > p {
+  color: #34445c !important;
+}
+:root[data-theme="light"] .movie-site .top-carousel .feature-kicker,
+:root[data-theme="light"] .movie-site .top-carousel .feature-kicker span {
+  color: #34445c !important;
+}
+:root[data-theme="light"] .movie-site .top-carousel .eyebrow {
+  color: #536781 !important;
+}
+:root[data-theme="light"] .movie-site .top-carousel .feature-detail {
+  color: #24364f !important;
+  background: rgba(255,255,255,.62) !important;
+  border-color: rgba(67, 91, 125, .18) !important;
+}
+
+/* Keep both poster layers composited; crossfade the outgoing and incoming art. */
+.movie-site .top-carousel .carousel-backdrops {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  overflow: hidden;
+  pointer-events: none;
+  transform: translate3d(var(--carousel-backdrop-drag-x, 0px), 0, 0);
+  transition: transform .34s cubic-bezier(.22, 1, .36, 1);
+  contain: paint;
+}
+.movie-site .top-carousel .carousel-backdrop {
+  opacity: .78 !important;
+  filter: blur(18px) saturate(1.14) brightness(.98) !important;
+  transform: translate3d(0,0,0) scale(1.08);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  will-change: opacity, transform;
+  animation: none !important;
+}
+.movie-site .top-carousel .carousel-backdrop.is-previous {
+  opacity: 0 !important;
+  animation: carouselPosterFadeOut .62s cubic-bezier(.22, 1, .36, 1) both !important;
+}
+.movie-site .top-carousel .carousel-backdrop.is-current {
+  opacity: .78 !important;
+  animation: carouselPosterFadeIn .72s cubic-bezier(.22, 1, .36, 1) both !important;
+}
+@keyframes carouselPosterFadeIn {
+  from { opacity: 0; transform: translate3d(0,0,0) scale(1.12); }
+  to { opacity: .78; transform: translate3d(0,0,0) scale(1.08); }
+}
+@keyframes carouselPosterFadeOut {
+  from { opacity: .78; transform: translate3d(0,0,0) scale(1.08); }
+  to { opacity: 0; transform: translate3d(0,0,0) scale(1.10); }
+}
+.movie-site .top-carousel .carousel-backdrop-shade {
+  background: rgba(5, 8, 14, .18) !important;
+  transition: background .5s ease !important;
+}
+:root[data-theme="light"] .movie-site .top-carousel .carousel-backdrop {
+  opacity: .76 !important;
+  filter: blur(18px) saturate(1.08) brightness(1.08) !important;
+}
+:root[data-theme="light"] .movie-site .top-carousel .carousel-backdrop.is-current {
+  animation-name: carouselPosterFadeInLight !important;
+}
+:root[data-theme="light"] .movie-site .top-carousel .carousel-backdrop.is-previous {
+  animation-name: carouselPosterFadeOutLight !important;
+}
+@keyframes carouselPosterFadeInLight {
+  from { opacity: 0; transform: translate3d(0,0,0) scale(1.12); }
+  to { opacity: .76; transform: translate3d(0,0,0) scale(1.08); }
+}
+@keyframes carouselPosterFadeOutLight {
+  from { opacity: .76; transform: translate3d(0,0,0) scale(1.08); }
+  to { opacity: 0; transform: translate3d(0,0,0) scale(1.10); }
+}
+:root[data-theme="light"] .movie-site .top-carousel .carousel-backdrop-shade {
+  background: linear-gradient(115deg, rgba(237, 244, 255, .42), rgba(248, 250, 255, .30)) !important;
+}
+
+/* Follow the finger while dragging; release eases the stack and backdrop home. */
+.movie-site .top-carousel .poster-stack {
+  transform: translate3d(var(--carousel-drag-x, 0px), 0, 0);
+  transition: transform .34s cubic-bezier(.22, 1, .36, 1);
+  backface-visibility: hidden;
+}
+.movie-site .top-carousel[data-dragging="true"] .poster-stack,
+.movie-site .top-carousel[data-dragging="true"] .carousel-backdrops {
+  transition: none !important;
+}
+.movie-site .top-carousel .smooth-stack .stack-poster {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+@media (max-width: 560px) {
+  .movie-site .top-carousel .carousel-backdrop {
+    filter: blur(18px) saturate(1.12) brightness(.98) !important;
+  }
+  :root[data-theme="light"] .movie-site .top-carousel .carousel-backdrop {
+    filter: blur(18px) saturate(1.06) brightness(1.08) !important;
+  }
+}
