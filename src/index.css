@@ -5753,3 +5753,42 @@ button { border: 0; color: inherit; cursor: pointer; }
 :root[data-theme="light"] .movie-site .bottom-nav button.active svg {
   stroke: #101d30 !important;
 }
+
+
+/* ── Higher-transparency hero + adaptive inactive navigation contrast ────── */
+/* Halve the remaining hero tint so the selected artwork is much more present. */
+.movie-site .top-carousel {
+  background: rgba(14, 16, 22, .06) !important;
+}
+.movie-site .top-carousel::before {
+  opacity: .70 !important;
+  filter: blur(22px) saturate(1.04) !important;
+}
+.movie-site .top-carousel::after {
+  background: linear-gradient(110deg, rgba(7, 10, 18, .08), rgba(7, 10, 18, .035)) !important;
+}
+:root[data-theme="light"] .movie-site .top-carousel {
+  background: rgba(247, 250, 255, .04) !important;
+}
+:root[data-theme="light"] .movie-site .top-carousel::before {
+  opacity: .66 !important;
+  filter: blur(22px) saturate(.96) brightness(1.06) !important;
+}
+:root[data-theme="light"] .movie-site .top-carousel::after {
+  background: linear-gradient(110deg, rgba(246, 249, 255, .06), rgba(250, 252, 255, .022)) !important;
+}
+
+/* Difference blending inverts the underlying local shade: light glyphs on dark
+   areas and dark glyphs on bright areas, without guessing the poster palette. */
+:root .movie-site .bottom-nav button:not(.active) {
+  color: #fff !important;
+}
+:root .movie-site .bottom-nav button:not(.active) svg,
+:root .movie-site .bottom-nav button:not(.active) span {
+  color: #fff !important;
+  mix-blend-mode: difference !important;
+  opacity: 1 !important;
+}
+:root .movie-site .bottom-nav button:not(.active) svg {
+  stroke: #fff !important;
+}
