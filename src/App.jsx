@@ -1138,7 +1138,7 @@ export default function App() {
         })}
       </nav>
 
-      {selectedItem && <DetailView item={selectedItem} onClose={() => selectItem(null)} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={startWatchWithConfirm} onStartWatchFromRoadmap={startWatchFromRoadmap} activeItems={roadmapItems} />}
+      {selectedItem && <DetailView item={selectedItem} onClose={() => selectItem(null)} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={startWatchWithConfirm} onOpenItem={selectItem} activeItems={roadmapItems} />}
       {trailer && <TrailerModal trailer={trailer} onClose={() => setTrailer(null)} />}
       {filtersOpen && <Filters genre={genre} setGenre={setGenre} rating={rating} setRating={setRating} ageRatingFilter={ageRatingFilter} setAgeRatingFilter={setAgeRatingFilter} universe={universe} typeFilter={typeFilter} setTypeFilter={setTypeFilter} genres={genres} count={activeItems.length} onClose={() => setFiltersOpen(false)} />}
       {sortOpen && <SortSheet sortBy={sortBy} setSortBy={setSortBy} sortDirection={sortDirection} setSortDirection={setSortDirection} count={activeItems.length} onClose={() => setSortOpen(false)} />}
@@ -1642,7 +1642,7 @@ function AnalyticsPanel({ stats, large = false }) {
   return <section className={`analytics-panel ${large ? 'large' : ''}`}><div><p className="eyebrow">Analytics</p><h2>{stats.percent}% complete</h2><div className="progress"><span style={{ width: `${stats.percent}%` }} /></div></div><div className="stat-grid"><div><b>{stats.total}</b><span>Total</span></div><div><b>{stats.watched}</b><span>Watched</span></div><div><b>{stats.watching}</b><span>Watching</span></div><div><b>{stats.dropped}</b><span>Dropped</span></div><div><b>{stats.bookmarked}</b><span>Saved</span></div><div><b>{stats.watchedTime}</b><span>Watch Time</span></div></div></section>;
 }
 
-function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, onStartWatchFromRoadmap, activeItems }) {
+function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, onOpenItem, activeItems }) {
   const guidance = getTitleGuidance(item);
   const [inlineTrailer, setInlineTrailer] = useState(null);
   const [isTrailerExpanded, setIsTrailerExpanded] = useState(false);
@@ -2021,7 +2021,7 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, on
               total={itemRoadmap.siblings.length}
               title="Viewing roadmap"
               eyebrow="Recommended sequence"
-              onPlay={(target) => onStartWatchFromRoadmap(target, target.tmdbId || null, target.type === 'series' ? 'tv' : 'movie')}
+              onPlay={(target) => onOpenItem(target)}
             />
           )}
           </div>
@@ -2095,7 +2095,7 @@ function RoadmapBoard({ segments = [], complete = 0, total = 0, title = 'Viewing
         const watched = item.userStatus === 'watched';
         return <li key={item.id} className={`rm-step${step.isActive ? ' is-active' : ''}${watched ? ' is-watched' : ''}`}>
           <span className="rm-node" aria-hidden="true">{watched ? <Check size={13} /> : String(index + 1).padStart(2, '0')}</span>
-          <button type="button" className="rm-card" onClick={() => onPlay(item)} title={`Play ${item.title}`} style={{ '--accent': item.accent }}>
+          <button type="button" className="rm-card" onClick={() => onPlay(item)} title={`View ${item.title} details`} style={{ '--accent': item.accent }}>
             <span className="rm-poster">
               {item.poster ? <img src={item.poster} alt="" loading="lazy" /> : <FallbackPoster item={item} />}
             </span>
