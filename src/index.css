@@ -6151,3 +6151,26 @@ button { border: 0; color: inherit; cursor: pointer; }
   text-shadow: none !important;
   box-shadow: none !important;
 }
+
+
+/* Search: remove every focus/selection edge highlight, including mobile WebView rings. */
+.movie-site .header-search:focus,
+.movie-site .header-search:focus-within,
+.movie-site .header-search input:focus,
+.movie-site .header-search input:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+.movie-site .header-search:focus-within {
+  border-color: rgba(255,255,255,.08) !important;
+  background: rgba(255,255,255,.06) !important;
+}
+:root[data-theme="light"] .movie-site .header-search:focus-within {
+  border-color: rgba(0,0,0,.08) !important;
+  background: rgba(0,0,0,.04) !important;
+}
+.movie-site .header-search input::selection,
+.movie-site .header-search input::-moz-selection {
+  background: transparent !important;
+  color: inherit !important;
+}
