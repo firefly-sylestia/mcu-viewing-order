@@ -5954,8 +5954,9 @@ button { border: 0; color: inherit; cursor: pointer; }
   z-index: 2 !important;
 }
 .movie-site .top-carousel[data-swipe-preview="true"][data-swipe-direction="previous"] .smooth-stack .poster-previous-preview {
+  /* Stay at the front poster's anchor; reveal from behind by enlarging in place. */
   transform-origin: 50% 100% !important;
-  transform: translateX(var(--swipe-in-x)) translate3d(0,var(--swipe-in-y),0) rotate(var(--swipe-in-rotate)) !important;
+  transform: translateX(var(--swipe-in-x)) translate3d(0,var(--swipe-in-y),var(--swipe-in-z, 0px)) rotate(var(--swipe-in-rotate)) !important;
   scale: var(--swipe-in-scale) !important;
   opacity: var(--swipe-in-opacity) !important;
   z-index: 4 !important;
