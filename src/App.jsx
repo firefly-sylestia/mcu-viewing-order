@@ -1316,7 +1316,7 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
       </div>
       <div className="feature-copy">
         <div className="feature-text" key={featured?.id}>
-          <div className="feature-kicker"><span>{featured?.year}</span><span>{runtimeLabel(featured?.runtime, featured?.type)}</span><span>{featured?.rating} rating</span></div>
+          <div className="feature-kicker" aria-label="Title information"><span className="feature-meta-pill feature-meta-year">{featured?.year}</span><span className="feature-meta-pill feature-meta-duration">{runtimeLabel(featured?.runtime, featured?.type)}</span><span className="feature-meta-pill feature-meta-rating">{featured?.rating} rating</span></div>
           <h1>{featured?.title}</h1>
           <p key={featured?.id} className="feature-desc">{featured?.desc || `Follow ${featured?.title} in the complete ${featured?.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} viewing order.`}</p>
         </div>
