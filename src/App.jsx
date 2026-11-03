@@ -1202,7 +1202,7 @@ function ControlOverview({ stats, items, nextUp, universeLabel, onOpen, onStart,
 }
 
 function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) {
-  const [swipeAnimationEnabled, setSwipeAnimationEnabled] = useState(() => { try { return localStorage.getItem('carousel-swipe-animation') === '1'; } catch { return false; } });
+  const [swipeAnimationEnabled, setSwipeAnimationEnabled] = useState(() => { try { return localStorage.getItem('carousel-swipe-animation') !== '0'; } catch { return true; } });
   useEffect(() => {
     const onSwipeAnimationChange = (event) => setSwipeAnimationEnabled(Boolean(event.detail));
     window.addEventListener('carousel-swipe-animation-changed', onSwipeAnimationChange);
@@ -1254,9 +1254,10 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
     const distance = (event.touches[0]?.clientX ?? touchStartX.current) - touchStartX.current;
     if (Math.abs(distance) < 3) return;
     const section = event.currentTarget;
+    const progress = Math.min(Math.abs(distance) / Math.max(section.getBoundingClientRect().width, 1), 1);
     section.dataset.swipePreview = 'true';
     section.dataset.swipeDirection = distance < 0 ? 'next' : 'previous';
-    section.style.setProperty('--swipe-shift', `${Math.max(-150, Math.min(150, distance))}px`);
+    section.style.setProperty('--swipe-progress', progress.toFixed(3));
   };
   const handleTouchEnd = (event) => {
     if (touchStartX.current === null) return;
@@ -1301,7 +1302,7 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
     <div className="feature-heading"><div><p className="eyebrow">{featured?.universe === 'marvel' ? 'Marvel Cinematic Universe' : featured?.universe === 'xmen' ? 'X-Men Universe' : featured?.universe === 'sony' ? 'Sony Spider-Man Universe' : 'DC Universe'} · Featured</p><h2>Top movies</h2></div><button className="feature-detail" onClick={() => setSelected(featured)}>View details</button></div>
     <div className="feature-stage">
       <div className="poster-stack smooth-stack">
-        {inlineTrailer ? <div className="inline-trailer"><iframe src={inlineTrailer} title={`${featured.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={() => setInlineTrailer(null)} aria-label="Close trailer"><X size={20} /></button></div> : items.map((item, rawIndex) => { const offset = (rawIndex - heroIndex + items.length) % items.length; const isLeaving = leavingId === item.id && offset >= 3; if (offset > 3 && !isLeaving) return null; return <button key={item.id} aria-label={offset ? `Show ${item.title}` : `View ${item.title} details`} aria-hidden={offset === 3 || isLeaving ? 'true' : undefined} tabIndex={offset === 3 || isLeaving ? -1 : 0} className={`stack-poster ${isLeaving ? 'poster-exit' : `poster-${offset}`}`} onClick={() => selectPoster(item, rawIndex, offset)} style={{ '--accent': item.accent }}><PosterArt item={item} loading="eager" fetchPriority={offset === 0 ? 'high' : 'auto'} /></button>; })}
+        {inlineTrailer ? <div className="inline-trailer"><iframe src={inlineTrailer} title={`${featured.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={() => setInlineTrailer(null)} aria-label="Close trailer"><X size={20} /></button></div> : items.map((item, rawIndex) => { const offset = (rawIndex - heroIndex + items.length) % items.length; const isLeaving = leavingId === item.id && offset >= 3; const isPreviousPreview = swipeAnimationEnabled && offset === items.length - 1 && items.length > 1; if (offset > 3 && !isLeaving && !isPreviousPreview) return null; const posterClass = isLeaving ? 'poster-exit' : isPreviousPreview ? 'poster-previous-preview' : `poster-${offset}`; return <button key={item.id} aria-label={offset ? `Show ${item.title}` : `View ${item.title} details`} aria-hidden={offset === 3 || isLeaving || isPreviousPreview ? 'true' : undefined} tabIndex={offset === 3 || isLeaving || isPreviousPreview ? -1 : 0} className={`stack-poster ${posterClass}`} onClick={() => selectPoster(item, rawIndex, offset)} style={{ '--accent': item.accent }}><PosterArt item={item} loading="eager" fetchPriority={offset === 0 ? 'high' : 'auto'} /></button>; })}
       </div>
       <div className="feature-copy">
         <div className="feature-text" key={featured?.id}>
