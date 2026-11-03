@@ -6118,3 +6118,22 @@ button { border: 0; color: inherit; cursor: pointer; }
   color: #fff !important;
   text-shadow: none !important;
 }
+
+
+/* ── Search field selection: use the app accent, not browser defaults ─────── */
+.movie-site .header-search input {
+  caret-color: var(--accent) !important;
+  accent-color: var(--accent) !important;
+  -webkit-tap-highlight-color: transparent !important;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.movie-site .header-search input::selection,
+.movie-site .header-search input::-moz-selection {
+  background: color-mix(in srgb, var(--accent) 32%, transparent) !important;
+  color: inherit !important;
+}
+.movie-site .header-search,
+.movie-site .header-search * {
+  -webkit-tap-highlight-color: transparent !important;
+}
