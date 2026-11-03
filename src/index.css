@@ -5940,3 +5940,29 @@ button { border: 0; color: inherit; cursor: pointer; }
   mix-blend-mode: normal !important;
   opacity: 1 !important;
 }
+
+
+/* ── Light carousel: clearer pearl-white atmosphere and consistent text lift ─ */
+:root[data-theme="light"] .movie-site .top-carousel::after {
+  background: linear-gradient(
+    112deg,
+    rgba(255, 255, 255, .34) 0%,
+    rgba(255, 255, 255, .24) 52%,
+    rgba(255, 255, 255, .38) 100%
+  ) !important;
+  opacity: 1 !important;
+}
+:root[data-theme="light"] .movie-site .top-carousel .carousel-backdrop-shade {
+  background: linear-gradient(
+    115deg,
+    rgba(255, 255, 255, .48),
+    rgba(248, 251, 255, .38)
+  ) !important;
+}
+:root[data-theme="light"] .movie-site .top-carousel .feature-copy .feature-desc,
+:root[data-theme="light"] .movie-site .top-carousel .feature-kicker,
+:root[data-theme="light"] .movie-site .top-carousel .feature-kicker span,
+:root[data-theme="light"] .movie-site .top-carousel .eyebrow,
+:root[data-theme="light"] .movie-site .top-carousel .feature-detail {
+  text-shadow: 0 1px 0 rgba(255, 255, 255, .30) !important;
+}
