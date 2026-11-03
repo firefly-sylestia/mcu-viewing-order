@@ -4,7 +4,6 @@ export const XMEN_PHASES = [
   { id: 3, label: 'Era 3', name: 'Post-DOFP & Standalone', color: '#9a9aa8' },
   { id: 4, label: 'TV', name: 'X-Men TV Series', color: '#b0b0ba' },
   { id: 5, label: 'Animated', name: 'X-Men Animated Revival', color: '#c4c4cc' },
-  { id: 6, label: 'MCU', name: 'Marvel Studios X-Men', color: '#e0b84a' },
 ];
 
 export const XMEN_RAW = [
@@ -35,11 +34,8 @@ export const XMEN_RAW = [
   { id: 6018, order: 18, title: 'The Gifted S2', ageRating: 'TV-14', year: 2018, phase: 4, type: 'series', essential: false, runtime: 704, releaseDate: '2018-09-25', status: 'unwatched', prereq: 'The Gifted S1', tmdbId: 69629, seriesGroup: 'the-gifted', season: 2, epStart: 1, epEnd: 16, desc: 'The Mutant Underground splinters between idealism and extremism as the Hellfire Club rises. 16 episodes.' },
 
   // ── Era 5: X-Men '97 / Animated Revival ──
-  { id: 6019, order: 19, title: "X-Men '97 S1", ageRating: 'TV-PG', year: 2024, phase: 5, type: 'series', essential: true, runtime: 300, releaseDate: '2024-03-20', status: 'unwatched', prereq: 'X-Men: The Animated Series (optional)', tmdbId: 138502, season: 1, epStart: 1, epEnd: 10, seriesGroup: 'xmen-97', desc: 'A direct continuation of the beloved 90s X-Men animated series. Cyclops, Wolverine, Storm, Rogue, Gambit, Beast, Jubilee and Morph face a world without Professor X — and a dangerous new threat. 10 episodes.' },
-  { id: 6020, order: 20, title: "X-Men '97 S2", ageRating: 'TV-PG', year: 2026, phase: 5, type: 'series', essential: true, runtime: 207, releaseDate: '2026-07-01', releaseStatus: 'released', prereq: "X-Men '97 S1", tmdbId: 138502, season: 2, epStart: 1, epEnd: 9, seriesGroup: 'xmen-97', desc: 'Season 2 picks up after the explosive finale, with the team scattered across time and facing an even greater existential threat to mutantkind. Apocalypse rises. 9 episodes.' },
-  { id: 6021, order: 21, title: "X-Men '97 S3", ageRating: 'TV-PG', year: 2027, phase: 5, type: 'series', essential: true, runtime: 0, releaseLabel: '2027', releaseStatus: 'announced', prereq: "X-Men '97 S2", tmdbId: 138502, season: 3, seriesGroup: 'xmen-97', desc: 'The third season continues the animated X-Men revival. Marvel previewed the return of the Brotherhood of Mutants and Rogue and Gambit’s wedding. Release window: 2027.' },
-  { id: 6022, order: 22, title: "X-Men '97 S4", ageRating: 'TV-PG', phase: 5, type: 'series', essential: false, runtime: 0, releaseLabel: 'TBA', releaseStatus: 'announced', prereq: "X-Men '97 S3", tmdbId: 138502, season: 4, seriesGroup: 'xmen-97', desc: 'A fourth season of X-Men ’97 has been confirmed as planned. Release date and episode count have not been announced.' },
-  { id: 6023, order: 23, title: 'Untitled X-Men Film', ageRating: 'TBA', year: 2028, phase: 6, type: 'film', essential: true, runtime: 0, releaseDate: '2028-05-05', releaseStatus: 'announced', prereq: 'None (new MCU X-Men continuity)', seriesGroup: 'mcu-xmen', desc: 'Marvel Studios’ new X-Men film, announced at D23 2026, with Sadie Sink as Jean Grey, Kit Connor as Cyclops, Christopher Abbott as Professor X, Samara Weaving as Emma Frost, Inde Navarrette as Rogue, Maya Boyd as Storm, and Adam Driver as Nathaniel Milbury.' },
+  { id: 6019, order: 19, title: "X-Men '97 S1", ageRating: 'TV-PG', year: 2024, phase: 5, type: 'series', essential: true, runtime: 300, releaseDate: '2024-03-20', status: 'unwatched', prereq: 'X-Men: The Animated Series (optional)', tmdbId: 226606, season: 1, epStart: 1, epEnd: 10, seriesGroup: 'xmen-97', desc: 'A direct continuation of the beloved 90s X-Men animated series. Cyclops, Wolverine, Storm, Rogue, Gambit, Beast, Jubilee and Morph face a world without Professor X — and a dangerous new threat. 10 episodes.' },
+  { id: 6020, order: 20, title: "X-Men '97 S2", ageRating: 'TV-PG', year: 2026, phase: 5, type: 'series', essential: true, runtime: 300, releaseDate: '2026-01-01', releaseStatus: 'released', upcoming: true, prereq: "X-Men '97 S1", tmdbId: 226606, season: 2, epStart: 1, epEnd: 10, seriesGroup: 'xmen-97', desc: 'Season 2 picks up after the explosive finale, with the team scattered across time and facing an even greater existential threat to mutantkind. Apocalypse rises. 10 episodes.' },
 ];
 
 export const XMEN_CORE_IDS = new Set(XMEN_RAW.map(item => item.id));

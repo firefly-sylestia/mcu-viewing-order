@@ -4403,3 +4403,14 @@
   background: var(--fx-surface-3) !important;
   border-color: var(--fx-border) !important;
 }
+
+
+/* The hero metadata uses clean pills, not bullet separators or dark outlines. */
+:root .top-carousel .feature-kicker .feature-meta-pill {
+  border: 0 !important;
+  box-shadow: none !important;
+}
+:root .top-carousel .feature-kicker .feature-meta-pill + .feature-meta-pill::before {
+  content: none !important;
+  display: none !important;
+}

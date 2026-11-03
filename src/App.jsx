@@ -595,48 +595,33 @@ export default function App() {
         if (item.season) params.set('season', String(item.season));
         
         try {
-          // First try the stored TMDB ID. If that ID is stale or invalid, retry
-          // by title/year instead of marking the title as permanently poster-less.
-          let data = null;
           const response = await fetch(apiUrl(`/api/tmdb/description?${params.toString()}`));
-          if (response.ok) data = await response.json();
-
-          if ((!data?.success || !data?.poster) && item.tmdbId) {
-            const titleParams = new URLSearchParams({
-              title: item.title,
-              year: String(item.year || ''),
-              mediaType: item.type === 'series' ? 'tv' : 'movie',
-            });
-            if (item.season) titleParams.set('season', String(item.season));
-            const titleResponse = await fetch(apiUrl(`/api/tmdb/description?${titleParams.toString()}`));
-            if (titleResponse.ok) {
-              const titleData = await titleResponse.json();
-              if (titleData?.success && titleData?.poster) data = titleData;
-            }
+          if (!response.ok) {
+            console.warn(`[v0] Description endpoint failed for ${item.title}: ${response.status}`);
+            return null;
           }
-
-          if (data?.success && data?.poster) return data;
-
-          // Final fallback: use TMDB multi-search and choose the matching media
-          // type/year rather than blindly taking the first result.
+          
+          const data = await response.json();
+          // If description finds a result with poster, return it
+          if (data.success && data.poster) {
+            return data;
+          }
+          
+          // Fallback: search directly using search/multi endpoint which is great for TV series
           console.log(`[v0] Fallback search for ${item.title} (no poster from description)`);
           const searchParams = new URLSearchParams({ q: item.title });
           const searchResponse = await fetch(apiUrl(`/api/tmdb/search?${searchParams.toString()}`));
+          
           if (!searchResponse.ok) {
-            console.warn(`[v0] Search fallback failed for ${item.title}: ${searchResponse.status}`);
+            console.warn(`[v0] Search fallback failed for ${item.title}`);
             return null;
           }
-
+          
           const searchData = await searchResponse.json();
           const results = searchData.results || [];
-          const expectedType = item.type === 'series' ? 'tv' : 'movie';
-          const typed = results.filter(result => result.type === expectedType);
-          const exactYear = typed.find(result => String(result.year || '') === String(item.year || ''));
-          const normalizedTitle = value => String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
-          const exactTitle = typed.find(result => normalizedTitle(result.title) === normalizedTitle(item.title.replace(/\s+S\d+$/i, '')));
-          const result = exactYear || exactTitle || typed[0] || results[0];
-
-          if (result?.poster) {
+          
+          if (results.length > 0) {
+            const result = results[0]; // Take first result (already sorted by relevance)
             console.log(`[v0] Found poster via search fallback for ${item.title}`);
             return {
               success: true,
@@ -646,10 +631,9 @@ export default function App() {
               rating: result.rating,
               releaseDate: result.year,
               mediaType: result.type,
-              tmdbId: result.id,
             };
           }
-
+          
           return null;
         } catch (err) {
           console.error(`[v0] Poster fetch error for ${item.title}:`, err.message);
@@ -670,7 +654,7 @@ export default function App() {
               if (data.rating) updates[`rating_${item.id}`] = Number(data.rating);
               
               // Cache the metadata - use provided tmdbId or item's tmdbId
-              const cacheKey = metadataCacheKey({ tmdbId: item.tmdbId || data.tmdbId, season: item.season });
+              const cacheKey = metadataCacheKey({ tmdbId: data.tmdbId || item.tmdbId, season: item.season });
               if (cacheKey) {
                 const existing = getFromCache(cacheKey) || {};
                 const hadImdb = !!existing.imdbRating;
@@ -759,14 +743,12 @@ export default function App() {
       if (omdbFetchedRef.current.has(ck)) return false;
       const cached = getFromCache(ck);
       return !cached || (!cached.imdbRating && !cached.tomatoRating && !cached.metaRating);
-    }).slice(0, 24);
+    }).slice(0, 12);
     if (!needRatings.length) return;
     let cancelled = false;
     const fetchOmdbBatch = async (idx) => {
       if (cancelled || idx >= needRatings.length) return;
-      // A little more parallelism makes visible ratings populate quickly without
-      // flooding the OMDb proxy with one request per title at once.
-      const batch = needRatings.slice(idx, idx + 6);
+      const batch = needRatings.slice(idx, idx + 2);
       await Promise.allSettled(batch.map(async (item) => {
         const ck = metadataCacheKey(item) || `omdb:${item.id}`;
         try {
@@ -787,7 +769,7 @@ export default function App() {
           }
         } catch {}
       }));
-      if (!cancelled) { setOmdbVersion(v => v + 1); fetchOmdbBatch(idx + 6); }
+      if (!cancelled) { setOmdbVersion(v => v + 1); setTimeout(() => fetchOmdbBatch(idx + 2), 500); }
     };
     fetchOmdbBatch(0);
     return () => { cancelled = true; };
@@ -1346,33 +1328,10 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
 }
 
 function PosterArt({ item, loading: loadingProp = 'lazy', fetchPriority: fetchPriorityProp = 'auto' }) {
-  const [retryAttempt, setRetryAttempt] = useState(0);
-  const [failed, setFailed] = useState(false);
-
-  useEffect(() => {
-    setRetryAttempt(0);
-    setFailed(false);
-  }, [item.poster]);
-
-  if (!item.poster || failed) return <FallbackPoster item={item} />;
-
-  const src = retryAttempt
-    ? `${item.poster}${item.poster.includes('?') ? '&' : '?'}poster_retry=${retryAttempt}`
-    : item.poster;
-
-  return <img
-    src={src}
-    alt={`${item.title} poster`}
-    width="300"
-    height="450"
-    loading={loadingProp}
-    fetchPriority={fetchPriorityProp}
-    referrerPolicy="no-referrer"
-    onError={() => {
-      if (retryAttempt < 1) setRetryAttempt(1);
-      else setFailed(true);
-    }}
-  />;
+  return item.poster ? <>
+    <img src={item.poster} alt={`${item.title} poster`} width="300" height="450" loading={loadingProp} fetchPriority={fetchPriorityProp} referrerPolicy="no-referrer" onError={e => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling?.removeAttribute('hidden'); }} />
+    <FallbackPoster item={item} hidden />
+  </> : <FallbackPoster item={item} />;
 }
 function FallbackPoster({ item, hidden = false }) { return <div className="fallback-poster" hidden={hidden}><strong>{item.title}</strong><span>{item.year}</span></div>; }
 
