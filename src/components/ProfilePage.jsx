@@ -268,7 +268,6 @@ function SettingsPanel({ profileName, setProfileName, user, configured, onLogin,
   const { theme, setTheme } = useAppTheme();
   const { variant, setVariant } = useUiVariant();
   const [hapticsOn, setHapticsOn] = useState(() => getHapticsEnabled());
-  const [swipeAnimationOn, setSwipeAnimationOn] = useState(() => { try { return localStorage.getItem('carousel-swipe-animation') !== '0'; } catch { return true; } });
   const [mounted, setMounted] = useState(false);
   const [draft, setDraft] = useState(profileName);
   const [editing, setEditing] = useState(false);
@@ -359,30 +358,6 @@ function SettingsPanel({ profileName, setProfileName, user, configured, onLogin,
 
       <div className="settings-group">
         <h3 className="settings-group-title">Motion</h3>
-        <div className="settings-row">
-          <div className="settings-row-label">
-            <span className="settings-row-icon"><Sparkles size={18} /></span>
-            <div>
-              <strong>Swipe-controlled poster animation</strong>
-              <small>{swipeAnimationOn ? 'Poster movement follows your finger' : 'Swipe changes titles with the standard transition'}</small>
-            </div>
-          </div>
-          <button
-            className="theme-toggle"
-            onClick={() => {
-              const next = !swipeAnimationOn;
-              setSwipeAnimationOn(next);
-              try { localStorage.setItem('carousel-swipe-animation', next ? '1' : '0'); } catch {}
-              window.dispatchEvent(new CustomEvent('carousel-swipe-animation-changed', { detail: next }));
-            }}
-            aria-label={`Turn swipe-controlled poster animation ${swipeAnimationOn ? 'off' : 'on'}`}
-            aria-pressed={swipeAnimationOn}
-          >
-            <span className={`theme-toggle-track ${swipeAnimationOn ? 'dark' : 'light'}`}>
-              <span className="theme-toggle-thumb"><Sparkles size={14} /></span>
-            </span>
-          </button>
-        </div>
       </div>
 
       {/* Player Mode */}
