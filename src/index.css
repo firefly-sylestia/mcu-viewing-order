@@ -6031,7 +6031,7 @@ button { border: 0; color: inherit; cursor: pointer; }
 
 /* ── Carousel layout correction: poster stays fixed, copy gets its own room ─ */
 .movie-site .top-carousel .feature-stage {
-  padding-top: 0 !important;
+  padding-top: 32px !important;
   box-sizing: border-box !important;
 }
 .movie-site .top-carousel .poster-stack {
