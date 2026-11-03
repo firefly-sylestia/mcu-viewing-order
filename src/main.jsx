@@ -25,6 +25,7 @@ const readStored = (key, fallback) => {
 }
 const storedTheme = readStored('theme', 'dark')
 document.documentElement.setAttribute('data-theme', storedTheme)
+document.documentElement.setAttribute('data-carousel-text-shadow', readStored('carousel-text-shadow', 'on'))
 document.documentElement.classList.toggle('dark', storedTheme !== 'light')
 document.documentElement.setAttribute('data-ui', readStored('ui-variant', 'fresh'))
 
