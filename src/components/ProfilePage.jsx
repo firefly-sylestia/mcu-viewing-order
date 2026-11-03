@@ -268,6 +268,9 @@ function SettingsPanel({ profileName, setProfileName, user, configured, onLogin,
   const { theme, setTheme } = useAppTheme();
   const { variant, setVariant } = useUiVariant();
   const [hapticsOn, setHapticsOn] = useState(() => getHapticsEnabled());
+  const [carouselTextShadow, setCarouselTextShadow] = useState(() => {
+    try { return localStorage.getItem('carousel-text-shadow') !== 'off'; } catch { return true; }
+  });
   const [mounted, setMounted] = useState(false);
   const [draft, setDraft] = useState(profileName);
   const [editing, setEditing] = useState(false);
@@ -275,6 +278,10 @@ function SettingsPanel({ profileName, setProfileName, user, configured, onLogin,
   const [confirmingLogout, setConfirmingLogout] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    document.documentElement.setAttribute('data-carousel-text-shadow', carouselTextShadow ? 'on' : 'off');
+    try { localStorage.setItem('carousel-text-shadow', carouselTextShadow ? 'on' : 'off'); } catch {}
+  }, [carouselTextShadow]);
 
   const saveName = () => {
     const trimmed = draft.trim();
@@ -332,6 +339,25 @@ function SettingsPanel({ profileName, setProfileName, user, configured, onLogin,
               </button>
             ))}
           </div>
+        </div>
+        <div className="settings-row">
+          <div className="settings-row-label">
+            <span className="settings-row-icon"><Clapperboard size={18} /></span>
+            <div>
+              <strong>Carousel text shadows</strong>
+              <small>{carouselTextShadow ? 'Text shadows enabled' : 'Text shadows removed'}</small>
+            </div>
+          </div>
+          <button
+            className="theme-toggle"
+            onClick={() => setCarouselTextShadow(value => !value)}
+            aria-label={`Turn carousel text shadows ${carouselTextShadow ? 'off' : 'on'}`}
+            aria-pressed={carouselTextShadow}
+          >
+            <span className={`theme-toggle-track ${carouselTextShadow ? 'dark' : 'light'}`}>
+              <span className="theme-toggle-thumb"><Clapperboard size={14} /></span>
+            </span>
+          </button>
         </div>
         <div className="settings-row">
           <div className="settings-row-label">
