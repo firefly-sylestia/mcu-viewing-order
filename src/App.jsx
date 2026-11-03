@@ -104,7 +104,13 @@ const mediaKey = (item) => item?.external
   : String(item?.id);
 
 const posterFromManifest = (item, manifest) => {
-  const value = manifest?.byId?.[String(item.id)] || manifest?.byTitle?.[item.title];
+  // These two legacy-series posters are deliberately pinned to their bundled
+  // files so stale remote metadata/cache entries cannot hide the local artwork.
+  const pinned = {
+    134: '134-cloak-and-dagger-s1.jpg',
+    143: '143-cloak-and-dagger-s2.jpg',
+  }[Number(item?.id)];
+  const value = pinned || manifest?.byId?.[String(item.id)] || manifest?.byTitle?.[item.title];
   if (!value) return '';
   return value.startsWith('http') ? value : assetUrl(`/posters/${value}`);
 };
@@ -441,7 +447,8 @@ export default function App() {
       if (cached.voteCount) voteCount = cached.voteCount;
     }
     
-    if (!poster) poster = posterFromManifest(item, posterMap);
+    if ([134, 143].includes(Number(item.id))) poster = posterFromManifest(item, posterMap) || poster;
+    else if (!poster) poster = posterFromManifest(item, posterMap);
 
     const key = mediaKey(item);
     const action = actions[key] || actions[item.id] || {};
