@@ -5702,3 +5702,54 @@ button { border: 0; color: inherit; cursor: pointer; }
     left: calc(4px + var(--nav-index, 0) * ((100% - 10px + 1px) / var(--nav-count, 5))) !important;
   }
 }
+
+
+/* ── Final glass / hero visibility pass ──────────────────────────────────── */
+/* Slightly clearer dock, while keeping enough contrast for legibility. */
+:root .movie-site .bottom-nav {
+  background: rgba(13, 16, 22, .27) !important;
+  border-color: rgba(255, 255, 255, .075) !important;
+  box-shadow: 0 5px 18px rgba(0, 0, 0, .09) !important;
+  backdrop-filter: blur(26px) saturate(165%) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(165%) !important;
+}
+:root[data-theme="light"] .movie-site .bottom-nav {
+  background: rgba(250, 252, 255, .23) !important;
+  border-color: rgba(126, 148, 180, .10) !important;
+  box-shadow: 0 5px 18px rgba(80, 102, 136, .06) !important;
+  backdrop-filter: blur(26px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(160%) !important;
+}
+
+/* Let substantially more of the selected title artwork show through the hero. */
+.movie-site .top-carousel {
+  background: rgba(14, 16, 22, .12) !important;
+}
+.movie-site .top-carousel::before {
+  opacity: .62 !important;
+  filter: blur(24px) saturate(1.02) !important;
+}
+.movie-site .top-carousel::after {
+  background: linear-gradient(110deg, rgba(7, 10, 18, .16), rgba(7, 10, 18, .07)) !important;
+}
+:root[data-theme="light"] .movie-site .top-carousel {
+  background: rgba(247, 250, 255, .08) !important;
+}
+:root[data-theme="light"] .movie-site .top-carousel::before {
+  opacity: .58 !important;
+  filter: blur(24px) saturate(.94) brightness(1.06) !important;
+}
+:root[data-theme="light"] .movie-site .top-carousel::after {
+  background: linear-gradient(110deg, rgba(246, 249, 255, .12), rgba(250, 252, 255, .045)) !important;
+}
+
+/* Strong dark active icon/text on the pale light-mode selection pill. */
+:root[data-theme="light"] .movie-site .bottom-nav button.active,
+:root[data-theme="light"] .movie-site .bottom-nav button.active svg,
+:root[data-theme="light"] .movie-site .bottom-nav button.active span {
+  color: #101d30 !important;
+  opacity: 1 !important;
+}
+:root[data-theme="light"] .movie-site .bottom-nav button.active svg {
+  stroke: #101d30 !important;
+}
