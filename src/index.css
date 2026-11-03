@@ -6067,3 +6067,30 @@ button { border: 0; color: inherit; cursor: pointer; }
     transform: translateY(18px) !important;
   }
 }
+
+
+/* ── Featured carousel typography: stronger metadata + black/white contrast ─ */
+.movie-site .top-carousel .feature-kicker {
+  font-size: clamp(14px, 1.15vw, 16px) !important;
+  font-weight: 650 !important;
+  gap: 12px !important;
+}
+.movie-site .top-carousel .feature-kicker span {
+  font-size: inherit !important;
+  font-weight: inherit !important;
+}
+.movie-site .top-carousel .feature-copy,
+.movie-site .top-carousel .feature-copy h1,
+.movie-site .top-carousel .feature-copy p,
+.movie-site .top-carousel .feature-copy .feature-kicker,
+.movie-site .top-carousel .feature-copy .feature-kicker span,
+.movie-site .top-carousel .feature-copy .feature-footer,
+.movie-site .top-carousel .feature-copy .feature-footer button,
+.movie-site .top-carousel .feature-copy .chips,
+.movie-site .top-carousel .feature-copy .chips span {
+  color: #000 !important;
+  text-shadow: 0 1px 0 rgba(255,255,255,.95), 0 0 3px rgba(255,255,255,.78) !important;
+}
+.movie-site .top-carousel .feature-copy .feature-play {
+  border-color: rgba(0,0,0,.34) !important;
+}
