@@ -5923,17 +5923,27 @@ button { border: 0; color: inherit; cursor: pointer; }
 }
 
 
-/* Finger-controlled carousel transition: only the incoming and outgoing posters move. */
+/* Finger-controlled carousel transition: the outgoing poster scales from a
+   fixed left-side anchor, so its original position never drifts. */
 .movie-site .top-carousel[data-swipe-preview="true"] .smooth-stack .stack-poster {
   transition: none !important;
 }
 .movie-site .top-carousel[data-swipe-preview="true"] .smooth-stack .poster-0 {
-  transform: translateX(14%) translate3d(0,0,50px) scale(var(--swipe-out-scale, 1)) !important;
+  transform-origin: left center !important;
+  transform: translateX(var(--swipe-first-x, 14%)) translate3d(0,0,50px) scale(var(--swipe-out-scale, 1)) !important;
   opacity: calc(1 - var(--swipe-progress, 0)) !important;
 }
-.movie-site .top-carousel[data-swipe-preview="true"][data-swipe-direction="next"] .smooth-stack .poster-1,
-.movie-site .top-carousel[data-swipe-preview="true"][data-swipe-direction="previous"] .smooth-stack .poster-previous-preview {
+/* Next: keep the second poster stacked until halfway, then bring it forward. */
+.movie-site .top-carousel[data-swipe-preview="true"][data-swipe-direction="next"] .smooth-stack .poster-1 {
+  transform-origin: left center !important;
   transform: translateX(var(--swipe-in-x)) translate3d(0,var(--swipe-in-y),0) rotate(var(--swipe-in-rotate)) scale(var(--swipe-in-scale)) !important;
+  opacity: var(--swipe-in-opacity) !important;
+  z-index: 4 !important;
+}
+/* Previous: grow the previous poster in place, directly over the first poster area. */
+.movie-site .top-carousel[data-swipe-preview="true"][data-swipe-direction="previous"] .smooth-stack .poster-previous-preview {
+  transform-origin: left center !important;
+  transform: translateX(var(--swipe-first-x, 14%)) translate3d(0,0,50px) scale(var(--swipe-in-scale)) !important;
   opacity: var(--swipe-in-opacity) !important;
   z-index: 4 !important;
 }
