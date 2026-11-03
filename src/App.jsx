@@ -1255,7 +1255,7 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
     const distance = (event.touches[0]?.clientX ?? touchStartX.current) - touchStartX.current;
     if (Math.abs(distance) < 3) return;
     const section = event.currentTarget;
-    const progress = Math.min(Math.abs(distance) / Math.max(section.getBoundingClientRect().width, 1), 1);
+    const progress = Math.min((Math.abs(distance) * 2.2) / Math.max(section.getBoundingClientRect().width, 1), 1);
     const direction = distance < 0 ? 'next' : 'previous';
     const isMobile = window.matchMedia('(max-width: 560px)').matches;
     const firstX = isMobile ? 4 : 14;
@@ -1279,18 +1279,20 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
       section.style.setProperty('--swipe-in-scale', (.89 + incomingProgress * .11).toFixed(3));
       section.style.setProperty('--swipe-in-opacity', (.9 + incomingProgress * .1).toFixed(3));
     } else {
-      // Reverse the automatic stack transition: the current front poster
-      // retreats to slot two while the previous poster advances from slot two.
+      // Reverse transition: the current poster retreats into slot two.
+      // The previous poster stays behind it at the front anchor and enlarges
+      // into place, rather than travelling through the visible second slot.
       section.style.setProperty('--swipe-out-x', (firstX + incomingProgress * (secondX - firstX)).toFixed(2) + '%');
       section.style.setProperty('--swipe-out-y', (secondY * incomingProgress).toFixed(2) + 'px');
       section.style.setProperty('--swipe-out-rotate', (6 * incomingProgress).toFixed(2) + 'deg');
       section.style.setProperty('--swipe-out-scale', (1 - incomingProgress * .11).toFixed(3));
       section.style.setProperty('--swipe-out-opacity', (1 - incomingProgress * .1).toFixed(3));
-      section.style.setProperty('--swipe-in-x', (secondX - incomingProgress * (secondX - firstX)).toFixed(2) + '%');
-      section.style.setProperty('--swipe-in-y', (secondY * (1 - incomingProgress)).toFixed(2) + 'px');
-      section.style.setProperty('--swipe-in-rotate', (6 * (1 - incomingProgress)).toFixed(2) + 'deg');
-      section.style.setProperty('--swipe-in-scale', (.89 + incomingProgress * .11).toFixed(3));
-      section.style.setProperty('--swipe-in-opacity', (.9 + incomingProgress * .1).toFixed(3));
+      section.style.setProperty('--swipe-in-x', firstX + '%');
+      section.style.setProperty('--swipe-in-y', '0px');
+      section.style.setProperty('--swipe-in-z', (incomingProgress * 50).toFixed(1) + 'px');
+      section.style.setProperty('--swipe-in-rotate', '0deg');
+      section.style.setProperty('--swipe-in-scale', (.72 + incomingProgress * .28).toFixed(3));
+      section.style.setProperty('--swipe-in-opacity', (.12 + incomingProgress * .88).toFixed(3));
     }
   };
   const handleTouchEnd = (event) => {
@@ -1301,7 +1303,7 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
     const section = event.currentTarget;
     section.removeAttribute('data-swipe-preview');
     section.removeAttribute('data-swipe-direction');
-    ['--swipe-shift', '--swipe-progress', '--swipe-first-x', '--swipe-out-scale', '--swipe-in-x', '--swipe-in-y', '--swipe-in-rotate', '--swipe-in-scale', '--swipe-in-opacity', '--swipe-second-x', '--swipe-second-y', '--swipe-out-x', '--swipe-out-y', '--swipe-out-rotate', '--swipe-out-opacity'].forEach((property) => section.style.removeProperty(property));
+    ['--swipe-shift', '--swipe-progress', '--swipe-first-x', '--swipe-out-scale', '--swipe-in-x', '--swipe-in-y', '--swipe-in-rotate', '--swipe-in-scale', '--swipe-in-opacity', '--swipe-second-x', '--swipe-second-y', '--swipe-out-x', '--swipe-out-y', '--swipe-out-rotate', '--swipe-out-opacity', '--swipe-in-z'].forEach((property) => section.style.removeProperty(property));
     if (didSwipe.current) move(distance < 0 ? 1 : -1);
     resumeTimer.current = window.setTimeout(() => setPaused(false), 4200);
   };
