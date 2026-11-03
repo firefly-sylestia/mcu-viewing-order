@@ -5923,22 +5923,17 @@ button { border: 0; color: inherit; cursor: pointer; }
 }
 
 
-/* Finger-controlled carousel transition: only the two posters involved move.
-   The active poster shrinks/fades while its neighbour takes its exact place. */
+/* Finger-controlled carousel transition: only the incoming and outgoing posters move. */
 .movie-site .top-carousel[data-swipe-preview="true"] .smooth-stack .stack-poster {
   transition: none !important;
 }
 .movie-site .top-carousel[data-swipe-preview="true"] .smooth-stack .poster-0 {
-  transform: translateX(14%) translate3d(0,0,50px) scale(calc(1 - var(--swipe-progress, 0) * .42)) !important;
+  transform: translateX(14%) translate3d(0,0,50px) scale(var(--swipe-out-scale, 1)) !important;
   opacity: calc(1 - var(--swipe-progress, 0)) !important;
 }
-.movie-site .top-carousel[data-swipe-preview="true"][data-swipe-direction="next"] .smooth-stack .poster-1 {
-  transform: translateX(calc(70% - var(--swipe-progress, 0) * 56%)) translate3d(0,calc(26px - var(--swipe-progress, 0) * 26px),0) rotate(calc(6deg - var(--swipe-progress, 0) * 6deg)) scale(calc(.89 + var(--swipe-progress, 0) * .11)) !important;
-  opacity: calc(.9 + var(--swipe-progress, 0) * .1) !important;
-  z-index: 4 !important;
-}
+.movie-site .top-carousel[data-swipe-preview="true"][data-swipe-direction="next"] .smooth-stack .poster-1,
 .movie-site .top-carousel[data-swipe-preview="true"][data-swipe-direction="previous"] .smooth-stack .poster-previous-preview {
-  transform: translateX(calc(-42% + var(--swipe-progress, 0) * 56%)) translate3d(0,calc(26px - var(--swipe-progress, 0) * 26px),0) rotate(calc(-6deg + var(--swipe-progress, 0) * 6deg)) scale(calc(.89 + var(--swipe-progress, 0) * .11)) !important;
-  opacity: calc(.9 + var(--swipe-progress, 0) * .1) !important;
+  transform: translateX(var(--swipe-in-x)) translate3d(0,var(--swipe-in-y),0) rotate(var(--swipe-in-rotate)) scale(var(--swipe-in-scale)) !important;
+  opacity: var(--swipe-in-opacity) !important;
   z-index: 4 !important;
 }
