@@ -6137,3 +6137,17 @@ button { border: 0; color: inherit; cursor: pointer; }
 .movie-site .header-search * {
   -webkit-tap-highlight-color: transparent !important;
 }
+
+
+/* Light carousel copy: true black description without a text glow. */
+:root[data-theme="light"] .movie-site .top-carousel .feature-copy .feature-desc {
+  color: #000 !important;
+  text-shadow: none !important;
+}
+
+/* Keep the Watch Trailer control clean in light mode, without a drop shadow. */
+:root[data-theme="light"] .movie-site .top-carousel .feature-copy .feature-play,
+:root[data-theme="light"] .movie-site .top-carousel .feature-copy .feature-play:hover {
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
