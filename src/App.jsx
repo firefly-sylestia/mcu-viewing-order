@@ -577,7 +577,7 @@ export default function App() {
     const missing = activeItems.filter(item => {
       const cached = item.tmdbId ? getFromCache(metadataCacheKey(item)) : null;
       return !item.poster && !cached && !posterFromManifest(item, posterMap) && !failedRef.current.has(item.id);
-    }).slice(0, 15);
+    });
     
     if (!missing.length) return;
     let cancelled = false;
