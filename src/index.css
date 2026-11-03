@@ -5923,41 +5923,9 @@ button { border: 0; color: inherit; cursor: pointer; }
 }
 
 
-/* Finger-controlled carousel transition. Both directions interpolate the
-   same two poster slots used by the automatic stack transition. */
-.movie-site .top-carousel[data-swipe-preview="true"] .smooth-stack .stack-poster {
-  transition: none !important;
-}
-.movie-site .top-carousel[data-swipe-preview="true"] .smooth-stack .poster-0 {
-  transform-origin: 50% 100% !important;
-  opacity: 1 !important;
-}
-/* Forward: the next poster leaves slot two and advances to the front. */
-.movie-site .top-carousel[data-swipe-preview="true"][data-swipe-direction="next"] .smooth-stack .poster-0 {
-  transform: translateX(var(--swipe-first-x, 14%)) translate3d(0,0,50px) scale(1) !important;
-  scale: var(--swipe-out-scale, 1) !important;
-  opacity: calc(1 - var(--swipe-progress, 0)) !important;
-}
-.movie-site .top-carousel[data-swipe-preview="true"][data-swipe-direction="next"] .smooth-stack .poster-1 {
-  transform-origin: 50% 100% !important;
-  transform: translateX(var(--swipe-in-x)) translate3d(0,var(--swipe-in-y),0) rotate(var(--swipe-in-rotate)) !important;
-  scale: var(--swipe-in-scale) !important;
-  opacity: var(--swipe-in-opacity) !important;
-  z-index: 4 !important;
-}
-/* Reverse: the front poster retreats into slot two as the previous poster
-   advances from that same slot, mirroring the automatic transition. */
-.movie-site .top-carousel[data-swipe-preview="true"][data-swipe-direction="previous"] .smooth-stack .poster-0 {
-  transform: translateX(var(--swipe-out-x, var(--swipe-first-x, 14%))) translate3d(0,var(--swipe-out-y, 0px),50px) rotate(var(--swipe-out-rotate, 0deg)) !important;
-  scale: var(--swipe-out-scale, 1) !important;
-  opacity: var(--swipe-out-opacity, 1) !important;
-  z-index: 2 !important;
-}
-.movie-site .top-carousel[data-swipe-preview="true"][data-swipe-direction="previous"] .smooth-stack .poster-previous-preview {
-  /* Stay at the front poster's anchor; reveal from behind by enlarging in place. */
-  transform-origin: 50% 100% !important;
-  transform: translateX(var(--swipe-in-x)) translate3d(0,var(--swipe-in-y),var(--swipe-in-z, 0px)) rotate(var(--swipe-in-rotate)) !important;
-  scale: var(--swipe-in-scale) !important;
-  opacity: var(--swipe-in-opacity) !important;
-  z-index: 4 !important;
+/* Manual gestures use the normal poster-stack animation with a shorter
+   duration. The automatic carousel keeps its original timing. */
+.movie-site .top-carousel[data-fast-swipe="true"] .smooth-stack .stack-poster {
+  transition-duration: .24s !important;
+  transition-timing-function: cubic-bezier(.22, 1, .36, 1) !important;
 }
