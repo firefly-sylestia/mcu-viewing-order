@@ -4347,9 +4347,13 @@
 
 /* Featured carousel text-shadow preference. The trailer action is always clean. */
 :root[data-carousel-text-shadow="off"] .movie-site .top-carousel .feature-copy,
-:root[data-carousel-text-shadow="off"] .movie-site .top-carousel .feature-copy * {
+:root[data-carousel-text-shadow="off"] .movie-site .top-carousel .feature-copy *,
+:root[data-theme="light"][data-carousel-text-shadow="off"] .movie-site .top-carousel .feature-copy * {
   text-shadow: none !important;
 }
 .movie-site .top-carousel .feature-copy .feature-play {
+  text-shadow: none !important;
+}
+:root[data-theme="light"] .movie-site .top-carousel .feature-copy .feature-play {
   text-shadow: none !important;
 }
