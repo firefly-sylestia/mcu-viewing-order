@@ -5986,3 +5986,22 @@ button { border: 0; color: inherit; cursor: pointer; }
 .movie-site .top-carousel .poster-stack {
   z-index: 2 !important;
 }
+
+
+/* ── Carousel copy clearance and single-line title ───────────────────────── */
+.movie-site .top-carousel .feature-copy {
+  transform: translateY(26px) !important;
+}
+.movie-site .top-carousel .feature-copy h1 {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  min-height: 1.1em !important;
+  line-height: 1.1 !important;
+  text-wrap: nowrap !important;
+}
+@media (max-width: 920px) {
+  .movie-site .top-carousel .feature-copy {
+    transform: translateY(18px) !important;
+  }
+}
