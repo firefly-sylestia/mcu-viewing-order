@@ -119,7 +119,7 @@ function ProfilePage({ stats, activeItems, universe, activeTab = 'insights', que
 
         {activeTab === 'settings' && (
           <div id="settings-panel" role="tabpanel" className="profile-panel settings-panel">
-            <SettingsPanel profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={onLogin} onLogout={onLogout} universe={universe} activeItems={activeItems} setStatus={setStatus} toggleBookmark={toggleBookmark} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} />
+            <SettingsPanel query={query} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={onLogin} onLogout={onLogout} universe={universe} activeItems={activeItems} setStatus={setStatus} toggleBookmark={toggleBookmark} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} />
           </div>
         )}
       </div>
@@ -216,7 +216,9 @@ export function ProfileHeader({ universe, stats, profileName, setProfileName, us
   );
 }
 
-function SettingsPanel({ profileName, setProfileName, user, configured, onLogin, onLogout, universe, activeItems, setStatus, toggleBookmark, nativePlayer, setNativePlayer }) {
+function SettingsPanel({ query = '', profileName, setProfileName, user, configured, onLogin, onLogout, universe, activeItems, setStatus, toggleBookmark, nativePlayer, setNativePlayer }) {
+  const search = query.trim().toLowerCase();
+  const showGroup = (terms) => !search || terms.includes(search);
   const { theme, setTheme } = useAppTheme();
   const { variant, setVariant } = useUiVariant();
   const [hapticsOn, setHapticsOn] = useState(() => getHapticsEnabled());
@@ -242,7 +244,7 @@ function SettingsPanel({ profileName, setProfileName, user, configured, onLogin,
   return (
     <div className="settings-section">
       {/* Theme Toggle */}
-      <div className="settings-group">
+      <div className="settings-group" hidden={!showGroup('appearance theme interface haptics dark light layout vibration')}>
         <h3 className="settings-group-title">Appearance</h3>
         <div className="settings-row">
           <div className="settings-row-label">
@@ -310,7 +312,7 @@ function SettingsPanel({ profileName, setProfileName, user, configured, onLogin,
       </div>
 
       {/* Player Mode */}
-      <div className="settings-group">
+      <div className="settings-group" hidden={!showGroup('playback player native embedded video')}>
         <h3 className="settings-group-title">Playback</h3>
         <div className="settings-row">
           <div className="settings-row-label">
@@ -339,7 +341,7 @@ function SettingsPanel({ profileName, setProfileName, user, configured, onLogin,
       </div>
 
       {/* Profile Name */}
-      <div className="settings-group">
+      <div className="settings-group" hidden={!showGroup('profile name display edit')}>
         <h3 className="settings-group-title">Profile</h3>
         <div className="settings-row">
           <div className="settings-row-label">
@@ -372,7 +374,7 @@ function SettingsPanel({ profileName, setProfileName, user, configured, onLogin,
 
       {/* Account */}
       {configured && (
-        <div className="settings-group">
+        <div className="settings-group" hidden={!showGroup('account sign in sync cloud logout')}>
           <h3 className="settings-group-title">Account</h3>
           <div className="settings-row">
             <div className="settings-row-label">
@@ -716,7 +718,7 @@ function DataSection({ universe, activeItems, profileName, setStatus, toggleBook
   };
 
   return (
-    <div className="settings-group">
+    <div className="settings-group" hidden={!showGroup('data management export import backup progress')}>
       <h3 className="settings-group-title">Data Management</h3>
       <p className="settings-data-desc">Export your {universeName} viewing progress as a JSON backup, or restore from a previous export.</p>
       {pendingImport ? (
