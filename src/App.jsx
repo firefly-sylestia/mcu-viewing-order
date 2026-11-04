@@ -990,6 +990,7 @@ export default function App() {
   <main className={`movie-site universe-${universe} page-${section}`} style={{ '--brand-accent': universeAccent, '--accent': universeAccent, '--theme-accent': universeAccent }}>
   <div className="site-glow" />
       <header className="site-header">
+  <div className="header-universe-backdrop" aria-hidden="true"><span>{UNIVERSE_LOGOS[universe]}</span></div>
   <div className="header-top">
   <div className="header-quick-actions" aria-label="Quick viewing controls">
   {(() => {
