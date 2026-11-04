@@ -1400,7 +1400,13 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
         <div className="feature-footer"><button className="feature-play" onClick={showTrailer}><Clapperboard size={18} /> Watch trailer</button><div className="chips">{featured?.genres.slice(0, 3).map(g => <span key={g}>{g}</span>)}</div></div>
       </div>
     </div>
-    <div className="carousel-nav"><button onClick={() => move(-1)} aria-label="Previous title"><ChevronLeft /></button><div className="dots">{items.map((item, index) => <button key={item.id} aria-label={`Show ${item.title}`} className={item.id === featured?.id ? 'active' : ''} onClick={() => { setHeroIndex(index); setInlineTrailer(null); }} />)}</div><button onClick={() => move(1)} aria-label="Next title"><ChevronRight /></button></div>
+    <div className="carousel-nav"><button onClick={() => move(-1)} aria-label="Previous title"><ChevronLeft /></button><div className="dots">{Array.from({ length: Math.min(items.length, 6) }, (_, dotIndex) => {
+        const targetIndex = items.length <= 6 ? dotIndex : Math.round(dotIndex * (items.length - 1) / 5);
+        const activeDot = items.length <= 6
+          ? heroIndex % items.length === dotIndex
+          : Math.round((heroIndex % items.length) * 5 / (items.length - 1)) === dotIndex;
+        return <button key={dotIndex} aria-label={`Show carousel group ${dotIndex + 1}`} className={activeDot ? 'active' : ''} onClick={() => { setHeroIndex(targetIndex); setInlineTrailer(null); }} />;
+      })}</div><button onClick={() => move(1)} aria-label="Next title"><ChevronRight /></button></div>
   </section>;
 }
 
