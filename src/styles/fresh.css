@@ -4772,3 +4772,8 @@
     animation: none !important;
   }
 }
+
+/* Keep the home header spacious; list mode retains the full filtering toolbar. */
+.page-home .site-header .header-tools {
+  display: none !important;
+}
