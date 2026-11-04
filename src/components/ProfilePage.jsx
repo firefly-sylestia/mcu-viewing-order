@@ -127,11 +127,11 @@ function ProfilePage({ stats, activeItems, universe, activeTab = 'insights', que
   );
 }
 
-export function ProfileHeader({ universe, stats, profileName, user, configured, onLogin, onLogout }) {
+export function ProfileHeader({ universe, stats, profileName, user, onLogin, onLogout }) {
   const [confirmingLogout, setConfirmingLogout] = useState(false);
   const universeName = universe === 'marvel' ? 'MCU' : universe === 'xmen' ? 'X-Men' : universe === 'sony' ? 'Sony' : 'DC';
-  const displayName = profileName || user?.displayName || `${universeName} Viewer`;
-  const avatarInitial = (displayName.trim()[0] || universeName[0]).toUpperCase();
+  const displayName = (profileName || user?.displayName || user?.email?.split('@')[0] || `${universeName} Viewer`).trim();
+  const avatarInitial = (displayName[0] || universeName[0]).toUpperCase();
 
   return (
     <div className="profile-header profile-header-compact">
@@ -140,29 +140,26 @@ export function ProfileHeader({ universe, stats, profileName, user, configured, 
       </div>
       <div className="profile-info">
         <h1 className="profile-title">{displayName}</h1>
-        <p className="profile-subtitle">{stats.percent}% complete · {stats.total} titles tracked</p>
       </div>
-      {configured && (
-        <div className="profile-auth">
-          {user ? (
-            confirmingLogout ? (
-              <div className="profile-auth-confirm">
-                <span>Sign out?</span>
-                <button className="confirm-yes" onClick={() => { onLogout(); setConfirmingLogout(false); }}>Yes</button>
-                <button className="confirm-no" onClick={() => setConfirmingLogout(false)}>No</button>
-              </div>
-            ) : (
-              <button className="profile-auth-btn signed-in" onClick={() => setConfirmingLogout(true)} aria-label="Sign out" title="Sign out">
-                <LogOut size={18} />
-              </button>
-            )
+      <div className="profile-auth">
+        {user ? (
+          confirmingLogout ? (
+            <div className="profile-auth-confirm">
+              <span>Sign out?</span>
+              <button className="confirm-yes" onClick={() => { onLogout(); setConfirmingLogout(false); }}>Yes</button>
+              <button className="confirm-no" onClick={() => setConfirmingLogout(false)}>No</button>
+            </div>
           ) : (
-            <button className="profile-auth-btn sign-in" onClick={onLogin} aria-label="Sign in" title="Sign in">
-              <LogIn size={18} />
+            <button className="profile-auth-btn signed-in" onClick={() => setConfirmingLogout(true)} aria-label="Sign out" title="Sign out">
+              <LogOut size={17} />
             </button>
-          )}
-        </div>
-      )}
+          )
+        ) : (
+          <button className="profile-auth-btn sign-in" onClick={onLogin} aria-label="Sign in" title="Sign in">
+            <LogIn size={17} />
+          </button>
+        )}
+      </div>
     </div>
   );
 }
