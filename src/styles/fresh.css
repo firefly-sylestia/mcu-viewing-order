@@ -5150,3 +5150,33 @@
     height: 106px !important;
   }
 }
+
+
+/* Neutralize Sony's masked backdrop mark and let more of the page show through the glass. */
+:root .movie-site.universe-sony .site-header .header-universe-backdrop > span {
+  color: rgba(224, 229, 237, .78) !important;
+}
+:root .movie-site .site-header {
+  background: rgba(18, 22, 30, .12) !important;
+}
+:root .movie-site .site-header::before {
+  background: linear-gradient(105deg,
+    rgba(18, 22, 30, .10) 0%,
+    rgba(18, 22, 30, .035) 50%,
+    rgba(18, 22, 30, .085) 100%) !important;
+}
+:root .movie-site .site-header .header-universe-backdrop {
+  opacity: .18 !important;
+}
+:root[data-theme="light"] .movie-site .site-header {
+  background: rgba(255, 255, 255, .14) !important;
+}
+:root[data-theme="light"] .movie-site .site-header::before {
+  background: linear-gradient(105deg,
+    rgba(255,255,255,.13) 0%,
+    rgba(255,255,255,.045) 50%,
+    rgba(255,255,255,.11) 100%) !important;
+}
+:root[data-theme="light"] .movie-site .site-header .header-universe-backdrop {
+  opacity: .13 !important;
+}
