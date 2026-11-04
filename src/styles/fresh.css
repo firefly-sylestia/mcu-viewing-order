@@ -4435,7 +4435,8 @@
   justify-content: flex-start;
 }
 .universe-tabs {
-  width: 100%;
+  width: auto;
+  flex: 0 1 auto;
   gap: 6px;
 }
 .universe-tabs button {
@@ -4476,6 +4477,9 @@
   color: #151922 !important;
   background: transparent !important;
   box-shadow: 0 0 0 1px rgba(255,255,255,.9), 0 0 13px rgba(255,255,255,.95), 0 2px 9px rgba(16,24,40,.07) !important;
+}
+@media (max-width: 1060px) {
+  .universe-tabs { width: 100%; }
 }
 @media (max-width: 620px) {
   .header-top { gap: 10px; }
