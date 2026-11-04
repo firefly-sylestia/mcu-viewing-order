@@ -5900,33 +5900,6 @@
 }
 
 
-/* One shared header search treatment across Home, List, Insights and Profile. */
-:root .movie-site .site-header .header-bar .header-search {
-  box-sizing: border-box !important;
-  min-height: 48px !important;
-  height: 48px !important;
-  max-height: 48px !important;
-  border-radius: 13px !important;
-  padding: 0 15px !important;
-  border: 1px solid color-mix(in srgb, var(--fx-muted) 18%, transparent) !important;
-  background: color-mix(in srgb, var(--fx-surface-2) 76%, transparent) !important;
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--fx-text) 5%, transparent) !important;
-  -webkit-backdrop-filter: blur(18px) saturate(150%) !important;
-  backdrop-filter: blur(18px) saturate(150%) !important;
-}
-:root .movie-site .site-header .header-bar .header-search:focus-within {
-  border-color: color-mix(in srgb, var(--fx-accent) 48%, transparent) !important;
-  background: color-mix(in srgb, var(--fx-surface-3) 82%, transparent) !important;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--fx-accent) 17%, transparent),
-    inset 0 1px 0 color-mix(in srgb, var(--fx-text) 7%, transparent) !important;
-}
-@media (max-width: 620px) {
-  :root .movie-site .site-header .header-bar .header-search {
-    min-height: 48px !important; height: 48px !important; max-height: 48px !important;
-    flex-basis: 48px !important; border-radius: 13px !important; padding: 0 13px !important;
-  }
-}
-
 /* Keep the glass and universe haze identical on Insights/Profile and List. */
 :root .movie-site.page-analytics .site-header,
 :root .movie-site.page-profile .site-header {
@@ -5979,79 +5952,80 @@
 }
 
 
-/* Final shared header controls: List's pill search and universe sizing everywhere. */
-:root .movie-site .site-header .header-bar .header-search {
+
+
+/* Insights and Profile borrow List's header control metrics without touching Home/List. */
+:root .movie-site.page-analytics .site-header .header-bar .header-search,
+:root .movie-site.page-profile .site-header .header-bar .header-search {
   box-sizing: border-box !important;
-  width: 100% !important;
   min-height: 54px !important;
   height: 54px !important;
-  max-height: 54px !important;
-  flex: 0 0 54px !important;
-  padding: 0 19px !important;
-  border-radius: 999px !important;
+  padding-inline: 19px !important;
   border: 1px solid color-mix(in srgb, var(--fx-muted) 20%, transparent) !important;
+  border-radius: 999px !important;
   background: color-mix(in srgb, var(--fx-surface-2) 70%, transparent) !important;
   -webkit-backdrop-filter: blur(18px) saturate(150%) !important;
   backdrop-filter: blur(18px) saturate(150%) !important;
   box-shadow: inset 0 1px 0 color-mix(in srgb, var(--fx-text) 5%, transparent) !important;
 }
-:root .movie-site .site-header .header-bar .header-search:focus-within {
+:root .movie-site.page-analytics .site-header .header-bar .header-search:focus-within,
+:root .movie-site.page-profile .site-header .header-bar .header-search:focus-within {
   background: color-mix(in srgb, var(--fx-surface-3) 78%, transparent) !important;
   border-color: color-mix(in srgb, var(--fx-accent) 48%, transparent) !important;
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--fx-accent) 17%, transparent),
     inset 0 1px 0 color-mix(in srgb, var(--fx-text) 7%, transparent) !important;
 }
-:root .movie-site .site-header .header-bar .universe-tabs {
-  box-sizing: border-box !important;
+:root .movie-site.page-analytics .site-header .header-bar .universe-tabs,
+:root .movie-site.page-profile .site-header .header-bar .universe-tabs {
   padding: 6px !important;
   gap: 5px !important;
 }
-:root .movie-site .site-header .header-bar .universe-tabs button {
+:root .movie-site.page-analytics .site-header .header-bar .universe-tabs button,
+:root .movie-site.page-profile .site-header .header-bar .universe-tabs button {
   min-width: 76px !important;
   min-height: 64px !important;
-  height: auto !important;
   padding: 12px 20px !important;
-  flex: 1 1 0 !important;
 }
-:root .movie-site .site-header .header-bar .universe-tabs button .universe-logo-img {
+:root .movie-site.page-analytics .site-header .header-bar .universe-tabs button .universe-logo-img,
+:root .movie-site.page-profile .site-header .header-bar .universe-tabs button .universe-logo-img {
   height: 27px !important;
-  width: auto !important;
 }
-:root .movie-site .site-header .header-bar .universe-tabs button[data-universe="sony"] .universe-logo-mask {
+:root .movie-site.page-analytics .site-header .header-bar .universe-tabs button[data-universe="sony"] .universe-logo-mask,
+:root .movie-site.page-profile .site-header .header-bar .universe-tabs button[data-universe="sony"] .universe-logo-mask {
   width: 78px !important; height: 22px !important;
 }
-:root .movie-site .site-header .header-bar .universe-tabs button[data-universe="xmen"] .universe-logo-mask {
+:root .movie-site.page-analytics .site-header .header-bar .universe-tabs button[data-universe="xmen"] .universe-logo-mask,
+:root .movie-site.page-profile .site-header .header-bar .universe-tabs button[data-universe="xmen"] .universe-logo-mask {
   width: 42px !important; height: 38px !important;
 }
-:root .movie-site .site-header .header-bar .universe-tabs button[data-universe="dc"] .universe-logo-img {
+:root .movie-site.page-analytics .site-header .header-bar .universe-tabs button[data-universe="dc"] .universe-logo-img,
+:root .movie-site.page-profile .site-header .header-bar .universe-tabs button[data-universe="dc"] .universe-logo-img {
   height: 29px !important;
 }
 @media (max-width: 620px) {
-  :root .movie-site .site-header .header-bar .header-search {
-    min-height: 48px !important; height: 48px !important; max-height: 48px !important;
-    flex-basis: 48px !important; padding: 0 13px !important; border-radius: 999px !important;
+  :root .movie-site.page-analytics .site-header .header-bar .header-search,
+  :root .movie-site.page-profile .site-header .header-bar .header-search {
+    min-height: 48px !important; height: 48px !important; padding-inline: 13px !important;
+    border-radius: 999px !important;
   }
-  :root .movie-site .site-header .header-bar .universe-tabs {
+  :root .movie-site.page-analytics .site-header .header-bar .universe-tabs,
+  :root .movie-site.page-profile .site-header .header-bar .universe-tabs {
     padding: 4px !important; gap: 3px !important;
   }
-  :root .movie-site .site-header .header-bar .universe-tabs button {
-    min-width: 0 !important; min-height: 56px !important;
-    padding: 9px 11px !important;
+  :root .movie-site.page-analytics .site-header .header-bar .universe-tabs button,
+  :root .movie-site.page-profile .site-header .header-bar .universe-tabs button {
+    min-width: 0 !important; min-height: 56px !important; padding: 9px 11px !important;
   }
-  :root .movie-site .site-header .header-bar .universe-tabs button .universe-logo-img {
+  :root .movie-site.page-analytics .site-header .header-bar .universe-tabs button .universe-logo-img,
+  :root .movie-site.page-profile .site-header .header-bar .universe-tabs button .universe-logo-img {
     height: 23px !important;
   }
-  :root .movie-site .site-header .header-bar .universe-tabs button[data-universe="sony"] .universe-logo-mask {
+  :root .movie-site.page-analytics .site-header .header-bar .universe-tabs button[data-universe="sony"] .universe-logo-mask,
+  :root .movie-site.page-profile .site-header .header-bar .universe-tabs button[data-universe="sony"] .universe-logo-mask {
     width: 62px !important; height: 18px !important;
   }
-  :root .movie-site .site-header .header-bar .universe-tabs button[data-universe="xmen"] .universe-logo-mask {
+  :root .movie-site.page-analytics .site-header .header-bar .universe-tabs button[data-universe="xmen"] .universe-logo-mask,
+  :root .movie-site.page-profile .site-header .header-bar .universe-tabs button[data-universe="xmen"] .universe-logo-mask {
     width: 34px !important; height: 31px !important;
   }
-}
-:root[data-theme="light"] .movie-site .site-header .header-bar .header-search {
-  background: rgba(255,255,255,.64) !important;
-  border-color: rgba(30,41,59,.12) !important;
-}
-:root[data-theme="light"] .movie-site .site-header .header-bar .header-search:focus-within {
-  background: rgba(255,255,255,.82) !important;
 }
