@@ -1132,8 +1132,8 @@ export default function App() {
     <span className="header-filter-label">Filters</span>
     {activeFilterCount > 0 && <b className="header-filter-count">{activeFilterCount}</b>}
   </button>
-        </div>
   </>}
+        </div>
   </div>
       </header>
 
