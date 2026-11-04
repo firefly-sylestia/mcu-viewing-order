@@ -4777,3 +4777,52 @@
 .page-home .site-header .header-tools {
   display: none !important;
 }
+
+
+/* Header correction: brand leads on the left; keep the existing universe marks only. */
+.header-top {
+  justify-content: flex-start !important;
+  align-items: center;
+  padding-inline: 5px;
+}
+.header-top .brand {
+  order: -1;
+  margin: 0 auto 0 0 !important;
+  flex: 0 0 auto;
+  max-width: none;
+  align-items: flex-start !important;
+  text-align: left !important;
+}
+.header-top .header-quick-actions {
+  order: 1;
+  margin: 0 0 0 auto !important;
+  justify-content: flex-end !important;
+}
+.universe-tabs button {
+  min-width: 68px;
+  min-height: 50px;
+  padding: 12px 22px;
+  gap: 0;
+}
+.universe-tabs button .universe-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.universe-tabs button .universe-logo svg {
+  width: 25px;
+  height: 25px;
+}
+@media (max-width: 620px) {
+  .header-top { padding-inline: 4px; }
+  .universe-tabs button {
+    min-width: 0;
+    min-height: 46px;
+    padding: 10px 13px;
+  }
+  .universe-tabs button .universe-logo svg {
+    width: 22px;
+    height: 22px;
+  }
+}
