@@ -7,7 +7,7 @@ import { SONY_RAW } from './data/sonyData';
 import { getTrailerByTitle, trailerEmbedUrl } from './data/trailerData';
 import { STORY_BRIDGES } from './data/connections';
 import { STORY_ORDER_OVERRIDES, DOOMSDAY_SECRET_WARS_TITLES, getTitleGuidance } from './data/timelineModes';
-import ProfilePage from './components/ProfilePage';
+import ProfilePage, { ProfileHeader } from './components/ProfilePage';
 import AuthModal from './components/AuthModal';
 import SeoHead from './components/SeoHead';
 import NotFoundPage from './components/NotFoundPage';
@@ -186,6 +186,7 @@ export default function App() {
   const [externalSearchLoading, setExternalSearchLoading] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
+  const [profileTab, setProfileTab] = useState('insights');
 
   // Interface variant (classic | fresh | control) is chosen in Settings; applied on the root.
   const [uiVariant, setUiVariant] = useState(() => {
@@ -1075,7 +1076,8 @@ export default function App() {
       <header className="site-header">
   <div className="header-universe-backdrop" aria-hidden="true"><span>{UNIVERSE_LOGOS[universe]}</span></div>
   <div className="header-top">
-  <div className="header-quick-actions" aria-label="Quick viewing controls" style={{ display: ['analytics', 'profile'].includes(section) ? 'none' : undefined }}>
+  {section === 'profile' ? <ProfileHeader universe={universe} stats={stats} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} /> : <>
+  <div className="header-quick-actions" aria-label="Quick viewing controls" style={{ display: section === 'analytics' ? 'none' : undefined }}>
   {(() => {
     // Exactly one quick card: whatever is playing now wins, otherwise the next title.
     const watchingItem = activeItems.find(item => item.userStatus === 'watching');
@@ -1097,10 +1099,13 @@ export default function App() {
   </div>
         <div className="header-search">
           <Search size={18} />
-          <input value={query} onChange={e => setQuery(e.target.value)} placeholder={`Search ${universe === 'marvel' ? 'Marvel' : universe === 'xmen' ? 'X-Men' : universe === 'sony' ? 'Sony' : 'DC'} titles & TMDB…`} aria-label="Search titles" />
+          <input value={query} onChange={e => setQuery(e.target.value)} placeholder={section === 'profile' ? (profileTab === 'settings' ? 'Search settings…' : profileTab === 'saved' ? 'Search saved titles…' : 'Search insights…') : `Search ${universe === 'marvel' ? 'Marvel' : universe === 'xmen' ? 'X-Men' : universe === 'sony' ? 'Sony' : 'DC'} titles & TMDB…`} aria-label={section === 'profile' ? 'Search profile' : 'Search titles'} />
           {query && <button className="search-clear" onClick={() => setQuery('')} aria-label="Clear search"><X size={16} /></button>}
         </div>
         <div className="header-tools">
+  {section === 'profile' ? <div className="profile-header-tabs" role="tablist" aria-label="Profile sections">
+    {['insights', 'saved', 'settings'].map(tab => <button key={tab} role="tab" aria-selected={profileTab === tab} className={profileTab === tab ? 'active' : ''} onClick={() => { setProfileTab(tab); setQuery(''); }}>{tab === 'insights' ? 'Insights' : tab === 'saved' ? 'Saved' : 'Settings'}</button>)}
+  </div> : section === 'analytics' ? null : <>
   <div className={`header-phase-menu ${section === 'home' ? 'home-hidden-phase' : ''}`}>
   <button ref={phaseButtonRef} className={`header-phase-btn ${phaseFilter !== 'All' ? 'active' : ''}`} onClick={() => { const rect = phaseButtonRef.current?.getBoundingClientRect(); if (rect) setPhaseMenuPosition({ top: rect.bottom + 7, left: rect.left }); setPhaseMenuOpen(open => !open); }} aria-expanded={phaseMenuOpen} aria-haspopup="listbox">
   <ListFilter size={14} /> <span>{phaseFilter === 'All' ? 'All phases' : `Phase ${phaseFilter}`}</span><ChevronDown size={13} />
@@ -1126,6 +1131,7 @@ export default function App() {
     {activeFilterCount > 0 && <b className="header-filter-count">{activeFilterCount}</b>}
   </button>
         </div>
+  </>}
   </div>
       </header>
 
@@ -1214,7 +1220,7 @@ export default function App() {
 
       {section === 'list' && <ListSection items={activeItems} sortBy={sortBy} sortDirection={sortDirection} sortKey={`${sortBy}-${sortDirection}`} externalResults={externalSearchResults} externalLoading={externalSearchLoading} query={query} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} onPlayExternal={onPlayExternal} onWarning={showWarningToast} />}
       {section === 'analytics' && <><AnalyticsPanel stats={stats} large /><MovieRail title="In progress" items={activeItems.filter(i => i.userStatus === 'watching')} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} /></>}
-            {section === 'profile' && <ProfilePage stats={stats} activeItems={activeItems} universe={universe} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} conflict={conflict} onResolveRemote={resolveUseRemote} onResolveLocal={resolveKeepLocal} syncToast={toast} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} />}
+            {section === 'profile' && <ProfilePage stats={stats} activeItems={activeItems} universe={universe} activeTab={profileTab} query={query} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} conflict={conflict} onResolveRemote={resolveUseRemote} onResolveLocal={resolveKeepLocal} syncToast={toast} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} />}
       {WATCH_ENABLED && section === 'watch' && safeWatchItem && <WatchPage watchItem={safeWatchItem} activeItems={roadmapItems} onBack={() => { setWatchItem(null); window.history.replaceState(null, '', '#watch'); }} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={startWatchWithConfirm} updateAction={updateAction} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} />}
       {WATCH_ENABLED && section === 'watch' && !safeWatchItem && <WatchBrowse activeItems={activeItems} externalResults={externalSearchResults} externalLoading={externalSearchLoading} actions={actions} query={query} onStartWatch={startWatchWithConfirm} onPlayExternal={onPlayExternal} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} />}
 
