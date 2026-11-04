@@ -6256,3 +6256,52 @@
     padding-inline: 12px;
   }
 }
+
+
+/* Match Home universe marks to the larger, balanced List-page sizing. */
+:root .movie-site.page-home .site-header .universe-tabs button {
+  min-width: 76px !important;
+  min-height: 64px !important;
+  padding: 12px 20px !important;
+}
+:root .movie-site.page-home .site-header .universe-tabs button[data-universe="marvel"] .universe-logo-img {
+  height: 27px !important;
+  max-width: 104px !important;
+}
+:root .movie-site.page-home .site-header .universe-tabs button[data-universe="dc"] .universe-logo-img {
+  height: 29px !important;
+  max-width: 90px !important;
+}
+:root .movie-site.page-home .site-header .universe-tabs button[data-universe="sony"] .universe-logo-mask {
+  width: 78px !important;
+  height: 22px !important;
+  transform: none !important;
+}
+:root .movie-site.page-home .site-header .universe-tabs button[data-universe="xmen"] .universe-logo-mask {
+  width: 42px !important;
+  height: 38px !important;
+  transform: none !important;
+}
+:root .movie-site.page-home {
+  view-transition-name: universe-content;
+}
+::view-transition-group(universe-content) {
+  animation-duration: 280ms;
+  animation-timing-function: cubic-bezier(.22,.8,.25,1);
+}
+::view-transition-old(universe-content) {
+  animation: universe-out 180ms ease both;
+}
+::view-transition-new(universe-content) {
+  animation: universe-in 260ms cubic-bezier(.22,.8,.25,1) both;
+}
+@keyframes universe-out {
+  to { opacity: 0; transform: translateY(-3px) scale(.996); }
+}
+@keyframes universe-in {
+  from { opacity: 0; transform: translateY(5px) scale(.996); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  :root .movie-site.page-home { view-transition-name: none; }
+}
