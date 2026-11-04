@@ -6072,36 +6072,54 @@
 }
 
 
-/* ── Icon-only bottom navigation with a subtle animated edge glint ──────── */
+/* ── Static glass edge glint for the icon-only bottom navigation ── */
 :root .movie-site .bottom-nav {
   position: fixed;
   isolation: isolate;
-  border: 1px solid rgba(255,255,255,.12) !important;
-  overflow: visible;
+  border: 1px solid rgba(255,255,255,.14) !important;
+  overflow: hidden;
 }
 :root .movie-site .bottom-nav::before {
   content: "";
   position: absolute;
   z-index: 3;
   inset: -1px;
-  padding: 1px;
+  padding: 2.5px;
   border-radius: inherit;
   pointer-events: none;
   background: linear-gradient(112deg,
-    rgba(255,255,255,.10) 0%,
-    rgba(255,255,255,.10) 24%,
-    rgba(255,255,255,.88) 39%,
-    color-mix(in srgb, var(--accent, #da1e37) 60%, white) 46%,
-    rgba(255,255,255,.12) 57%,
-    rgba(255,255,255,.10) 100%);
-  background-size: 240% 100%;
-  background-position: 100% 0;
+    rgba(255,255,255,.24) 0%,
+    rgba(255,255,255,.24) 24%,
+    rgba(255,255,255,.96) 39%,
+    color-mix(in srgb, var(--accent, #da1e37) 52%, white) 47%,
+    rgba(255,255,255,.24) 58%,
+    rgba(255,255,255,.18) 100%);
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
-  animation: navEdgeGlint 6.5s ease-in-out infinite;
+}
+:root .movie-site .bottom-nav::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    linear-gradient(112deg,
+      transparent 23%,
+      rgba(255,255,255,.025) 32%,
+      rgba(255,255,255,.13) 40%,
+      color-mix(in srgb, var(--accent, #da1e37) 12%, transparent) 47%,
+      rgba(255,255,255,.035) 56%,
+      transparent 65%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.09);
+  backdrop-filter: blur(12px) saturate(1.35);
+  -webkit-backdrop-filter: blur(12px) saturate(1.35);
 }
 :root .movie-site .bottom-nav button {
+  position: relative;
+  z-index: 1;
   flex: 1 1 0;
   min-width: 0;
   min-height: 48px;
@@ -6128,16 +6146,7 @@
     flex-basis: 27px;
   }
 }
-@keyframes navEdgeGlint {
-  0%, 12% { background-position: 100% 0; opacity: .62; }
-  48% { opacity: .95; }
-  78%, 100% { background-position: -140% 0; opacity: .62; }
-}
-@media (prefers-reduced-motion: reduce) {
-  :root .movie-site .bottom-nav::before { animation: none; opacity: .58; }
-}
 
- 
 /* Grid polish: remove red accent bleed around poster corners and cards. */
 :root .movie-card .poster-button {
   overflow: hidden !important;
