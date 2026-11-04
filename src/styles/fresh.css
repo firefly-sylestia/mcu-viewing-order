@@ -4826,3 +4826,28 @@
     height: 22px;
   }
 }
+
+
+/* Carousel metadata: one consistent translucent glass treatment for year,
+   runtime, and rating in both themes. */
+:root .movie-site .top-carousel .feature-kicker .feature-meta-pill,
+:root .movie-site .top-carousel .feature-kicker .feature-meta-year,
+:root .movie-site .top-carousel .feature-kicker .feature-meta-duration,
+:root .movie-site .top-carousel .feature-kicker .feature-meta-rating {
+  color: rgba(255, 255, 255, .96) !important;
+  background: rgba(18, 22, 30, .34) !important;
+  border: 1px solid rgba(255, 255, 255, .18) !important;
+  border-radius: 999px !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .07) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(155%) !important;
+  backdrop-filter: blur(18px) saturate(155%) !important;
+}
+:root[data-theme="light"] .movie-site .top-carousel .feature-kicker .feature-meta-pill,
+:root[data-theme="light"] .movie-site .top-carousel .feature-kicker .feature-meta-year,
+:root[data-theme="light"] .movie-site .top-carousel .feature-kicker .feature-meta-duration,
+:root[data-theme="light"] .movie-site .top-carousel .feature-kicker .feature-meta-rating {
+  color: #17243a !important;
+  background: rgba(255, 255, 255, .34) !important;
+  border-color: rgba(255, 255, 255, .48) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .42) !important;
+}
