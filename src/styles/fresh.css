@@ -5252,3 +5252,28 @@
   border-radius: 13px;
   font-weight: 700;
 }
+
+
+/* Final universe-specific backdrop tuning: Sony stays neutral; X-Men gets more breathing room. */
+:root .movie-site.universe-sony .site-header .header-universe-backdrop > span {
+  color: rgba(218, 222, 230, .9) !important;
+  filter: blur(11px) saturate(100%) !important;
+}
+:root .movie-site.universe-xmen .site-header .header-universe-backdrop > span {
+  transform: translate(-50%, -50%) scale(1.42) !important;
+  color: rgba(224, 226, 234, .95) !important;
+  filter: blur(11px) saturate(115%) !important;
+}
+:root .movie-site.universe-xmen .site-header .header-universe-backdrop .universe-logo-mask {
+  width: 245px !important;
+  height: 190px !important;
+}
+@media (max-width: 620px) {
+  :root .movie-site.universe-xmen .site-header .header-universe-backdrop > span {
+    transform: translate(-50%, -50%) scale(1.22) !important;
+  }
+  :root .movie-site.universe-xmen .site-header .header-universe-backdrop .universe-logo-mask {
+    width: 210px !important;
+    height: 165px !important;
+  }
+}
