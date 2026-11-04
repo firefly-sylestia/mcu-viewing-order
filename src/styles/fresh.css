@@ -6354,13 +6354,13 @@
    tint. The subtle shadow gives it separation without turning it into a solid pill. */
 :root .movie-site .bottom-nav .nav-blob,
 :root .movie-site .bottom-nav[data-holding="true"] .nav-blob {
-  background: rgba(255, 255, 255, .02) !important;
+  background: rgba(255, 255, 255, .20) !important;
   border: 0 !important;
   box-shadow: 0 7px 16px -11px rgba(0, 0, 0, .42) !important;
   filter: none !important;
 }
 :root[data-theme="light"] .movie-site .bottom-nav .nav-blob,
 :root[data-theme="light"] .movie-site .bottom-nav[data-holding="true"] .nav-blob {
-  background: rgba(255, 255, 255, .02) !important;
+  background: rgba(255, 255, 255, .20) !important;
   box-shadow: 0 6px 14px -10px rgba(16, 24, 40, .24) !important;
 }
