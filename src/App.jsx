@@ -790,10 +790,17 @@ export default function App() {
       if (item.type === 'series') {
         const normalizedTitle = String(item.title || '')
           .toLowerCase()
-          .replace(/\\s+(?:season|series)\\s+\\d+.*$/i, '')
-          .replace(/\\s+s\\d{1,2}(?:\\s*[:.-].*)?$/i, '')
+          .normalize('NFKD')
+          .replace(/[’']/g, '')
+          .replace(/\b(?:season|series)\s*\d+.*$/i, '')
+          .replace(/\bs\s*\d{1,2}\b.*$/i, '')
+          .replace(/\b(?:episodes?|eps?)\s*\d+.*$/i, '')
+          .replace(/\s*[|:–-]\s*(?:episodes?|eps?).*$/i, '')
+          .replace(/[^a-z0-9]+/g, ' ')
+          .replace(/\s+/g, ' ')
           .trim();
-        const seriesKey = String(item.seriesGroup || normalizedTitle);
+        // Avoid broad franchise tags: they can merge different shows.
+        const seriesKey = normalizedTitle;
         if (seenSeries.has(seriesKey)) continue;
         seenSeries.add(seriesKey);
       }
