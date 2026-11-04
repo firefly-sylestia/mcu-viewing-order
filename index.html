@@ -1,14 +1,14 @@
 <!doctype html>
-<html lang="en" class="dark" style="color-scheme: dark; background: #050812;">
+<html lang="en" style="color-scheme: light; background: #f6f7fb;">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/jpeg" href="/mcu-icon.jpg" />
     <link rel="apple-touch-icon" href="/mcu-icon.jpg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
-    <meta name="theme-color" content="#050812" />
+    <meta name="theme-color" content="#f6f7fb" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="color-scheme" content="dark" />
+    <meta name="color-scheme" content="light" />
     
     <!-- Fonts: preloaded then applied asynchronously so text renders immediately -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -17,24 +17,23 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" media="print" onload="this.media='all'" />
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" /></noscript>
     
-    <!-- Prevent white flash on load -->
+    <!-- Apply the light default immediately to avoid a dark flash before the app mounts. -->
     <style>
       html, body, #root {
-        background: #050812 !important;
-        color: #f5fffd;
+        background: #f6f7fb !important;
+        color: #171b26;
         margin: 0;
         padding: 0;
       }
-      /* Critical loading styles to prevent white flash */
       html::before {
         content: "";
         position: fixed;
         inset: 0;
         z-index: -10;
-        background: 
-          radial-gradient(circle at 18% 8%, rgba(124,255,218,0.25), transparent 35%),
-          radial-gradient(circle at 82% 22%, rgba(154,134,255,0.20), transparent 40%),
-          linear-gradient(155deg, #050812 0%, #0b1936 38%, #25114e 70%, #083d3b 100%);
+        background:
+          radial-gradient(circle at 18% 8%, rgba(124, 145, 255, .10), transparent 35%),
+          radial-gradient(circle at 82% 22%, rgba(255, 133, 153, .08), transparent 40%),
+          linear-gradient(155deg, #f8f9fc 0%, #f1f3f9 58%, #f7f5fb 100%);
       }
     </style>
     
