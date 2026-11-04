@@ -6278,29 +6278,6 @@
   height: 38px !important;
   transform: none !important;
 }
-:root .movie-site.page-home {
-  view-transition-name: universe-content;
-}
-::view-transition-group(universe-content) {
-  animation-duration: 280ms;
-  animation-timing-function: cubic-bezier(.22,.8,.25,1);
-}
-::view-transition-old(universe-content) {
-  animation: universe-out 180ms ease both;
-}
-::view-transition-new(universe-content) {
-  animation: universe-in 260ms cubic-bezier(.22,.8,.25,1) both;
-}
-@keyframes universe-out {
-  to { opacity: 0; transform: translateY(-3px) scale(.996); }
-}
-@keyframes universe-in {
-  from { opacity: 0; transform: translateY(5px) scale(.996); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-@media (prefers-reduced-motion: reduce) {
-  :root .movie-site.page-home { view-transition-name: none; }
-}
 
 
 /* Keep the cinematic carousel motion enabled even when the device requests reduced motion. */
@@ -6313,4 +6290,63 @@
 }
 :root .movie-site .poster-stack {
   transition: transform .68s cubic-bezier(.18, .82, .22, 1) !important;
+}
+
+
+/* Home: restore the balanced Marvel/Sony marks while preserving DC and X-Men. */
+:root .movie-site.page-home .site-header .universe-tabs button[data-universe="marvel"] .universe-logo-img {
+  height: 23px !important;
+  max-width: 88px !important;
+}
+:root .movie-site.page-home .site-header .universe-tabs button[data-universe="sony"] .universe-logo-mask {
+  width: 60px !important;
+  height: 18px !important;
+  transform: none !important;
+}
+
+/* Universe changes animate only the hero content, not a captured full-page snapshot. */
+:root .movie-site.page-home .hero-layout {
+  animation: homeHeroEnter .42s cubic-bezier(.2, .75, .25, 1) both;
+}
+@keyframes homeHeroEnter {
+  from { opacity: .72; transform: translateY(7px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Keep the header's poster and text column anchored as titles change. */
+:root .movie-site .header-quick-actions .header-status-pill {
+  box-sizing: border-box;
+  width: min(300px, 50vw) !important;
+  min-width: min(300px, 50vw) !important;
+  max-width: min(300px, 50vw) !important;
+  flex: 0 0 min(300px, 50vw) !important;
+  justify-content: flex-start;
+}
+:root .movie-site .header-status-pill .header-pill-poster {
+  flex: 0 0 34px;
+  width: 34px;
+}
+:root .movie-site .header-status-pill .header-pill-label {
+  flex: 1 1 0;
+  min-width: 0;
+  width: 0;
+}
+:root .movie-site .header-status-pill .header-pill-label b {
+  width: 100%;
+  max-width: none !important;
+}
+@media (max-width: 720px) {
+  :root .movie-site .header-quick-actions .header-status-pill {
+    width: min(220px, 58vw) !important;
+    min-width: min(220px, 58vw) !important;
+    max-width: min(220px, 58vw) !important;
+    flex-basis: min(220px, 58vw) !important;
+  }
+  :root .movie-site .header-status-pill .header-pill-poster {
+    flex-basis: 27px;
+    width: 27px;
+  }
+  :root .movie-site .header-status-pill .header-pill-label b {
+    max-width: none !important;
+  }
 }
