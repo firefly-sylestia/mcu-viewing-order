@@ -5004,3 +5004,94 @@
     transform: translateY(-50%) scale(1.15);
   }
 }
+
+/* Shared universe-logo glass backdrop: centered, clipped, and consistent on every page. */
+:root .movie-site .site-header {
+  position: sticky;
+  isolation: isolate;
+  background: color-mix(in srgb, var(--fx-surface) 78%, transparent);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  backdrop-filter: blur(24px) saturate(150%);
+}
+:root .movie-site .site-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(105deg,
+    color-mix(in srgb, var(--fx-surface) 86%, transparent) 0%,
+    color-mix(in srgb, var(--fx-surface) 62%, transparent) 50%,
+    color-mix(in srgb, var(--fx-surface) 84%, transparent) 100%);
+}
+:root .movie-site .site-header .header-universe-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  overflow: hidden;
+  pointer-events: none;
+  border-radius: inherit;
+  opacity: .20;
+}
+:root .movie-site .site-header .header-universe-backdrop > span {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  right: auto;
+  display: flex;
+  width: max-content;
+  max-width: 72%;
+  align-items: center;
+  justify-content: center;
+  transform: translate(-50%, -50%);
+  transform-origin: center;
+  filter: blur(13px);
+  color: var(--brand-accent, var(--fx-accent));
+}
+:root .movie-site .site-header .header-universe-backdrop .universe-logo-img {
+  display: block;
+  width: auto;
+  height: clamp(92px, 13vw, 150px) !important;
+  max-width: min(68vw, 620px);
+  object-fit: contain;
+}
+:root .movie-site .site-header .header-universe-backdrop .universe-logo-mask {
+  display: block;
+  width: clamp(220px, 38vw, 420px) !important;
+  height: clamp(88px, 12vw, 138px) !important;
+  background-color: currentColor !important;
+  -webkit-mask-position: center !important;
+  mask-position: center !important;
+  -webkit-mask-repeat: no-repeat !important;
+  mask-repeat: no-repeat !important;
+  -webkit-mask-size: contain !important;
+  mask-size: contain !important;
+}
+:root .movie-site .site-header > :not(.header-universe-backdrop) {
+  position: relative;
+  z-index: 1;
+}
+:root[data-theme="light"] .movie-site .site-header::before {
+  background: linear-gradient(105deg,
+    rgba(255,255,255,.84) 0%,
+    rgba(255,255,255,.62) 50%,
+    rgba(255,255,255,.82) 100%);
+}
+:root[data-theme="light"] .movie-site .site-header .header-universe-backdrop {
+  opacity: .13;
+}
+@media (max-width: 620px) {
+  :root .movie-site .site-header .header-universe-backdrop > span {
+    max-width: 86%;
+  }
+  :root .movie-site .site-header .header-universe-backdrop .universe-logo-img {
+    height: 88px !important;
+    max-width: 82vw;
+  }
+  :root .movie-site .site-header .header-universe-backdrop .universe-logo-mask {
+    width: 250px !important;
+    height: 82px !important;
+  }
+}
