@@ -1255,8 +1255,8 @@ export default function App() {
         <span className="nav-blob" aria-hidden="true" />
         {NAV_VISIBLE.map((id) => {
           const { label, Icon } = NAV_TAB_META[id];
-          return <button key={id} className={section === id ? 'active' : ''} aria-current={section === id ? 'page' : undefined} onClick={() => handleNavClick(id)}>
-            <Icon size={22} /><span>{label}</span>
+          return <button key={id} className={section === id ? 'active' : ''} aria-label={label} title={label} aria-current={section === id ? 'page' : undefined} onClick={() => handleNavClick(id)}>
+            <Icon size={28} strokeWidth={2.1} /><span aria-hidden="true">{label}</span>
           </button>;
         })}
       </nav>

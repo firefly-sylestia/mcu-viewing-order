@@ -6070,3 +6070,69 @@
   outline: 0 !important;
   box-shadow: none !important;
 }
+
+
+/* ── Icon-only bottom navigation with a subtle animated edge glint ──────── */
+:root .movie-site .bottom-nav {
+  position: fixed;
+  isolation: isolate;
+  border: 1px solid rgba(255,255,255,.12) !important;
+  overflow: visible;
+}
+:root .movie-site .bottom-nav::before {
+  content: "";
+  position: absolute;
+  z-index: 3;
+  inset: -1px;
+  padding: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(112deg,
+    rgba(255,255,255,.10) 0%,
+    rgba(255,255,255,.10) 24%,
+    rgba(255,255,255,.88) 39%,
+    color-mix(in srgb, var(--accent, #da1e37) 60%, white) 46%,
+    rgba(255,255,255,.12) 57%,
+    rgba(255,255,255,.10) 100%);
+  background-size: 240% 100%;
+  background-position: 100% 0;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: navEdgeGlint 6.5s ease-in-out infinite;
+}
+:root .movie-site .bottom-nav button {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 48px;
+  padding: 8px 0 !important;
+  gap: 0 !important;
+}
+:root .movie-site .bottom-nav button span {
+  display: none !important;
+}
+:root .movie-site .bottom-nav button svg {
+  display: block;
+  width: 28px !important;
+  height: 28px !important;
+  flex: 0 0 28px;
+}
+@media (max-width: 560px) {
+  :root .movie-site .bottom-nav button {
+    min-height: 46px;
+    padding: 7px 0 !important;
+  }
+  :root .movie-site .bottom-nav button svg {
+    width: 27px !important;
+    height: 27px !important;
+    flex-basis: 27px;
+  }
+}
+@keyframes navEdgeGlint {
+  0%, 12% { background-position: 100% 0; opacity: .62; }
+  48% { opacity: .95; }
+  78%, 100% { background-position: -140% 0; opacity: .62; }
+}
+@media (prefers-reduced-motion: reduce) {
+  :root .movie-site .bottom-nav::before { animation: none; opacity: .58; }
+}
