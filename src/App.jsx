@@ -987,7 +987,7 @@ export default function App() {
   return (
   <>
   <SeoHead section={section} selectedTitle={selectedTitle} />
-  <main className={`movie-site universe-${universe}`} style={{ '--brand-accent': universeAccent, '--accent': universeAccent, '--theme-accent': universeAccent }}>
+  <main className={`movie-site universe-${universe} page-${section}`} style={{ '--brand-accent': universeAccent, '--accent': universeAccent, '--theme-accent': universeAccent }}>
   <div className="site-glow" />
       <header className="site-header">
   <div className="header-top">
@@ -1017,7 +1017,7 @@ export default function App() {
           {query && <button className="search-clear" onClick={() => setQuery('')} aria-label="Clear search"><X size={16} /></button>}
         </div>
         <div className="header-tools">
-  <div className="header-phase-menu">
+  <div className={`header-phase-menu ${section === 'home' ? 'home-hidden-phase' : ''}`}>
   <button ref={phaseButtonRef} className={`header-phase-btn ${phaseFilter !== 'All' ? 'active' : ''}`} onClick={() => { const rect = phaseButtonRef.current?.getBoundingClientRect(); if (rect) setPhaseMenuPosition({ top: rect.bottom + 7, left: rect.left }); setPhaseMenuOpen(open => !open); }} aria-expanded={phaseMenuOpen} aria-haspopup="listbox">
   <ListFilter size={14} /> <span>{phaseFilter === 'All' ? 'All phases' : `Phase ${phaseFilter}`}</span><ChevronDown size={13} />
   </button>
@@ -1428,6 +1428,13 @@ function ListSection({ items, sortKey, externalResults = [], externalLoading = f
   const currentPage = Math.min(page, pageCount);
   const firstItem = (currentPage - 1) * pageSize;
   const visibleItems = items.slice(firstItem, firstItem + pageSize);
+  const sortDescription = sortBy === 'order' ? 'Original story order'
+    : sortBy === 'phase' ? 'Grouped by phase'
+    : sortBy === 'year' ? (sortDirection === 'asc' ? 'Oldest releases first' : 'Newest releases first')
+    : sortBy === 'title' ? (sortDirection === 'asc' ? 'A to Z' : 'Z to A')
+    : sortBy === 'popularity' ? (sortDirection === 'asc' ? 'Least popular first' : 'Most popular first')
+    : sortBy === 'essential' ? 'Essential titles first'
+    : (sortDirection === 'asc' ? 'Lowest rated first' : 'Highest rated first');
   useEffect(() => { setPage(1); }, [items.length]);
 
   // Swipe a row right to mark it watched, left to save it (touch only).
@@ -1480,11 +1487,11 @@ function ListSection({ items, sortKey, externalResults = [], externalLoading = f
   };
 
   return <section className={`list-section ${viewMode === 'grid' ? 'is-grid-view' : 'is-list-view'}`}>
-    <div className="list-heading"><div><p className="eyebrow">Every story, in order</p><h2>Complete viewing list</h2><p className="list-intro">Track every chapter, update your progress, and keep the next story within reach.</p></div><div className="list-summary"><strong>{items.length}</strong><span>titles</span></div></div>    <div className="list-results-bar">
-      <span className="list-results-count">Showing {items.length ? firstItem + 1 : 0}–{Math.min(firstItem + pageSize, items.length)} of {items.length} titles</span>
+    <div className="list-results-bar">
+      <div className="list-results-meta"><span className="list-results-count">{items.length ? `${String(firstItem + 1).padStart(2, '0')}–${String(Math.min(firstItem + pageSize, items.length)).padStart(2, '0')}` : '00'} <i>of</i> {String(items.length).padStart(2, '0')} <small>titles</small></span><span className="list-sort-description">{sortDescription}</span></div>
       <div className="list-results-actions">
-        <span className="list-page-indicator">Page {currentPage} of {pageCount}</span>
-        <div className="list-view-toggle" role="group" aria-label="List view mode">
+        <span className="list-page-indicator" aria-label={`Page ${currentPage} of ${pageCount}`}><strong>{String(currentPage).padStart(2, '0')}</strong><i>/</i>{String(pageCount).padStart(2, '0')}</span>
+        <div className={`list-view-toggle ${viewMode}`} role="group" aria-label="List view mode">
           <button className={viewMode === 'list' ? 'active' : ''} onClick={() => { hapticTap(); setViewMode('list'); }}>List</button>
           <button className={viewMode === 'grid' ? 'active' : ''} onClick={() => { hapticTap(); setViewMode('grid'); }}>Grid</button>
         </div>
