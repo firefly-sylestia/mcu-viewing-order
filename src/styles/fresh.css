@@ -6029,3 +6029,22 @@
     width: 34px !important; height: 31px !important;
   }
 }
+
+
+/* Dark mode: solid gradient active state for Profile's Insights/Saved/Settings tabs. */
+:root:not([data-theme="light"]) .movie-site.page-profile .profile-header-tabs button.active,
+:root:not([data-theme="light"]) .movie-site.page-profile .profile-header-tabs button[aria-selected="true"] {
+  color: #fff !important;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--fx-accent) 92%, #7c3aed) 0%, color-mix(in srgb, var(--fx-accent) 72%, #2563eb) 100%) !important;
+  border: 1px solid transparent !important;
+  outline: 0 !important;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--fx-accent) 26%, transparent),
+    inset 0 1px 0 rgba(255,255,255,.16) !important;
+}
+:root:not([data-theme="light"]) .movie-site.page-profile .profile-header-tabs button.active::before,
+:root:not([data-theme="light"]) .movie-site.page-profile .profile-header-tabs button.active::after,
+:root:not([data-theme="light"]) .movie-site.page-profile .profile-header-tabs button[aria-selected="true"]::before,
+:root:not([data-theme="light"]) .movie-site.page-profile .profile-header-tabs button[aria-selected="true"]::after {
+  border: 0 !important;
+  box-shadow: none !important;
+}
