@@ -4414,3 +4414,78 @@
   content: none !important;
   display: none !important;
 }
+
+
+/* Header cleanup: right-aligned identity, full-width universe choices, neutral selection. */
+.header-top {
+  justify-content: space-between;
+  align-items: center;
+}
+.header-top .brand {
+  margin-left: auto;
+  flex: 0 0 auto;
+  width: auto;
+  max-width: none;
+  align-items: flex-end;
+  text-align: right;
+  overflow: visible;
+}
+.header-quick-actions {
+  margin-right: auto;
+  justify-content: flex-start;
+}
+.universe-tabs {
+  width: 100%;
+  gap: 6px;
+}
+.universe-tabs button {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 48px;
+  justify-content: center;
+  gap: 9px;
+  padding: 11px 18px;
+  font-size: 14px;
+  letter-spacing: .01em;
+}
+.universe-tabs button .universe-logo {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.universe-tabs button .universe-label {
+  display: inline-block;
+  font-size: 14px;
+  font-weight: 850;
+  line-height: 1;
+  white-space: nowrap;
+}
+.universe-tabs button.active,
+.movie-site .universe-tabs button.active {
+  color: #fff !important;
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.055), 0 0 15px rgba(255,255,255,.12) !important;
+}
+.universe-tabs button.active .universe-logo {
+  filter: brightness(1.12);
+}
+:root[data-theme="light"] .universe-tabs button.active,
+:root[data-theme="light"] .movie-site .universe-tabs button.active {
+  color: #151922 !important;
+  background: transparent !important;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.9), 0 0 13px rgba(255,255,255,.95), 0 2px 9px rgba(16,24,40,.07) !important;
+}
+@media (max-width: 620px) {
+  .header-top { gap: 10px; }
+  .header-top .brand b { font-size: 18px; }
+  .header-top .brand small { font-size: 8px; letter-spacing: .12em; }
+  .universe-tabs { gap: 3px; }
+  .universe-tabs button {
+    min-height: 46px;
+    padding: 10px 6px;
+    gap: 5px;
+  }
+  .universe-tabs button .universe-label { font-size: 12px; }
+}
