@@ -4493,3 +4493,282 @@
   }
   .universe-tabs button .universe-label { font-size: 12px; }
 }
+
+
+/* Dynamic page layouts: compact list header, clearer result context, fluid view switch. */
+.page-list .site-header .header-top {
+  display: none !important;
+}
+.page-home .header-phase-menu.home-hidden-phase {
+  display: none !important;
+}
+.page-list .site-header {
+  padding-top: 10px;
+  padding-bottom: 12px;
+}
+.page-list .header-bar {
+  width: 100%;
+}
+.page-list .header-bar .universe-tabs {
+  flex: 0 1 auto;
+}
+.page-list .header-bar .header-search {
+  min-width: 120px;
+}
+:root .list-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+:root .list-results-bar {
+  min-height: 62px;
+  padding: 10px 12px 10px 18px;
+  gap: 12px 18px;
+  border: 1px solid color-mix(in srgb, var(--fx-border) 65%, transparent);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--fx-surface-2) 88%, transparent);
+  box-shadow: 0 8px 24px -22px rgba(0,0,0,.42);
+}
+:root .list-results-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  min-width: 0;
+}
+:root .list-results-count {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  color: var(--fx-text);
+  font-size: 14px;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.02em;
+}
+:root .list-results-count i {
+  color: var(--fx-muted);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 600;
+}
+:root .list-results-count small {
+  margin-left: 2px;
+  color: var(--fx-muted);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: .01em;
+}
+:root .list-sort-description {
+  padding-left: 13px;
+  border-left: 1px solid var(--fx-border);
+  color: var(--fx-muted);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: .015em;
+}
+:root .list-results-actions {
+  gap: 12px;
+}
+:root .list-page-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 11px;
+  border-radius: 11px;
+  background: var(--fx-surface);
+  color: var(--fx-muted);
+  font-size: 11px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .06em;
+}
+:root .list-page-indicator strong {
+  color: var(--fx-text);
+  font-size: 13px;
+  font-weight: 900;
+}
+:root .list-page-indicator i {
+  color: var(--fx-muted);
+  font-size: 10px;
+  font-style: normal;
+  opacity: .65;
+}
+:root .list-view-toggle {
+  position: relative;
+  isolation: isolate;
+  min-height: 38px;
+  gap: 2px;
+  padding: 3px;
+  overflow: hidden;
+  background: var(--fx-surface);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fx-border) 72%, transparent);
+}
+:root .list-view-toggle::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc(50% - 2px);
+  border-radius: 999px;
+  background: var(--fx-accent);
+  box-shadow: 0 5px 14px -8px var(--fx-accent);
+  transform: translateX(0);
+  transition: transform .42s cubic-bezier(.2,.85,.25,1), box-shadow .3s ease;
+}
+:root .list-view-toggle.grid::before {
+  transform: translateX(calc(100% + 2px));
+}
+:root .list-view-toggle button {
+  position: relative;
+  z-index: 1;
+  min-width: 62px;
+  height: 32px;
+  padding: 0 13px;
+  border-radius: 999px;
+  background: transparent !important;
+  color: var(--fx-muted);
+  transition: color .28s ease, transform .32s cubic-bezier(.2,.85,.25,1);
+}
+:root .list-view-toggle button.active {
+  color: #fff !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+:root .list-view-toggle button:active {
+  transform: scale(.94);
+}
+:root .list-grid,
+:root .list-card-grid {
+  animation: listViewEnter .42s cubic-bezier(.2,.75,.25,1) both;
+  transform-origin: top center;
+}
+:root .list-row,
+:root .list-card-grid .movie-card {
+  animation: listItemEnter .48s cubic-bezier(.2,.75,.25,1) both;
+}
+@keyframes listViewEnter {
+  from { opacity: 0; transform: translateY(9px) scale(.992); filter: blur(2px); }
+  to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+@keyframes listItemEnter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+:root .pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin: 8px auto 2px;
+  padding: 6px;
+  border: 1px solid color-mix(in srgb, var(--fx-border) 70%, transparent);
+  border-radius: 16px;
+  background: var(--fx-surface-2);
+  box-shadow: 0 8px 24px -22px rgba(0,0,0,.4);
+}
+:root .pagination button {
+  min-width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: var(--fx-muted);
+  font-size: 12px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  transition: transform .22s ease, background .25s ease, color .25s ease;
+}
+:root .pagination button.active {
+  background: var(--fx-accent);
+  color: #fff;
+  box-shadow: 0 6px 15px -10px var(--fx-accent);
+}
+:root .pagination button:not(:disabled):hover {
+  transform: translateY(-1px);
+  background: var(--fx-surface-3);
+  color: var(--fx-text);
+}
+:root .pagination button.active:hover {
+  background: var(--fx-accent);
+  color: #fff;
+}
+:root .pagination button:disabled {
+  opacity: .32;
+}
+:root[data-theme="light"] .list-results-bar {
+  background: #fff;
+  border-color: rgba(16,24,40,.07);
+  box-shadow: 0 5px 18px -16px rgba(16,24,40,.3);
+}
+:root[data-theme="light"] .list-page-indicator {
+  background: #f2f4f8;
+}
+:root[data-theme="light"] .list-view-toggle {
+  background: #f2f4f8;
+  box-shadow: inset 0 0 0 1px rgba(16,24,40,.04);
+}
+:root[data-theme="light"] .list-view-toggle button.active {
+  color: #fff !important;
+}
+:root[data-theme="light"] .pagination {
+  background: #fff;
+  border-color: rgba(16,24,40,.07);
+}
+@media (max-width: 680px) {
+  .page-list .site-header {
+    padding-top: 8px;
+    padding-bottom: 10px;
+  }
+  .page-list .header-bar {
+    gap: 7px;
+  }
+  .page-list .universe-tabs {
+    order: 1;
+  }
+  .page-list .header-search {
+    order: 2;
+  }
+  .page-list .header-tools {
+    order: 3;
+  }
+  :root .list-results-bar {
+    align-items: stretch;
+    padding: 10px;
+    border-radius: 15px;
+  }
+  :root .list-results-meta {
+    flex: 1 1 100%;
+    justify-content: space-between;
+  }
+  :root .list-results-actions {
+    width: 100%;
+    justify-content: space-between;
+    margin-left: 0;
+  }
+  :root .list-sort-description {
+    font-size: 10px;
+  }
+  :root .list-page-indicator {
+    min-height: 36px;
+  }
+  :root .list-view-toggle {
+    margin-left: auto;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  :root .list-view-toggle::before,
+  :root .list-view-toggle button,
+  :root .pagination button {
+    transition: none !important;
+  }
+  :root .list-grid,
+  :root .list-card-grid,
+  :root .list-row,
+  :root .list-card-grid .movie-card {
+    animation: none !important;
+  }
+}
