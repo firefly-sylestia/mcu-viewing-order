@@ -23,7 +23,7 @@ const readStored = (key, fallback) => {
     return fallback
   }
 }
-const storedTheme = readStored('theme', 'dark')
+const storedTheme = readStored('theme', 'light')
 document.documentElement.setAttribute('data-theme', storedTheme)
 
 document.documentElement.classList.toggle('dark', storedTheme !== 'light')
