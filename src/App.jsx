@@ -487,7 +487,7 @@ export default function App() {
     const effectiveRating = (item) => Number(item.rating) || Number(item.imdbRating) || 0;
     const sorted = allItems
       .filter(item => item.universe === universe)
-      .filter(item => item.title.toLowerCase().includes(query.toLowerCase()))
+      .filter(item => item.title.toLowerCase().includes(activeQuery.toLowerCase()))
       .filter(item => genre === 'All' || item.genres.includes(genre) || item.type === genre.toLowerCase())
       .filter(item => ageRatingFilter === 'All' || (item.ageRating || (item.type === 'series' ? 'TV-14' : 'PG-13')) === ageRatingFilter)
       .filter(item => phaseFilter === 'All' || String(item.phase || '') === String(phaseFilter))
@@ -514,7 +514,7 @@ export default function App() {
       return (timelineRank(a) - timelineRank(b)) * dir;
     });
     return sorted;
-  }, [allItems, universe, query, genre, rating, ageRatingFilter, sortBy, sortDirection, phaseFilter, typeFilter, enrichItem]);
+  }, [allItems, universe, query, section, profileTab, genre, rating, ageRatingFilter, sortBy, sortDirection, phaseFilter, typeFilter, enrichItem]);
 
   // Unfiltered items (no search/filter) for WatchPage/WatchBrowse suggestions
   const roadmapItems = useMemo(() => {
