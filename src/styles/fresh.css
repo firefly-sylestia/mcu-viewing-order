@@ -6136,3 +6136,36 @@
 @media (prefers-reduced-motion: reduce) {
   :root .movie-site .bottom-nav::before { animation: none; opacity: .58; }
 }
+
+ 
+/* Grid polish: remove red accent bleed around poster corners and cards. */
+:root .movie-card .poster-button {
+  overflow: hidden !important;
+  isolation: isolate;
+  background: var(--fx-surface-3, #20232b) !important;
+}
+:root .movie-card .poster-button > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+}
+:root .movie-card:hover {
+  border-color: color-mix(in srgb, var(--fx-muted) 20%, transparent) !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,.24) !important;
+  filter: none !important;
+}
+
+/* Keep carousel rendering and card painting bounded to visible content. */
+:root .top-carousel .carousel-backdrop { will-change: opacity; }
+:root .top-carousel .stack-poster { contain: layout paint; }
+@media (max-width: 680px) {
+  :root .movie-card:hover {
+    transform: none !important;
+    box-shadow: var(--fx-shadow-sm) !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  :root .top-carousel .carousel-backdrop,
+  :root .top-carousel .stack-poster { transition: none !important; }
+}
