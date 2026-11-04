@@ -732,24 +732,29 @@ export default function App() {
     return () => { cancelled = true; };
   }, [activeItems, posterMap]);
 
-  // Build a broad, rotating recommendation pool from the complete universe catalogue.
-  // The carousel still renders the same four-card stack; this only changes which titles
-  // it can cycle through. Watched titles leave the candidate pool immediately, allowing
-  // the next backup title to move up without ever shrinking the pool unnecessarily.
+  // Build a rotating pool, but always present its titles in the universe's
+  // actual viewing-order sequence. Series seasons share one pool slot so the
+  // same show cannot dominate the carousel with Season 1, Season 2, etc.
   const heroItems = useMemo(() => {
+    const timelineSort = (a, b) =>
+      (Number(a.order) || 0) - (Number(b.order) || 0) ||
+      (Number(a.year) || 0) - (Number(b.year) || 0) ||
+      String(a.title || '').localeCompare(String(b.title || ''));
+
     const catalogue = allItems
       .filter(item => item.universe === universe)
-      .map(enrichItem);
+      .map(enrichItem)
+      .sort(timelineSort);
     if (!catalogue.length) return [];
 
     const available = catalogue.filter(item => item.userStatus !== 'watched' && item.userStatus !== 'dropped');
     const candidates = available.length >= 4 ? available : catalogue;
     const score = (item) => (Number(item.rating) || 0) * 1000 + Math.log10((Number(item.voteCount) || 0) + 1) * 100;
     const popularity = [...candidates].sort((a, b) =>
-      (Number(b.voteCount) || 0) - (Number(a.voteCount) || 0) || score(b) - score(a)
+      (Number(b.voteCount) || 0) - (Number(a.voteCount) || 0) || score(b) - score(a) || timelineSort(a, b)
     );
     const bestSeries = candidates.filter(item => item.type === 'series')
-      .sort((a, b) => score(b) - score(a));
+      .sort((a, b) => score(b) - score(a) || timelineSort(a, b));
     const watchedHistory = catalogue.filter(item => item.userStatus === 'watched');
     const genreCounts = new Map();
     watchedHistory.forEach(item => (item.genres || []).forEach(value => {
@@ -759,15 +764,15 @@ export default function App() {
     }));
     const preferredGenres = [...genreCounts.entries()].sort((a, b) => b[1] - a[1]).map(([value]) => value);
     const personalized = [...candidates].sort((a, b) => {
-      const affinity = (item) => (item.genres || []).reduce((sum, value, index) => {
+      const affinity = (item) => (item.genres || []).reduce((sum, value) => {
         const rank = preferredGenres.indexOf(value);
         return sum + (rank < 0 ? 0 : preferredGenres.length - rank);
       }, 0);
-      return affinity(b) - affinity(a) || score(b) - score(a);
+      return affinity(b) - affinity(a) || score(b) - score(a) || timelineSort(a, b);
     });
-    const essential = [...candidates].filter(item => item.essential).sort((a, b) => score(b) - score(a));
+    const essential = [...candidates].filter(item => item.essential).sort((a, b) => score(b) - score(a) || timelineSort(a, b));
     const continueWatching = [...candidates].filter(item => item.userStatus === 'watching');
-    const nextUnwatched = [...candidates].filter(item => item.userStatus === 'unwatched').sort((a, b) => a.order - b.order);
+    const nextUnwatched = [...candidates].filter(item => item.userStatus === 'unwatched');
     const rotations = [
       [...popularity.slice(0, 5), ...popularity.slice(5)],
       [...bestSeries, ...popularity],
@@ -777,14 +782,27 @@ export default function App() {
     ];
     const ordered = rotations[heroRotation % rotations.length];
     const unique = [];
-    const seen = new Set();
+    const seenIds = new Set();
+    const seenSeries = new Set();
     for (const item of ordered) {
-      if (!item || seen.has(item.id)) continue;
-      seen.add(item.id);
+      if (!item || seenIds.has(item.id)) continue;
+      seenIds.add(item.id);
+      if (item.type === 'series') {
+        const normalizedTitle = String(item.title || '')
+          .toLowerCase()
+          .replace(/\\s+(?:season|series)\\s+\\d+.*$/i, '')
+          .replace(/\\s+s\\d{1,2}(?:\\s*[:.-].*)?$/i, '')
+          .trim();
+        const seriesKey = String(item.seriesGroup || normalizedTitle);
+        if (seenSeries.has(seriesKey)) continue;
+        seenSeries.add(seriesKey);
+      }
       unique.push(item);
+      if (unique.length >= 24) break;
     }
-    // Keep a healthy reserve so status changes can promote backup titles into view.
-    return unique.slice(0, Math.min(24, unique.length));
+
+    // Rotation chooses the mix; timeline order determines how that mix is shown.
+    return unique.sort(timelineSort);
   }, [allItems, universe, enrichItem, heroRotation]);
 
   // Fetch OMDb ratings (IMDb, Rotten Tomatoes, Metacritic) for ALL items
