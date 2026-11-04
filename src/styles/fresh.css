@@ -6162,3 +6162,41 @@
 :root[data-theme="light"] .movie-site .site-header::before {
   background: color-mix(in srgb, var(--brand-accent, var(--fx-accent)) 5%, transparent) !important;
 }
+
+
+/* Home universe switcher: give the brand artwork more presence inside each pill. */
+:root .movie-site.page-home .site-header .universe-tabs button {
+  min-height: 54px;
+  padding: 10px 18px;
+}
+:root .movie-site.page-home .site-header .universe-tabs button .universe-logo-img {
+  height: 23px !important;
+  max-width: 92px !important;
+}
+:root .movie-site.page-home .site-header .universe-tabs button .universe-logo-mask {
+  width: 25px !important;
+  height: 23px !important;
+  transform: scale(1.08);
+}
+:root .movie-site.page-home .site-header .universe-tabs button .universe-logo svg {
+  width: 29px;
+  height: 29px;
+}
+@media (max-width: 620px) {
+  :root .movie-site.page-home .site-header .universe-tabs button {
+    min-height: 49px;
+    padding: 8px 13px;
+  }
+  :root .movie-site.page-home .site-header .universe-tabs button .universe-logo-img {
+    height: 20px !important;
+    max-width: 78px !important;
+  }
+  :root .movie-site.page-home .site-header .universe-tabs button .universe-logo-mask {
+    width: 22px !important;
+    height: 20px !important;
+  }
+  :root .movie-site.page-home .site-header .universe-tabs button .universe-logo svg {
+    width: 25px;
+    height: 25px;
+  }
+}
