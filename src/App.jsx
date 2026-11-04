@@ -484,6 +484,7 @@ export default function App() {
   }, [actions, posterMap, omdbVersion]);
 
   const activeItems = useMemo(() => {
+    const activeQuery = section === 'profile' && profileTab === 'settings' ? '' : query;
     const effectiveRating = (item) => Number(item.rating) || Number(item.imdbRating) || 0;
     const sorted = allItems
       .filter(item => item.universe === universe)
