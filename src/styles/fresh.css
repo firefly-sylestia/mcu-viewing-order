@@ -6140,3 +6140,25 @@
   :root .top-carousel .carousel-backdrop,
   :root .top-carousel .stack-poster { transition: none !important; }
 }
+
+
+/* Clean company-accent glass header: no blurred universe artwork. */
+:root .movie-site .site-header {
+  background: color-mix(in srgb, var(--brand-accent, var(--fx-accent)) 9%, var(--fx-surface) 91%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(125%) !important;
+  backdrop-filter: blur(18px) saturate(125%) !important;
+}
+:root .movie-site .site-header::before {
+  background: color-mix(in srgb, var(--brand-accent, var(--fx-accent)) 7%, transparent) !important;
+}
+:root .movie-site .site-header .header-universe-backdrop {
+  display: none !important;
+}
+:root[data-theme="light"] .movie-site .site-header {
+  background: color-mix(in srgb, var(--brand-accent, var(--fx-accent)) 7%, rgba(255,255,255,.88)) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(120%) !important;
+  backdrop-filter: blur(18px) saturate(120%) !important;
+}
+:root[data-theme="light"] .movie-site .site-header::before {
+  background: color-mix(in srgb, var(--brand-accent, var(--fx-accent)) 5%, transparent) !important;
+}
