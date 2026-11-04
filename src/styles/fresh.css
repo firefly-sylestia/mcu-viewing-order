@@ -6136,10 +6136,6 @@
     box-shadow: var(--fx-shadow-sm) !important;
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  :root .top-carousel .carousel-backdrop,
-  :root .top-carousel .stack-poster { transition: none !important; }
-}
 
 
 /* Clean company-accent glass header: no blurred universe artwork. */
@@ -6304,4 +6300,17 @@
 }
 @media (prefers-reduced-motion: reduce) {
   :root .movie-site.page-home { view-transition-name: none; }
+}
+
+
+/* Keep the cinematic carousel motion enabled even when the device requests reduced motion. */
+:root .movie-site .smooth-stack .stack-poster {
+  transition: transform .78s cubic-bezier(.18, .82, .22, 1), opacity .62s cubic-bezier(.2, .7, .25, 1), box-shadow .38s ease, filter .38s ease !important;
+  will-change: transform, opacity;
+}
+:root .movie-site .carousel-backdrop.is-current {
+  animation-duration: .82s !important;
+}
+:root .movie-site .poster-stack {
+  transition: transform .68s cubic-bezier(.18, .82, .22, 1) !important;
 }
