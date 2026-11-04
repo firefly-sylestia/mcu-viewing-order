@@ -1416,6 +1416,32 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
     return () => window.clearTimeout(timer);
   }, [heroIndex, inlineTrailer, items.length, paused, setHeroIndex]);
 
+  // Render only the four carousel cards that can be visible, plus an outgoing card during its exit.
+  const carouselEntries = useMemo(() => {
+    if (!items.length) return [];
+    const entries = Array.from({ length: Math.min(items.length, 4) }, (_, offset) => {
+      const rawIndex = (heroIndex + offset) % items.length;
+      return { item: items[rawIndex], rawIndex, offset, isLeaving: false };
+    });
+    if (leavingId && !entries.some((entry) => entry.item.id === leavingId)) {
+      const leavingIndex = items.findIndex((entry) => entry.id === leavingId);
+      if (leavingIndex >= 0) entries.push({ item: items[leavingIndex], rawIndex: leavingIndex, offset: 4, isLeaving: true });
+    }
+    return entries;
+  }, [items, heroIndex, leavingId]);
+
+  // Pre-decode the next three posters so they are ready before the stack advances.
+  useEffect(() => {
+    if (!items.length || typeof window === 'undefined') return undefined;
+    const warm = Array.from({ length: Math.min(3, items.length - 1) }, (_, index) => items[(heroIndex + index + 1) % items.length]).filter((item) => item && item.poster);
+    warm.forEach((item) => {
+      const image = new Image();
+      image.decoding = 'async';
+      image.src = item.poster;
+      if (typeof image.decode === 'function') image.decode().catch(() => {});
+    });
+    return undefined;
+  }, [items, heroIndex]);
   const showTrailer = () => {
     const match = getTrailerByTitle(featured.title);
     const id = match?.primary?.youtubeId || match?.youtubeId;
@@ -1435,7 +1461,7 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
     
     <div className="feature-stage">
       <div className="poster-stack smooth-stack">
-        {inlineTrailer ? <div className="inline-trailer"><iframe src={inlineTrailer} title={`${featured.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={() => setInlineTrailer(null)} aria-label="Close trailer"><X size={20} /></button></div> : items.map((item, rawIndex) => { const offset = (rawIndex - heroIndex + items.length) % items.length; const isLeaving = leavingId === item.id && offset >= 3; if (offset > 3 && !isLeaving) return null; const posterClass = isLeaving ? 'poster-exit' : `poster-${offset}`; return <button key={item.id} aria-label={offset ? `Show ${item.title}` : `View ${item.title} details`} aria-hidden={offset === 3 || isLeaving ? 'true' : undefined} tabIndex={offset === 3 || isLeaving ? -1 : 0} className={`stack-poster ${posterClass}`} onClick={() => selectPoster(item, rawIndex, offset)} style={{ '--accent': item.accent }}><PosterArt item={item} loading="eager" fetchPriority={offset === 0 ? 'high' : 'auto'} /></button>; })}
+        {inlineTrailer ? <div className="inline-trailer"><iframe src={inlineTrailer} title={`${featured.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={() => setInlineTrailer(null)} aria-label="Close trailer"><X size={20} /></button></div> : carouselEntries.map(({ item, rawIndex, offset, isLeaving }) => { const posterClass = isLeaving ? 'poster-exit' : `poster-${offset}`; return <button key={item.id} aria-label={offset ? `Show ${item.title}` : `View ${item.title} details`} aria-hidden={offset === 3 || isLeaving ? 'true' : undefined} tabIndex={offset === 3 || isLeaving ? -1 : 0} className={`stack-poster ${posterClass}`} onClick={() => selectPoster(item, rawIndex, offset)} style={{ '--accent': item.accent }}><PosterArt item={item} loading="eager" fetchPriority={offset === 0 ? 'high' : 'auto'} /></button>; })}
       </div>
       <div className="feature-copy">
         <div className="feature-text" key={featured?.id}>
