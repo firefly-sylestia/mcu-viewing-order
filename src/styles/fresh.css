@@ -5761,3 +5761,88 @@
     width: 34px !important; min-width: 34px !important; height: 34px !important;
   }
 }
+
+
+/* Insights/Profile: use List's inset content width and restrained universe backdrop. */
+:root .movie-site.page-analytics .site-header,
+:root .movie-site.page-profile .site-header {
+  padding: 10px 22px 12px !important;
+  overflow: hidden !important;
+}
+:root .movie-site.page-analytics .site-header .header-bar,
+:root .movie-site.page-profile .site-header .header-bar {
+  width: 100% !important; max-width: none !important; gap: 8px !important;
+}
+:root .movie-site.page-analytics .site-header .header-bar .universe-tabs,
+:root .movie-site.page-profile .site-header .header-bar .universe-tabs {
+  flex: 0 1 auto !important; width: 100% !important;
+  min-height: 56px !important; height: 56px !important;
+  padding: 4px !important; gap: 3px !important;
+}
+:root .movie-site.page-analytics .site-header .header-bar .universe-tabs button,
+:root .movie-site.page-profile .site-header .header-bar .universe-tabs button {
+  flex: 1 1 0 !important; min-width: 0 !important;
+  min-height: 48px !important; padding: 8px 11px !important;
+}
+:root .movie-site.page-analytics .site-header .header-bar .header-search,
+:root .movie-site.page-profile .site-header .header-bar .header-search {
+  width: 100% !important; min-width: 0 !important;
+  min-height: 48px !important; height: 48px !important; max-height: 48px !important;
+  flex: 0 0 48px !important; padding: 0 13px !important;
+}
+:root .movie-site.page-analytics .site-header .header-universe-backdrop,
+:root .movie-site.page-profile .site-header .header-universe-backdrop { opacity: .14 !important; }
+:root .movie-site.page-analytics .site-header .header-universe-backdrop > span,
+:root .movie-site.page-profile .site-header .header-universe-backdrop > span {
+  transform: translate(-50%, -50%) scale(1.15) !important; filter: blur(13px) !important;
+}
+:root .movie-site.page-analytics .site-header .header-universe-backdrop .universe-logo-img,
+:root .movie-site.page-profile .site-header .header-universe-backdrop .universe-logo-img {
+  height: 88px !important; max-width: 82vw !important;
+}
+:root .movie-site.page-analytics .site-header .header-universe-backdrop .universe-logo-mask,
+:root .movie-site.page-profile .site-header .header-universe-backdrop .universe-logo-mask {
+  width: 250px !important; height: 82px !important;
+}
+:root[data-theme="light"] .movie-site.page-analytics .site-header .header-universe-backdrop,
+:root[data-theme="light"] .movie-site.page-profile .site-header .header-universe-backdrop { opacity: .14 !important; }
+:root .movie-site.page-profile .site-header .header-top {
+  display: flex !important; width: 100% !important;
+  min-height: 42px !important; height: 42px !important;
+  margin: 0 0 8px !important; padding: 0 !important;
+}
+:root .movie-site.page-profile .site-header .profile-header.profile-header-compact {
+  display: flex !important; flex-direction: row !important; align-items: center !important;
+  gap: 10px !important; width: 100% !important; max-width: none !important;
+  min-height: 42px !important; height: 42px !important;
+  padding: 0 !important; margin: 0 !important; background: transparent !important;
+  border: 0 !important; border-radius: 0 !important; box-shadow: none !important; animation: none !important;
+}
+:root .movie-site.page-profile .profile-header-compact .profile-avatar {
+  flex: 0 0 36px !important; width: 36px !important; height: 36px !important;
+}
+:root .movie-site.page-profile .profile-header-compact .profile-info {
+  display: flex !important; flex: 1 1 auto !important; width: auto !important;
+  min-width: 0 !important; visibility: visible !important; opacity: 1 !important; overflow: visible !important;
+}
+:root .movie-site.page-profile .profile-header-compact .profile-title {
+  display: block !important; width: 100% !important; margin: 0 !important;
+  color: var(--fx-text) !important; font-size: 15px !important; line-height: 1.2 !important;
+  font-weight: 800 !important; visibility: visible !important; opacity: 1 !important;
+}
+:root .movie-site.page-profile .profile-header-compact .profile-auth {
+  display: flex !important; flex: 0 0 34px !important; width: 34px !important;
+  margin-left: auto !important; visibility: visible !important; opacity: 1 !important;
+}
+:root .movie-site.page-profile .profile-header-compact .profile-auth-btn {
+  display: inline-flex !important; width: 34px !important; min-width: 34px !important;
+  height: 34px !important; align-items: center !important; justify-content: center !important;
+}
+@media (max-width: 620px) {
+  :root .movie-site.page-analytics .site-header,
+  :root .movie-site.page-profile .site-header { padding: 10px 22px 12px !important; }
+  :root .movie-site.page-analytics .site-header .header-bar .universe-tabs,
+  :root .movie-site.page-profile .site-header .header-bar .universe-tabs { min-height: 56px !important; height: 56px !important; }
+  :root .movie-site.page-analytics .site-header .header-bar .header-search,
+  :root .movie-site.page-profile .site-header .header-bar .header-search { min-height: 48px !important; height: 48px !important; }
+}
