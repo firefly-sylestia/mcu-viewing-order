@@ -1412,7 +1412,7 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
   };
 
   useEffect(() => {
-    if (paused || inlineTrailer || items.length < 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
+    if (paused || inlineTrailer || items.length < 2) return undefined;
     const timer = window.setTimeout(() => setHeroIndex((heroIndex + 1) % items.length), 4800);
     return () => window.clearTimeout(timer);
   }, [heroIndex, inlineTrailer, items.length, paused, setHeroIndex]);
