@@ -6048,3 +6048,25 @@
   border: 0 !important;
   box-shadow: none !important;
 }
+
+
+/* One universal search shape and focus treatment across Home, List, Insights and Profile. */
+:root .movie-site .header-bar .header-search,
+:root[data-theme="light"] .movie-site .header-bar .header-search {
+  border: 0 !important;
+  border-radius: 999px !important;
+  box-shadow: none !important;
+}
+:root .movie-site .header-bar .header-search:focus-within,
+:root[data-theme="light"] .movie-site .header-bar .header-search:focus-within {
+  border: 0 !important;
+  outline: 0 !important;
+  border-radius: 999px !important;
+  background: var(--fx-surface-3) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--fx-accent) 26%, transparent) !important;
+}
+:root .movie-site .header-bar .header-search:focus-within input,
+:root[data-theme="light"] .movie-site .header-bar .header-search:focus-within input {
+  outline: 0 !important;
+  box-shadow: none !important;
+}
