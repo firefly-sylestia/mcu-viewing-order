@@ -127,90 +127,14 @@ function ProfilePage({ stats, activeItems, universe, activeTab = 'insights', que
   );
 }
 
-export function ProfileHeader({ universe, stats, profileName, setProfileName, user, configured, onLogin, onLogout, lastSynced, syncing, onSync }) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(profileName);
-  const [confirmingLogout, setConfirmingLogout] = useState(false);
-  const inputRef = useRef(null);
-  const universeName = universe === 'marvel' ? 'MCU' : universe === 'xmen' ? 'X-Men' : 'DC';
-  const universeAccent = universe === 'marvel' ? '#da1e37' : universe === 'xmen' ? '#a0a0ac' : '#2f80ed';
-  const displayName = profileName || `${universeName} Viewer`;
-  const avatarInitial = (displayName.trim()[0] || universeName[0]).toUpperCase();
-
-  const save = () => {
-    const trimmed = draft.trim();
-    setProfileName(trimmed);
-    setDraft(trimmed);
-    setEditing(false);
-  };
-
-  const startEdit = () => {
-    setDraft(profileName);
-    setEditing(true);
-    setTimeout(() => inputRef.current?.focus(), 0);
-  };
-
+export function ProfileHeader({ user, configured, onLogin }) {
   return (
-    <div className="profile-header" style={{ '--accent': universeAccent }}>
-      <div className="profile-avatar">
-        <span className="avatar-initials">{avatarInitial}</span>
-      </div>
-      <div className="profile-info">
-        {editing ? (
-          <div className="profile-name-edit">
-            <input
-              ref={inputRef}
-              value={draft}
-              onChange={e => setDraft(e.target.value)}
-              onBlur={save}
-              onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') { setDraft(profileName); setEditing(false); } }}
-              placeholder="Your name"
-              maxLength={30}
-            />
-          </div>
-        ) : (
-          <h1 className="profile-title" onClick={startEdit} title="Click to edit">
-            {displayName}
-            <Pencil size={14} className="profile-edit-icon" />
-          </h1>
-        )}
-        <p className="profile-subtitle">
-          {stats.percent}% complete · {stats.total} titles tracked
-        </p>
-      </div>
-      {configured && (
-        <div className="profile-auth">
-          {user ? (
-            <>
-              <div className="profile-sync-status" title={lastSynced ? new Date(lastSynced).toLocaleString() : ''}>
-                {syncing && <span className="sync-spinner" />}
-                {lastSynced && !syncing && <Cloud size={13} className="sync-ok" />}
-                {lastSynced && !syncing && <span className="sync-label">{formatTimeAgo(lastSynced)}</span>}
-                {!lastSynced && !syncing && <span className="sync-label">Not synced yet</span>}
-              </div>
-              <button className="sync-now-btn" onClick={onSync} disabled={syncing} title="Sync now">
-                <RefreshCw size={14} className={syncing ? 'spinning' : ''} />
-              </button>
-              {confirmingLogout ? (
-                <div className="profile-auth-confirm">
-                  <span>Sign out?</span>
-                  <button className="confirm-yes" onClick={() => { onLogout(); setConfirmingLogout(false); }}>Yes</button>
-                  <button className="confirm-no" onClick={() => setConfirmingLogout(false)}>No</button>
-                </div>
-              ) : (
-                <button className="profile-auth-btn signed-in" onClick={() => setConfirmingLogout(true)} title="Sign out">
-                  <span className="auth-user-avatar">{avatarInitial}</span>
-                  <LogOut size={14} />
-                </button>
-              )}
-            </>
-          ) : (
-            <button className="profile-auth-btn sign-in" onClick={onLogin}>
-              <LogIn size={18} />
-              <span>Sign in to sync</span>
-            </button>
-          )}
-        </div>
+    <div className="profile-header profile-header-compact">
+      <strong className="profile-header-label">Profile</strong>
+      {configured && !user && (
+        <button className="profile-auth-icon" onClick={onLogin} aria-label="Sign in" title="Sign in">
+          <LogIn size={18} />
+        </button>
       )}
     </div>
   );
@@ -408,7 +332,7 @@ function SettingsPanel({ query = '', profileName, setProfileName, user, configur
       )}
 
       {/* Data Management */}
-      <DataSection universe={universe} activeItems={activeItems} profileName={profileName} setStatus={setStatus} toggleBookmark={toggleBookmark} />
+      <DataSection universe={universe} activeItems={activeItems} profileName={profileName} setStatus={setStatus} toggleBookmark={toggleBookmark} query={query} />
     </div>
   );
 }
@@ -626,7 +550,9 @@ function StatusSelect({ item, setStatus, compact = false }) {
 
 const SCHEMA_VERSION = 2;
 
-function DataSection({ universe, activeItems, profileName, setStatus, toggleBookmark }) {
+function DataSection({ universe, activeItems, profileName, setStatus, toggleBookmark, query = '' }) {
+  const search = query.trim().toLowerCase();
+  const showGroup = (terms) => !search || terms.includes(search);
   const fileRef = useRef(null);
   const [importMsg, setImportMsg] = useState(null);
   const [exporting, setExporting] = useState(false);
