@@ -1068,7 +1068,7 @@ export default function App() {
       <header className="site-header">
   <div className="header-universe-backdrop" aria-hidden="true"><span>{UNIVERSE_LOGOS[universe]}</span></div>
   <div className="header-top">
-  <div className="header-quick-actions" aria-label="Quick viewing controls">
+  <div className="header-quick-actions" aria-label="Quick viewing controls" style={{ display: ['analytics', 'profile'].includes(section) ? 'none' : undefined }}>
   {(() => {
     // Exactly one quick card: whatever is playing now wins, otherwise the next title.
     const watchingItem = activeItems.find(item => item.userStatus === 'watching');
@@ -1080,7 +1080,7 @@ export default function App() {
     </button>;
   })()}
   </div>
-  <button className="brand" onClick={() => { setQuery(''); setSection('home'); setWatchItem(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }} aria-label="Go to Incursion home"><b>Incursion</b><small>{universeName} timeline</small></button>
+  <button className="brand" onClick={() => { setQuery(''); setSection(section === 'profile' || section === 'analytics' ? section : 'home'); setWatchItem(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }} aria-label={section === 'profile' ? 'Profile' : section === 'analytics' ? 'Insights' : 'Go to Incursion home'}><b>{section === 'profile' ? 'Profile' : section === 'analytics' ? 'Insights' : 'Incursion'}</b><small>{section === 'profile' ? 'Your space' : section === 'analytics' ? 'Your viewing activity' : `${universeName} timeline`}</small></button>
   </div>
   <div className="header-bar">
   <div className="universe-tabs" role="tablist" aria-label="Universe">
