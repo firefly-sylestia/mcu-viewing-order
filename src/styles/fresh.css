@@ -6353,13 +6353,13 @@
 /* Navigation finish: transparent active tab with a 20% white tint and gentle lift. */
 :root .movie-site .bottom-nav .nav-blob,
 :root .movie-site .bottom-nav[data-holding="true"] .nav-blob {
-  background: rgba(255, 255, 255, .20) !important;
+  background: rgba(255, 255, 255, .40) !important;
   border: 0 !important;
   box-shadow: 0 4px 12px -3px rgba(0, 0, 0, .30), 0 1px 3px rgba(0, 0, 0, .18), inset 0 1px 0 rgba(255, 255, 255, .08) !important;
   filter: none !important;
 }
 :root[data-theme="light"] .movie-site .bottom-nav .nav-blob,
 :root[data-theme="light"] .movie-site .bottom-nav[data-holding="true"] .nav-blob {
-  background: rgba(255, 255, 255, .20) !important;
+  background: rgba(255, 255, 255, .40) !important;
   box-shadow: 0 4px 12px -3px rgba(16, 24, 40, .20), 0 1px 3px rgba(16, 24, 40, .12), inset 0 1px 0 rgba(255, 255, 255, .42) !important;
 }
