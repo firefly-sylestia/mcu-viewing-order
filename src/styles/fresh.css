@@ -5095,3 +5095,58 @@
     height: 82px !important;
   }
 }
+
+/* Refined header glass: larger, softer universe mark with a lighter tint. */
+:root .movie-site .site-header {
+  background: rgba(18, 22, 30, .22) !important;
+  -webkit-backdrop-filter: blur(34px) saturate(125%) !important;
+  backdrop-filter: blur(34px) saturate(125%) !important;
+}
+:root .movie-site .site-header::before {
+  background: linear-gradient(105deg,
+    rgba(18, 22, 30, .22) 0%,
+    rgba(18, 22, 30, .10) 50%,
+    rgba(18, 22, 30, .20) 100%) !important;
+}
+:root .movie-site .site-header .header-universe-backdrop {
+  opacity: .25 !important;
+}
+:root .movie-site .site-header .header-universe-backdrop > span {
+  transform: translate(-50%, -50%) scale(1.85) !important;
+  filter: blur(19px) !important;
+}
+:root .movie-site .site-header .header-universe-backdrop .universe-logo-img {
+  height: clamp(130px, 18vw, 210px) !important;
+  max-width: 82vw !important;
+}
+:root .movie-site .site-header .header-universe-backdrop .universe-logo-mask {
+  width: clamp(300px, 52vw, 560px) !important;
+  height: clamp(120px, 17vw, 196px) !important;
+}
+:root[data-theme="light"] .movie-site .site-header {
+  background: rgba(255, 255, 255, .25) !important;
+  -webkit-backdrop-filter: blur(34px) saturate(125%) !important;
+  backdrop-filter: blur(34px) saturate(125%) !important;
+}
+:root[data-theme="light"] .movie-site .site-header::before {
+  background: linear-gradient(105deg,
+    rgba(255,255,255,.26) 0%,
+    rgba(255,255,255,.12) 50%,
+    rgba(255,255,255,.23) 100%) !important;
+}
+:root[data-theme="light"] .movie-site .site-header .header-universe-backdrop {
+  opacity: .18 !important;
+}
+@media (max-width: 620px) {
+  :root .movie-site .site-header .header-universe-backdrop > span {
+    transform: translate(-50%, -50%) scale(1.5) !important;
+  }
+  :root .movie-site .site-header .header-universe-backdrop .universe-logo-img {
+    height: 112px !important;
+    max-width: 88vw !important;
+  }
+  :root .movie-site .site-header .header-universe-backdrop .universe-logo-mask {
+    width: 300px !important;
+    height: 106px !important;
+  }
+}
