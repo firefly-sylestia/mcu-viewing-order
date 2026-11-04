@@ -5180,3 +5180,75 @@
 :root[data-theme="light"] .movie-site .site-header .header-universe-backdrop {
   opacity: .13 !important;
 }
+
+
+/* Make the selected universe artwork visible again without burying its colour. */
+:root .movie-site .site-header {
+  background: rgba(18, 22, 30, .055) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(185%) !important;
+  backdrop-filter: blur(24px) saturate(185%) !important;
+}
+:root .movie-site .site-header::before {
+  background: linear-gradient(105deg,
+    rgba(18,22,30,.055) 0%,
+    rgba(18,22,30,.012) 50%,
+    rgba(18,22,30,.045) 100%) !important;
+}
+:root .movie-site .site-header .header-universe-backdrop {
+  opacity: .48 !important;
+}
+:root .movie-site .site-header .header-universe-backdrop > span {
+  filter: blur(11px) saturate(175%) !important;
+}
+:root .movie-site.universe-sony .site-header .header-universe-backdrop > span {
+  color: var(--brand-accent, #2f6bd8) !important;
+}
+:root[data-theme="light"] .movie-site .site-header {
+  background: rgba(255,255,255,.055) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(185%) !important;
+  backdrop-filter: blur(24px) saturate(185%) !important;
+}
+:root[data-theme="light"] .movie-site .site-header::before {
+  background: linear-gradient(105deg,
+    rgba(255,255,255,.07) 0%,
+    rgba(255,255,255,.015) 50%,
+    rgba(255,255,255,.055) 100%) !important;
+}
+:root[data-theme="light"] .movie-site .site-header .header-universe-backdrop {
+  opacity: .38 !important;
+}
+
+/* Stats and Profile get their own quiet identity header, not list controls. */
+:root .movie-site.page-analytics .site-header,
+:root .movie-site.page-profile .site-header {
+  padding: 12px 0 14px !important;
+}
+:root .movie-site.page-analytics .site-header .header-top,
+:root .movie-site.page-profile .site-header .header-top {
+  display: flex !important;
+  min-height: 62px;
+  justify-content: flex-start !important;
+}
+:root .movie-site.page-analytics .site-header .header-top .brand,
+:root .movie-site.page-profile .site-header .header-top .brand {
+  margin: 0 !important;
+  align-items: flex-start !important;
+  text-align: left !important;
+}
+:root .movie-site.page-analytics .site-header .header-bar,
+:root .movie-site.page-profile .site-header .header-bar {
+  display: none !important;
+}
+:root .movie-site.page-profile .profile-tabs-container {
+  margin-top: 8px;
+}
+:root .movie-site.page-profile .profile-tabs {
+  min-height: 54px;
+  padding: 5px;
+  border-radius: 18px;
+}
+:root .movie-site.page-profile .profile-tab {
+  min-height: 44px;
+  border-radius: 13px;
+  font-weight: 700;
+}
