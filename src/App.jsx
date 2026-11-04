@@ -210,7 +210,15 @@ export default function App() {
   const phaseButtonRef = useRef(null);
   const [phaseMenuPosition, setPhaseMenuPosition] = useState({ top: 0, left: 0 });
   const [typeFilter, setTypeFilter] = useState(saved.typeFilter || 'All');
-  const [heroIndex, setHeroIndex] = useState(saved.heroIndex || 0);
+  const [heroRotation] = useState(() => {
+    try {
+      const key = 'mcu-carousel-pool-rotation';
+      const next = (Number(localStorage.getItem(key)) || 0) + 1;
+      localStorage.setItem(key, String(next));
+      return next - 1;
+    } catch { return Math.floor(Date.now() / 86400000); }
+  });
+  const [heroIndex, setHeroIndex] = useState(0);
   const [section, setSection] = useState(parseHash().section || saved.section || 'home');
   const [navHoldIndex, setNavHoldIndex] = useState(null);
   const [navHolding, setNavHolding] = useState(false);
@@ -724,10 +732,60 @@ export default function App() {
     return () => { cancelled = true; };
   }, [activeItems, posterMap]);
 
-  // Slicing 6 items is cheap; do NOT memoize-by-id-only — items keep mutating as posters,
-  // ratings, and user state load async, and an id-keyed freeze would lock the carousel to
-  // the first-pass objects (poster-less) forever.
-  const heroItems = useMemo(() => activeItems.slice(0, 6), [activeItems]);
+  // Build a broad, rotating recommendation pool from the complete universe catalogue.
+  // The carousel still renders the same four-card stack; this only changes which titles
+  // it can cycle through. Watched titles leave the candidate pool immediately, allowing
+  // the next backup title to move up without ever shrinking the pool unnecessarily.
+  const heroItems = useMemo(() => {
+    const catalogue = allItems
+      .filter(item => item.universe === universe)
+      .map(enrichItem);
+    if (!catalogue.length) return [];
+
+    const available = catalogue.filter(item => item.userStatus !== 'watched' && item.userStatus !== 'dropped');
+    const candidates = available.length >= 4 ? available : catalogue;
+    const score = (item) => (Number(item.rating) || 0) * 1000 + Math.log10((Number(item.voteCount) || 0) + 1) * 100;
+    const popularity = [...candidates].sort((a, b) =>
+      (Number(b.voteCount) || 0) - (Number(a.voteCount) || 0) || score(b) - score(a)
+    );
+    const bestSeries = candidates.filter(item => item.type === 'series')
+      .sort((a, b) => score(b) - score(a));
+    const watchedHistory = catalogue.filter(item => item.userStatus === 'watched');
+    const genreCounts = new Map();
+    watchedHistory.forEach(item => (item.genres || []).forEach(value => {
+      if (value && value !== 'Essential' && value !== 'Canon' && value !== 'Series') {
+        genreCounts.set(value, (genreCounts.get(value) || 0) + 1);
+      }
+    }));
+    const preferredGenres = [...genreCounts.entries()].sort((a, b) => b[1] - a[1]).map(([value]) => value);
+    const personalized = [...candidates].sort((a, b) => {
+      const affinity = (item) => (item.genres || []).reduce((sum, value, index) => {
+        const rank = preferredGenres.indexOf(value);
+        return sum + (rank < 0 ? 0 : preferredGenres.length - rank);
+      }, 0);
+      return affinity(b) - affinity(a) || score(b) - score(a);
+    });
+    const essential = [...candidates].filter(item => item.essential).sort((a, b) => score(b) - score(a));
+    const continueWatching = [...candidates].filter(item => item.userStatus === 'watching');
+    const nextUnwatched = [...candidates].filter(item => item.userStatus === 'unwatched').sort((a, b) => a.order - b.order);
+    const rotations = [
+      [...popularity.slice(0, 5), ...popularity.slice(5)],
+      [...bestSeries, ...popularity],
+      [...personalized, ...continueWatching, ...popularity],
+      [...essential, ...popularity],
+      [...continueWatching, ...nextUnwatched, ...popularity],
+    ];
+    const ordered = rotations[heroRotation % rotations.length];
+    const unique = [];
+    const seen = new Set();
+    for (const item of ordered) {
+      if (!item || seen.has(item.id)) continue;
+      seen.add(item.id);
+      unique.push(item);
+    }
+    // Keep a healthy reserve so status changes can promote backup titles into view.
+    return unique.slice(0, Math.min(24, unique.length));
+  }, [allItems, universe, enrichItem, heroRotation]);
 
   // Fetch OMDb ratings (IMDb, Rotten Tomatoes, Metacritic) for ALL items
   // Items visible on screen are prioritised so the ratings users see populate first.
