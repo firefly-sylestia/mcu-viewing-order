@@ -5898,3 +5898,82 @@
   font-weight: 800 !important; line-height: 1.2 !important;
   white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;
 }
+
+
+/* One shared header search treatment across Home, List, Insights and Profile. */
+:root .movie-site .site-header .header-bar .header-search {
+  box-sizing: border-box !important;
+  min-height: 48px !important;
+  height: 48px !important;
+  max-height: 48px !important;
+  border-radius: 13px !important;
+  padding: 0 15px !important;
+  border: 1px solid color-mix(in srgb, var(--fx-muted) 18%, transparent) !important;
+  background: color-mix(in srgb, var(--fx-surface-2) 76%, transparent) !important;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--fx-text) 5%, transparent) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(150%) !important;
+  backdrop-filter: blur(18px) saturate(150%) !important;
+}
+:root .movie-site .site-header .header-bar .header-search:focus-within {
+  border-color: color-mix(in srgb, var(--fx-accent) 48%, transparent) !important;
+  background: color-mix(in srgb, var(--fx-surface-3) 82%, transparent) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--fx-accent) 17%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--fx-text) 7%, transparent) !important;
+}
+@media (max-width: 620px) {
+  :root .movie-site .site-header .header-bar .header-search {
+    min-height: 48px !important; height: 48px !important; max-height: 48px !important;
+    flex-basis: 48px !important; border-radius: 13px !important; padding: 0 13px !important;
+  }
+}
+
+/* Keep the glass and universe haze identical on Insights/Profile and List. */
+:root .movie-site.page-analytics .site-header,
+:root .movie-site.page-profile .site-header {
+  background: color-mix(in srgb, var(--fx-surface) 82%, transparent) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(145%) !important;
+  backdrop-filter: blur(22px) saturate(145%) !important;
+}
+:root .movie-site.page-analytics .site-header::before,
+:root .movie-site.page-profile .site-header::before {
+  background: linear-gradient(100deg,
+    color-mix(in srgb, var(--fx-surface) 88%, transparent) 0%,
+    color-mix(in srgb, var(--fx-surface) 66%, transparent) 52%,
+    color-mix(in srgb, var(--fx-surface) 82%, transparent) 100%) !important;
+}
+:root .movie-site.page-analytics .site-header .header-universe-backdrop,
+:root .movie-site.page-profile .site-header .header-universe-backdrop {
+  opacity: .20 !important;
+}
+:root .movie-site.page-analytics .site-header .header-universe-backdrop > span,
+:root .movie-site.page-profile .site-header .header-universe-backdrop > span {
+  filter: blur(11px) saturate(175%) !important;
+}
+:root[data-theme="light"] .movie-site.page-analytics .site-header,
+:root[data-theme="light"] .movie-site.page-profile .site-header {
+  background: rgba(255,255,255,.82) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(145%) !important;
+  backdrop-filter: blur(22px) saturate(145%) !important;
+}
+:root[data-theme="light"] .movie-site.page-analytics .site-header::before,
+:root[data-theme="light"] .movie-site.page-profile .site-header::before {
+  background: linear-gradient(100deg, rgba(255,255,255,.88) 0%, rgba(255,255,255,.66) 52%, rgba(255,255,255,.82) 100%) !important;
+}
+:root[data-theme="light"] .movie-site.page-analytics .site-header .header-universe-backdrop,
+:root[data-theme="light"] .movie-site.page-profile .site-header .header-universe-backdrop {
+  opacity: .14 !important;
+}
+
+/* Profile section selector: clear active state in dark mode, subtle lift in light. */
+:root:not([data-theme="light"]) .movie-site.page-profile .profile-header-tabs button.active {
+  color: var(--fx-text) !important;
+  background: color-mix(in srgb, var(--fx-accent) 24%, var(--fx-surface-2)) !important;
+  border: 1px solid color-mix(in srgb, var(--fx-accent) 48%, transparent) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 4px 14px -9px var(--fx-accent) !important;
+}
+:root[data-theme="light"] .movie-site.page-profile .profile-header-tabs button.active {
+  color: #171b24 !important;
+  background: #fff !important;
+  border: 1px solid rgba(30,41,59,.07) !important;
+  box-shadow: 0 3px 10px rgba(28,39,58,.10), 0 1px 2px rgba(28,39,58,.06) !important;
+}
