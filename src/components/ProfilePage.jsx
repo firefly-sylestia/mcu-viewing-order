@@ -127,14 +127,41 @@ function ProfilePage({ stats, activeItems, universe, activeTab = 'insights', que
   );
 }
 
-export function ProfileHeader({ user, configured, onLogin }) {
+export function ProfileHeader({ universe, stats, profileName, user, configured, onLogin, onLogout }) {
+  const [confirmingLogout, setConfirmingLogout] = useState(false);
+  const universeName = universe === 'marvel' ? 'MCU' : universe === 'xmen' ? 'X-Men' : universe === 'sony' ? 'Sony' : 'DC';
+  const displayName = profileName || user?.displayName || `${universeName} Viewer`;
+  const avatarInitial = (displayName.trim()[0] || universeName[0]).toUpperCase();
+
   return (
     <div className="profile-header profile-header-compact">
-      <strong className="profile-header-label">Profile</strong>
-      {configured && !user && (
-        <button className="profile-auth-icon" onClick={onLogin} aria-label="Sign in" title="Sign in">
-          <LogIn size={18} />
-        </button>
+      <div className="profile-avatar" aria-hidden="true">
+        {user?.photoURL ? <img src={user.photoURL} alt="" referrerPolicy="no-referrer" /> : <span className="avatar-initials">{avatarInitial}</span>}
+      </div>
+      <div className="profile-info">
+        <h1 className="profile-title">{displayName}</h1>
+        <p className="profile-subtitle">{stats.percent}% complete · {stats.total} titles tracked</p>
+      </div>
+      {configured && (
+        <div className="profile-auth">
+          {user ? (
+            confirmingLogout ? (
+              <div className="profile-auth-confirm">
+                <span>Sign out?</span>
+                <button className="confirm-yes" onClick={() => { onLogout(); setConfirmingLogout(false); }}>Yes</button>
+                <button className="confirm-no" onClick={() => setConfirmingLogout(false)}>No</button>
+              </div>
+            ) : (
+              <button className="profile-auth-btn signed-in" onClick={() => setConfirmingLogout(true)} aria-label="Sign out" title="Sign out">
+                <LogOut size={18} />
+              </button>
+            )
+          ) : (
+            <button className="profile-auth-btn sign-in" onClick={onLogin} aria-label="Sign in" title="Sign in">
+              <LogIn size={18} />
+            </button>
+          )}
+        </div>
       )}
     </div>
   );
