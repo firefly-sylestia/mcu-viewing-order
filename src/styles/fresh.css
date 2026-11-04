@@ -5277,3 +5277,34 @@
     height: 165px !important;
   }
 }
+
+
+/* Profile navigation lives in the shared header, below the universe and search row. */
+:root .movie-site.page-analytics .site-header .header-top,
+:root .movie-site.page-profile .site-header .header-top { display: flex !important; min-height: 58px; align-items: center; }
+:root .movie-site.page-profile .site-header .header-top { justify-content: flex-start; }
+:root .movie-site.page-profile .site-header .header-top > .profile-header {
+  width: 100%; margin: 0; padding: 2px 0; border: 0; background: transparent; box-shadow: none;
+}
+:root .movie-site.page-analytics .site-header .header-bar,
+:root .movie-site.page-profile .site-header .header-bar { display: grid !important; }
+:root .movie-site.page-analytics .site-header .header-tools { display: none !important; }
+:root .movie-site.page-profile .site-header .header-tools { display: flex !important; flex: 1 1 100%; min-width: 0; }
+:root .movie-site.page-profile .profile-header-tabs {
+  display: flex; align-items: center; gap: 5px; width: 100%; padding: 3px;
+  border-radius: 13px; background: var(--fx-surface-2);
+}
+:root .movie-site.page-profile .profile-header-tabs button {
+  flex: 1; min-width: 0; min-height: 38px; padding: 0 12px; border: 0; border-radius: 10px;
+  background: transparent; color: var(--fx-muted-strong); font: inherit; font-size: 12px;
+  font-weight: 750; cursor: pointer;
+}
+:root .movie-site.page-profile .profile-header-tabs button.active {
+  background: var(--fx-surface); color: var(--fx-text); box-shadow: var(--fx-shadow-sm);
+}
+:root .movie-site.page-profile .profile-page > .profile-tabs-container,
+:root .movie-site.page-profile .profile-page > .profile-header { display: none !important; }
+@media (max-width: 620px) {
+  :root .movie-site.page-profile .site-header .header-top > .profile-header { gap: 10px; }
+  :root .movie-site.page-profile .profile-header-tabs button { min-height: 36px; }
+}
