@@ -59,8 +59,7 @@ const formatTimeAgo = (timestamp) => {
   return 'Synced ' + Math.floor(hours / 24) + 'd ago';
 };
 
-function ProfilePage({ stats, activeItems, universe, setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, profileName, setProfileName, user, configured, onLogin, onLogout, lastSynced, syncing, onSync, conflict, onResolveRemote, onResolveLocal, syncToast, nativePlayer, setNativePlayer }) {
-  const [activeTab, setActiveTab] = useState('insights');
+function ProfilePage({ stats, activeItems, universe, activeTab = 'insights', query = '', setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, profileName, setProfileName, user, configured, onLogin, onLogout, lastSynced, syncing, onSync, conflict, onResolveRemote, onResolveLocal, syncToast, nativePlayer, setNativePlayer }) {
   
   const savedItems = activeItems.filter(i => i.bookmarked);
   const inProgressItems = activeItems.filter(i => i.userStatus === 'watching');
@@ -75,9 +74,6 @@ function ProfilePage({ stats, activeItems, universe, setSelected, cycleStatus, s
           {syncToast.type === 'error' ? '⚠️' : '✓'} {syncToast.message}
         </div>
       )}
-      
-      {/* Profile Header */}
-      <ProfileHeader universe={universe} stats={stats} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={onLogin} onLogout={onLogout} lastSynced={lastSynced} syncing={syncing} onSync={onSync} />
       
       {/* Conflict Resolution */}
       {conflict && (
@@ -94,59 +90,15 @@ function ProfilePage({ stats, activeItems, universe, setSelected, cycleStatus, s
         </div>
       )}
       
-      {/* Tabs */}
-      <div className="profile-tabs-container">
-        <div className="profile-tabs" role="tablist">
-          <button
-            role="tab"
-            aria-selected={activeTab === 'insights'}
-            aria-controls="insights-panel"
-            className={`profile-tab ${activeTab === 'insights' ? 'active' : ''}`}
-            onClick={() => setActiveTab('insights')}
-          >
-            Insights
-          </button>
-          <button
-            role="tab"
-            aria-selected={activeTab === 'saved'}
-            aria-controls="saved-panel"
-            className={`profile-tab ${activeTab === 'saved' ? 'active' : ''}`}
-            onClick={() => setActiveTab('saved')}
-          >
-            Saved
-            {savedItems.length > 0 && <span className="tab-badge">{savedItems.length}</span>}
-          </button>
-          <button
-            role="tab"
-            aria-selected={activeTab === 'settings'}
-            aria-controls="settings-panel"
-            className={`profile-tab ${activeTab === 'settings' ? 'active' : ''}`}
-            onClick={() => setActiveTab('settings')}
-          >
-            <Settings size={16} />
-            Settings
-          </button>
-        </div>
-        <div className="profile-tab-indicator" />
-      </div>
-
       {/* Tab Content */}
       <div className="profile-tab-content">
         {activeTab === 'insights' && (
           <div id="insights-panel" role="tabpanel" className="profile-panel insights-panel">
             <AnalyticsPanel stats={stats} activeItems={activeItems} inProgressItems={inProgressItems} />
-            {inProgressItems.length > 0 && (
-              <MovieRail title="In progress" items={inProgressItems} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />
-            )}
-            {watchedItems.length > 0 && (
-              <MovieRail title="Watched" items={watchedItems} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />
-            )}
-            {droppedItems.length > 0 && (
-              <MovieRail title="Dropped" items={droppedItems} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />
-            )}
-            {savedItems.length > 0 && (
-              <MovieRail title="Bookmarked" items={savedItems} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />
-            )}
+            {inProgressItems.some(i => !query || i.title.toLowerCase().includes(query.toLowerCase())) && <MovieRail title="In progress" items={inProgressItems.filter(i => !query || i.title.toLowerCase().includes(query.toLowerCase()))} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />}
+            {watchedItems.some(i => !query || i.title.toLowerCase().includes(query.toLowerCase())) && <MovieRail title="Watched" items={watchedItems.filter(i => !query || i.title.toLowerCase().includes(query.toLowerCase()))} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />}
+            {droppedItems.some(i => !query || i.title.toLowerCase().includes(query.toLowerCase())) && <MovieRail title="Dropped" items={droppedItems.filter(i => !query || i.title.toLowerCase().includes(query.toLowerCase()))} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />}
+            {savedItems.some(i => !query || i.title.toLowerCase().includes(query.toLowerCase())) && <MovieRail title="Bookmarked" items={savedItems.filter(i => !query || i.title.toLowerCase().includes(query.toLowerCase()))} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />}
           </div>
         )}
 
@@ -154,7 +106,7 @@ function ProfilePage({ stats, activeItems, universe, setSelected, cycleStatus, s
           <div id="saved-panel" role="tabpanel" className="profile-panel saved-panel">
             <MovieRail
               title="Saved titles"
-              items={savedItems}
+              items={savedItems.filter(i => !query || i.title.toLowerCase().includes(query.toLowerCase()))}
               setSelected={setSelected}
               cycleStatus={cycleStatus}
               setStatus={setStatus}
@@ -175,7 +127,7 @@ function ProfilePage({ stats, activeItems, universe, setSelected, cycleStatus, s
   );
 }
 
-function ProfileHeader({ universe, stats, profileName, setProfileName, user, configured, onLogin, onLogout, lastSynced, syncing, onSync }) {
+export function ProfileHeader({ universe, stats, profileName, setProfileName, user, configured, onLogin, onLogout, lastSynced, syncing, onSync }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(profileName);
   const [confirmingLogout, setConfirmingLogout] = useState(false);
