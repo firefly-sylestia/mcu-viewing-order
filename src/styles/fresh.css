@@ -6350,21 +6350,17 @@
 }
 
 
-/* Navigation finish: keep the moving tab flat and understated. The reflective
-   treatment is reserved for the outside edge of the whole bar. */
-:root .movie-site .bottom-nav .nav-blob {
-  background: color-mix(in srgb, var(--accent, #da1e37) 58%, #1c1f27) !important;
-  border: 0 !important;
-  box-shadow: 0 7px 16px -11px color-mix(in srgb, var(--accent, #da1e37) 58%, transparent) !important;
-  filter: none !important;
-}
+/* Navigation finish: keep the moving tab transparent with only a 2% white
+   tint. The subtle shadow gives it separation without turning it into a solid pill. */
+:root .movie-site .bottom-nav .nav-blob,
 :root .movie-site .bottom-nav[data-holding="true"] .nav-blob {
-  background: color-mix(in srgb, var(--accent, #da1e37) 58%, #1c1f27) !important;
-  box-shadow: 0 8px 18px -12px color-mix(in srgb, var(--accent, #da1e37) 62%, transparent) !important;
+  background: rgba(255, 255, 255, .02) !important;
+  border: 0 !important;
+  box-shadow: 0 7px 16px -11px rgba(0, 0, 0, .42) !important;
   filter: none !important;
 }
 :root[data-theme="light"] .movie-site .bottom-nav .nav-blob,
 :root[data-theme="light"] .movie-site .bottom-nav[data-holding="true"] .nav-blob {
-  background: color-mix(in srgb, var(--accent, #da1e37) 88%, #ffffff) !important;
-  box-shadow: 0 6px 14px -10px color-mix(in srgb, var(--accent, #da1e37) 55%, transparent) !important;
+  background: rgba(255, 255, 255, .02) !important;
+  box-shadow: 0 6px 14px -10px rgba(16, 24, 40, .24) !important;
 }
