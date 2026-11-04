@@ -6348,3 +6348,23 @@
     inset -1px 0 0 rgba(255, 255, 255, .72),
     inset 0 -1px 0 rgba(16, 24, 40, .06);
 }
+
+
+/* Navigation finish: keep the moving tab flat and understated. The reflective
+   treatment is reserved for the outside edge of the whole bar. */
+:root .movie-site .bottom-nav .nav-blob {
+  background: color-mix(in srgb, var(--accent, #da1e37) 58%, #1c1f27) !important;
+  border: 0 !important;
+  box-shadow: 0 7px 16px -11px color-mix(in srgb, var(--accent, #da1e37) 58%, transparent) !important;
+  filter: none !important;
+}
+:root .movie-site .bottom-nav[data-holding="true"] .nav-blob {
+  background: color-mix(in srgb, var(--accent, #da1e37) 58%, #1c1f27) !important;
+  box-shadow: 0 8px 18px -12px color-mix(in srgb, var(--accent, #da1e37) 62%, transparent) !important;
+  filter: none !important;
+}
+:root[data-theme="light"] .movie-site .bottom-nav .nav-blob,
+:root[data-theme="light"] .movie-site .bottom-nav[data-holding="true"] .nav-blob {
+  background: color-mix(in srgb, var(--accent, #da1e37) 88%, #ffffff) !important;
+  box-shadow: 0 6px 14px -10px color-mix(in srgb, var(--accent, #da1e37) 55%, transparent) !important;
+}
