@@ -6228,3 +6228,31 @@
     radial-gradient(ellipse at 86% 100%, color-mix(in srgb, var(--brand-accent, var(--fx-accent)) 11%, transparent), transparent 55%),
     color-mix(in srgb, var(--brand-accent, var(--fx-accent)) 3%, transparent) !important;
 }
+
+
+/* Balance the Sony and X-Men wordmarks with the larger Marvel/DC marks on Home. */
+:root .movie-site.page-home .site-header .universe-tabs button[data-universe="sony"] .universe-logo-mask,
+:root .movie-site.page-home .site-header .universe-tabs button[data-universe="xmen"] .universe-logo-mask {
+  width: 40px !important;
+  height: 29px !important;
+  transform: scale(1.22) !important;
+  transform-origin: center;
+}
+:root .movie-site.page-home .site-header .universe-tabs button[data-universe="sony"],
+:root .movie-site.page-home .site-header .universe-tabs button[data-universe="xmen"] {
+  min-width: 76px;
+  padding-inline: 17px;
+}
+@media (max-width: 620px) {
+  :root .movie-site.page-home .site-header .universe-tabs button[data-universe="sony"] .universe-logo-mask,
+  :root .movie-site.page-home .site-header .universe-tabs button[data-universe="xmen"] .universe-logo-mask {
+    width: 34px !important;
+    height: 25px !important;
+    transform: scale(1.18) !important;
+  }
+  :root .movie-site.page-home .site-header .universe-tabs button[data-universe="sony"],
+  :root .movie-site.page-home .site-header .universe-tabs button[data-universe="xmen"] {
+    min-width: 68px;
+    padding-inline: 12px;
+  }
+}
