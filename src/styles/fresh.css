@@ -5308,3 +5308,22 @@
   :root .movie-site.page-profile .site-header .header-top > .profile-header { gap: 10px; }
   :root .movie-site.page-profile .profile-header-tabs button { min-height: 36px; }
 }
+
+:root .movie-site.page-profile .site-header .header-bar {
+  display: grid !important;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: center;
+  gap: 9px 12px;
+}
+:root .movie-site.page-profile .site-header .header-tools {
+  grid-column: 1 / -1;
+  width: 100%;
+  margin: 0;
+}
+@media (max-width: 620px) {
+  :root .movie-site.page-profile .site-header .header-bar {
+    grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+    gap: 8px;
+  }
+  :root .movie-site.page-profile .site-header .header-tools { grid-column: 1 / -1; }
+}
