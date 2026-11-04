@@ -6326,44 +6326,25 @@
   box-shadow: 0 8px 22px -18px rgba(16, 24, 40, .42), inset 0 1px 0 rgba(255, 255, 255, .9);
 }
 
-/* A brighter, layered specular reflection on the active navigation pill. */
-:root .movie-site .bottom-nav .nav-blob {
-  isolation: isolate;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, .18);
+/* Reflective edge treatment belongs to the entire navigation bar, not the
+   moving active tab. Keep the sheen subtle and visible along all four sides. */
+:root .movie-site .bottom-nav {
+  border: 1px solid rgba(255, 255, 255, .16);
   box-shadow:
-    0 12px 28px -15px color-mix(in srgb, var(--accent, #da1e37) 90%, transparent),
-    inset 0 1px 0 rgba(255, 255, 255, .42),
-    inset 0 -1px 0 rgba(0, 0, 0, .22);
+    0 26px 64px -42px rgba(0, 0, 0, .95),
+    0 2px 12px rgba(0, 0, 0, .34),
+    inset 0 1px 0 rgba(255, 255, 255, .24),
+    inset 1px 0 0 rgba(255, 255, 255, .10),
+    inset -1px 0 0 rgba(255, 255, 255, .10),
+    inset 0 -1px 0 rgba(255, 255, 255, .07);
 }
-:root .movie-site .bottom-nav .nav-blob::before {
-  content: "";
-  position: absolute;
-  inset: 1px 1px auto;
-  height: 48%;
-  border-radius: inherit;
-  background: linear-gradient(180deg, rgba(255, 255, 255, .34), rgba(255, 255, 255, .09) 55%, transparent);
-  pointer-events: none;
-}
-:root .movie-site .bottom-nav .nav-blob::after {
-  content: "";
-  position: absolute;
-  top: -55%;
-  left: -18%;
-  width: 72%;
-  height: 150%;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, .12);
-  filter: blur(9px);
-  pointer-events: none;
-}
-:root[data-theme="light"] .movie-site .bottom-nav .nav-blob {
-  border-color: rgba(255, 255, 255, .48);
+:root[data-theme="light"] .movie-site .bottom-nav {
+  border-color: rgba(255, 255, 255, .72);
   box-shadow:
-    0 10px 24px -16px color-mix(in srgb, var(--accent, #da1e37) 68%, transparent),
-    inset 0 1px 0 rgba(255, 255, 255, .58),
-    inset 0 -1px 0 rgba(0, 0, 0, .12);
-}
-:root[data-theme="light"] .movie-site .bottom-nav .nav-blob::before {
-  background: linear-gradient(180deg, rgba(255, 255, 255, .5), rgba(255, 255, 255, .12) 58%, transparent);
+    0 20px 48px -32px rgba(16, 24, 40, .5),
+    0 2px 10px rgba(16, 24, 40, .1),
+    inset 0 1px 0 rgba(255, 255, 255, .96),
+    inset 1px 0 0 rgba(255, 255, 255, .72),
+    inset -1px 0 0 rgba(255, 255, 255, .72),
+    inset 0 -1px 0 rgba(16, 24, 40, .06);
 }
