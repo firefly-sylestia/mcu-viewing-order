@@ -483,30 +483,43 @@ export default function App() {
     };
   }, [actions, posterMap, omdbVersion]);
 
+  // Enrich each title once per data change. Search/filter keystrokes now work
+  // against this in-memory snapshot instead of repeatedly parsing localStorage
+  // metadata for every title.
+  const universeItems = useMemo(
+    () => allItems.filter(item => item.universe === universe),
+    [allItems, universe],
+  );
+  const enrichedItems = useMemo(
+    () => universeItems.map(enrichItem),
+    [universeItems, enrichItem],
+  );
+
   const activeItems = useMemo(() => {
     const activeQuery = section === 'profile' && profileTab === 'settings' ? '' : query;
+    const normalizedQuery = activeQuery.trim().toLowerCase();
+    const genreLower = genre.toLowerCase();
     const effectiveRating = (item) => Number(item.rating) || Number(item.imdbRating) || 0;
-    const sorted = allItems
-      .filter(item => item.universe === universe)
-      .filter(item => item.title.toLowerCase().includes(activeQuery.toLowerCase()))
-      .filter(item => genre === 'All' || item.genres.includes(genre) || item.type === genre.toLowerCase())
-      .filter(item => ageRatingFilter === 'All' || (item.ageRating || (item.type === 'series' ? 'TV-14' : 'PG-13')) === ageRatingFilter)
-      .filter(item => phaseFilter === 'All' || String(item.phase || '') === String(phaseFilter))
-  .filter(item => typeFilter === 'All' || (typeFilter === 'Movies' ? item.type === 'film' : item.type === 'series'))
-  .filter(item => sortBy !== 'doomsday-secret-wars' || DOOMSDAY_SECRET_WARS_TITLES.has(item.title))
-  .filter(item => sortBy !== 'essential' || item.essential)
-  .map(enrichItem)
-  .filter(item => effectiveRating(item) >= rating);
-  const timelineRank = (item) => {
-    if (sortBy === 'chronological') return Number(item.storyYear || item.year || 9999) * 1000 + item.order;
-    if (sortBy === 'doomsday-secret-wars') return STORY_ORDER_OVERRIDES.get(item.title) ?? item.order;
-    return item.order;
-  };
-  sorted.sort((a, b) => {
-  const dir = sortDirection === 'asc' ? 1 : -1;
+    const sorted = enrichedItems.filter(item => {
+      if (normalizedQuery && !item.title.toLowerCase().includes(normalizedQuery)) return false;
+      if (genre !== 'All' && !item.genres.includes(genre) && item.type !== genreLower) return false;
+      if (ageRatingFilter !== 'All' && (item.ageRating || (item.type === 'series' ? 'TV-14' : 'PG-13')) !== ageRatingFilter) return false;
+      if (phaseFilter !== 'All' && String(item.phase || '') !== String(phaseFilter)) return false;
+      if (typeFilter !== 'All' && (typeFilter === 'Movies' ? item.type !== 'film' : item.type !== 'series')) return false;
+      if (sortBy === 'doomsday-secret-wars' && !DOOMSDAY_SECRET_WARS_TITLES.has(item.title)) return false;
+      if (sortBy === 'essential' && !item.essential) return false;
+      return effectiveRating(item) >= rating;
+    });
+    const timelineRank = (item) => {
+      if (sortBy === 'chronological') return Number(item.storyYear || item.year || 9999) * 1000 + item.order;
+      if (sortBy === 'doomsday-secret-wars') return STORY_ORDER_OVERRIDES.get(item.title) ?? item.order;
+      return item.order;
+    };
+    const dir = sortDirection === 'asc' ? 1 : -1;
+    sorted.sort((a, b) => {
       if (sortBy === 'phase') return ((Number(a.phase) || 99) - (Number(b.phase) || 99)) * dir;
-  if (sortBy === 'year') return (a.year - b.year) * (sortDirection === 'asc' ? 1 : -1);
-      if (sortBy === 'title') return a.title.localeCompare(b.title) * (sortDirection === 'asc' ? 1 : -1);
+      if (sortBy === 'year') return (a.year - b.year) * dir;
+      if (sortBy === 'title') return a.title.localeCompare(b.title) * dir;
       if (sortBy === 'rating') return (effectiveRating(a) - effectiveRating(b)) * dir;
       if (sortBy === 'imdb') return ((Number(a.imdbRating) || 0) - (Number(b.imdbRating) || 0)) * dir;
       if (sortBy === 'tomato') return ((parseInt(a.tomatoRating) || 0) - (parseInt(b.tomatoRating) || 0)) * dir;
@@ -515,14 +528,14 @@ export default function App() {
       return (timelineRank(a) - timelineRank(b)) * dir;
     });
     return sorted;
-  }, [allItems, universe, query, section, profileTab, genre, rating, ageRatingFilter, sortBy, sortDirection, phaseFilter, typeFilter, enrichItem]);
+  }, [enrichedItems, universe, query, section, profileTab, genre, rating, ageRatingFilter, sortBy, sortDirection, phaseFilter, typeFilter]);
 
   // Unfiltered items (no search/filter) for WatchPage/WatchBrowse suggestions
   const roadmapItems = useMemo(() => {
-    const sorted = allItems.filter(item => item.universe === universe).map(enrichItem);
+    const sorted = [...enrichedItems];
     sorted.sort((a, b) => a.order - b.order);
     return sorted;
-  }, [allItems, universe, enrichItem]);
+  }, [enrichedItems]);
 
   const unfilteredItems = useMemo(
     () => roadmapItems,
@@ -1465,6 +1478,7 @@ function PosterArt({ item, loading: loadingProp = 'lazy', fetchPriority: fetchPr
     height="450"
     loading={loadingProp}
     fetchPriority={fetchPriorityProp}
+    decoding="async"
     referrerPolicy="no-referrer"
     onError={() => {
       if (retryAttempt < 1) setRetryAttempt(1);

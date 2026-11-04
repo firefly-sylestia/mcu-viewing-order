@@ -6181,3 +6181,17 @@ button { border: 0; color: inherit; cursor: pointer; }
   color: #000 !important;
   text-shadow: none !important;
 }
+
+
+/* ── Rendering performance: keep long title grids responsive ──────────────── */
+/* Limit entrance choreography to the first visible batch; off-screen cards
+   should not all animate at once when a large list mounts or gets re-sorted. */
+:root .movie-grid > .movie-card:nth-child(n + 13),
+:root .list-section .list-row:nth-child(n + 9) {
+  animation: none !important;
+}
+
+/* Avoid persistent compositor promotion for every scroll-triggered section. */
+.motion-section {
+  will-change: auto;
+}
