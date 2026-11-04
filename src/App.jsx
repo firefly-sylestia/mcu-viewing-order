@@ -991,7 +991,6 @@ export default function App() {
   <div className="site-glow" />
       <header className="site-header">
   <div className="header-top">
-  <button className="brand" onClick={() => { setQuery(''); setSection('home'); setWatchItem(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }} aria-label="Go to Incursion home"><b>Incursion</b><small>{universeName} timeline</small></button>
   <div className="header-quick-actions" aria-label="Quick viewing controls">
   {(() => {
     // Exactly one quick card: whatever is playing now wins, otherwise the next title.
@@ -1004,11 +1003,12 @@ export default function App() {
     </button>;
   })()}
   </div>
+  <button className="brand" onClick={() => { setQuery(''); setSection('home'); setWatchItem(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }} aria-label="Go to Incursion home"><b>Incursion</b><small>{universeName} timeline</small></button>
   </div>
   <div className="header-bar">
   <div className="universe-tabs" role="tablist" aria-label="Universe">
   {[['marvel', 'Marvel'], ['sony', 'Sony'], ['xmen', 'X-Men'], ['dc', 'DC']].map(([key, label]) => (
-    <button key={key} data-universe={key} role="tab" aria-selected={universe === key} aria-label={`${label} universe`} title={`${label} universe`} className={universe === key ? 'active' : ''} onClick={() => { hapticTap(); setUniverse(key); setHeroIndex(0); }}><span className="universe-logo" aria-hidden="true">{UNIVERSE_LOGOS[key]}</span><span className="sr-only">{label}</span></button>
+    <button key={key} data-universe={key} role="tab" aria-selected={universe === key} aria-label={`${label} universe`} title={`${label} universe`} className={universe === key ? 'active' : ''} onClick={() => { hapticTap(); setUniverse(key); setHeroIndex(0); }}><span className="universe-logo" aria-hidden="true">{UNIVERSE_LOGOS[key]}</span><span className="universe-label">{label}</span></button>
   ))}
   </div>
         <div className="header-search">
