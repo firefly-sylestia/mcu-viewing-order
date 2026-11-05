@@ -21,6 +21,7 @@ import { hapticTap, hapticSelect, hapticSuccess, hapticWarning } from './utils/h
 import { UNIVERSE_LOGOS } from './constants/logos';
 import './index.css';
 import './styles/fresh.css';
+import './styles/dark-header-fix.css';
 
 const STORAGE_KEY = 'cinematic-viewing-ui-state-v2';
 const VALID_HASHES = ['home', 'list', 'analytics', 'watch', 'profile', 'detail'];
