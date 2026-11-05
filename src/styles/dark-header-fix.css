@@ -1,0 +1,18 @@
+/* Dark-mode header: remove the milky accent wash and uneven lower tint. */
+:root:not([data-theme="light"]) .movie-site .site-header {
+  background: rgba(20, 22, 29, .88) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(110%) !important;
+  backdrop-filter: blur(14px) saturate(110%) !important;
+  box-shadow:
+    0 10px 30px -22px rgba(0, 0, 0, .88),
+    inset 0 1px 0 rgba(255, 255, 255, .055) !important;
+}
+
+:root:not([data-theme="light"]) .movie-site .site-header::before {
+  background: rgba(255, 255, 255, .025) !important;
+  opacity: 1 !important;
+}
+
+:root:not([data-theme="light"]) .movie-site .site-header .header-universe-backdrop {
+  display: none !important;
+}
