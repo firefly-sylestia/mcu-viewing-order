@@ -496,8 +496,9 @@ export default function App() {
     [universeItems, enrichItem],
   );
 
+  const profileSettingsSearch = section === 'profile' && profileTab === 'settings';
   const activeItems = useMemo(() => {
-    const activeQuery = section === 'profile' && profileTab === 'settings' ? '' : query;
+    const activeQuery = profileSettingsSearch ? '' : query;
     const normalizedQuery = activeQuery.trim().toLowerCase();
     const genreLower = genre.toLowerCase();
     const effectiveRating = (item) => Number(item.rating) || Number(item.imdbRating) || 0;
@@ -529,7 +530,7 @@ export default function App() {
       return (timelineRank(a) - timelineRank(b)) * dir;
     });
     return sorted;
-  }, [enrichedItems, universe, query, section, profileTab, genre, rating, ageRatingFilter, sortBy, sortDirection, phaseFilter, typeFilter]);
+  }, [enrichedItems, universe, query, profileSettingsSearch, genre, rating, ageRatingFilter, sortBy, sortDirection, phaseFilter, typeFilter]);
 
   // Unfiltered items (no search/filter) for WatchPage/WatchBrowse suggestions
   const roadmapItems = useMemo(() => {
