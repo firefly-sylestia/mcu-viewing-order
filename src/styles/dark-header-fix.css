@@ -43,17 +43,14 @@
 }
 :root:not([data-theme="light"]) .movie-site.page-profile .site-header,
 :root:not([data-theme="light"]) .movie-site.page-analytics .site-header {
-  background: color-mix(in srgb, var(--brand-accent, var(--fx-accent)) 15%, rgba(20,22,29,.78)) !important;
-  -webkit-backdrop-filter: blur(26px) saturate(155%) !important;
-  backdrop-filter: blur(26px) saturate(155%) !important;
-  box-shadow: 0 10px 34px -26px color-mix(in srgb, var(--brand-accent, var(--fx-accent)) 42%, transparent),
-    inset 0 1px 0 rgba(255,255,255,.08) !important;
+  background: rgba(20, 22, 29, .90) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(108%) !important;
+  backdrop-filter: blur(16px) saturate(108%) !important;
+  box-shadow: 0 10px 30px -22px rgba(0,0,0,.88), inset 0 1px 0 rgba(255,255,255,.055) !important;
 }
 :root:not([data-theme="light"]) .movie-site.page-profile .site-header::before,
 :root:not([data-theme="light"]) .movie-site.page-analytics .site-header::before {
-  background:
-    radial-gradient(ellipse at 18% 0%, color-mix(in srgb, var(--brand-accent, var(--fx-accent)) 30%, transparent), transparent 58%),
-    radial-gradient(ellipse at 86% 100%, color-mix(in srgb, var(--brand-accent, var(--fx-accent)) 17%, transparent), transparent 55%) !important;
+  background: rgba(255,255,255,.025) !important;
 }
 .stats-universe-filter { position: relative; display: flex; align-items: center; }
 .stats-universe-trigger { min-height: 44px; }
@@ -74,3 +71,66 @@
 }
 .stats-universe-dropdown button.selected { background: color-mix(in srgb, var(--fx-accent) 15%, transparent); }
 .stats-universe-dropdown label input { accent-color: var(--fx-accent); }
+
+
+/* Profile and Stats keep the luminous accent blur in light mode only. */
+:root[data-theme="light"] .movie-site.page-profile .site-header,
+:root[data-theme="light"] .movie-site.page-analytics .site-header {
+  background: color-mix(in srgb, var(--brand-accent, var(--fx-accent)) 10%, rgba(255,255,255,.76)) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(155%) !important;
+  backdrop-filter: blur(26px) saturate(155%) !important;
+  box-shadow: 0 10px 34px -26px color-mix(in srgb, var(--brand-accent, var(--fx-accent)) 42%, transparent),
+    inset 0 1px 0 rgba(255,255,255,.58) !important;
+}
+:root[data-theme="light"] .movie-site.page-profile .site-header::before,
+:root[data-theme="light"] .movie-site.page-analytics .site-header::before {
+  background:
+    radial-gradient(ellipse at 18% 0%, color-mix(in srgb, var(--brand-accent, var(--fx-accent)) 23%, transparent), transparent 58%),
+    radial-gradient(ellipse at 86% 100%, color-mix(in srgb, var(--brand-accent, var(--fx-accent)) 13%, transparent), transparent 55%),
+    color-mix(in srgb, var(--brand-accent, var(--fx-accent)) 4%, transparent) !important;
+}
+
+.profile-brand-kicker {
+  display: block;
+  margin: 0 0 3px;
+  color: var(--fx-muted);
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.profile-next-up {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: min(260px, 34vw);
+  height: 42px;
+  padding: 4px 12px 4px 5px;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--fx-surface-2) 84%, transparent);
+  color: var(--fx-text);
+  text-align: left;
+  cursor: pointer;
+  transition: background .18s ease, transform .18s ease;
+}
+.profile-next-up:hover { background: var(--fx-surface-3); }
+.profile-next-up:active { transform: scale(.98); }
+.profile-next-up-art {
+  display: grid;
+  width: 32px; height: 32px; flex: 0 0 32px;
+  place-items: center; overflow: hidden; border-radius: 50%;
+  background: color-mix(in srgb, var(--fx-accent) 16%, var(--fx-surface-2));
+}
+.profile-next-up-art img { width: 100%; height: 100%; object-fit: cover; }
+.profile-next-up-copy { display: flex; min-width: 0; flex-direction: column; gap: 2px; }
+.profile-next-up-copy small { color: var(--fx-muted); font-size: 9px; line-height: 1; }
+.profile-next-up-copy strong { overflow: hidden; color: var(--fx-text); font-size: 11px; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
+.profile-next-up.watching .profile-next-up-art { background: color-mix(in srgb, #d99b37 20%, var(--fx-surface-2)); }
+@media (max-width: 620px) {
+  .profile-next-up { max-width: 34vw; gap: 6px; padding-right: 8px; }
+  .profile-next-up-art { width: 28px; height: 28px; flex-basis: 28px; }
+  .profile-next-up-copy strong { max-width: 19vw; }
+}
