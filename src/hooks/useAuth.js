@@ -1,87 +1,67 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signInWithPopup,
-  signInWithRedirect,
-  getRedirectResult,
-  signInAnonymously,
-  GoogleAuthProvider,
-  signOut,
-  onAuthStateChanged,
-  sendPasswordResetEmail,
-  setPersistence,
-  browserLocalPersistence,
-} from 'firebase/auth';
-import { auth, configured } from '../firebase';
+  configured, readSession, saveSession, getValidSession, signUpWithEmail,
+  signInWithEmail, signOut, sendPasswordReset, changePassword,
+  consumeRecoverySession, hydrateRecoverySession,
+} from '../supabase';
 
 export function useAuth() {
-  const [user, setUser] = useState(null);
+  const initial = readSession();
+  const [user, setUser] = useState(initial?.user?.id ? { id: initial.user.id, uid: initial.user.id, email: initial.user.email } : null);
   const [loading, setLoading] = useState(configured);
+  const [recovery, setRecovery] = useState(false);
+
+  const applySession = useCallback((session) => {
+    saveSession(session);
+    setUser(session?.user?.id ? { id: session.user.id, uid: session.user.id, email: session.user.email } : null);
+  }, []);
 
   useEffect(() => {
-    if (!configured) { setLoading(false); return; }
-    // Enable persistent auth so the user stays logged in across reloads and redirects
-    setPersistence(auth, browserLocalPersistence).catch((err) => {
-      console.warn('Failed to set auth persistence:', err.code);
-    });
-    // Consume any pending redirect sign-in result on mount (fallback for popup-blocked browsers)
-    getRedirectResult(auth).catch((err) => {
-      console.warn('Redirect sign-in result error:', err.code);
-    });
-    const unsub = onAuthStateChanged(auth, (u) => {
-      setUser(u ? { uid: u.uid, email: u.email } : null);
-      setLoading(false);
-    });
-    return () => unsub();
-  }, []);
+    if (!configured) { setLoading(false); return undefined; }
+    let alive = true;
+    const isRecovery = consumeRecoverySession();
+    if (isRecovery) setRecovery(true);
+    (async () => {
+      try {
+        let session = await getValidSession();
+        if (isRecovery) session = await hydrateRecoverySession();
+        if (alive) applySession(session);
+      } catch (error) {
+        console.warn('Supabase session restore failed:', error.message);
+        if (alive) applySession(null);
+      } finally { if (alive) setLoading(false); }
+    })();
+    const onStorage = (event) => {
+      if (event.key !== 'mcu-supabase-session-v1') return;
+      try { if (alive) applySession(event.newValue ? JSON.parse(event.newValue) : null); } catch { /* Ignore malformed storage events. */ }
+    };
+    window.addEventListener('storage', onStorage);
+    const refreshTimer = window.setInterval(async () => {
+      try { const next = await getValidSession(); if (alive && next) applySession(next); }
+      catch { if (alive) applySession(null); }
+    }, 45_000);
+    return () => { alive = false; window.removeEventListener('storage', onStorage); window.clearInterval(refreshTimer); };
+  }, [applySession]);
 
   const login = useCallback(async (email, password) => {
-    if (!configured) throw new Error('Firebase not configured');
-    await signInWithEmailAndPassword(auth, email, password);
-  }, []);
-
+    const session = await signInWithEmail(email.trim(), password);
+    applySession(session); setRecovery(false);
+  }, [applySession]);
   const signup = useCallback(async (email, password) => {
-    if (!configured) throw new Error('Firebase not configured');
-    await createUserWithEmailAndPassword(auth, email, password);
-  }, []);
-
-  const googleSignIn = useCallback(async () => {
-    if (!configured || !auth) throw new Error('Firebase not configured');
-    const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({ prompt: 'select_account' });
-    // On mobile, skip popup entirely — redirects are more reliable
-    const isMobile = /Android|iPhone|iPad|iPod|webOS/i.test(navigator.userAgent);
-    if (isMobile) {
-      await signInWithRedirect(auth, provider);
-      return; // page navigates away
-    }
-    try {
-      await signInWithPopup(auth, provider);
-    } catch (err) {
-      // Fall back to redirect-based sign-in when the popup is blocked
-      if (err.code === 'auth/popup-blocked') {
-        await signInWithRedirect(auth, provider);
-        return; // page navigates away
-      }
-      throw err;
-    }
-  }, []);
-
-  const anonymousSignIn = useCallback(async () => {
-    if (!configured) throw new Error('Firebase not configured');
-    await signInAnonymously(auth);
-  }, []);
-
+    const result = await signUpWithEmail(email.trim(), password);
+    if (result.session) applySession(result.session);
+    return result;
+  }, [applySession]);
   const logout = useCallback(async () => {
-    if (!configured) return;
-    await signOut(auth);
-  }, []);
+    try { await signOut(); } finally { applySession(null); setRecovery(false); }
+  }, [applySession]);
+  const resetPassword = useCallback((email) => sendPasswordReset(email.trim()), []);
+  const updatePassword = useCallback(async (password) => {
+    await changePassword(password);
+    const session = await getValidSession();
+    applySession(session); setRecovery(false);
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }, [applySession]);
 
-  const resetPassword = useCallback(async (email) => {
-    if (!configured) throw new Error('Firebase not configured');
-    await sendPasswordResetEmail(auth, email);
-  }, []);
-
-  return { user, loading, login, signup, googleSignIn, anonymousSignIn, logout, resetPassword, configured };
+  return { user, loading, login, signup, logout, resetPassword, updatePassword, configured, recovery };
 }
