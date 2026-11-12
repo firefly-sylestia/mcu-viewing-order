@@ -60,7 +60,7 @@ export function useCloudSync(user, actions, profileName, setActions, setProfileN
       // Optimistic concurrency check: never silently overwrite a newer device snapshot.
       if (!force) {
         const remote = await fetchRemote();
-        if (remote?.updated_at !== lastRemoteUpdatedAt.current) {
+        if ((remote?.updated_at || null) !== (lastRemoteUpdatedAt.current || null)) {
           setConflict({
             remoteActions: remote?.data?.actions || {},
             remoteProfile: remote?.data?.profileName || '',
