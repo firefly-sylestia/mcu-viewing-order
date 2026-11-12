@@ -4,6 +4,7 @@ import { X, LogIn, UserPlus, KeyRound } from 'lucide-react';
 export default function AuthModal({ onClose, onLogin, onSignup, onResetPassword, onUpdatePassword, configured, recovery = false }) {
   const [mode, setMode] = useState(recovery ? 'update' : 'login');
   const [email, setEmail] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
@@ -29,7 +30,7 @@ export default function AuthModal({ onClose, onLogin, onSignup, onResetPassword,
       } else if (mode === 'login') {
         await onLogin(email, password); onClose();
       } else {
-        const result = await onSignup(email, password);
+        const result = await onSignup(email, password, displayName.trim());
         if (result?.needsConfirmation) {
           setSuccess('Check your inbox to confirm your email address, then come back to log in.');
           setMode('login'); setPassword('');
@@ -52,6 +53,7 @@ export default function AuthModal({ onClose, onLogin, onSignup, onResetPassword,
           <h2>{title}</h2><p>{description}</p>
         </div>
         <form onSubmit={submit} className="auth-form">
+          {mode === 'signup' && <label><span>Display name</span><input type="text" value={displayName} onChange={(event) => setDisplayName(event.target.value)} placeholder="How should people see you?" required maxLength={32} autoComplete="nickname" /></label>}
           {mode !== 'update' && <label><span>Email</span><input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" required autoComplete="email" autoFocus /></label>}
           {mode !== 'forgot' && <label><span>{mode === 'update' ? 'New password' : 'Password'}</span><input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="At least 8 characters" required minLength={8} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} /></label>}
           {mode === 'update' && <label><span>Confirm new password</span><input type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder="Enter it again" required minLength={8} autoComplete="new-password" /></label>}

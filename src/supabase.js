@@ -54,8 +54,8 @@ export async function getValidSession() {
   }
   return refreshPromise;
 }
-export async function signUpWithEmail(email, password) {
-  const payload = await request('/auth/v1/signup', { method: 'POST', body: JSON.stringify({ email, password }) });
+export async function signUpWithEmail(email, password, displayName = '') {
+  const payload = await request('/auth/v1/signup', { method: 'POST', body: JSON.stringify({ email, password, data: { display_name: displayName } }) });
   const session = normalizeSession(payload);
   if (session) saveSession(session);
   return { session, needsConfirmation: !session };

@@ -13,7 +13,7 @@ export function useAuth() {
 
   const applySession = useCallback((session) => {
     saveSession(session);
-    setUser(session?.user?.id ? { id: session.user.id, uid: session.user.id, email: session.user.email } : null);
+    setUser(session?.user?.id ? { id: session.user.id, uid: session.user.id, email: session.user.email, displayName: session.user.user_metadata?.display_name || session.user.user_metadata?.full_name || '' } : null);
   }, []);
 
   useEffect(() => {
@@ -47,8 +47,8 @@ export function useAuth() {
     const session = await signInWithEmail(email.trim(), password);
     applySession(session); setRecovery(false);
   }, [applySession]);
-  const signup = useCallback(async (email, password) => {
-    const result = await signUpWithEmail(email.trim(), password);
+  const signup = useCallback(async (email, password, displayName = '') => {
+    const result = await signUpWithEmail(email.trim(), password, displayName.trim());
     if (result.session) applySession(result.session);
     return result;
   }, [applySession]);

@@ -69,7 +69,7 @@ function ProfilePage({ stats, activeItems, universe, activeTab = 'insights', que
   return (
     <div className="profile-page">
       {/* Sync Toast */}
-      {syncToast && (
+      {syncToast?.type === 'error' && (
         <div className={`sync-toast ${syncToast.type === 'error' ? 'sync-toast-error' : ''}`}>
           {syncToast.type === 'error' ? '⚠️' : '✓'} {syncToast.message}
         </div>
@@ -127,14 +127,14 @@ function ProfilePage({ stats, activeItems, universe, activeTab = 'insights', que
   );
 }
 
-export function ProfileHeader({ universe, stats, profileName, user, onLogin, onLogout, watchingItem, nextUp, onSelectItem }) {
+export function ProfileHeader({ universe, stats, profileName, user, onLogin, onLogout, watchingItem, nextUp, onSelectItem, syncing = false, lastSynced, onSync }) {
   const [confirmingLogout, setConfirmingLogout] = useState(false);
   const universeName = universe === 'all' ? 'Multiverse' : universe === 'marvel' ? 'MCU' : universe === 'xmen' ? 'X-Men' : universe === 'sony' ? 'Sony' : 'DC';
   const displayName = (profileName || user?.displayName || user?.email?.split('@')[0] || `${universeName} Viewer`).trim();
   const avatarInitial = (displayName[0] || universeName[0]).toUpperCase();
 
   return (
-    <div className="profile-header profile-header-compact">
+    <div className={`profile-header profile-header-compact ${confirmingLogout ? "logout-confirming" : ""}`}>
       <div className="profile-avatar" aria-hidden="true">
         {user?.photoURL ? <img src={user.photoURL} alt="" referrerPolicy="no-referrer" /> : <span className="avatar-initials">{avatarInitial}</span>}
       </div>
@@ -147,6 +147,7 @@ export function ProfileHeader({ universe, stats, profileName, user, onLogin, onL
         <span className="profile-next-up-copy"><small>{watchingItem ? 'Watching now' : 'Up next'}</small><strong>{(watchingItem || nextUp).title}</strong></span>
       </button>}
       <div className="profile-auth">
+        {user && <button className="sync-now-btn profile-sync-icon" onClick={onSync} disabled={syncing} aria-label={syncing ? 'Syncing progress' : 'Sync progress now'} title={lastSynced ? `Last synced ${formatTimeAgo(lastSynced)}` : 'Sync progress'}><RefreshCw size={16} className={syncing ? 'spinning' : ''} /></button>}
         {user ? (
           confirmingLogout ? (
             <div className="profile-auth-confirm">

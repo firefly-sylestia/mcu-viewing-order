@@ -78,7 +78,7 @@ export function useCloudSync(user, actions, profileName, setActions, setProfileN
       });
       markSynced(current, rows?.[0]?.updated_at || new Date().toISOString());
       setConflict(null);
-      if (!silent) setToast({ message: 'Synced successfully', type: 'success' });
+      // Successful background syncs stay quiet; the header icon communicates activity.
       return true;
     } catch (error) {
       setToast({ message: error.message || 'Sync failed — check your connection', type: 'error' });
@@ -146,7 +146,7 @@ export function useCloudSync(user, actions, profileName, setActions, setProfileN
     if (!conflict) return;
     applyRemote({ data: { actions: conflict.remoteActions, profileName: conflict.remoteProfile, watchItem: conflict.remoteWatchItem }, updated_at: conflict.remoteUpdatedAt });
     setConflict(null);
-    setToast({ message: 'Loaded the latest cloud data', type: 'success' });
+    setToast(null);
   }, [conflict, applyRemote]);
 
   const resolveKeepLocal = useCallback(async () => {

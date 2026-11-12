@@ -356,6 +356,7 @@ export default function App() {
   const { user, login, signup, logout: authLogout, resetPassword, updatePassword, configured, recovery } = useAuth();
   const { pushToCloud, pushBeforeLogout, lastSynced, syncing, conflict, resolveUseRemote, resolveKeepLocal, toast } = useCloudSync(user, actions, profileName, setActions, setProfileName, watchItem, setWatchItem);
   useEffect(() => { if (recovery) setAuthOpen(true); }, [recovery]);
+  useEffect(() => { if (user?.displayName && !profileName) setProfileName(user.displayName); }, [user?.displayName, profileName]);
   const showWarningToast = useCallback((item) => {
   const guidance = getTitleGuidance(item);
   if (!guidance) return;
