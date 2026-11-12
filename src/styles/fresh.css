@@ -6943,3 +6943,19 @@
 @media (max-width: 520px) {
   .pwa-dialog { padding: 28px 22px 20px; border-radius: 25px; }
 }
+
+
+/* Keep the Profile Insights / Saved / Settings sliding pill fully inside its rail. */
+:root .movie-site.page-profile .profile-header-tabs.shared-switcher::before {
+  inset: 4px !important;
+  width: calc((100% - 8px) / 3) !important;
+  max-height: calc(100% - 8px) !important;
+  border-radius: 999px !important;
+  transform: translateX(calc(var(--profile-tab-index, 0) * 100%));
+}
+:root .movie-site.page-profile .profile-header-tabs.shared-switcher:has(button:nth-child(2)[aria-selected="true"])::before {
+  transform: translateX(100%) !important;
+}
+:root .movie-site.page-profile .profile-header-tabs.shared-switcher:has(button:nth-child(3)[aria-selected="true"])::before {
+  transform: translateX(200%) !important;
+}
