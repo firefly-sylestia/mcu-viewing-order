@@ -6634,3 +6634,19 @@
     transition-duration: .01ms !important;
   }
 }
+
+
+/* Embedded Sony and X-Men marks inherit contrast without network mask assets. */
+:root .movie-site .universe-tabs .universe-logo-img {
+  display: block;
+  width: var(--logo-w, auto);
+  height: var(--logo-h, 16px);
+  max-width: 76px;
+  object-fit: contain;
+}
+:root:not([data-theme="light"]) .movie-site .universe-logo-monochrome {
+  filter: invert(1);
+}
+:root[data-theme="light"] .movie-site .universe-logo-monochrome {
+  filter: none;
+}

@@ -1,8 +1,8 @@
 import React from 'react';
 import marvelSvg from '../assets/logos/marvel-logo.svg?raw';
-import sonySvg from '../../public/logos/sony-logo.svg?raw';
-import xmenSvg from '../../public/logos/xmen-logo.svg?raw';
-import dcSvg from '../../public/logos/dc-logo.svg?raw';
+import sonySvg from '../assets/logos/sony-logo.svg?raw';
+import xmenSvg from '../assets/logos/xmen-logo.svg?raw';
+import dcSvg from '../assets/logos/dc-logo.svg?raw';
 
 // Inline SVG data keeps brand marks available from the app bundle, even offline.
 const embeddedLogo = (svg) => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg.replace(/<\?xml[^>]*\?>/g, '').replace(/<!--[\s\S]*?-->/g, ''))}`;
