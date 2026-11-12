@@ -34,6 +34,13 @@ document.documentElement.setAttribute('data-ui', readStored('ui-variant', 'fresh
 // where env(safe-area-inset-top) comes back as zero.
 const nativePlatform = window.Capacitor?.isNativePlatform?.() || window.Capacitor?.platform === 'android' || window.Capacitor?.platform === 'ios';
 if (nativePlatform) document.documentElement.classList.add('is-native');
+if (!nativePlatform && 'serviceWorker' in navigator && window.isSecureContext) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(error => {
+      console.warn('Offline cache registration failed:', error);
+    });
+  }, { once: true });
+}
 
 class AppErrorBoundary extends Component {
   constructor(props) {
