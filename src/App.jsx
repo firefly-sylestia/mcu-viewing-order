@@ -13,7 +13,6 @@ import SeoHead from './components/SeoHead';
 import NotFoundPage from './components/NotFoundPage';
 import { useAuth } from './hooks/useAuth';
 import { useCloudSync } from './hooks/useCloudSync';
-import { configured as firebaseReady } from './firebase';
 import { getFromCache, setCache, clearExpiredCache } from './utils/mediaCache';
 import { buildDownloadUrl, buildPlayerUrl } from './utils/mediaProviders';
 import { apiUrl, assetUrl, isOffline } from './utils/apiBase';
@@ -354,8 +353,9 @@ export default function App() {
   const [adBlockerDismissed, setAdBlockerDismissed] = useState(() => localStorage.getItem('adblocker-dismissed') === '1');
   const [watchConfirmItem, setWatchConfirmItem] = useState(null); // { item, tmdbId, mediaType, onConfirm }
   const [warningToast, setWarningToast] = useState('');
-  const { user, login, signup, googleSignIn, anonymousSignIn, logout: authLogout, resetPassword, configured } = useAuth();
+  const { user, login, signup, logout: authLogout, resetPassword, updatePassword, configured, recovery } = useAuth();
   const { pushToCloud, pushBeforeLogout, lastSynced, syncing, conflict, resolveUseRemote, resolveKeepLocal, toast } = useCloudSync(user, actions, profileName, setActions, setProfileName, watchItem, setWatchItem);
+  useEffect(() => { if (recovery) setAuthOpen(true); }, [recovery]);
   const showWarningToast = useCallback((item) => {
   const guidance = getTitleGuidance(item);
   if (!guidance) return;
@@ -1299,7 +1299,7 @@ export default function App() {
       {trailer && <TrailerModal trailer={trailer} onClose={() => setTrailer(null)} />}
       {filtersOpen && <Filters genre={genre} setGenre={setGenre} rating={rating} setRating={setRating} ageRatingFilter={ageRatingFilter} setAgeRatingFilter={setAgeRatingFilter} universe={universe} typeFilter={typeFilter} setTypeFilter={setTypeFilter} genres={genres} count={activeItems.length} onClose={() => setFiltersOpen(false)} />}
       {sortOpen && <SortSheet sortBy={sortBy} setSortBy={setSortBy} sortDirection={sortDirection} setSortDirection={setSortDirection} count={activeItems.length} onClose={() => setSortOpen(false)} />}
-      {authOpen && <AuthModal onClose={() => setAuthOpen(false)} onLogin={login} onSignup={signup} onGoogleSignIn={googleSignIn} onAnonymousSignIn={anonymousSignIn} onResetPassword={resetPassword} />}
+      {authOpen && <AuthModal onClose={() => setAuthOpen(false)} onLogin={login} onSignup={signup} onResetPassword={resetPassword} onUpdatePassword={updatePassword} configured={configured} recovery={recovery} />}
       {watchConfirmItem && <WatchConfirmDialog item={watchConfirmItem.item} onConfirm={confirmWatch} onDismiss={(skipFuture) => dismissWatchConfirm(skipFuture)} />}
       <Footer />
     </main>
