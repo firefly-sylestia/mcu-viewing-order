@@ -6363,3 +6363,83 @@
   background: rgba(255, 255, 255, .30) !important;
   box-shadow: 0 4px 12px -3px rgba(16, 24, 40, .20), 0 1px 3px rgba(16, 24, 40, .12), inset 0 1px 0 rgba(255, 255, 255, .42) !important;
 }
+
+
+/* Stats filter hover uses universe-tinted feedback, never a white flash.
+   Keep its search field exactly as wide and tall as the Home/List universe rail. */
+:root .movie-site.page-analytics .stats-universe-tabs button[data-universe="all"] { --stats-hover: var(--fx-accent); }
+:root .movie-site.page-analytics .stats-universe-tabs button[data-universe="marvel"] { --stats-hover: #e6394f; }
+:root .movie-site.page-analytics .stats-universe-tabs button[data-universe="sony"] { --stats-hover: #e0654a; }
+:root .movie-site.page-analytics .stats-universe-tabs button[data-universe="xmen"] { --stats-hover: #8fa0bd; }
+:root .movie-site.page-analytics .stats-universe-tabs button[data-universe="dc"] { --stats-hover: #3b82f6; }
+:root .movie-site.page-analytics .stats-universe-tabs button:hover,
+:root .movie-site.page-analytics .stats-universe-tabs button:focus-visible {
+  color: var(--fx-text) !important;
+  background: color-mix(in srgb, var(--stats-hover, var(--fx-accent)) 16%, transparent) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--stats-hover, var(--fx-accent)) 28%, transparent) !important;
+  outline: none;
+}
+:root .movie-site.page-analytics .stats-universe-tabs button.active:hover {
+  color: #fff !important;
+  background: color-mix(in srgb, var(--stats-hover, var(--fx-accent)) 82%, #20232b) !important;
+  box-shadow: 0 8px 20px -13px var(--stats-hover, var(--fx-accent)), inset 0 1px 0 rgba(255,255,255,.2) !important;
+}
+:root .movie-site.page-analytics .site-header .header-bar {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+  gap: 10px !important;
+  width: 100% !important;
+}
+:root .movie-site.page-analytics .site-header .header-bar .header-search {
+  display: flex !important;
+  box-sizing: border-box !important;
+  flex: 0 0 64px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 64px !important;
+  height: 64px !important;
+  max-height: 64px !important;
+  padding-inline: 20px !important;
+  border-radius: 999px !important;
+}
+:root .movie-site.page-analytics .site-header .header-tools {
+  display: flex !important;
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 64px !important;
+  height: auto !important;
+  justify-content: stretch !important;
+}
+:root .movie-site.page-analytics .stats-universe-tabs {
+  display: flex !important;
+  flex: 1 1 100% !important;
+  width: 100% !important;
+  min-height: 64px !important;
+  height: 64px !important;
+  box-sizing: border-box !important;
+  align-items: stretch !important;
+}
+:root .movie-site.page-analytics .stats-universe-tabs button {
+  min-height: 54px !important;
+  height: auto !important;
+}
+@media (max-width: 620px) {
+  :root .movie-site.page-analytics .site-header .header-bar .header-search {
+    flex-basis: 56px !important;
+    min-height: 56px !important;
+    height: 56px !important;
+    max-height: 56px !important;
+    padding-inline: 15px !important;
+  }
+  :root .movie-site.page-analytics .site-header .header-tools,
+  :root .movie-site.page-analytics .stats-universe-tabs {
+    min-height: 56px !important;
+    height: 56px !important;
+  }
+  :root .movie-site.page-analytics .stats-universe-tabs button {
+    min-height: 48px !important;
+  }
+}
