@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Play, Bookmark, RotateCcw, Clock, Check, X, Pencil, Trophy, LogIn, LogOut, Cloud, RefreshCw, Sun, Moon, Settings, Upload, Download, Clapperboard, Sparkles, LayoutGrid, Vibrate, ChevronDown, Maximize2, } from 'lucide-react';
 import { getHapticsEnabled, setHapticsEnabled, hapticsSupported, hapticTap, hapticSuccess } from '../utils/haptics';
 
@@ -171,7 +172,7 @@ export function ProfileHeader({ universe, stats, profileName, user, onLogin, onL
         {localAvatar || user?.photoURL ? <img src={localAvatar || user.photoURL} alt="" referrerPolicy="no-referrer" /> : <span className="avatar-initials">{avatarInitial}</span>}
       </button>
       <input ref={avatarInput} className="profile-avatar-input" type="file" accept="image/*" onChange={handleAvatar} />
-      {avatarDialogOpen && (
+      {avatarDialogOpen && typeof document !== 'undefined' && createPortal((
         <div className="avatar-dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) { setAvatarDialogOpen(false); setAvatarFullscreen(false); } }}>
           <section className={`avatar-dialog ${avatarFullscreen ? 'avatar-dialog-fullscreen' : ''}`} role="dialog" aria-modal="true" aria-label="Profile picture">
             <button type="button" className="avatar-dialog-close" onClick={() => { setAvatarDialogOpen(false); setAvatarFullscreen(false); }} aria-label="Close profile picture dialog"><X size={18} /></button>
@@ -191,7 +192,7 @@ export function ProfileHeader({ universe, stats, profileName, user, onLogin, onL
             </div>
           </section>
         </div>
-      )}
+      ), document.body)}
       <div className="profile-info">
         <span className="profile-brand-kicker">Incursion</span>
         <h1 className="profile-title">{displayName}</h1>
