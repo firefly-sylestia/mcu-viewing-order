@@ -1,130 +1,69 @@
-import React, { useState, useRef } from 'react';
-import { X, LogIn, UserPlus, Eye } from 'lucide-react';
-import { configured } from '../firebase';
+import React, { useEffect, useState } from 'react';
+import { X, LogIn, UserPlus, KeyRound } from 'lucide-react';
 
-export default function AuthModal({ onClose, onLogin, onSignup, onGoogleSignIn, onAnonymousSignIn, onResetPassword, loading: authLoading }) {
-  const [mode, setMode] = useState('login');
+export default function AuthModal({ onClose, onLogin, onSignup, onResetPassword, onUpdatePassword, configured, recovery = false }) {
+  const [mode, setMode] = useState(recovery ? 'update' : 'login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [busy, setBusy] = useState(false);
 
-  const submit = async (e) => {
-    e.preventDefault();
-    if (!configured) { setError('Firebase not configured. Add VITE_FIREBASE_* env vars.'); return; }
-    setError('');
-    setSuccess('');
+  useEffect(() => { if (recovery) setMode('update'); }, [recovery]);
+
+  const submit = async (event) => {
+    event.preventDefault(); setError(''); setSuccess('');
+    if (!configured) { setError('Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in Vercel.'); return; }
+    if ((mode === 'signup' || mode === 'update') && password.length < 8) { setError('Use a password with at least 8 characters.'); return; }
+    if (mode === 'update' && password !== confirmPassword) { setError('The passwords do not match.'); return; }
     setBusy(true);
     try {
       if (mode === 'forgot') {
         await onResetPassword(email);
-        setSuccess('Password reset email sent. Check your inbox.');
-        setEmail('');
+        setSuccess('If an account exists for that email, a password reset link is on its way.');
+      } else if (mode === 'update') {
+        await onUpdatePassword(password);
+        setSuccess('Your password has been updated. You are now signed in.');
+        window.setTimeout(onClose, 900);
       } else if (mode === 'login') {
-        await onLogin(email, password);
-        onClose();
+        await onLogin(email, password); onClose();
       } else {
-        await onSignup(email, password);
-        onClose();
+        const result = await onSignup(email, password);
+        if (result?.needsConfirmation) {
+          setSuccess('Check your inbox to confirm your email address, then come back to log in.');
+          setMode('login'); setPassword('');
+        } else onClose();
       }
     } catch (err) {
-      setError(err.message?.replace('Firebase: ', '').replace('Error ', '') || 'Something went wrong');
-    }
-    setBusy(false);
+      setError((err?.message || 'Something went wrong. Please try again.').replace(/^AuthApiError:\\s*/i, '').replace(/^Error:\\s*/i, ''));
+    } finally { setBusy(false); }
   };
 
-  const handleProviderSignIn = async (fn) => {
-    if (!configured) { setError('Firebase not configured. Add VITE_FIREBASE_* env vars.'); return; }
-    setError('');
-    setBusy(true);
-    try {
-      await fn();
-      onClose();
-    } catch (err) {
-      const msg = (err.message || '').replace('Firebase: ', '').replace('Error ', '').replace(/^\(auth\//, '').replace(/[.)]+$/, '');
-      if (msg.includes('popup-closed-by-user') || msg.includes('cancelled-popup-request') || msg.includes('popup')) {
-        setError('Sign-in popup was closed. Please try again or use email instead.');
-      } else if (msg.includes('unauthorized-domain')) {
-        setError('This domain is not authorized for Google sign-in. Contact the site owner.');
-      } else {
-        setError(msg || 'Sign-in failed. Please try again.');
-      }
-    }
-    setBusy(false);
-  };
+  const title = mode === 'login' ? 'Welcome back' : mode === 'signup' ? 'Create your account' : mode === 'forgot' ? 'Reset your password' : 'Choose a new password';
+  const description = mode === 'login' ? 'Sign in to keep your watch progress in sync.' : mode === 'signup' ? 'Create an account with your email address.' : mode === 'forgot' ? 'We’ll email you a secure password reset link.' : 'Choose a new password for your account.';
 
   return (
-    <div className="detail-overlay" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <article className="auth-modal" role="dialog" aria-modal="true" aria-label={mode === 'login' ? 'Log in' : mode === 'forgot' ? 'Reset password' : 'Sign up'}>
+    <div className="detail-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+      <article className="auth-modal" role="dialog" aria-modal="true" aria-label={title}>
         <button className="detail-close" onClick={onClose} aria-label="Close"><X size={21} /></button>
         <div className="auth-header">
-          <div className="auth-icon">{mode === 'login' ? <LogIn size={32} /> : mode === 'forgot' ? <LogIn size={32} /> : <UserPlus size={32} />}</div>
-          <h2>{mode === 'login' ? 'Welcome back' : mode === 'forgot' ? 'Reset password' : 'Create account'}</h2>
-          <p>{mode === 'login' ? 'Log in to sync your data across devices.' : mode === 'forgot' ? 'Enter your email to receive a password reset link.' : 'Sign up to save your progress in the cloud.'}</p>
+          <div className="auth-icon">{mode === 'signup' ? <UserPlus size={32} /> : mode === 'update' || mode === 'forgot' ? <KeyRound size={32} /> : <LogIn size={32} />}</div>
+          <h2>{title}</h2><p>{description}</p>
         </div>
         <form onSubmit={submit} className="auth-form">
-          <label>
-            <span>Email</span>
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required autoFocus />
-          </label>
-          {mode !== 'forgot' && (
-            <label>
-              <span>Password</span>
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required minLength={6} />
-            </label>
-          )}
-          {error && <p className="auth-error">{error}</p>}
-          {success && <p className="auth-success">{success}</p>}
-          <button type="submit" className="auth-submit" disabled={busy}>
-            {busy ? 'Please wait…' : mode === 'login' ? 'Log in' : mode === 'forgot' ? 'Send reset link' : 'Sign up'}
-          </button>
+          {mode !== 'update' && <label><span>Email</span><input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" required autoComplete="email" autoFocus /></label>}
+          {mode !== 'forgot' && <label><span>{mode === 'update' ? 'New password' : 'Password'}</span><input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="At least 8 characters" required minLength={8} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} /></label>}
+          {mode === 'update' && <label><span>Confirm new password</span><input type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder="Enter it again" required minLength={8} autoComplete="new-password" /></label>}
+          {error && <p className="auth-error" role="alert">{error}</p>}
+          {success && <p className="auth-success" role="status">{success}</p>}
+          <button type="submit" className="auth-submit" disabled={busy}>{busy ? 'Please wait…' : mode === 'login' ? 'Log in' : mode === 'signup' ? 'Create account' : mode === 'forgot' ? 'Send reset link' : 'Update password'}</button>
         </form>
-
-        {mode !== 'forgot' && <div className="auth-divider"><span>or continue with</span></div>}
-
-        {mode !== 'forgot' && <button type="button" className="auth-google-btn" onClick={() => { try { onGoogleSignIn(); } catch (err) { setError(err.message?.replace('Firebase: ', '') || 'Something went wrong'); } }} disabled={busy}>
-          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
-            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-          </svg>
-          <span>Sign in with Google</span>
-        </button>}
-
-        {mode !== 'forgot' && <button type="button" className="auth-anonymous-btn" onClick={() => { try { onAnonymousSignIn(); } catch (err) { setError(err.message?.replace('Firebase: ', '') || 'Something went wrong'); } }} disabled={busy}>
-          <Eye size={20} />
-          <span>Continue as guest</span>
-        </button>}
-        <p className="auth-switch">
-          {mode === 'login' ? (
-            <>
-              Don't have an account?{' '}
-              <button onClick={() => { setMode('signup'); setError(''); setSuccess(''); }}>
-                Sign up
-              </button>
-              {' · '}
-              <button onClick={() => { setMode('forgot'); setError(''); setSuccess(''); }}>
-                Forgot password?
-              </button>
-            </>
-          ) : mode === 'forgot' ? (
-            <>
-              Remember your password?{' '}
-              <button onClick={() => { setMode('login'); setError(''); setSuccess(''); setPassword(''); }}>
-                Log in
-              </button>
-            </>
-          ) : (
-            <>
-              Already have an account?{' '}
-              <button onClick={() => { setMode('login'); setError(''); setSuccess(''); }}>
-                Log in
-              </button>
-            </>
-          )}
-        </p>
+        {mode !== 'update' && <p className="auth-switch">
+          {mode === 'login' ? <>New here? <button type="button" onClick={() => { setMode('signup'); setError(''); setSuccess(''); }}>Create account</button>{' · '}<button type="button" onClick={() => { setMode('forgot'); setError(''); setSuccess(''); }}>Forgot password?</button></>
+            : mode === 'forgot' ? <>Remembered it? <button type="button" onClick={() => { setMode('login'); setError(''); setSuccess(''); }}>Back to login</button></>
+              : <>Already have an account? <button type="button" onClick={() => { setMode('login'); setError(''); setSuccess(''); }}>Log in</button></>}
+        </p>}
       </article>
     </div>
   );
