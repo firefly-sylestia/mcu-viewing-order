@@ -67,6 +67,7 @@
     "65": "065-avengers-doomsday.jpg",
     "66": "066-daredevil-born-again-s3.jpg",
     "67": "067-avengers-secret-wars.jpg",
+    "77": "https://pbs.twimg.com/media/HQlGn79aMAA1iK0?format=jpg&name=large",
     "101": "007-agent-carter-(one-shot).jpg",
     "102": "102-agent-carter-s1-and-s2.jpg",
     "103": "009-A-Funny-Thing-Happened-on-the-Way-to-Thors-Hammer.jpg",
@@ -171,9 +172,11 @@
     "5044": "5044-justice-league-dark.jpg",
     "5045": "5045-the-penguin-s1.jpg",
     "5046": "5046-supergirl-woman-of-tomorrow.jpg",
-    "5047": "5047-clayface.jpg",
+    "5047": "https://image.tmdb.org/t/p/w500/5jCpQnWPikggmQZoDp1eAi6BI6w.jpg",
     "5048": "5048-the-batman-part-ii.jpg",
     "5049": "5049-superman-man-of-tomorrow.jpg",
+    "5050": "https://image.tmdb.org/t/p/w500/gpC7h43xPMEV3goYMQShfJbTtLq.jpg",
+    "5058": "https://snworksceo.imgix.net/cds/55cab51c-6f1b-4f17-b80d-c3b908c8293f.sized-1000x1000.jpg?dpr=2&w=1000",
     "6001": "6001-x-men.jpg",
     "6002": "6002-x2-x-men-united.jpg",
     "6003": "6003-x-men-the-last-stand.jpg",
@@ -343,7 +346,10 @@
     "Batman: The Killing Joke": "5043-batman-the-killing-joke.jpg",
     "Supergirl: Woman of Tomorrow": "5046-supergirl-woman-of-tomorrow.jpg",
     "The Batman Part II": "5048-the-batman-part-ii.jpg",
-    "Clayface": "5047-clayface.jpg",
-    "Superman: Man of Tomorrow": "5049-superman-man-of-tomorrow.jpg"
+    "Clayface": "https://image.tmdb.org/t/p/w500/5jCpQnWPikggmQZoDp1eAi6BI6w.jpg",
+    "Superman: Man of Tomorrow": "5049-superman-man-of-tomorrow.jpg",
+    "Lanterns S1": "https://image.tmdb.org/t/p/w500/gpC7h43xPMEV3goYMQShfJbTtLq.jpg",
+    "Peacemaker Season 2": "https://snworksceo.imgix.net/cds/55cab51c-6f1b-4f17-b80d-c3b908c8293f.sized-1000x1000.jpg?dpr=2&w=1000",
+    "Avengers Endgame: Encore": "https://pbs.twimg.com/media/HQlGn79aMAA1iK0?format=jpg&name=large"
   }
 }

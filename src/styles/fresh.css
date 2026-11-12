@@ -6744,3 +6744,20 @@
   .avatar-dialog-backdrop, .avatar-dialog { animation: none; }
   .avatar-dialog-actions button { transition: none; }
 }
+
+
+/* Profile and Insights share one exact horizontal page rail with their content. */
+:root .movie-site.page-profile .site-header,
+:root .movie-site.page-profile .profile-page,
+:root .movie-site.page-analytics .site-header,
+:root .movie-site.page-analytics .analytics-panel {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  max-width: none !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+:root .movie-site.page-profile .profile-page,
+:root .movie-site.page-analytics .analytics-panel {
+  min-width: 0 !important;
+}
