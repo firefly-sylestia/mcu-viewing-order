@@ -6903,3 +6903,43 @@
     width: 35px !important; height: 32px !important;
   }
 }
+
+
+/* PWA install prompt and help sheets. */
+.pwa-dialog-backdrop {
+  position: fixed; inset: 0; z-index: 100000; display: grid; place-items: center;
+  padding: max(22px, env(safe-area-inset-top)) 20px max(22px, env(safe-area-inset-bottom));
+  background: rgba(12,16,28,.48); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+}
+.pwa-dialog {
+  position: relative; width: min(100%, 390px); padding: 32px 26px 24px; border-radius: 28px;
+  background: var(--fx-surface, #fff); color: var(--fx-text, #171923);
+  box-shadow: 0 28px 90px rgba(0,0,0,.25); text-align: center;
+}
+.pwa-dialog-close {
+  position: absolute; top: 13px; right: 13px; width: 36px; height: 36px; border: 0;
+  border-radius: 50%; display: grid; place-items: center; color: var(--fx-muted);
+  background: var(--fx-surface-2, rgba(120,130,150,.12));
+}
+.pwa-dialog-icon {
+  width: 62px; height: 62px; margin: 0 auto 17px; border-radius: 21px; display: grid;
+  place-items: center; color: var(--fx-text); background: var(--fx-surface-2, #f0f2f7);
+}
+.pwa-dialog-kicker { color: var(--fx-muted); font-size: 10px; font-weight: 850; letter-spacing: .18em; }
+.pwa-dialog h2 { margin: 9px 0 10px; font-size: clamp(23px, 6vw, 29px); line-height: 1.08; letter-spacing: -.04em; }
+.pwa-dialog p { margin: 0 auto 20px; max-width: 300px; color: var(--fx-muted-strong); font-size: 13px; line-height: 1.6; }
+.pwa-dialog .pwa-primary, .pwa-dialog .pwa-secondary {
+  width: 100%; min-height: 46px; border: 0; border-radius: 999px; font: inherit; font-size: 13px; font-weight: 800;
+}
+.pwa-dialog .pwa-primary { color: var(--fx-surface, #fff); background: var(--fx-text, #171923); }
+.pwa-dialog .pwa-secondary { margin-top: 7px; color: var(--fx-muted-strong); background: transparent; }
+.pwa-help-dialog { text-align: left; }
+.pwa-help-dialog .pwa-dialog-icon { margin-left: 0; }
+.pwa-help-dialog h2 { font-size: 24px; }
+.pwa-help-dialog p { max-width: none; margin-left: 0; }
+.pwa-help-dialog .pwa-help-note { font-size: 11px; opacity: .8; }
+.settings-release-link { padding: 0 0 8px 48px; font-size: 12px; }
+.settings-release-link a { color: var(--fx-muted-strong); text-decoration: none; font-weight: 700; }
+@media (max-width: 520px) {
+  .pwa-dialog { padding: 28px 22px 20px; border-radius: 25px; }
+}

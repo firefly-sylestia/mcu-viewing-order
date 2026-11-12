@@ -189,6 +189,62 @@ export default function App() {
   const [profileTab, setProfileTab] = useState('insights');
   const [statsUniverses, setStatsUniverses] = useState(['marvel', 'sony', 'xmen', 'dc']);
   const [statsUniverseMenuOpen, setStatsUniverseMenuOpen] = useState(false);
+  const [installPromptEvent, setInstallPromptEvent] = useState(null);
+  const [appInstalled, setAppInstalled] = useState(() => {
+    try { return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true; } catch { return false; }
+  });
+  const [installDialogOpen, setInstallDialogOpen] = useState(false);
+  const [installHelpOpen, setInstallHelpOpen] = useState(false);
+
+  useEffect(() => {
+    const onBeforeInstall = (event) => {
+      event.preventDefault();
+      setInstallPromptEvent(event);
+    };
+    const onInstalled = () => {
+      setAppInstalled(true);
+      setInstallPromptEvent(null);
+      setInstallDialogOpen(false);
+      try { localStorage.setItem('incursion-pwa-installed', '1'); } catch {}
+    };
+    window.addEventListener('beforeinstallprompt', onBeforeInstall);
+    window.addEventListener('appinstalled', onInstalled);
+    try {
+      if (localStorage.getItem('incursion-pwa-installed') === '1') setAppInstalled(true);
+      if (!localStorage.getItem('incursion-pwa-intro-dismissed') && !localStorage.getItem('incursion-pwa-installed') && !window.matchMedia('(display-mode: standalone)').matches && window.navigator.standalone !== true) {
+        const timer = window.setTimeout(() => setInstallDialogOpen(true), 1800);
+        return () => { window.clearTimeout(timer); window.removeEventListener('beforeinstallprompt', onBeforeInstall); window.removeEventListener('appinstalled', onInstalled); };
+      }
+    } catch {}
+    return () => {
+      window.removeEventListener('beforeinstallprompt', onBeforeInstall);
+      window.removeEventListener('appinstalled', onInstalled);
+    };
+  }, []);
+
+  const installApp = async () => {
+    if (!installPromptEvent) {
+      setInstallHelpOpen(true);
+      return false;
+    }
+    try {
+      installPromptEvent.prompt();
+      const choice = await installPromptEvent.userChoice;
+      if (choice?.outcome === 'accepted') {
+        setInstallDialogOpen(false);
+        setInstallPromptEvent(null);
+        return true;
+      }
+      return false;
+    } catch {
+      setInstallHelpOpen(true);
+      return false;
+    }
+  };
+  const dismissInstallDialog = () => {
+    setInstallDialogOpen(false);
+    try { localStorage.setItem('incursion-pwa-intro-dismissed', '1'); } catch {}
+  };
 
   // Interface variant (classic | fresh | control) is chosen in Settings; applied on the root.
   const [uiVariant, setUiVariant] = useState(() => {
@@ -1267,7 +1323,7 @@ export default function App() {
 
       {section === 'list' && <ListSection items={activeItems} sortBy={sortBy} sortDirection={sortDirection} sortKey={`${sortBy}-${sortDirection}`} externalResults={externalSearchResults} externalLoading={externalSearchLoading} query={query} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} onPlayExternal={onPlayExternal} onWarning={showWarningToast} />}
       {section === 'analytics' && <><AnalyticsPanel stats={stats} large /><MovieRail title="In progress" items={analyticsItems.filter(i => i.userStatus === 'watching')} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} /></>}
-            {section === 'profile' && <ProfilePage stats={profileStats} activeItems={profileItems} universe="all" activeTab={profileTab} query={query} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} conflict={conflict} onResolveRemote={resolveUseRemote} onResolveLocal={resolveKeepLocal} syncToast={toast} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} />}
+            {section === 'profile' && <ProfilePage installApp={installApp} installAvailable={!!installPromptEvent} appInstalled={appInstalled} stats={profileStats} activeItems={profileItems} universe="all" activeTab={profileTab} query={query} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} conflict={conflict} onResolveRemote={resolveUseRemote} onResolveLocal={resolveKeepLocal} syncToast={toast} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} />}
       {WATCH_ENABLED && section === 'watch' && safeWatchItem && <WatchPage watchItem={safeWatchItem} activeItems={roadmapItems} onBack={() => { setWatchItem(null); window.history.replaceState(null, '', '#watch'); }} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={startWatchWithConfirm} updateAction={updateAction} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} />}
       {WATCH_ENABLED && section === 'watch' && !safeWatchItem && <WatchBrowse activeItems={activeItems} externalResults={externalSearchResults} externalLoading={externalSearchLoading} actions={actions} query={query} onStartWatch={startWatchWithConfirm} onPlayExternal={onPlayExternal} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} />}
 
@@ -1297,6 +1353,8 @@ export default function App() {
       {trailer && <TrailerModal trailer={trailer} onClose={() => setTrailer(null)} />}
       {filtersOpen && <Filters genre={genre} setGenre={setGenre} rating={rating} setRating={setRating} ageRatingFilter={ageRatingFilter} setAgeRatingFilter={setAgeRatingFilter} universe={universe} typeFilter={typeFilter} setTypeFilter={setTypeFilter} genres={genres} count={activeItems.length} onClose={() => setFiltersOpen(false)} />}
       {sortOpen && <SortSheet sortBy={sortBy} setSortBy={setSortBy} sortDirection={sortDirection} setSortDirection={setSortDirection} count={activeItems.length} onClose={() => setSortOpen(false)} />}
+      {installDialogOpen && !appInstalled && <InstallAppDialog onInstall={installApp} canInstall={!!installPromptEvent} onDismiss={dismissInstallDialog} onHelp={() => setInstallHelpOpen(true)} />}
+      {installHelpOpen && <InstallHelpDialog onClose={() => setInstallHelpOpen(false)} />}
       {authOpen && <AuthModal onClose={() => setAuthOpen(false)} onLogin={login} onSignup={signup} onResetPassword={resetPassword} onUpdatePassword={updatePassword} configured={configured} recovery={recovery} />}
       {watchConfirmItem && <WatchConfirmDialog item={watchConfirmItem.item} onConfirm={confirmWatch} onDismiss={(skipFuture) => dismissWatchConfirm(skipFuture)} />}
       <Footer />
@@ -3238,4 +3296,36 @@ function Footer() {
       )}
     </footer>
   );
+}
+
+
+function InstallAppDialog({ onInstall, canInstall, onDismiss, onHelp }) {
+  return <div className="pwa-dialog-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) onDismiss(); }}>
+    <section className="pwa-dialog" role="dialog" aria-modal="true" aria-labelledby="pwa-dialog-title">
+      <button className="pwa-dialog-close" onClick={onDismiss} aria-label="Not now"><X size={18} /></button>
+      <div className="pwa-dialog-icon"><Download size={27} /></div>
+      <span className="pwa-dialog-kicker">INCursion · APP</span>
+      <h2 id="pwa-dialog-title">Take your timeline with you.</h2>
+      <p>Install Incursion for a cleaner, app-like experience with offline access to cached pages and images.</p>
+      <button className="pwa-primary" onClick={canInstall ? onInstall : onHelp}>{canInstall ? 'Install app' : 'How to install'}</button>
+      <button className="pwa-secondary" onClick={onDismiss}>Maybe later</button>
+    </section>
+  </div>;
+}
+
+function InstallHelpDialog({ onClose }) {
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isSamsung = /samsungbrowser/i.test(navigator.userAgent);
+  return <div className="pwa-dialog-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}>
+    <section className="pwa-dialog pwa-help-dialog" role="dialog" aria-modal="true" aria-labelledby="pwa-help-title">
+      <button className="pwa-dialog-close" onClick={onClose} aria-label="Close"><X size={18} /></button>
+      <div className="pwa-dialog-icon"><Download size={25} /></div>
+      <h2 id="pwa-help-title">Add Incursion to your device</h2>
+      {isIOS ? <p>In Safari, tap <strong>Share</strong>, scroll down, then choose <strong>Add to Home Screen</strong>.</p>
+        : isSamsung ? <p>In Samsung Internet, open the browser menu and choose <strong>Add page to</strong> or <strong>Add to Home screen</strong>.</p>
+        : <p>In Chrome or a supported browser, open the browser menu (⋮), then choose <strong>Install app</strong> or <strong>Add to Home screen</strong>.</p>}
+      <p className="pwa-help-note">The install option appears only in supported browsers over HTTPS. If it is missing, update your browser and try again.</p>
+      <button className="pwa-primary" onClick={onClose}>Got it</button>
+    </section>
+  </div>;
 }

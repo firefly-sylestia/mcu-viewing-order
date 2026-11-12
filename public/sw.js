@@ -1,7 +1,7 @@
-const SHELL_CACHE = 'incursion-shell-v2';
+const SHELL_CACHE = 'incursion-shell-v3';
 const IMAGE_CACHE = 'incursion-images-v1';
 self.addEventListener('install', event => {
-  event.waitUntil((async () => { const cache = await caches.open(SHELL_CACHE); await cache.add('/'); await self.skipWaiting(); })());
+  event.waitUntil((async () => { const cache = await caches.open(SHELL_CACHE); await cache.addAll(['/', '/manifest.webmanifest', '/mcu-icon.jpg']); await self.skipWaiting(); })());
 });
 self.addEventListener('activate', event => {
   event.waitUntil((async () => { const keys = await caches.keys(); await Promise.all(keys.filter(key => key.startsWith('incursion-') && ![SHELL_CACHE, IMAGE_CACHE].includes(key)).map(key => caches.delete(key))); await self.clients.claim(); })());

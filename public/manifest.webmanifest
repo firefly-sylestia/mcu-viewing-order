@@ -1,0 +1,21 @@
+{
+  "id": "/",
+  "name": "Incursion · Superhero Timeline Guide",
+  "short_name": "Incursion",
+  "description": "Explore Marvel, DC, X-Men and Sony timelines, track your viewing progress, and continue offline with cached content.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f6f7fb",
+  "theme_color": "#f6f7fb",
+  "categories": ["entertainment", "lifestyle"],
+  "icons": [
+    {
+      "src": "/mcu-icon.jpg",
+      "sizes": "any",
+      "type": "image/jpeg",
+      "purpose": "any"
+    }
+  ]
+}

@@ -60,7 +60,7 @@ const formatTimeAgo = (timestamp) => {
   return 'Synced ' + Math.floor(hours / 24) + 'd ago';
 };
 
-function ProfilePage({ stats, activeItems, universe, activeTab = 'insights', query = '', setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, profileName, setProfileName, user, configured, onLogin, onLogout, lastSynced, syncing, onSync, conflict, onResolveRemote, onResolveLocal, syncToast, nativePlayer, setNativePlayer }) {
+function ProfilePage({ installApp, installAvailable, appInstalled, stats, activeItems, universe, activeTab = 'insights', query = '', setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, profileName, setProfileName, user, configured, onLogin, onLogout, lastSynced, syncing, onSync, conflict, onResolveRemote, onResolveLocal, syncToast, nativePlayer, setNativePlayer }) {
   
   const savedItems = activeItems.filter(i => i.bookmarked);
   const inProgressItems = activeItems.filter(i => i.userStatus === 'watching');
@@ -120,7 +120,7 @@ function ProfilePage({ stats, activeItems, universe, activeTab = 'insights', que
 
         {activeTab === 'settings' && (
           <div id="settings-panel" role="tabpanel" className="profile-panel settings-panel">
-            <SettingsPanel query={query} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={onLogin} onLogout={onLogout} universe={universe} activeItems={activeItems} setStatus={setStatus} toggleBookmark={toggleBookmark} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} />
+            <SettingsPanel installApp={installApp} installAvailable={installAvailable} appInstalled={appInstalled} query={query} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={onLogin} onLogout={onLogout} universe={universe} activeItems={activeItems} setStatus={setStatus} toggleBookmark={toggleBookmark} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} />
           </div>
         )}
       </div>
@@ -240,7 +240,7 @@ export function ProfileHeader({ universe, stats, profileName, setProfileName, us
   );
 }
 
-function SettingsPanel({ query = '', profileName, setProfileName, user, configured, onLogin, onLogout, universe, activeItems, setStatus, toggleBookmark, nativePlayer, setNativePlayer }) {
+function SettingsPanel({ installApp, installAvailable, appInstalled, query = '', profileName, setProfileName, user, configured, onLogin, onLogout, universe, activeItems, setStatus, toggleBookmark, nativePlayer, setNativePlayer }) {
   const search = query.trim().toLowerCase();
   const showGroup = (terms) => !search || terms.includes(search);
   const { theme, setTheme } = useAppTheme();
@@ -333,6 +333,27 @@ function SettingsPanel({ query = '', profileName, setProfileName, user, configur
             </span>
           </button>
         </div>
+      </div>
+
+      {/* Installable app */}
+      <div className="settings-group" hidden={!showGroup('install app download android apk offline browser add to home screen pwa')}>
+        <h3 className="settings-group-title">App & Offline</h3>
+        <div className="settings-row">
+          <div className="settings-row-label">
+            <span className="settings-row-icon"><Download size={18} /></span>
+            <div><strong>{appInstalled ? 'App installed' : 'Install Incursion'}</strong><small>{appInstalled ? 'You are using the installed app' : 'Add it to your home screen for an app-like experience'}</small></div>
+          </div>
+          {!appInstalled && <button className="settings-btn primary" onClick={installApp}>{installAvailable ? 'Install app' : 'How to install'}</button>}
+        </div>
+        <div className="settings-row">
+          <div className="settings-row-label">
+            <span className="settings-row-icon"><Download size={18} /></span>
+            <div><strong>Android APK</strong><small>Install the latest signed Android build from GitHub</small></div>
+          </div>
+          <a className="settings-btn" href="https://github.com/firefly-sylestia/mcu-viewing-order/releases/download/v10.2/MCU-Viewing-Order-10.2-signed.apk" target="_blank" rel="noreferrer">Download APK</a>
+        </div>
+        <div className="settings-release-link"><a href="https://github.com/firefly-sylestia/mcu-viewing-order/releases/latest" target="_blank" rel="noreferrer">View latest release and all versions ↗</a></div>
+        <p className="settings-data-desc">Offline mode keeps the app shell and previously loaded images available. Live search, account sync and streaming still require an internet connection.</p>
       </div>
 
       {/* Player Mode */}
