@@ -897,6 +897,8 @@ export default function App() {
   const featured = heroItems[heroIndex % Math.max(heroItems.length, 1)] || activeItems[0];
   const genres = ['All', 'Action', 'Adventure', 'Drama', 'Sci-fi', 'Essential', 'Series'];
   const profileItems = useMemo(() => allItems.map(enrichItem), [allItems, enrichItem]);
+  const profileWatchingItem = profileItems.find(item => item.userStatus === 'watching');
+  const profileNextUpItem = profileItems.find(item => item.userStatus !== 'watched' && item.userStatus !== 'dropped') || profileItems[0];
   const statsBaseItems = useMemo(() => allItems.filter(item => statsUniverses.includes(item.universe)).map(enrichItem), [allItems, enrichItem, statsUniverses]);
   const externalTrackedItems = useMemo(() => Object.entries(actions)
     .filter(([key, action]) => key.startsWith('tmdb:') && action.media && statsUniverses.includes(action.media.universe))
@@ -1115,7 +1117,7 @@ export default function App() {
       <header className="site-header">
   <div className="header-universe-backdrop" aria-hidden="true"><span>{UNIVERSE_LOGOS[universe]}</span></div>
   <div className="header-top">
-  {section === 'profile' ? <ProfileHeader universe={universe} stats={stats} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} /> : <>
+  {section === 'profile' ? <ProfileHeader universe={universe} stats={stats} profileName={profileName} watchingItem={profileWatchingItem} nextUp={profileNextUpItem} onSelectItem={selectItem} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} /> : <>
   <div className="header-quick-actions" aria-label="Quick viewing controls" style={{ display: section === 'analytics' ? 'none' : undefined }}>
   {(() => {
     // Exactly one quick card: whatever is playing now wins, otherwise the next title.
