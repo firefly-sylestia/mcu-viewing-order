@@ -16,3 +16,10 @@
 :root:not([data-theme="light"]) .movie-site .site-header .header-universe-backdrop {
   display: none !important;
 }
+
+/* Search is intentionally reserved for the List page. */
+:root .movie-site.page-home .site-header .header-bar .header-search,
+:root .movie-site.page-analytics .site-header .header-bar .header-search,
+:root .movie-site.page-profile .site-header .header-bar .header-search {
+  display: none !important;
+}
