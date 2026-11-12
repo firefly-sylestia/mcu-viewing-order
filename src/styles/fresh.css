@@ -6650,3 +6650,43 @@
 :root[data-theme="light"] .movie-site .universe-logo-monochrome {
   filter: none;
 }
+
+
+/* Unified page rails: header and primary content share identical outer edges. */
+:root .movie-site .site-header,
+:root .movie-site .profile-page,
+:root .movie-site .analytics-panel,
+:root .movie-site .list-section {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 1280px;
+  margin-inline: auto;
+}
+
+/* Profile's legacy 24px wrapper inset was making its content narrower than
+   the header. Keep vertical breathing room, but let the page rail align. */
+:root .movie-site.page-profile .profile-page {
+  padding-inline: 0 !important;
+}
+
+:root .movie-site.page-profile .profile-tab-content,
+:root .movie-site.page-profile .profile-panel {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* Match the same rail on tablet and phone; only the app's outer gutter changes. */
+@media (max-width: 860px) {
+  :root .movie-site .site-header,
+  :root .movie-site .profile-page,
+  :root .movie-site .analytics-panel,
+  :root .movie-site .list-section {
+    width: 100%;
+    max-width: 1280px;
+  }
+  :root .movie-site.page-profile .profile-page {
+    padding-inline: 0 !important;
+  }
+}
