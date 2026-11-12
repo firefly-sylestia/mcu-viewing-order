@@ -129,15 +129,48 @@ function ProfilePage({ stats, activeItems, universe, activeTab = 'insights', que
 
 export function ProfileHeader({ universe, stats, profileName, user, onLogin, onLogout, watchingItem, nextUp, onSelectItem, syncing = false, lastSynced, onSync }) {
   const [confirmingLogout, setConfirmingLogout] = useState(false);
+  const [localAvatar, setLocalAvatar] = useState(() => { try { return localStorage.getItem('incursion-profile-avatar') || ''; } catch { return ''; } });
+  const avatarInput = useRef(null);
   const universeName = universe === 'all' ? 'Multiverse' : universe === 'marvel' ? 'MCU' : universe === 'xmen' ? 'X-Men' : universe === 'sony' ? 'Sony' : 'DC';
   const displayName = (profileName || user?.displayName || user?.email?.split('@')[0] || `${universeName} Viewer`).trim();
   const avatarInitial = (displayName[0] || universeName[0]).toUpperCase();
 
+  const handleAvatar = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { event.target.value = ''; return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const image = new Image();
+      image.onload = () => {
+        const canvas = document.createElement('canvas');
+        const scale = Math.min(1, 384 / Math.max(image.width, image.height));
+        canvas.width = Math.max(1, Math.round(image.width * scale));
+        canvas.height = Math.max(1, Math.round(image.height * scale));
+        canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+        const data = canvas.toDataURL('image/jpeg', 0.82);
+        try { localStorage.setItem('incursion-profile-avatar', data); setLocalAvatar(data); }
+        catch { window.alert('This image is too large for local browser storage. Try a smaller photo.'); }
+      };
+      image.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+    event.target.value = '';
+  };
+
+  const clearAvatar = () => {
+    try { localStorage.removeItem('incursion-profile-avatar'); } catch {}
+    setLocalAvatar('');
+  };
+
   return (
     <div className={`profile-header profile-header-compact ${confirmingLogout ? "logout-confirming" : ""}`}>
-      <div className="profile-avatar" aria-hidden="true">
-        {user?.photoURL ? <img src={user.photoURL} alt="" referrerPolicy="no-referrer" /> : <span className="avatar-initials">{avatarInitial}</span>}
-      </div>
+      <button type="button" className="profile-avatar profile-avatar-edit" onClick={() => avatarInput.current?.click()} aria-label="Change profile picture" title="Change profile picture">
+        {localAvatar || user?.photoURL ? <img src={localAvatar || user.photoURL} alt="" referrerPolicy="no-referrer" /> : <span className="avatar-initials">{avatarInitial}</span>}
+        <span className="profile-avatar-edit-mark"><Pencil size={11} /></span>
+      </button>
+      <input ref={avatarInput} className="profile-avatar-input" type="file" accept="image/*" onChange={handleAvatar} />
+      {localAvatar && <button type="button" className="profile-avatar-remove" onClick={clearAvatar} aria-label="Remove profile picture" title="Remove profile picture"><X size={12} /></button>}
       <div className="profile-info">
         <span className="profile-brand-kicker">Incursion</span>
         <h1 className="profile-title">{displayName}</h1>
@@ -156,14 +189,10 @@ export function ProfileHeader({ universe, stats, profileName, user, onLogin, onL
               <button className="confirm-no" onClick={() => setConfirmingLogout(false)}>No</button>
             </div>
           ) : (
-            <button className="profile-auth-btn signed-in" onClick={() => setConfirmingLogout(true)} aria-label="Sign out" title="Sign out">
-              <LogOut size={17} />
-            </button>
+            <button className="profile-auth-btn signed-in" onClick={() => setConfirmingLogout(true)} aria-label="Sign out" title="Sign out"><LogOut size={17} /></button>
           )
         ) : (
-          <button className="profile-auth-btn sign-in" onClick={onLogin} aria-label="Sign in" title="Sign in">
-            <LogIn size={17} />
-          </button>
+          <button className="profile-auth-btn sign-in" onClick={onLogin} aria-label="Sign in" title="Sign in"><LogIn size={17} /></button>
         )}
       </div>
     </div>

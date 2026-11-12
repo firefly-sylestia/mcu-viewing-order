@@ -1,32 +1,18 @@
 import React from 'react';
-import { assetUrl } from '../utils/apiBase';
+import marvelSvg from '../../public/logos/marvel-logo.svg?raw';
+import sonySvg from '../../public/logos/sony-logo.svg?raw';
+import xmenSvg from '../../public/logos/xmen-logo.svg?raw';
+import dcSvg from '../../public/logos/dc-logo.svg?raw';
 
-/**
- * Universe brand marks for the header switcher.
- *
- * Real vector logos (Marvel, Sony, X-Men, DC) served from /public/logos.
- * Marvel and DC keep their own brand colours; Sony and X-Men are monochrome
- * marks rendered through a CSS mask so they inherit the pill's ink colour in
- * both light and dark mode.
- */
-
-const logoFile = (name) => assetUrl(`/logos/${name}`);
-
-const ImageLogo = ({ file, height }) => (
-  <img className="universe-logo-img" src={logoFile(file)} alt="" aria-hidden="true" style={{ '--logo-h': `${height}px` }} />
-);
-
-const MaskLogo = ({ file, width, height }) => (
-  <span
-    className="universe-logo-mask"
-    aria-hidden="true"
-    style={{ '--logo-url': `url("${logoFile(file)}")`, '--logo-w': `${width}px`, '--logo-h': `${height}px` }}
-  />
+// Inline SVG data keeps brand marks available from the app bundle, even offline.
+const embeddedLogo = (svg) => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg.replace(/<\?xml[^>]*\?>/g, '').replace(/<!--[\s\S]*?-->/g, ''))}`;
+const Logo = ({ svg, className = '', style = {} }) => (
+  <img className={`universe-logo-img ${className}`} src={embeddedLogo(svg)} alt="" aria-hidden="true" draggable="false" style={style} />
 );
 
 export const UNIVERSE_LOGOS = {
-  marvel: <ImageLogo file="marvel-logo.svg" height={16} />,
-  sony: <MaskLogo file="sony-logo.svg" width={60} height={11} />,
-  xmen: <MaskLogo file="xmen-logo.svg" width={30} height={27} />,
-  dc: <ImageLogo file="dc-logo.svg" height={16} />,
+  marvel: <Logo svg={marvelSvg} style={{ '--logo-h': '16px' }} />,
+  sony: <Logo svg={sonySvg} className="universe-logo-monochrome" style={{ '--logo-h': '11px', '--logo-w': '60px' }} />,
+  xmen: <Logo svg={xmenSvg} className="universe-logo-monochrome" style={{ '--logo-h': '27px', '--logo-w': '30px' }} />,
+  dc: <Logo svg={dcSvg} style={{ '--logo-h': '18px' }} />,
 };
