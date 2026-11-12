@@ -129,7 +129,7 @@ function ProfilePage({ stats, activeItems, universe, activeTab = 'insights', que
 
 export function ProfileHeader({ universe, stats, profileName, user, onLogin, onLogout }) {
   const [confirmingLogout, setConfirmingLogout] = useState(false);
-  const universeName = universe === 'marvel' ? 'MCU' : universe === 'xmen' ? 'X-Men' : universe === 'sony' ? 'Sony' : 'DC';
+  const universeName = universe === 'all' ? 'Multiverse' : universe === 'marvel' ? 'MCU' : universe === 'xmen' ? 'X-Men' : universe === 'sony' ? 'Sony' : 'DC';
   const displayName = (profileName || user?.displayName || user?.email?.split('@')[0] || `${universeName} Viewer`).trim();
   const avatarInitial = (displayName[0] || universeName[0]).toUpperCase();
 
@@ -582,7 +582,7 @@ function DataSection({ universe, activeItems, profileName, setStatus, toggleBook
   const [exporting, setExporting] = useState(false);
   const [pendingImport, setPendingImport] = useState(null);
   const importTimer = useRef(null);
-  const universeName = universe === 'marvel' ? 'Marvel' : universe === 'xmen' ? 'X-Men' : 'DC';
+  const universeName = universe === 'all' ? 'All universes' : universe === 'marvel' ? 'Marvel' : universe === 'xmen' ? 'X-Men' : universe === 'sony' ? 'Sony' : 'DC';
 
   useEffect(() => {
     if (!importMsg) return;
@@ -651,7 +651,7 @@ function DataSection({ universe, activeItems, profileName, setStatus, toggleBook
           return;
         }
         const importUniverse = data.universe || 'marvel';
-        if (importUniverse !== universe) {
+        if (universe !== 'all' && importUniverse !== universe) {
           setImportMsg({ type: 'error', text: `This backup is for ${data.universeName || importUniverse}. Switch to that universe to import it.` });
           return;
         }
