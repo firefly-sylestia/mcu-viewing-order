@@ -58,14 +58,14 @@ export function useCloudSync(user, actions, profileName, setActions, setProfileN
     setSyncing(true);
     try {
       // Optimistic concurrency check: never silently overwrite a newer device snapshot.
-      if (!force && lastRemoteUpdatedAt.current) {
+      if (!force) {
         const remote = await fetchRemote();
         if (remote?.updated_at !== lastRemoteUpdatedAt.current) {
-          if (remote) setConflict({
-            remoteActions: remote.data?.actions || {},
-            remoteProfile: remote.data?.profileName || '',
-            remoteWatchItem: remote.data?.watchItem ?? null,
-            remoteUpdatedAt: remote.updated_at,
+          setConflict({
+            remoteActions: remote?.data?.actions || {},
+            remoteProfile: remote?.data?.profileName || '',
+            remoteWatchItem: remote?.data?.watchItem ?? null,
+            remoteUpdatedAt: remote?.updated_at || null,
           });
           setToast({ message: 'Another device has newer changes. Resolve the sync conflict first.', type: 'error' });
           return;
