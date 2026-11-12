@@ -52,11 +52,25 @@ export function useCloudSync(user, actions, profileName, setActions, setProfileN
     window.setTimeout(() => { applyingRemote.current = false; }, 0);
   }, [setActions, setProfileName, setWatchItem, markSynced]);
 
-  const pushToCloud = useCallback(async ({ silent = false } = {}) => {
+  const pushToCloud = useCallback(async ({ silent = false, force = false } = {}) => {
     if (!configured || !user?.id) return;
     const current = snapshot();
     setSyncing(true);
     try {
+      // Optimistic concurrency check: never silently overwrite a newer device snapshot.
+      if (!force && lastRemoteUpdatedAt.current) {
+        const remote = await fetchRemote();
+        if (remote?.updated_at !== lastRemoteUpdatedAt.current) {
+          if (remote) setConflict({
+            remoteActions: remote.data?.actions || {},
+            remoteProfile: remote.data?.profileName || '',
+            remoteWatchItem: remote.data?.watchItem ?? null,
+            remoteUpdatedAt: remote.updated_at,
+          });
+          setToast({ message: 'Another device has newer changes. Resolve the sync conflict first.', type: 'error' });
+          return;
+        }
+      }
       const rows = await supabaseDataRequest(`${TABLE}?on_conflict=user_id`, {
         method: 'POST',
         headers: { Prefer: 'resolution=merge-duplicates,return=representation' },
@@ -68,7 +82,7 @@ export function useCloudSync(user, actions, profileName, setActions, setProfileN
     } catch (error) {
       setToast({ message: error.message || 'Sync failed — check your connection', type: 'error' });
     } finally { setSyncing(false); }
-  }, [user?.id, snapshot, markSynced]);
+  }, [user?.id, snapshot, markSynced, fetchRemote]);
 
   useEffect(() => {
     if (!configured || !user?.id) {
@@ -135,7 +149,7 @@ export function useCloudSync(user, actions, profileName, setActions, setProfileN
 
   const resolveKeepLocal = useCallback(async () => {
     if (!conflict) return;
-    await pushToCloud();
+    await pushToCloud({ force: true });
     setConflict(null);
   }, [conflict, pushToCloud]);
 
