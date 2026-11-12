@@ -6497,3 +6497,140 @@
   :root .movie-site .shared-switcher .universe-logo-img { max-width: 62px; }
   :root .movie-site .shared-switcher button[data-universe="sony"] { flex: 1.12 1 0 !important; }
 }
+
+
+/* Profile and stats controls: quiet, neutral states with a genuinely sliding tab. */
+:root .movie-site.page-profile .profile-header-tabs.shared-switcher {
+  position: relative !important;
+  isolation: isolate !important;
+  display: flex !important;
+  align-items: stretch !important;
+  gap: 3px !important;
+  width: 100% !important;
+  min-height: 52px !important;
+  padding: 4px !important;
+  overflow: hidden !important;
+  border-radius: 999px !important;
+  background: color-mix(in srgb, var(--fx-surface-2) 92%, var(--fx-text) 8%) !important;
+}
+:root .movie-site.page-profile .profile-header-tabs.shared-switcher::before {
+  content: "" !important;
+  position: absolute !important;
+  z-index: -1 !important;
+  top: 4px !important;
+  bottom: 4px !important;
+  left: 4px !important;
+  width: calc((100% - 8px) / 3) !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: var(--fx-surface, #fff) !important;
+  box-shadow: 0 3px 12px rgba(16,24,40,.11), inset 0 1px 0 rgba(255,255,255,.85) !important;
+  transform: translateX(0) !important;
+  transition: transform .48s cubic-bezier(.2,.85,.25,1) !important;
+  pointer-events: none !important;
+}
+:root .movie-site.page-profile .profile-header-tabs.shared-switcher:has(button:nth-child(2)[aria-selected="true"])::before {
+  transform: translateX(calc(100% + 3px)) !important;
+}
+:root .movie-site.page-profile .profile-header-tabs.shared-switcher:has(button:nth-child(3)[aria-selected="true"])::before {
+  transform: translateX(calc((100% + 3px) * 2)) !important;
+}
+:root .movie-site.page-profile .profile-header-tabs.shared-switcher button,
+:root .movie-site.page-profile .profile-header-tabs.shared-switcher button.active,
+:root .movie-site.page-profile .profile-header-tabs.shared-switcher button[aria-selected="true"] {
+  z-index: 1 !important;
+  min-height: 44px !important;
+  border: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  color: var(--fx-muted-strong) !important;
+  box-shadow: none !important;
+  font-size: 13px !important;
+  font-weight: 750 !important;
+  letter-spacing: .01em !important;
+  transition: color .24s ease, transform .24s ease !important;
+}
+:root .movie-site.page-profile .profile-header-tabs.shared-switcher button[aria-selected="true"] {
+  color: var(--fx-text) !important;
+}
+:root .movie-site.page-profile .profile-header-tabs.shared-switcher button:active {
+  transform: scale(.97) !important;
+}
+:root .movie-site.page-profile .profile-header-tabs.shared-switcher button:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--fx-muted) 45%, transparent) !important;
+  outline-offset: -3px !important;
+}
+:root[data-theme="light"] .movie-site.page-profile .profile-header-tabs.shared-switcher {
+  background: #edf0f5 !important;
+}
+:root[data-theme="light"] .movie-site.page-profile .profile-header-tabs.shared-switcher::before {
+  background: #fff !important;
+  box-shadow: 0 3px 12px rgba(24,34,50,.10), inset 0 1px 0 rgba(255,255,255,.96) !important;
+}
+:root[data-theme="light"] .movie-site.page-profile .profile-header-tabs.shared-switcher button[aria-selected="true"] {
+  color: #151922 !important;
+}
+
+/* Stats universe filters are multi-select: use quiet neutral selection, not brand fills. */
+:root .movie-site.page-analytics .stats-universe-tabs.shared-switcher button,
+:root .movie-site.page-analytics .stats-universe-tabs.shared-switcher button.active,
+:root .movie-site.page-analytics .stats-universe-tabs.shared-switcher button[aria-pressed="true"] {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  color: var(--fx-muted-strong) !important;
+  transition: background .2s ease, color .2s ease, opacity .2s ease, transform .2s ease !important;
+}
+:root .movie-site.page-analytics .stats-universe-tabs.shared-switcher button.active,
+:root .movie-site.page-analytics .stats-universe-tabs.shared-switcher button[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--fx-text) 8%, transparent) !important;
+  color: var(--fx-text) !important;
+}
+:root .movie-site.page-analytics .stats-universe-tabs.shared-switcher button:hover,
+:root .movie-site.page-analytics .stats-universe-tabs.shared-switcher button:focus-visible {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: color-mix(in srgb, var(--fx-text) 6%, transparent) !important;
+  color: var(--fx-text) !important;
+}
+:root .movie-site.page-analytics .stats-universe-tabs.shared-switcher button:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--fx-muted) 45%, transparent) !important;
+  outline-offset: -3px !important;
+}
+:root .movie-site.page-analytics .stats-universe-tabs.shared-switcher button.active:hover,
+:root .movie-site.page-analytics .stats-universe-tabs.shared-switcher button[aria-pressed="true"]:hover {
+  background: color-mix(in srgb, var(--fx-text) 10%, transparent) !important;
+  color: var(--fx-text) !important;
+}
+:root[data-theme="light"] .movie-site.page-analytics .stats-universe-tabs.shared-switcher button.active,
+:root[data-theme="light"] .movie-site.page-analytics .stats-universe-tabs.shared-switcher button[aria-pressed="true"] {
+  background: rgba(30,41,59,.075) !important;
+  color: #161b25 !important;
+}
+
+/* The poster thumbnail crowds the profile identity/actions on narrow screens.
+   Keep the full next-up shortcut on desktop, hide it on phones. */
+@media (max-width: 620px) {
+  :root .movie-site.page-profile .profile-header-compact .profile-next-up {
+    display: none !important;
+  }
+  :root .movie-site.page-profile .profile-header-compact {
+    grid-template-columns: 42px minmax(0,1fr) auto !important;
+    align-items: center !important;
+    gap: 10px !important;
+  }
+  :root .movie-site.page-profile .profile-header-compact .profile-info {
+    min-width: 0 !important;
+  }
+  :root .movie-site.page-profile .profile-header-compact .profile-auth {
+    flex: 0 0 auto !important;
+    margin-left: auto !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  :root .movie-site.page-profile .profile-header-tabs.shared-switcher::before {
+    transition-duration: .01ms !important;
+  }
+}
