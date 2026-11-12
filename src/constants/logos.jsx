@@ -1,5 +1,5 @@
 import React from 'react';
-import marvelSvg from '../../public/logos/marvel-logo.svg?raw';
+import marvelSvg from '../assets/logos/marvel-logo.svg?raw';
 import sonySvg from '../../public/logos/sony-logo.svg?raw';
 import xmenSvg from '../../public/logos/xmen-logo.svg?raw';
 import dcSvg from '../../public/logos/dc-logo.svg?raw';
