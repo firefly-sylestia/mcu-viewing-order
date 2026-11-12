@@ -11,7 +11,7 @@ self.addEventListener('fetch', event => {
   const request = event.request; if (request.method !== 'GET') return;
   const url = new URL(request.url); const sameOrigin = url.origin === self.location.origin;
   if (request.mode === 'navigate' && sameOrigin) { event.respondWith((async () => { const cache = await caches.open(SHELL_CACHE); try { const response = await fetch(request); if (response.ok) await cache.put('/', response.clone()); return response; } catch { return (await cache.match('/')) || Response.error(); } })()); return; }
-  const staticAsset = sameOrigin && (url.pathname.startsWith('/assets/') || url.pathname.startsWith('/logos/') || /\\.(svg|png|webp|avif|woff2?|ttf|css|js)$/.test(url.pathname));
+  const staticAsset = sameOrigin && (url.pathname.startsWith('/assets/') || url.pathname.startsWith('/logos/') || /\.(svg|png|webp|avif|woff2?|ttf|css|js)$/.test(url.pathname));
   const imageRequest = request.destination === 'image';
   if (staticAsset || imageRequest) event.respondWith((async () => { const cache = await caches.open(imageRequest ? IMAGE_CACHE : SHELL_CACHE); const cached = await cache.match(request); if (cached) return cached; try { const response = await fetch(request); if (response && (response.ok || response.type === 'opaque')) { await cache.put(request, response.clone()); if (imageRequest) await trimImageCache(cache); } return response; } catch { return cached || Response.error(); } })());
 });
