@@ -11,11 +11,6 @@
   "theme_color": "#f6f7fb",
   "categories": ["entertainment", "lifestyle"],
   "icons": [
-    {
-      "src": "/mcu-icon.jpg",
-      "sizes": "any",
-      "type": "image/jpeg",
-      "purpose": "any"
-    }
+    { "src": "/pwa-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
   ]
 }
