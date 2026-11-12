@@ -6784,3 +6784,59 @@
   overflow-y: auto !important;
   overscroll-behavior: contain;
 }
+
+
+/* Desktop-wide page composition: Home and List follow the same fluid horizontal
+   canvas as Profile and Insights, including the content rather than only the header. */
+@media (min-width: 861px) {
+  :root .movie-site.page-home .site-header,
+  :root .movie-site.page-list .site-header,
+  :root .movie-site.page-home .hero-layout,
+  :root .movie-site.page-home .upnext-board,
+  :root .movie-site.page-home .rail-card,
+  :root .movie-site.page-home .movie-rail,
+  :root .movie-site.page-home .continue-watching,
+  :root .movie-site.page-home .list-section,
+  :root .movie-site.page-list .list-section {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+  :root .movie-site.page-home .hero-layout,
+  :root .movie-site.page-home .upnext-board,
+  :root .movie-site.page-home .rail-card,
+  :root .movie-site.page-home .movie-rail,
+  :root .movie-site.page-home .continue-watching,
+  :root .movie-site.page-home .list-section,
+  :root .movie-site.page-list .list-section {
+    min-width: 0 !important;
+  }
+}
+
+/* Profile dialog name editor and compact photo-removal control. */
+.avatar-name-edit {
+  display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 7px; width: 100%;
+}
+.avatar-name-edit input {
+  width: min(190px, 100%); min-width: 0; height: 38px; padding: 0 12px;
+  border: 0; outline: 0; border-radius: 12px; color: var(--fx-text, #171923);
+  background: rgba(128,136,154,.14); font: inherit; text-align: center;
+}
+.avatar-name-edit button,
+.avatar-name-edit-trigger {
+  border: 0; border-radius: 999px; min-height: 34px; padding: 0 12px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  color: var(--fx-text, #171923); background: rgba(128,136,154,.14);
+  font: inherit; font-size: 12px; font-weight: 650;
+}
+.avatar-name-edit button[type="submit"] { background: var(--fx-text, #171923); color: var(--fx-surface, #fff); }
+.avatar-name-edit button:disabled { opacity: .4; }
+.avatar-name-edit .avatar-name-cancel { background: transparent; }
+.avatar-name-edit-trigger { margin: 0 auto; min-height: 28px; background: transparent; opacity: .72; }
+.avatar-photo-actions { display: flex; align-items: center; gap: 7px; }
+.avatar-dialog-actions .avatar-photo-actions .avatar-dialog-remove {
+  width: 42px; min-width: 42px; height: 42px; min-height: 42px; padding: 0;
+  border-radius: 50%; color: #c6535d; background: rgba(198,83,93,.12);
+}

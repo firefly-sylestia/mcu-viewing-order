@@ -128,8 +128,10 @@ function ProfilePage({ stats, activeItems, universe, activeTab = 'insights', que
   );
 }
 
-export function ProfileHeader({ universe, stats, profileName, user, onLogin, onLogout, watchingItem, nextUp, onSelectItem, syncing = false, lastSynced, onSync }) {
+export function ProfileHeader({ universe, stats, profileName, setProfileName, user, onLogin, onLogout, watchingItem, nextUp, onSelectItem, syncing = false, lastSynced, onSync }) {
   const [confirmingLogout, setConfirmingLogout] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState(profileName || user?.displayName || '');
   const [avatarDialogOpen, setAvatarDialogOpen] = useState(false);
   const [avatarFullscreen, setAvatarFullscreen] = useState(false);
   const [localAvatar, setLocalAvatar] = useState(() => { try { return localStorage.getItem('incursion-profile-avatar') || ''; } catch { return ''; } });
@@ -166,6 +168,13 @@ export function ProfileHeader({ universe, stats, profileName, user, onLogin, onL
     setLocalAvatar('');
   };
 
+  const saveDisplayName = () => {
+    const nextName = nameDraft.trim().slice(0, 30);
+    if (nextName) setProfileName?.(nextName);
+    setNameDraft(nextName || displayName);
+    setEditingName(false);
+  };
+
   return (
     <div className={`profile-header profile-header-compact ${confirmingLogout ? "logout-confirming" : ""}`}>
       <button type="button" className="profile-avatar profile-avatar-edit" onClick={() => setAvatarDialogOpen(true)} aria-label="View profile picture" title="Profile picture">
@@ -182,13 +191,23 @@ export function ProfileHeader({ universe, stats, profileName, user, onLogin, onL
                 : <span className="avatar-dialog-initial">{avatarInitial}</span>}
             </div>
             <div className="avatar-dialog-copy">
-              <strong>{displayName}</strong>
+              {editingName ? (
+                <form className="avatar-name-edit" onSubmit={(event) => { event.preventDefault(); saveDisplayName(); }}>
+                  <input autoFocus value={nameDraft} onChange={(event) => setNameDraft(event.target.value)} maxLength={30} aria-label="Display name" placeholder="Your name" />
+                  <button type="submit" disabled={!nameDraft.trim()}>Save</button>
+                  <button type="button" className="avatar-name-cancel" onClick={() => { setNameDraft(displayName); setEditingName(false); }}>Cancel</button>
+                </form>
+              ) : (
+                <><strong>{displayName}</strong><button type="button" className="avatar-name-edit-trigger" onClick={() => { setNameDraft(displayName); setEditingName(true); }}><Pencil size={13} /> Edit name</button></>
+              )}
               <span>{localAvatar ? 'Saved on this device' : user?.photoURL ? 'Profile picture' : 'Choose a photo for your profile'}</span>
             </div>
             <div className="avatar-dialog-actions">
-              <button type="button" onClick={() => avatarInput.current?.click()}><Pencil size={16} /><span>{localAvatar || user?.photoURL ? 'Edit photo' : 'Add photo'}</span></button>
+              <div className="avatar-photo-actions">
+                <button type="button" onClick={() => avatarInput.current?.click()}><Pencil size={16} /><span>{localAvatar || user?.photoURL ? 'Edit photo' : 'Add photo'}</span></button>
+                {localAvatar && <button type="button" className="avatar-dialog-remove" onClick={clearAvatar} aria-label="Remove profile picture" title="Remove profile picture"><X size={17} /></button>}
+              </div>
               {(localAvatar || user?.photoURL) && <button type="button" onClick={() => setAvatarFullscreen(value => !value)}><Maximize2 size={16} /><span>{avatarFullscreen ? 'Fit preview' : 'Full screen'}</span></button>}
-              {localAvatar && <button type="button" className="avatar-dialog-remove" onClick={clearAvatar}><X size={15} /><span>Remove</span></button>}
             </div>
           </section>
         </div>
