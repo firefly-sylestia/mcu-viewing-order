@@ -224,7 +224,7 @@ export function ProfileHeader({ universe, stats, profileName, setProfileName, us
         {user && <button className="sync-now-btn profile-sync-icon" onClick={onSync} disabled={syncing} aria-label={syncing ? 'Syncing progress' : 'Sync progress now'} title={lastSynced ? `Last synced ${formatTimeAgo(lastSynced)}` : 'Sync progress'}><RefreshCw size={16} className={syncing ? 'spinning' : ''} /></button>}
         {user ? (
           confirmingLogout ? (
-            <div className="profile-auth-confirm">
+            <div className="profile-auth-confirm" role="group" aria-label="Confirm sign out">
               <span>Sign out?</span>
               <button className="confirm-yes" onClick={() => { onLogout(); setConfirmingLogout(false); }}>Yes</button>
               <button className="confirm-no" onClick={() => setConfirmingLogout(false)}>No</button>

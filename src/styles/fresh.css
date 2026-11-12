@@ -6840,3 +6840,55 @@
   width: 42px; min-width: 42px; height: 42px; min-height: 42px; padding: 0;
   border-radius: 50%; color: #c6535d; background: rgba(198,83,93,.12);
 }
+
+
+/* Keep the sign-out confirmation inside its own opaque control surface.
+   It must never sit on top of the profile title or the sync action. */
+:root .movie-site.page-profile .profile-header-compact { position: relative !important; }
+:root .movie-site.page-profile .profile-header-compact.logout-confirming .profile-info,
+:root .movie-site.page-profile .profile-header-compact.logout-confirming .profile-next-up {
+  visibility: hidden !important;
+}
+:root .movie-site.page-profile .profile-header-compact .profile-auth-confirm {
+  position: relative !important;
+  z-index: 8 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 7px !important;
+  min-height: 42px !important;
+  padding: 5px 6px 5px 13px !important;
+  border-radius: 999px !important;
+  background: color-mix(in srgb, var(--fx-surface, #fff) 96%, transparent) !important;
+  box-shadow: 0 5px 20px rgba(20,30,50,.14), inset 0 0 0 1px rgba(100,110,130,.10) !important;
+  color: var(--fx-text) !important;
+  white-space: nowrap !important;
+}
+:root .movie-site.page-profile .profile-header-compact .profile-auth-confirm > span {
+  font-size: 12px !important; font-weight: 700 !important;
+}
+:root .movie-site.page-profile .profile-header-compact .profile-auth-confirm button {
+  min-width: 42px !important; height: 32px !important; padding: 0 12px !important;
+  border: 0 !important; border-radius: 999px !important; font-size: 12px !important;
+  font-weight: 750 !important; line-height: 1 !important;
+}
+:root .movie-site.page-profile .profile-header-compact .profile-auth-confirm .confirm-yes {
+  background: var(--fx-text, #171923) !important; color: var(--fx-surface, #fff) !important;
+}
+:root .movie-site.page-profile .profile-header-compact .profile-auth-confirm .confirm-no {
+  background: rgba(120,130,150,.12) !important; color: var(--fx-text, #171923) !important;
+}
+
+/* X-Men's source artwork has a near-square canvas, so give the image itself
+   a larger explicit box in both Home and List switchers. */
+:root .movie-site.page-home .site-header .universe-tabs button[data-universe="xmen"] .universe-logo-img,
+:root .movie-site.page-list .site-header .universe-tabs button[data-universe="xmen"] .universe-logo-img {
+  width: 42px !important; height: 38px !important; max-width: none !important;
+  object-fit: contain !important;
+}
+@media (max-width: 620px) {
+  :root .movie-site.page-home .site-header .universe-tabs button[data-universe="xmen"] .universe-logo-img,
+  :root .movie-site.page-list .site-header .universe-tabs button[data-universe="xmen"] .universe-logo-img {
+    width: 35px !important; height: 32px !important;
+  }
+}
