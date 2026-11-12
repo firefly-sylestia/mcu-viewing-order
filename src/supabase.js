@@ -72,9 +72,9 @@ export async function signOut() {
   finally { saveSession(null); }
 }
 export async function sendPasswordReset(email) {
-  await request('/auth/v1/recover', {
+  await request(`/auth/v1/recover?redirect_to=${encodeURIComponent(`${window.location.origin}/?auth=reset`)}`, {
     method: 'POST',
-    body: JSON.stringify({ email, redirect_to: `${window.location.origin}/?auth=reset` }),
+    body: JSON.stringify({ email }),
   });
 }
 export async function changePassword(password) {
