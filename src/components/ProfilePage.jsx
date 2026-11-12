@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, Bookmark, RotateCcw, Clock, Check, X, Pencil, Trophy, LogIn, LogOut, Cloud, RefreshCw, Sun, Moon, Settings, Upload, Download, Clapperboard, Sparkles, LayoutGrid, Vibrate, ChevronDown } from 'lucide-react';
+import { Play, Bookmark, RotateCcw, Clock, Check, X, Pencil, Trophy, LogIn, LogOut, Cloud, RefreshCw, Sun, Moon, Settings, Upload, Download, Clapperboard, Sparkles, LayoutGrid, Vibrate, ChevronDown, Maximize2, } from 'lucide-react';
 import { getHapticsEnabled, setHapticsEnabled, hapticsSupported, hapticTap, hapticSuccess } from '../utils/haptics';
 
 const UI_VARIANT_KEY = 'ui-variant';
@@ -129,6 +129,8 @@ function ProfilePage({ stats, activeItems, universe, activeTab = 'insights', que
 
 export function ProfileHeader({ universe, stats, profileName, user, onLogin, onLogout, watchingItem, nextUp, onSelectItem, syncing = false, lastSynced, onSync }) {
   const [confirmingLogout, setConfirmingLogout] = useState(false);
+  const [avatarDialogOpen, setAvatarDialogOpen] = useState(false);
+  const [avatarFullscreen, setAvatarFullscreen] = useState(false);
   const [localAvatar, setLocalAvatar] = useState(() => { try { return localStorage.getItem('incursion-profile-avatar') || ''; } catch { return ''; } });
   const avatarInput = useRef(null);
   const universeName = universe === 'all' ? 'Multiverse' : universe === 'marvel' ? 'MCU' : universe === 'xmen' ? 'X-Men' : universe === 'sony' ? 'Sony' : 'DC';
@@ -165,12 +167,31 @@ export function ProfileHeader({ universe, stats, profileName, user, onLogin, onL
 
   return (
     <div className={`profile-header profile-header-compact ${confirmingLogout ? "logout-confirming" : ""}`}>
-      <button type="button" className="profile-avatar profile-avatar-edit" onClick={() => avatarInput.current?.click()} aria-label="Change profile picture" title="Change profile picture">
+      <button type="button" className="profile-avatar profile-avatar-edit" onClick={() => setAvatarDialogOpen(true)} aria-label="View profile picture" title="Profile picture">
         {localAvatar || user?.photoURL ? <img src={localAvatar || user.photoURL} alt="" referrerPolicy="no-referrer" /> : <span className="avatar-initials">{avatarInitial}</span>}
-        <span className="profile-avatar-edit-mark"><Pencil size={11} /></span>
       </button>
       <input ref={avatarInput} className="profile-avatar-input" type="file" accept="image/*" onChange={handleAvatar} />
-      {localAvatar && <button type="button" className="profile-avatar-remove" onClick={clearAvatar} aria-label="Remove profile picture" title="Remove profile picture"><X size={12} /></button>}
+      {avatarDialogOpen && (
+        <div className="avatar-dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) { setAvatarDialogOpen(false); setAvatarFullscreen(false); } }}>
+          <section className={`avatar-dialog ${avatarFullscreen ? 'avatar-dialog-fullscreen' : ''}`} role="dialog" aria-modal="true" aria-label="Profile picture">
+            <button type="button" className="avatar-dialog-close" onClick={() => { setAvatarDialogOpen(false); setAvatarFullscreen(false); }} aria-label="Close profile picture dialog"><X size={18} /></button>
+            <div className="avatar-dialog-preview">
+              {localAvatar || user?.photoURL
+                ? <img src={localAvatar || user.photoURL} alt="Profile" referrerPolicy="no-referrer" />
+                : <span className="avatar-dialog-initial">{avatarInitial}</span>}
+            </div>
+            <div className="avatar-dialog-copy">
+              <strong>{displayName}</strong>
+              <span>{localAvatar ? 'Saved on this device' : user?.photoURL ? 'Profile picture' : 'Choose a photo for your profile'}</span>
+            </div>
+            <div className="avatar-dialog-actions">
+              <button type="button" onClick={() => avatarInput.current?.click()}><Pencil size={16} /><span>{localAvatar || user?.photoURL ? 'Edit photo' : 'Add photo'}</span></button>
+              {(localAvatar || user?.photoURL) && <button type="button" onClick={() => setAvatarFullscreen(value => !value)}><Maximize2 size={16} /><span>{avatarFullscreen ? 'Fit preview' : 'Full screen'}</span></button>}
+              {localAvatar && <button type="button" className="avatar-dialog-remove" onClick={clearAvatar}><X size={15} /><span>Remove</span></button>}
+            </div>
+          </section>
+        </div>
+      )}
       <div className="profile-info">
         <span className="profile-brand-kicker">Incursion</span>
         <h1 className="profile-title">{displayName}</h1>
