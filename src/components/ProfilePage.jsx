@@ -127,7 +127,7 @@ function ProfilePage({ stats, activeItems, universe, activeTab = 'insights', que
   );
 }
 
-export function ProfileHeader({ universe, stats, profileName, user, onLogin, onLogout }) {
+export function ProfileHeader({ universe, stats, profileName, user, onLogin, onLogout, watchingItem, nextUp, onSelectItem }) {
   const [confirmingLogout, setConfirmingLogout] = useState(false);
   const universeName = universe === 'all' ? 'Multiverse' : universe === 'marvel' ? 'MCU' : universe === 'xmen' ? 'X-Men' : universe === 'sony' ? 'Sony' : 'DC';
   const displayName = (profileName || user?.displayName || user?.email?.split('@')[0] || `${universeName} Viewer`).trim();
@@ -139,8 +139,13 @@ export function ProfileHeader({ universe, stats, profileName, user, onLogin, onL
         {user?.photoURL ? <img src={user.photoURL} alt="" referrerPolicy="no-referrer" /> : <span className="avatar-initials">{avatarInitial}</span>}
       </div>
       <div className="profile-info">
+        <span className="profile-brand-kicker">Incursion</span>
         <h1 className="profile-title">{displayName}</h1>
       </div>
+      {(watchingItem || nextUp) && <button className={`profile-next-up ${watchingItem ? 'watching' : ''}`} onClick={() => onSelectItem?.(watchingItem || nextUp)} title={`Open ${watchingItem ? 'current' : 'next'}: ${(watchingItem || nextUp).title}`}>
+        <span className="profile-next-up-art">{(watchingItem || nextUp).poster ? <img src={(watchingItem || nextUp).poster} alt="" loading="lazy" referrerPolicy="no-referrer" /> : <Play size={13} />}</span>
+        <span className="profile-next-up-copy"><small>{watchingItem ? 'Watching now' : 'Up next'}</small><strong>{(watchingItem || nextUp).title}</strong></span>
+      </button>}
       <div className="profile-auth">
         {user ? (
           confirmingLogout ? (
