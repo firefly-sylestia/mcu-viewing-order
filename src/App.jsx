@@ -1130,7 +1130,7 @@ export default function App() {
     </button>;
   })()}
   </div>
-  <button className={`brand ${section === 'analytics' ? 'analytics-brand' : ''}`} onClick={() => { setQuery(''); setSection(section === 'profile' || section === 'analytics' ? section : 'home'); setWatchItem(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }} aria-label={section === 'profile' ? 'Profile' : section === 'analytics' ? 'Insights' : 'Go to Incursion home'}>{section === 'analytics' && <span className="profile-brand-kicker">Incursion</span>}<b>{section === 'profile' ? 'Profile' : section === 'analytics' ? 'Insights' : 'Incursion'}</b><small>{section === 'profile' ? 'Your space' : section === 'analytics' ? 'Your viewing activity' : `${universeName} timeline`}</small></button>
+  <button className="brand" onClick={() => { setQuery(''); setSection(section === 'profile' || section === 'analytics' ? section : 'home'); setWatchItem(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }} aria-label={section === 'profile' ? 'Profile' : section === 'analytics' ? 'Insights' : 'Go to Incursion home'}><b>{section === 'profile' ? 'Profile' : section === 'analytics' ? 'Insights' : 'Incursion'}</b><small>{section === 'profile' ? 'Your space' : section === 'analytics' ? 'Your viewing activity' : `${universeName} timeline`}</small></button>
   </>}
   </div>
   <div className="header-bar">
@@ -1145,14 +1145,9 @@ export default function App() {
           {query && <button className="search-clear" onClick={() => setQuery('')} aria-label="Clear search"><X size={16} /></button>}
         </div>
         <div className="header-tools">
-  {section === 'analytics' ? <div className="stats-universe-filter">
-    <button className="header-phase-btn stats-universe-trigger" onClick={() => setStatsUniverseMenuOpen(open => !open)} aria-expanded={statsUniverseMenuOpen} aria-haspopup="true">
-      <SlidersHorizontal size={14} /><span>{statsUniverses.length === 4 ? 'All universes' : statsUniverses.length === 1 ? ({marvel:'Marvel',dc:'DC',xmen:'X-Men',sony:'Sony'}[statsUniverses[0]]) : String(statsUniverses.length) + ' universes'}</span><ChevronDown size={13} />
-    </button>
-    {statsUniverseMenuOpen && <div className="stats-universe-dropdown" role="group" aria-label="Filter statistics by universe">
-      <button className={statsUniverses.length === 4 ? 'selected' : ''} onClick={() => setStatsUniverses(['marvel','sony','xmen','dc'])}>All universes</button>
-      {[[ 'marvel','Marvel'],['dc','DC'],['xmen','X-Men'],['sony','Sony']].map(([key,label]) => <label key={key}><input type="checkbox" checked={statsUniverses.includes(key)} onChange={() => setStatsUniverses(current => current.includes(key) ? (current.length > 1 ? current.filter(item => item !== key) : current) : [...current,key])} />{label}</label>)}
-    </div>}
+  {section === 'analytics' ? <div className="stats-universe-tabs" role="group" aria-label="Filter statistics by universe">
+    <button className={statsUniverses.length === 4 ? 'active' : ''} aria-pressed={statsUniverses.length === 4} onClick={() => { hapticTap(); setStatsUniverses(['marvel','sony','xmen','dc']); }}>All</button>
+    {[['marvel','Marvel'],['sony','Sony'],['xmen','X-Men'],['dc','DC']].map(([key,label]) => <button key={key} className={statsUniverses.includes(key) && statsUniverses.length !== 4 ? 'active' : ''} aria-pressed={statsUniverses.includes(key) && statsUniverses.length !== 4} onClick={() => { hapticTap(); setStatsUniverses(current => current.length === 4 ? [key] : current.includes(key) ? (current.length > 1 ? current.filter(item => item !== key) : current) : [...current,key]); }}>{label}</button>)}
   </div> : null}
   {section === 'profile' ? <div className="profile-header-tabs" role="tablist" aria-label="Profile sections">
     {['insights', 'saved', 'settings'].map(tab => <button key={tab} role="tab" aria-selected={profileTab === tab} className={profileTab === tab ? 'active' : ''} onClick={() => { setProfileTab(tab); setQuery(''); }}>{tab === 'insights' ? 'Insights' : tab === 'saved' ? 'Saved' : 'Settings'}</button>)}
