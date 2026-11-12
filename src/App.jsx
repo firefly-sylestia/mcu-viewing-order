@@ -188,6 +188,8 @@ export default function App() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
   const [profileTab, setProfileTab] = useState('insights');
+  const [statsUniverses, setStatsUniverses] = useState(['marvel', 'sony', 'xmen', 'dc']);
+  const [statsUniverseMenuOpen, setStatsUniverseMenuOpen] = useState(false);
 
   // Interface variant (classic | fresh | control) is chosen in Settings; applied on the root.
   const [uiVariant, setUiVariant] = useState(() => {
@@ -894,10 +896,12 @@ export default function App() {
   }, [activeItems, section, heroItems]);
   const featured = heroItems[heroIndex % Math.max(heroItems.length, 1)] || activeItems[0];
   const genres = ['All', 'Action', 'Adventure', 'Drama', 'Sci-fi', 'Essential', 'Series'];
+  const profileItems = useMemo(() => allItems.map(enrichItem), [allItems, enrichItem]);
+  const statsBaseItems = useMemo(() => allItems.filter(item => statsUniverses.includes(item.universe)).map(enrichItem), [allItems, enrichItem, statsUniverses]);
   const externalTrackedItems = useMemo(() => Object.entries(actions)
-    .filter(([key, action]) => key.startsWith('tmdb:') && action.media && action.media.universe === universe)
-    .map(([, action]) => enrichItem({ ...action.media, external: true })), [actions, enrichItem, universe]);
-  const analyticsItems = useMemo(() => [...activeItems, ...externalTrackedItems], [activeItems, externalTrackedItems]);
+    .filter(([key, action]) => key.startsWith('tmdb:') && action.media && statsUniverses.includes(action.media.universe))
+    .map(([, action]) => enrichItem({ ...action.media, external: true })), [actions, enrichItem, statsUniverses]);
+  const analyticsItems = useMemo(() => [...statsBaseItems, ...externalTrackedItems], [statsBaseItems, externalTrackedItems]);
 
   const stats = useMemo(() => {
     const total = analyticsItems.length || 1;
@@ -908,7 +912,7 @@ export default function App() {
     const watchedMinutes = analyticsItems.filter(item => item.userStatus === 'watched').reduce((sum, i) => sum + (i.runtime || 0), 0);
     const watchedHours = Math.floor(watchedMinutes / 60);
     const watchedTime = watchedHours >= 1 ? `${watchedHours}h ${watchedMinutes % 60}m` : `${watchedMinutes}m`;
-    const watchedByOrder = activeItems.filter(item => item.userStatus === 'watched').map(i => i.order).sort((a, b) => a - b);
+    const watchedByOrder = analyticsItems.filter(item => item.userStatus === 'watched').map(i => i.order).sort((a, b) => a - b);
     let streak = 0, best = 0;
     for (let i = 0; i < watchedByOrder.length; i++) {
       if (i === 0 || watchedByOrder[i] === watchedByOrder[i - 1] + 1) streak++;
@@ -916,7 +920,7 @@ export default function App() {
       if (streak > best) best = streak;
     }
     return { total, watched, watching, dropped, bookmarked, percent: Math.round((watched / total) * 100), watchedMinutes, watchedTime, streak: best };
-  }, [activeItems, analyticsItems]);
+  }, [analyticsItems]);
 
   const updateAction = (item, patch) => setActions(prev => {
     const key = mediaKey(item);
@@ -1109,17 +1113,26 @@ export default function App() {
   </>}
   </div>
   <div className="header-bar">
-  <div className="universe-tabs" role="tablist" aria-label="Universe">
+  {section !== 'profile' && section !== 'analytics' && <div className="universe-tabs" role="tablist" aria-label="Universe">
   {[['marvel', 'Marvel'], ['sony', 'Sony'], ['xmen', 'X-Men'], ['dc', 'DC']].map(([key, label]) => (
     <button key={key} data-universe={key} role="tab" aria-selected={universe === key} aria-label={`${label} universe`} title={`${label} universe`} className={universe === key ? 'active' : ''} onClick={() => { hapticTap(); setUniverse(key); setHeroIndex(0); }}><span className="universe-logo" aria-hidden="true">{UNIVERSE_LOGOS[key]}</span></button>
   ))}
-  </div>
+  </div>}
         <div className="header-search">
           <Search size={18} />
           <input value={query} onChange={e => setQuery(e.target.value)} placeholder={section === 'profile' ? (profileTab === 'settings' ? 'Search settings…' : profileTab === 'saved' ? 'Search saved titles…' : 'Search insights…') : `Search ${universe === 'marvel' ? 'Marvel' : universe === 'xmen' ? 'X-Men' : universe === 'sony' ? 'Sony' : 'DC'} titles & TMDB…`} aria-label={section === 'profile' ? 'Search profile' : 'Search titles'} />
           {query && <button className="search-clear" onClick={() => setQuery('')} aria-label="Clear search"><X size={16} /></button>}
         </div>
         <div className="header-tools">
+  {section === 'analytics' ? <div className="stats-universe-filter">
+    <button className="header-phase-btn stats-universe-trigger" onClick={() => setStatsUniverseMenuOpen(open => !open)} aria-expanded={statsUniverseMenuOpen} aria-haspopup="true">
+      <SlidersHorizontal size={14} /><span>{statsUniverses.length === 4 ? 'All universes' : statsUniverses.length === 1 ? ({marvel:'Marvel',dc:'DC',xmen:'X-Men',sony:'Sony'}[statsUniverses[0]]) : String(statsUniverses.length) + ' universes'}</span><ChevronDown size={13} />
+    </button>
+    {statsUniverseMenuOpen && <div className="stats-universe-dropdown" role="group" aria-label="Filter statistics by universe">
+      <button className={statsUniverses.length === 4 ? 'selected' : ''} onClick={() => setStatsUniverses(['marvel','sony','xmen','dc'])}>All universes</button>
+      {[[ 'marvel','Marvel'],['dc','DC'],['xmen','X-Men'],['sony','Sony']].map(([key,label]) => <label key={key}><input type="checkbox" checked={statsUniverses.includes(key)} onChange={() => setStatsUniverses(current => current.includes(key) ? (current.length > 1 ? current.filter(item => item !== key) : current) : [...current,key])} />{label}</label>)}
+    </div>}
+  </div> : null}
   {section === 'profile' ? <div className="profile-header-tabs" role="tablist" aria-label="Profile sections">
     {['insights', 'saved', 'settings'].map(tab => <button key={tab} role="tab" aria-selected={profileTab === tab} className={profileTab === tab ? 'active' : ''} onClick={() => { setProfileTab(tab); setQuery(''); }}>{tab === 'insights' ? 'Insights' : tab === 'saved' ? 'Saved' : 'Settings'}</button>)}
   </div> : section === 'analytics' ? null : <>
@@ -1236,8 +1249,8 @@ export default function App() {
       </>}
 
       {section === 'list' && <ListSection items={activeItems} sortBy={sortBy} sortDirection={sortDirection} sortKey={`${sortBy}-${sortDirection}`} externalResults={externalSearchResults} externalLoading={externalSearchLoading} query={query} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} onPlayExternal={onPlayExternal} onWarning={showWarningToast} />}
-      {section === 'analytics' && <><AnalyticsPanel stats={stats} large /><MovieRail title="In progress" items={activeItems.filter(i => i.userStatus === 'watching')} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} /></>}
-            {section === 'profile' && <ProfilePage stats={stats} activeItems={activeItems} universe={universe} activeTab={profileTab} query={query} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} conflict={conflict} onResolveRemote={resolveUseRemote} onResolveLocal={resolveKeepLocal} syncToast={toast} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} />}
+      {section === 'analytics' && <><AnalyticsPanel stats={stats} large /><MovieRail title="In progress" items={analyticsItems.filter(i => i.userStatus === 'watching')} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} /></>}
+            {section === 'profile' && <ProfilePage stats={stats} activeItems={profileItems} universe="all" activeTab={profileTab} query={query} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} conflict={conflict} onResolveRemote={resolveUseRemote} onResolveLocal={resolveKeepLocal} syncToast={toast} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} />}
       {WATCH_ENABLED && section === 'watch' && safeWatchItem && <WatchPage watchItem={safeWatchItem} activeItems={roadmapItems} onBack={() => { setWatchItem(null); window.history.replaceState(null, '', '#watch'); }} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={startWatchWithConfirm} updateAction={updateAction} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} />}
       {WATCH_ENABLED && section === 'watch' && !safeWatchItem && <WatchBrowse activeItems={activeItems} externalResults={externalSearchResults} externalLoading={externalSearchLoading} actions={actions} query={query} onStartWatch={startWatchWithConfirm} onPlayExternal={onPlayExternal} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} />}
 
