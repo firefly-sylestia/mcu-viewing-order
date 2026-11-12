@@ -1,183 +1,155 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
-import { ref, set, get } from 'firebase/database';
-import { db, configured } from '../firebase';
+import { configured, supabaseDataRequest } from '../supabase';
+
+const TABLE = '/rest/v1/user_data';
+const encode = (value) => JSON.stringify(value ?? null);
 
 export function useCloudSync(user, actions, profileName, setActions, setProfileName, watchItem, setWatchItem) {
   const pushTimer = useRef(null);
-
-  // Track the last known state from the cloud to avoid echo loops
-  const lastSyncedActions = useRef(null);
-  const lastSyncedProfile = useRef(null);
-  const lastSyncedWatchItem = useRef(null);
-
+  const pollTimer = useRef(null);
+  const lastSyncedState = useRef(null);
+  const lastRemoteUpdatedAt = useRef(null);
+  const localStateRef = useRef({ actions, profileName, watchItem });
+  const applyingRemote = useRef(false);
   const [lastSynced, setLastSynced] = useState(null);
   const [syncing, setSyncing] = useState(false);
   const [conflict, setConflict] = useState(null);
   const [toast, setToast] = useState(null);
-  const toastTimer = useRef(null);
 
-  // Auto-dismiss toast after 3s with proper cleanup
+  useEffect(() => { localStateRef.current = { actions, profileName, watchItem }; }, [actions, profileName, watchItem]);
   useEffect(() => {
-    if (!toast) return;
-    window.clearTimeout(toastTimer.current);
-    toastTimer.current = window.setTimeout(() => setToast(null), 3000);
-    return () => window.clearTimeout(toastTimer.current);
+    if (!toast) return undefined;
+    const timer = window.setTimeout(() => setToast(null), 3200);
+    return () => window.clearTimeout(timer);
   }, [toast]);
 
-  // Keep a mutable ref of current local state for background sync writes
-  const localStateRef = useRef({ actions, profileName, watchItem });
-  useEffect(() => {
-    localStateRef.current = { actions, profileName, watchItem };
-  }, [actions, profileName, watchItem]);
+  const snapshot = useCallback(() => ({
+    actions: localStateRef.current.actions || {},
+    profileName: localStateRef.current.profileName || '',
+    watchItem: localStateRef.current.watchItem ?? null,
+  }), []);
 
-  const updateLastSynced = () => {
+  const markSynced = useCallback((state, updatedAt) => {
+    lastSyncedState.current = state;
+    lastRemoteUpdatedAt.current = updatedAt || null;
     setLastSynced(Date.now());
-  };
+  }, []);
 
-  // Push local changes to cloud (debounced)
-  const pushToCloud = useCallback(({ silent = false } = {}) => {
-    if (!configured || !user) return;
+  const fetchRemote = useCallback(async () => {
+    if (!configured || !user?.id) return null;
+    const rows = await supabaseDataRequest(
+      `${TABLE}?user_id=eq.${encodeURIComponent(user.id)}&select=data,updated_at&limit=1`,
+    );
+    return rows?.[0] || null;
+  }, [user?.id]);
 
-    const { actions: currentActions, profileName: currentProfileName, watchItem: currentWatchItem } = localStateRef.current;
+  const applyRemote = useCallback((row) => {
+    const data = row?.data || {};
+    const next = { actions: data.actions || {}, profileName: data.profileName || '', watchItem: data.watchItem ?? null };
+    applyingRemote.current = true;
+    setActions(next.actions); setProfileName(next.profileName); setWatchItem(next.watchItem);
+    markSynced(next, row?.updated_at);
+    window.setTimeout(() => { applyingRemote.current = false; }, 0);
+  }, [setActions, setProfileName, setWatchItem, markSynced]);
+
+  const pushToCloud = useCallback(async ({ silent = false } = {}) => {
+    if (!configured || !user?.id) return;
+    const current = snapshot();
     setSyncing(true);
-    const userRef = ref(db, `users/${user.uid}`);
-
-    lastSyncedActions.current = currentActions;
-    lastSyncedProfile.current = currentProfileName;
-    lastSyncedWatchItem.current = currentWatchItem;
-
-    set(userRef, {
-      actions: currentActions,
-      profileName: currentProfileName,
-      watchItem: currentWatchItem,
-      lastSynced: Date.now(),
-    }).then(() => {
-      updateLastSynced();
+    try {
+      const rows = await supabaseDataRequest(`${TABLE}?on_conflict=user_id`, {
+        method: 'POST',
+        headers: { Prefer: 'resolution=merge-duplicates,return=representation' },
+        body: JSON.stringify({ user_id: user.id, data: current }),
+      });
+      markSynced(current, rows?.[0]?.updated_at || new Date().toISOString());
+      setConflict(null);
       if (!silent) setToast({ message: 'Synced successfully', type: 'success' });
-    }).catch(() => {
-      setToast({ message: 'Sync failed — check connection', type: 'error' });
-    }).finally(() => setSyncing(false));
+    } catch (error) {
+      setToast({ message: error.message || 'Sync failed — check your connection', type: 'error' });
+    } finally { setSyncing(false); }
+  }, [user?.id, snapshot, markSynced]);
 
-  }, [user?.uid]);
-
-  // Pull data once on login/site open. Do not keep a live listener; local updates push behind
-  // the scenes only when tracked progress/profile/watch state changes.
   useEffect(() => {
-    if (!configured || !user) return;
-    const userRef = ref(db, `users/${user.uid}`);
+    if (!configured || !user?.id) {
+      lastSyncedState.current = null; lastRemoteUpdatedAt.current = null;
+      setLastSynced(null); setConflict(null);
+      return undefined;
+    }
     let cancelled = false;
     setSyncing(true);
+    const pull = async () => {
+      try {
+        const row = await fetchRemote();
+        if (cancelled) return;
+        if (!row) {
+          markSynced(snapshot(), null);
+          await pushToCloud({ silent: true });
+        } else applyRemote(row);
+      } catch (error) {
+        if (!cancelled) setToast({ message: error.message || 'Cloud sync unavailable — changes remain on this device', type: 'error' });
+      } finally { if (!cancelled) setSyncing(false); }
+    };
+    pull();
 
-    get(userRef).then((snapshot) => {
-      if (cancelled) return;
-      const data = snapshot.val();
-
-      if (!data) {
-        lastSyncedActions.current = localStateRef.current.actions;
-        lastSyncedProfile.current = localStateRef.current.profileName;
-        lastSyncedWatchItem.current = localStateRef.current.watchItem;
-        pushToCloud({ silent: true });
-        return;
-      }
-
-      const remoteActions = data.actions || {};
-      const remoteProfile = data.profileName || '';
-      const remoteWatchItem = data.watchItem || null;
-
-      lastSyncedActions.current = remoteActions;
-      lastSyncedProfile.current = remoteProfile;
-      lastSyncedWatchItem.current = remoteWatchItem;
-
-      setActions(remoteActions);
-      if (remoteProfile) setProfileName(remoteProfile);
-      if (remoteWatchItem) setWatchItem(remoteWatchItem);
-      if (data.lastSynced) setLastSynced(data.lastSynced);
-    }).catch(() => {
-      if (!cancelled) setToast({ message: 'Cloud sync unavailable — changes stay local', type: 'error' });
-    }).finally(() => {
-      if (!cancelled) setSyncing(false);
-    });
+    // Periodically check for updates from the same account on other devices.
+    pollTimer.current = window.setInterval(async () => {
+      try {
+        const row = await fetchRemote();
+        if (cancelled || !row || row.updated_at === lastRemoteUpdatedAt.current) return;
+        const local = snapshot();
+        const dirty = lastSyncedState.current && encode(local) !== encode(lastSyncedState.current);
+        if (dirty) {
+          setConflict({
+            remoteActions: row.data?.actions || {},
+            remoteProfile: row.data?.profileName || '',
+            remoteWatchItem: row.data?.watchItem ?? null,
+            remoteUpdatedAt: row.updated_at,
+          });
+        } else applyRemote(row);
+      } catch { /* Retry on the next poll; offline changes stay on this device. */ }
+    }, 25_000);
 
     return () => {
       cancelled = true;
+      window.clearInterval(pollTimer.current);
       window.clearTimeout(pushTimer.current);
     };
-  }, [user?.uid, pushToCloud, setActions, setProfileName, setWatchItem]);
+  }, [user?.id, fetchRemote, pushToCloud, applyRemote, markSynced, snapshot]);
 
-  // Resolve conflict: use remote data (discard local)
+  useEffect(() => {
+    if (!configured || !user?.id || applyingRemote.current || !lastSyncedState.current) return undefined;
+    const current = snapshot();
+    if (encode(current) === encode(lastSyncedState.current)) return undefined;
+    window.clearTimeout(pushTimer.current);
+    pushTimer.current = window.setTimeout(() => pushToCloud(), 1800);
+    return () => window.clearTimeout(pushTimer.current);
+  }, [actions, profileName, watchItem, user?.id, snapshot, pushToCloud]);
+
   const resolveUseRemote = useCallback(() => {
     if (!conflict) return;
-    setActions(conflict.remoteActions);
-    if (conflict.remoteProfile) setProfileName(conflict.remoteProfile);
-    if (conflict.remoteWatchItem !== undefined) setWatchItem(conflict.remoteWatchItem);
-    lastSyncedActions.current = conflict.remoteActions;
-    lastSyncedProfile.current = conflict.remoteProfile;
-    lastSyncedWatchItem.current = conflict.remoteWatchItem;
+    applyRemote({ data: { actions: conflict.remoteActions, profileName: conflict.remoteProfile, watchItem: conflict.remoteWatchItem }, updated_at: conflict.remoteUpdatedAt });
     setConflict(null);
-    setToast({ message: 'Synced from cloud', type: 'success' });
-  }, [conflict, setActions, setProfileName]);
+    setToast({ message: 'Loaded the latest cloud data', type: 'success' });
+  }, [conflict, applyRemote]);
 
-  // Resolve conflict: keep local data (overwrite remote)
-  const resolveKeepLocal = useCallback(() => {
-    if (!conflict || !configured || !user) return;
-    setSyncing(true);
-    const userRef = ref(db, `users/${user.uid}`);
-    lastSyncedActions.current = localStateRef.current.actions;
-    lastSyncedProfile.current = localStateRef.current.profileName;
-    lastSyncedWatchItem.current = localStateRef.current.watchItem;
-    set(userRef, {
-      actions: localStateRef.current.actions,
-      profileName: localStateRef.current.profileName,
-      watchItem: localStateRef.current.watchItem,
-      lastSynced: Date.now(),
-    }).then(() => {
-      updateLastSynced();
-      setConflict(null);
-      setToast({ message: 'Local data kept — synced', type: 'success' });
-    }).catch(() => {
-      setToast({ message: 'Push failed — try again', type: 'error' });
-    }).finally(() => setSyncing(false));
-  }, [conflict, user, configured, updateLastSynced]);
+  const resolveKeepLocal = useCallback(async () => {
+    if (!conflict) return;
+    await pushToCloud();
+    setConflict(null);
+  }, [conflict, pushToCloud]);
 
-  // Listen for local changes to trigger debounce push
-  useEffect(() => {
-    if (!configured || !user) return;
-
-    const currentActionsStr = JSON.stringify(actions || {});
-    const syncedActionsStr = JSON.stringify(lastSyncedActions.current || {});
-    const currentWatchStr = JSON.stringify(watchItem || null);
-    const syncedWatchStr = JSON.stringify(lastSyncedWatchItem.current || null);
-
-    const changed = currentActionsStr !== syncedActionsStr
-      || profileName !== lastSyncedProfile.current
-      || currentWatchStr !== syncedWatchStr;
-
-    if (!changed) return;
-
+  const pushBeforeLogout = useCallback(async () => {
+    if (!configured || !user?.id) return;
     window.clearTimeout(pushTimer.current);
-    pushTimer.current = window.setTimeout(pushToCloud, 5000);
+    const current = snapshot();
+    const rows = await supabaseDataRequest(`${TABLE}?on_conflict=user_id`, {
+      method: 'POST',
+      headers: { Prefer: 'resolution=merge-duplicates,return=representation' },
+      body: JSON.stringify({ user_id: user.id, data: current }),
+    });
+    markSynced(current, rows?.[0]?.updated_at || new Date().toISOString());
+  }, [user?.id, snapshot, markSynced]);
 
-    return () => window.clearTimeout(pushTimer.current);
-  }, [actions, profileName, watchItem, user?.uid, pushToCloud]);
-
-  // Push on logout (always immediate, no conflict check needed)
-  const pushBeforeLogout = useCallback(() => {
-    if (!configured || !user) return Promise.resolve();
-    const userRef = ref(db, `users/${user.uid}`);
-    lastSyncedActions.current = actions;
-    lastSyncedProfile.current = profileName;
-    lastSyncedWatchItem.current = watchItem;
-    return set(userRef, { actions, profileName, watchItem, lastSynced: Date.now() }).then(updateLastSynced);
-  }, [user?.uid, actions, profileName, watchItem]);
-
-  return {
-    pushToCloud,
-    pushBeforeLogout,
-    lastSynced,
-    syncing,
-    conflict,
-    resolveUseRemote,
-    resolveKeepLocal,
-    toast,
-  };
+  return { pushToCloud, pushBeforeLogout, lastSynced, syncing, conflict, resolveUseRemote, resolveKeepLocal, toast };
 }
