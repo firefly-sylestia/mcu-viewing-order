@@ -250,3 +250,114 @@
     justify-content: flex-start !important;
   }
 }
+
+
+/* Stats follows the shared Home/List header structure. The universe selector
+   uses a full-width animated button rail instead of a compact dropdown. */
+:root .movie-site.page-analytics .site-header .header-top {
+  min-height: 58px !important;
+  margin: 0 0 12px !important;
+  padding: 0 2px !important;
+  gap: 18px !important;
+}
+:root .movie-site.page-analytics .site-header .header-top .brand {
+  display: flex !important;
+  flex: 0 1 auto !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  gap: 3px !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  text-align: left !important;
+}
+:root .movie-site.page-analytics .site-header .header-top .brand b {
+  display: block !important;
+  color: var(--fx-text) !important;
+  font-size: 20px !important;
+  line-height: 1.15 !important;
+  font-weight: 850 !important;
+}
+:root .movie-site.page-analytics .site-header .header-top .brand small {
+  display: block !important;
+  color: var(--fx-muted) !important;
+  font-size: 11px !important;
+  line-height: 1.2 !important;
+}
+:root .movie-site.page-analytics .site-header .header-bar {
+  display: flex !important;
+  width: 100% !important;
+  min-height: 0 !important;
+  height: auto !important;
+  justify-content: stretch !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+:root .movie-site.page-analytics .site-header .header-tools {
+  display: flex !important;
+  flex: 1 1 100% !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+:root .movie-site.page-analytics .stats-universe-filter { display: none !important; }
+:root .movie-site.page-analytics .stats-universe-tabs {
+  position: relative;
+  display: flex;
+  flex: 1 1 100%;
+  width: 100%;
+  min-width: 0;
+  gap: 6px;
+  padding: 5px;
+  border-radius: 999px;
+  background: var(--fx-surface-2);
+}
+:root .movie-site.page-analytics .stats-universe-tabs button {
+  position: relative;
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 46px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--fx-muted);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color .22s ease, background .22s ease, transform .22s cubic-bezier(.2,.8,.2,1), box-shadow .22s ease;
+}
+:root .movie-site.page-analytics .stats-universe-tabs button:hover {
+  background: var(--fx-surface-3);
+  color: var(--fx-text);
+}
+:root .movie-site.page-analytics .stats-universe-tabs button.active {
+  color: #fff;
+  background: color-mix(in srgb, var(--brand-accent, var(--fx-accent)) 82%, #20232b);
+  box-shadow: 0 8px 20px -13px var(--brand-accent, var(--fx-accent)), inset 0 1px 0 rgba(255,255,255,.2);
+  animation: statsUniverseSelect .28s cubic-bezier(.2,.8,.2,1) both;
+}
+:root .movie-site.page-analytics .stats-universe-tabs button:active { transform: scale(.96); }
+@keyframes statsUniverseSelect {
+  from { opacity: .72; transform: scale(.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+:root[data-theme="light"] .movie-site.page-analytics .stats-universe-tabs {
+  background: #f1f3f8;
+}
+:root[data-theme="light"] .movie-site.page-analytics .stats-universe-tabs button { color: #5c6675; }
+:root[data-theme="light"] .movie-site.page-analytics .stats-universe-tabs button:hover { background: #e7ebf3; color: #10141b; }
+:root[data-theme="light"] .movie-site.page-analytics .stats-universe-tabs button.active { color: #fff; }
+@media (max-width: 620px) {
+  :root .movie-site.page-analytics .site-header .header-top { min-height: 54px !important; gap: 8px !important; }
+  :root .movie-site.page-analytics .site-header .header-top .brand b { font-size: 17px !important; }
+  :root .movie-site.page-analytics .site-header .header-top .brand small { font-size: 10px !important; }
+  :root .movie-site.page-analytics .stats-universe-tabs { gap: 3px; padding: 4px; }
+  :root .movie-site.page-analytics .stats-universe-tabs button { min-height: 42px; padding-inline: 5px; font-size: 11px; }
+}
