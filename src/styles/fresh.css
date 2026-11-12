@@ -6842,33 +6842,32 @@
 }
 
 
-/* Keep the sign-out confirmation inside its own opaque control surface.
-   It must never sit on top of the profile title or the sync action. */
+/* Sign-out confirmation overlays the existing action slot, centered within
+   the profile header. It does not change header height or move the row. */
 :root .movie-site.page-profile .profile-header-compact { position: relative !important; }
 :root .movie-site.page-profile .profile-header-compact.logout-confirming .profile-info,
 :root .movie-site.page-profile .profile-header-compact.logout-confirming .profile-next-up {
-  visibility: hidden !important;
+  visibility: visible !important;
+}
+:root .movie-site.page-profile .profile-header-compact .profile-auth {
+  position: relative !important; z-index: 12 !important;
+  flex: 0 0 40px !important; width: 40px !important; min-width: 40px !important; height: 40px !important;
 }
 :root .movie-site.page-profile .profile-header-compact .profile-auth-confirm {
-  position: relative !important;
-  z-index: 8 !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 7px !important;
-  min-height: 42px !important;
-  padding: 5px 6px 5px 13px !important;
-  border-radius: 999px !important;
-  background: color-mix(in srgb, var(--fx-surface, #fff) 96%, transparent) !important;
-  box-shadow: 0 5px 20px rgba(20,30,50,.14), inset 0 0 0 1px rgba(100,110,130,.10) !important;
-  color: var(--fx-text) !important;
-  white-space: nowrap !important;
+  position: absolute !important; top: 50% !important; right: 0 !important;
+  transform: translateY(-50%) !important; z-index: 20 !important;
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  gap: 7px !important; width: max-content !important; min-height: 38px !important;
+  padding: 4px 5px 4px 12px !important; border-radius: 999px !important;
+  background: color-mix(in srgb, var(--fx-surface, #fff) 98%, transparent) !important;
+  box-shadow: 0 5px 18px rgba(20,30,50,.14), inset 0 0 0 1px rgba(100,110,130,.10) !important;
+  color: var(--fx-text) !important; white-space: nowrap !important;
 }
 :root .movie-site.page-profile .profile-header-compact .profile-auth-confirm > span {
   font-size: 12px !important; font-weight: 700 !important;
 }
 :root .movie-site.page-profile .profile-header-compact .profile-auth-confirm button {
-  min-width: 42px !important; height: 32px !important; padding: 0 12px !important;
+  min-width: 40px !important; height: 30px !important; padding: 0 11px !important;
   border: 0 !important; border-radius: 999px !important; font-size: 12px !important;
   font-weight: 750 !important; line-height: 1 !important;
 }
@@ -6877,6 +6876,18 @@
 }
 :root .movie-site.page-profile .profile-header-compact .profile-auth-confirm .confirm-no {
   background: rgba(120,130,150,.12) !important; color: var(--fx-text, #171923) !important;
+}
+@media (max-width: 620px) {
+  :root .movie-site.page-profile .profile-header-compact .profile-auth {
+    flex-basis: 36px !important; width: 36px !important; min-width: 36px !important; height: 36px !important;
+  }
+  :root .movie-site.page-profile .profile-header-compact .profile-auth-confirm {
+    min-height: 36px !important; gap: 5px !important; padding: 3px 4px 3px 10px !important;
+  }
+  :root .movie-site.page-profile .profile-header-compact .profile-auth-confirm > span { font-size: 11px !important; }
+  :root .movie-site.page-profile .profile-header-compact .profile-auth-confirm button {
+    min-width: 36px !important; height: 29px !important; padding: 0 9px !important;
+  }
 }
 
 /* X-Men's source artwork has a near-square canvas, so give the image itself
