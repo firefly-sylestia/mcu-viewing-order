@@ -6268,12 +6268,10 @@ button { border: 0; color: inherit; cursor: pointer; }
 }
 
 
-/* The active navigation pill alone gets a slightly stronger glass tint. */
-:root .movie-site .bottom-nav .nav-blob,
-:root .movie-site .bottom-nav[data-holding="true"] .nav-blob {
-  background: rgba(255, 255, 255, .40) !important;
+/* The active navigation pill is 20% opaque; keep every other nav surface unchanged. */
+:root .movie-site .bottom-nav .nav-blob {
+  background: rgba(255, 255, 255, .20) !important;
 }
-:root[data-theme="light"] .movie-site .bottom-nav .nav-blob,
-:root[data-theme="light"] .movie-site .bottom-nav[data-holding="true"] .nav-blob {
-  background: rgba(255, 255, 255, .40) !important;
+:root[data-theme="light"] .movie-site .bottom-nav .nav-blob {
+  background: rgba(255, 255, 255, .20) !important;
 }
