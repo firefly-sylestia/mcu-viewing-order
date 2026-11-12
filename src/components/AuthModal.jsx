@@ -36,7 +36,7 @@ export default function AuthModal({ onClose, onLogin, onSignup, onResetPassword,
         } else onClose();
       }
     } catch (err) {
-      setError((err?.message || 'Something went wrong. Please try again.').replace(/^AuthApiError:\\s*/i, '').replace(/^Error:\\s*/i, ''));
+      setError((err?.message || 'Something went wrong. Please try again.').replace(/^AuthApiError:\s*/i, '').replace(/^Error:\s*/i, ''));
     } finally { setBusy(false); }
   };
 
