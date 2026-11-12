@@ -1146,8 +1146,8 @@ export default function App() {
         </div>
         <div className="header-tools">
   {section === 'analytics' ? <div className="stats-universe-tabs" role="group" aria-label="Filter statistics by universe">
-    <button className={statsUniverses.length === 4 ? 'active' : ''} aria-pressed={statsUniverses.length === 4} onClick={() => { hapticTap(); setStatsUniverses(['marvel','sony','xmen','dc']); }}>All</button>
-    {[['marvel','Marvel'],['sony','Sony'],['xmen','X-Men'],['dc','DC']].map(([key,label]) => <button key={key} className={statsUniverses.includes(key) && statsUniverses.length !== 4 ? 'active' : ''} aria-pressed={statsUniverses.includes(key) && statsUniverses.length !== 4} onClick={() => { hapticTap(); setStatsUniverses(current => current.length === 4 ? [key] : current.includes(key) ? (current.length > 1 ? current.filter(item => item !== key) : current) : [...current,key]); }}>{label}</button>)}
+    <button data-universe="all" className={statsUniverses.length === 4 ? 'active' : ''} aria-pressed={statsUniverses.length === 4} onClick={() => { hapticTap(); setStatsUniverses(['marvel','sony','xmen','dc']); }}>All</button>
+    {[['marvel','Marvel'],['sony','Sony'],['xmen','X-Men'],['dc','DC']].map(([key,label]) => <button key={key} data-universe={key} className={statsUniverses.includes(key) && statsUniverses.length !== 4 ? 'active' : ''} aria-pressed={statsUniverses.includes(key) && statsUniverses.length !== 4} onClick={() => { hapticTap(); setStatsUniverses(current => current.length === 4 ? [key] : current.includes(key) ? (current.length > 1 ? current.filter(item => item !== key) : current) : [...current,key]); }}>{label}</button>)}
   </div> : null}
   {section === 'profile' ? <div className="profile-header-tabs" role="tablist" aria-label="Profile sections">
     {['insights', 'saved', 'settings'].map(tab => <button key={tab} role="tab" aria-selected={profileTab === tab} className={profileTab === tab ? 'active' : ''} onClick={() => { setProfileTab(tab); setQuery(''); }}>{tab === 'insights' ? 'Insights' : tab === 'saved' ? 'Saved' : 'Settings'}</button>)}
