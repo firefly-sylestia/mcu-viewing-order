@@ -6258,3 +6258,11 @@ button { border: 0; color: inherit; cursor: pointer; }
   }
   :root .movie-site.page-profile .profile-header-compact .profile-avatar-remove { display: none; }
 }
+
+@media (max-width: 860px) {
+  :root .movie-site.page-profile .profile-header-compact .profile-auth {
+    width: auto !important;
+    flex-wrap: nowrap !important;
+    justify-content: flex-end !important;
+  }
+}
