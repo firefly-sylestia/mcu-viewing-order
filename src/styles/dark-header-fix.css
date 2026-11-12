@@ -1,5 +1,5 @@
 /* Dark-mode header: remove the milky accent wash and uneven lower tint. */
-:root:not([data-theme="light"]) .movie-site .site-header {
+:root:not([data-theme="light"]) .movie-site:not(.page-profile):not(.page-analytics) .site-header {
   background: rgba(20, 22, 29, .88) !important;
   -webkit-backdrop-filter: blur(14px) saturate(110%) !important;
   backdrop-filter: blur(14px) saturate(110%) !important;
@@ -8,12 +8,12 @@
     inset 0 1px 0 rgba(255, 255, 255, .055) !important;
 }
 
-:root:not([data-theme="light"]) .movie-site .site-header::before {
+:root:not([data-theme="light"]) .movie-site:not(.page-profile):not(.page-analytics) .site-header::before {
   background: rgba(255, 255, 255, .025) !important;
   opacity: 1 !important;
 }
 
-:root:not([data-theme="light"]) .movie-site .site-header .header-universe-backdrop {
+:root:not([data-theme="light"]) .movie-site:not(.page-profile):not(.page-analytics) .site-header .header-universe-backdrop {
   display: none !important;
 }
 
@@ -23,3 +23,54 @@
 :root .movie-site.page-profile .site-header .header-bar .header-search {
   display: none !important;
 }
+
+
+/* Profile and Stats use the same luminous gradient blur as the main browsing pages. */
+:root .movie-site.page-profile .site-header,
+:root .movie-site.page-analytics .site-header {
+  background: color-mix(in srgb, var(--brand-accent, var(--fx-accent)) 10%, rgba(255,255,255,.76)) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(155%) !important;
+  backdrop-filter: blur(26px) saturate(155%) !important;
+  box-shadow: 0 10px 34px -26px color-mix(in srgb, var(--brand-accent, var(--fx-accent)) 42%, transparent),
+    inset 0 1px 0 rgba(255,255,255,.58) !important;
+}
+:root .movie-site.page-profile .site-header::before,
+:root .movie-site.page-analytics .site-header::before {
+  background:
+    radial-gradient(ellipse at 18% 0%, color-mix(in srgb, var(--brand-accent, var(--fx-accent)) 23%, transparent), transparent 58%),
+    radial-gradient(ellipse at 86% 100%, color-mix(in srgb, var(--brand-accent, var(--fx-accent)) 13%, transparent), transparent 55%),
+    color-mix(in srgb, var(--brand-accent, var(--fx-accent)) 4%, transparent) !important;
+}
+:root:not([data-theme="light"]) .movie-site.page-profile .site-header,
+:root:not([data-theme="light"]) .movie-site.page-analytics .site-header {
+  background: color-mix(in srgb, var(--brand-accent, var(--fx-accent)) 15%, rgba(20,22,29,.78)) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(155%) !important;
+  backdrop-filter: blur(26px) saturate(155%) !important;
+  box-shadow: 0 10px 34px -26px color-mix(in srgb, var(--brand-accent, var(--fx-accent)) 42%, transparent),
+    inset 0 1px 0 rgba(255,255,255,.08) !important;
+}
+:root:not([data-theme="light"]) .movie-site.page-profile .site-header::before,
+:root:not([data-theme="light"]) .movie-site.page-analytics .site-header::before {
+  background:
+    radial-gradient(ellipse at 18% 0%, color-mix(in srgb, var(--brand-accent, var(--fx-accent)) 30%, transparent), transparent 58%),
+    radial-gradient(ellipse at 86% 100%, color-mix(in srgb, var(--brand-accent, var(--fx-accent)) 17%, transparent), transparent 55%) !important;
+}
+.stats-universe-filter { position: relative; display: flex; align-items: center; }
+.stats-universe-trigger { min-height: 44px; }
+.stats-universe-dropdown {
+  position: absolute; z-index: 100; top: calc(100% + 9px); right: 0;
+  min-width: 190px; padding: 8px; border-radius: 18px;
+  background: color-mix(in srgb, var(--fx-surface-2) 90%, transparent);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  backdrop-filter: blur(24px) saturate(150%);
+  box-shadow: 0 16px 42px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.12);
+}
+.stats-universe-dropdown button,
+.stats-universe-dropdown label {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 10px 12px; border: 0; border-radius: 11px;
+  background: transparent; color: var(--fx-text); text-align: left;
+  font: inherit; cursor: pointer;
+}
+.stats-universe-dropdown button.selected { background: color-mix(in srgb, var(--fx-accent) 15%, transparent); }
+.stats-universe-dropdown label input { accent-color: var(--fx-accent); }
