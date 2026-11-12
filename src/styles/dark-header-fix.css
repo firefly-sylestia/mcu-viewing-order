@@ -138,3 +138,115 @@
   .profile-next-up-art { width: 28px; height: 28px; flex-basis: 28px; }
   .profile-next-up-copy strong { max-width: 19vw; }
 }
+
+
+/* Stats header: restore the Incursion identity row and the next-up card.
+   Keep the universe filter on its own line so the header never collapses into one strip. */
+:root .movie-site.page-analytics .site-header .header-top {
+  display: flex !important;
+  width: 100% !important;
+  min-height: 58px !important;
+  height: auto !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 18px !important;
+  margin: 0 0 12px !important;
+  padding: 0 2px !important;
+}
+:root .movie-site.page-analytics .site-header .header-top .brand.analytics-brand {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  text-align: left !important;
+  gap: 3px !important;
+}
+:root .movie-site.page-analytics .site-header .header-top .brand.analytics-brand .profile-brand-kicker {
+  display: block !important;
+  margin: 0 !important;
+  font-size: 10px !important;
+  line-height: 1 !important;
+  letter-spacing: .16em !important;
+}
+:root .movie-site.page-analytics .site-header .header-top .brand.analytics-brand b {
+  display: block !important;
+  color: var(--fx-text) !important;
+  font-size: 20px !important;
+  line-height: 1.15 !important;
+  font-weight: 850 !important;
+}
+:root .movie-site.page-analytics .site-header .header-top .brand.analytics-brand small {
+  display: block !important;
+  color: var(--fx-muted) !important;
+  font-size: 11px !important;
+  line-height: 1.2 !important;
+  letter-spacing: .02em !important;
+}
+:root .movie-site.page-analytics .site-header .header-quick-actions {
+  display: flex !important;
+  flex: 0 1 auto !important;
+  min-width: 0 !important;
+  max-width: min(360px, 48%) !important;
+  margin: 0 0 0 auto !important;
+  justify-content: flex-end !important;
+}
+:root .movie-site.page-analytics .site-header .header-quick-actions .header-status-pill {
+  max-width: 100% !important;
+}
+:root .movie-site.page-analytics .site-header .header-bar {
+  display: flex !important;
+  width: 100% !important;
+  min-height: 0 !important;
+  height: auto !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 10px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+:root .movie-site.page-analytics .site-header .header-bar .header-search,
+:root .movie-site.page-analytics .site-header .header-bar .universe-tabs {
+  display: none !important;
+}
+:root .movie-site.page-analytics .site-header .header-tools {
+  display: flex !important;
+  flex: 0 0 auto !important;
+  width: auto !important;
+  min-height: 42px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  justify-content: flex-end !important;
+}
+:root .movie-site.page-analytics .site-header .stats-universe-filter {
+  display: flex !important;
+}
+@media (max-width: 620px) {
+  :root .movie-site.page-analytics .site-header .header-top {
+    min-height: 54px !important;
+    gap: 8px !important;
+    margin-bottom: 10px !important;
+  }
+  :root .movie-site.page-analytics .site-header .header-top .brand.analytics-brand b {
+    font-size: 17px !important;
+  }
+  :root .movie-site.page-analytics .site-header .header-top .brand.analytics-brand small {
+    font-size: 10px !important;
+  }
+  :root .movie-site.page-analytics .site-header .header-quick-actions {
+    max-width: 52% !important;
+  }
+  :root .movie-site.page-analytics .site-header .header-quick-actions .header-status-pill {
+    min-height: 40px !important;
+    padding: 4px 8px 4px 4px !important;
+  }
+  :root .movie-site.page-analytics .site-header .header-quick-actions .header-pill-label b {
+    max-width: 26vw !important;
+  }
+  :root .movie-site.page-analytics .site-header .header-bar {
+    justify-content: flex-start !important;
+  }
+}
