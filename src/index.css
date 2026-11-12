@@ -6266,3 +6266,14 @@ button { border: 0; color: inherit; cursor: pointer; }
     justify-content: flex-end !important;
   }
 }
+
+
+/* The active navigation pill alone gets a slightly stronger glass tint. */
+:root .movie-site .bottom-nav .nav-blob,
+:root .movie-site .bottom-nav[data-holding="true"] .nav-blob {
+  background: rgba(255, 255, 255, .40) !important;
+}
+:root[data-theme="light"] .movie-site .bottom-nav .nav-blob,
+:root[data-theme="light"] .movie-site .bottom-nav[data-holding="true"] .nav-blob {
+  background: rgba(255, 255, 255, .40) !important;
+}

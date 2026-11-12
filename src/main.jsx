@@ -27,7 +27,25 @@ const storedTheme = readStored('theme', 'light')
 document.documentElement.setAttribute('data-theme', storedTheme)
 
 document.documentElement.classList.toggle('dark', storedTheme !== 'light')
+
 document.documentElement.setAttribute('data-ui', readStored('ui-variant', 'fresh'))
+
+// Keep Android/Chrome's system status bar in step with the active app surface.
+const syncBrowserThemeColor = () => {
+  const dark = document.documentElement.getAttribute('data-theme') !== 'light';
+  const color = dark ? '#0b0d13' : '#f6f7fb';
+  let themeMeta = document.querySelector('meta[name="theme-color"]');
+  if (!themeMeta) {
+    themeMeta = document.createElement('meta');
+    themeMeta.name = 'theme-color';
+    document.head.appendChild(themeMeta);
+  }
+  themeMeta.setAttribute('content', color);
+};
+syncBrowserThemeColor();
+const themeColorObserver = new MutationObserver(syncBrowserThemeColor);
+themeColorObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
 
 // The packaged Android/iOS build draws underneath the system status bar. Flag it
 // before the first paint so the shell can reserve that strip even on devices
