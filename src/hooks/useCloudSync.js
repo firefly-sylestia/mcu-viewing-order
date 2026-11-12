@@ -53,7 +53,7 @@ export function useCloudSync(user, actions, profileName, setActions, setProfileN
   }, [setActions, setProfileName, setWatchItem, markSynced]);
 
   const pushToCloud = useCallback(async ({ silent = false, force = false } = {}) => {
-    if (!configured || !user?.id) return;
+    if (!configured || !user?.id) return false;
     const current = snapshot();
     setSyncing(true);
     try {
@@ -68,7 +68,7 @@ export function useCloudSync(user, actions, profileName, setActions, setProfileN
             remoteUpdatedAt: remote?.updated_at || null,
           });
           setToast({ message: 'Another device has newer changes. Resolve the sync conflict first.', type: 'error' });
-          return;
+          return false;
         }
       }
       const rows = await supabaseDataRequest(`${TABLE}?on_conflict=user_id`, {
@@ -79,8 +79,10 @@ export function useCloudSync(user, actions, profileName, setActions, setProfileN
       markSynced(current, rows?.[0]?.updated_at || new Date().toISOString());
       setConflict(null);
       if (!silent) setToast({ message: 'Synced successfully', type: 'success' });
+      return true;
     } catch (error) {
       setToast({ message: error.message || 'Sync failed — check your connection', type: 'error' });
+      return false;
     } finally { setSyncing(false); }
   }, [user?.id, snapshot, markSynced, fetchRemote]);
 
@@ -149,8 +151,8 @@ export function useCloudSync(user, actions, profileName, setActions, setProfileN
 
   const resolveKeepLocal = useCallback(async () => {
     if (!conflict) return;
-    await pushToCloud({ force: true });
-    setConflict(null);
+    const saved = await pushToCloud({ force: true });
+    if (saved) setConflict(null);
   }, [conflict, pushToCloud]);
 
   const pushBeforeLogout = useCallback(async () => {
