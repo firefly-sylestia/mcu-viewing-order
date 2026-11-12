@@ -45,6 +45,8 @@ In **Vercel → Project → Settings → Environment Variables**, add:
 
 Add them to Production, Preview, and Development as needed, then redeploy.
 
+For Android APK builds or GitHub Actions builds, also add the same two values under **GitHub → Repository Settings → Secrets and variables → Actions** with the exact names `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. Vercel environment variables are not automatically available to GitHub Actions.
+
 These two values are designed to be public in a browser application. **Never put a Supabase service-role/secret key in a `VITE_*` variable or in this repository.** Row Level Security is the security boundary for user data.
 
 For local development, copy `.env.example` to `.env.local` and fill in the same two values.
