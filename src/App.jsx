@@ -921,6 +921,25 @@ export default function App() {
     }
     return { total, watched, watching, dropped, bookmarked, percent: Math.round((watched / total) * 100), watchedMinutes, watchedTime, streak: best };
   }, [analyticsItems]);
+  const profileStats = useMemo(() => {
+    const items = profileItems;
+    const total = items.length || 1;
+    const watched = items.filter(item => item.userStatus === 'watched').length;
+    const watching = items.filter(item => item.userStatus === 'watching').length;
+    const dropped = items.filter(item => item.userStatus === 'dropped').length;
+    const bookmarked = items.filter(item => item.bookmarked).length;
+    const watchedMinutes = items.filter(item => item.userStatus === 'watched').reduce((sum, item) => sum + (item.runtime || 0), 0);
+    const watchedHours = Math.floor(watchedMinutes / 60);
+    const watchedTime = watchedHours >= 1 ? String(watchedHours) + 'h ' + String(watchedMinutes % 60) + 'm' : String(watchedMinutes) + 'm';
+    const watchedByOrder = items.filter(item => item.userStatus === 'watched').map(item => item.order).sort((a, b) => a - b);
+    let streak = 0, best = 0;
+    for (let i = 0; i < watchedByOrder.length; i++) {
+      if (i === 0 || watchedByOrder[i] === watchedByOrder[i - 1] + 1) streak++;
+      else streak = 1;
+      if (streak > best) best = streak;
+    }
+    return { total, watched, watching, dropped, bookmarked, percent: Math.round((watched / total) * 100), watchedMinutes, watchedTime, streak: best };
+  }, [profileItems]);
 
   const updateAction = (item, patch) => setActions(prev => {
     const key = mediaKey(item);
@@ -1250,7 +1269,7 @@ export default function App() {
 
       {section === 'list' && <ListSection items={activeItems} sortBy={sortBy} sortDirection={sortDirection} sortKey={`${sortBy}-${sortDirection}`} externalResults={externalSearchResults} externalLoading={externalSearchLoading} query={query} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} onPlayExternal={onPlayExternal} onWarning={showWarningToast} />}
       {section === 'analytics' && <><AnalyticsPanel stats={stats} large /><MovieRail title="In progress" items={analyticsItems.filter(i => i.userStatus === 'watching')} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} /></>}
-            {section === 'profile' && <ProfilePage stats={stats} activeItems={profileItems} universe="all" activeTab={profileTab} query={query} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} conflict={conflict} onResolveRemote={resolveUseRemote} onResolveLocal={resolveKeepLocal} syncToast={toast} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} />}
+            {section === 'profile' && <ProfilePage stats={profileStats} activeItems={profileItems} universe="all" activeTab={profileTab} query={query} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} conflict={conflict} onResolveRemote={resolveUseRemote} onResolveLocal={resolveKeepLocal} syncToast={toast} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} />}
       {WATCH_ENABLED && section === 'watch' && safeWatchItem && <WatchPage watchItem={safeWatchItem} activeItems={roadmapItems} onBack={() => { setWatchItem(null); window.history.replaceState(null, '', '#watch'); }} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={startWatchWithConfirm} updateAction={updateAction} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} />}
       {WATCH_ENABLED && section === 'watch' && !safeWatchItem && <WatchBrowse activeItems={activeItems} externalResults={externalSearchResults} externalLoading={externalSearchLoading} actions={actions} query={query} onStartWatch={startWatchWithConfirm} onPlayExternal={onPlayExternal} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} />}
 
