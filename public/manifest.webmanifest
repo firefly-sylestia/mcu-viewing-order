@@ -1,16 +1,34 @@
 {
   "id": "/",
-  "name": "Incursion · Superhero Timeline Guide",
+  "name": "Incursion",
   "short_name": "Incursion",
-  "description": "Explore Marvel, DC, X-Men and Sony timelines, track your viewing progress, and continue offline with cached content.",
+  "description": "Your superhero timeline and viewing guide.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#f6f7fb",
   "theme_color": "#f6f7fb",
-  "categories": ["entertainment", "lifestyle"],
+  "categories": [
+    "entertainment",
+    "lifestyle"
+  ],
   "icons": [
-    { "src": "/pwa-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+    {
+      "src": "/mcu-icon.jpg",
+      "sizes": "1254x1254",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "display_override": [
+    "standalone",
+    "fullscreen"
   ]
 }
