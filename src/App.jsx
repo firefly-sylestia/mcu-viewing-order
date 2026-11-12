@@ -1118,7 +1118,7 @@ export default function App() {
   <div className="header-universe-backdrop" aria-hidden="true"><span>{UNIVERSE_LOGOS[universe]}</span></div>
   <div className="header-top">
   {section === 'profile' ? <ProfileHeader universe={universe} stats={stats} profileName={profileName} watchingItem={profileWatchingItem} nextUp={profileNextUpItem} onSelectItem={selectItem} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} /> : <>
-  <div className="header-quick-actions" aria-label="Quick viewing controls" style={{ display: section === 'analytics' ? 'none' : undefined }}>
+  <div className="header-quick-actions" aria-label="Quick viewing controls">
   {(() => {
     // Exactly one quick card: whatever is playing now wins, otherwise the next title.
     const watchingItem = activeItems.find(item => item.userStatus === 'watching');
@@ -1130,7 +1130,7 @@ export default function App() {
     </button>;
   })()}
   </div>
-  <button className="brand" onClick={() => { setQuery(''); setSection(section === 'profile' || section === 'analytics' ? section : 'home'); setWatchItem(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }} aria-label={section === 'profile' ? 'Profile' : section === 'analytics' ? 'Insights' : 'Go to Incursion home'}><b>{section === 'profile' ? 'Profile' : section === 'analytics' ? 'Insights' : 'Incursion'}</b><small>{section === 'profile' ? 'Your space' : section === 'analytics' ? 'Your viewing activity' : `${universeName} timeline`}</small></button>
+  <button className={`brand ${section === 'analytics' ? 'analytics-brand' : ''}`} onClick={() => { setQuery(''); setSection(section === 'profile' || section === 'analytics' ? section : 'home'); setWatchItem(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }} aria-label={section === 'profile' ? 'Profile' : section === 'analytics' ? 'Insights' : 'Go to Incursion home'}>{section === 'analytics' && <span className="profile-brand-kicker">Incursion</span>}<b>{section === 'profile' ? 'Profile' : section === 'analytics' ? 'Insights' : 'Incursion'}</b><small>{section === 'profile' ? 'Your space' : section === 'analytics' ? 'Your viewing activity' : `${universeName} timeline`}</small></button>
   </>}
   </div>
   <div className="header-bar">
