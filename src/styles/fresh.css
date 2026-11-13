@@ -10085,3 +10085,37 @@
   border-color: rgba(220,230,245,.075) !important;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.055) !important;
 }
+
+
+/* Faster navigation cadence: approximately 1.4x quicker while preserving
+   the same easing, direction, and visual treatment. */
+:root .movie-site .nav-page-transition,
+:root .movie-site.page-analytics .nav-page-transition,
+.performance-mode .movie-site .nav-page-transition {
+  animation-duration: 329ms !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root .movie-site .nav-page-transition {
+    animation-duration: 329ms !important;
+  }
+}
+:root .movie-site .bottom-nav .nav-blob,
+:root .movie-site .bottom-nav[data-holding="true"] .nav-blob,
+.performance-mode .movie-site .bottom-nav .nav-blob {
+  transition-duration: 457ms, 186ms, 186ms !important;
+}
+:root .movie-site .bottom-nav[data-holding="true"] .nav-blob {
+  transition-duration: 86ms, 186ms, 186ms !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root .movie-site .bottom-nav .nav-blob {
+    transition-duration: 457ms !important;
+  }
+}
+:root .movie-site .universe-tabs button,
+:root .movie-site .stats-universe-tabs button {
+  transition-duration: 200ms, 200ms, 200ms, 200ms !important;
+}
+:root .movie-site .site-glow {
+  transition-duration: 357ms, 357ms !important;
+}
