@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Search, SlidersHorizontal, House, Bookmark, Play, UserRound, X, ArrowLeft, Star, BarChart3, Check, Clock, ListFilter, RotateCcw, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Calendar, Timer, Sparkles, LogOut, Cloud, Download, Camera, Info, ShieldAlert, Clapperboard, ArrowUpDown, ExternalLink } from 'lucide-react';
-import { RAW } from './data/mcuData';
-import { DC_RAW } from './data/dcData';
-import { XMEN_RAW } from './data/xmenData';
-import { SONY_RAW } from './data/sonyData';
+import { RAW, PHASES } from './data/mcuData';
+import { DC_RAW, DC_PHASES } from './data/dcData';
+import { XMEN_RAW, XMEN_PHASES } from './data/xmenData';
+import { SONY_RAW, SONY_PHASES } from './data/sonyData';
 import { getTrailerByTitle, trailerEmbedUrl } from './data/trailerData';
 import { STORY_BRIDGES } from './data/connections';
 import { STORY_ORDER_OVERRIDES, DOOMSDAY_SECRET_WARS_TITLES, getTitleGuidance } from './data/timelineModes';
@@ -349,7 +349,9 @@ export default function App() {
   const [ageRatingFilter, setAgeRatingFilter] = useState(saved.ageRatingFilter || 'All');
   const [sortBy, setSortBy] = useState(saved.sortBy || 'order');
   const [sortDirection, setSortDirection] = useState('asc');
-  const [phaseFilter, setPhaseFilter] = useState(saved.phaseFilter || 'All');
+  const [phaseFilters, setPhaseFilters] = useState(saved.phaseFilters || { marvel: saved.phaseFilter || 'All', sony: 'All', xmen: 'All', dc: 'All' });
+  const phaseFilter = phaseFilters[universe] ?? 'All';
+  const setPhaseFilter = useCallback((value) => setPhaseFilters(current => ({ ...current, [universe]: value })), [universe]);
   const [phaseMenuOpen, setPhaseMenuOpen] = useState(false);
   const phaseButtonRef = useRef(null);
   const [phaseMenuPosition, setPhaseMenuPosition] = useState({ top: 0, left: 0 });
@@ -542,8 +544,8 @@ export default function App() {
   const allItems = useMemo(() => [...RAW.map(item => enhance(item, 'marvel')), ...DC_RAW.map(item => enhance(item, 'dc')), ...XMEN_RAW.map(item => enhance(item, 'xmen')), ...SONY_RAW.map(item => enhance(item, 'sony'))], []);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ universe, query, genre, rating, ageRatingFilter, sortBy, sortDirection, phaseFilter, typeFilter, actions, section, watchItem, profileName }));
-  }, [universe, query, genre, rating, ageRatingFilter, sortBy, sortDirection, phaseFilter, typeFilter, actions, section, watchItem, profileName]);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ universe, query, genre, rating, ageRatingFilter, sortBy, sortDirection, phaseFilters, phaseFilter, typeFilter, actions, section, watchItem, profileName }));
+  }, [universe, query, genre, rating, ageRatingFilter, sortBy, sortDirection, phaseFilters, phaseFilter, typeFilter, actions, section, watchItem, profileName]);
 
   const initialRender = useRef(true);
   useEffect(() => {
@@ -1080,14 +1082,18 @@ export default function App() {
   const profileItems = useMemo(() => allItems.map(enrichItem), [allItems, enrichItem]);
   const profileWatchingItem = profileItems.find(item => item.userStatus === 'watching');
   const profileNextUpItem = profileItems.find(item => item.userStatus !== 'watched' && item.userStatus !== 'dropped') || profileItems[0];
-  const statsBaseItems = useMemo(() => allItems.filter(item => statsUniverses.includes(item.universe)).map(enrichItem), [allItems, enrichItem, statsUniverses]);
+  // Scope every Insights calculation to the universes currently selected.
+  const selectedStatsItems = useMemo(
+    () => allItems.filter(item => statsUniverses.includes(item.universe)).map(enrichItem),
+    [allItems, enrichItem, statsUniverses],
+  );
   const externalTrackedItems = useMemo(() => Object.entries(actions)
     .filter(([key, action]) => key.startsWith('tmdb:') && action.media && statsUniverses.includes(action.media.universe))
     .map(([, action]) => enrichItem({ ...action.media, external: true })), [actions, enrichItem, statsUniverses]);
-  const analyticsItems = useMemo(() => [...statsBaseItems, ...externalTrackedItems], [statsBaseItems, externalTrackedItems]);
+  const analyticsItems = useMemo(() => [...selectedStatsItems, ...externalTrackedItems], [selectedStatsItems, externalTrackedItems]);
 
   const stats = useMemo(() => {
-    const total = analyticsItems.length || 1;
+    const total = analyticsItems.length;
     const watched = analyticsItems.filter(item => item.userStatus === 'watched').length;
     const watching = analyticsItems.filter(item => item.userStatus === 'watching').length;
     const dropped = analyticsItems.filter(item => item.userStatus === 'dropped').length;
@@ -1103,7 +1109,7 @@ export default function App() {
       else streak = 1;
       if (streak > best) best = streak;
     }
-    return { total, watched, watching, dropped, unwatched, bookmarked, percent: Math.round((watched / total) * 100), watchedMinutes, watchedTime, streak: best };
+    return { total, watched, watching, dropped, unwatched, bookmarked, percent: total ? Math.round((watched / total) * 100) : 0, watchedMinutes, watchedTime, streak: best };
   }, [analyticsItems]);
   const profileStats = useMemo(() => {
     const items = profileItems;
@@ -1331,16 +1337,18 @@ export default function App() {
   {section === 'profile' ? null : section === 'analytics' ? null : <>
   <div className={`header-phase-menu ${section === 'home' ? 'home-hidden-phase' : ''}`}>
   <button ref={phaseButtonRef} className={`header-phase-btn ${phaseFilter !== 'All' ? 'active' : ''}`} onClick={() => { const rect = phaseButtonRef.current?.getBoundingClientRect(); if (rect) setPhaseMenuPosition({ top: rect.bottom + 7, left: rect.left }); setPhaseMenuOpen(open => !open); }} aria-expanded={phaseMenuOpen} aria-haspopup="listbox">
-  <ListFilter size={14} /> <span>{phaseFilter === 'All' ? 'All phases' : `Phase ${phaseFilter}`}</span><ChevronDown size={13} />
+  <ListFilter size={14} /> <span>{phaseFilter === 'All' ? 'All phases' : (({ marvel: PHASES, sony: SONY_PHASES, xmen: XMEN_PHASES, dc: DC_PHASES })[universe]?.find(entry => String(entry.id) === String(phaseFilter))?.name || `Phase ${phaseFilter}`)}</span><ChevronDown size={13} />
   </button>
   {phaseMenuOpen && typeof document !== 'undefined' && createPortal(
-    <div className="header-phase-dropdown" style={{ position: 'fixed', top: phaseMenuPosition.top, left: phaseMenuPosition.left, zIndex: 2147483000 }} role="listbox" aria-label="Select phase">
-      <p className="phase-menu-title">Jump to phase</p>
-      {['All', ...new Set(allItems.filter(item => item.universe === universe && item.phase).map(item => item.phase))].map(phase => {
+    <div className="header-phase-dropdown" style={{ position: 'fixed', top: phaseMenuPosition.top, left: phaseMenuPosition.left, zIndex: 2147483000 }} role="listbox" aria-label={`Select ${universe === 'xmen' ? 'X-Men' : universe[0].toUpperCase()+universe.slice(1)} timeline phase`}>
+      <p className="phase-menu-title">Jump to {universe === 'marvel' ? 'MCU' : universe === 'sony' ? 'Sony' : universe === 'xmen' ? 'X-Men' : 'DC'} phase</p>
+      {['All', ...(({ marvel: PHASES, sony: SONY_PHASES, xmen: XMEN_PHASES, dc: DC_PHASES })[universe] || []).map(entry => entry.id)].map(phase => {
+        const phaseMeta = phase === 'All' ? null : (({ marvel: PHASES, sony: SONY_PHASES, xmen: XMEN_PHASES, dc: DC_PHASES })[universe] || []).find(entry => String(entry.id) === String(phase));
         const phaseItems = phase === 'All' ? [] : allItems.filter(item => item.universe === universe && String(item.phase) === String(phase)).map(enrichItem);
         const phaseWatched = phaseItems.length > 0 && phaseItems.every(item => item.userStatus === 'watched');
         const phasePartiallyWatched = phaseItems.some(item => item.userStatus === 'watched') && !phaseWatched;
-        return <div key={phase} className="phase-menu-row"><button className={String(phaseFilter) === String(phase) ? 'selected' : ''} onClick={() => { setPhaseFilter(phase); setPhaseMenuOpen(false); }} role="option" aria-selected={String(phaseFilter) === String(phase)}>{phase === 'All' ? 'All phases' : `Phase ${phase}`}</button>{phase !== 'All' && <input type="checkbox" checked={phaseWatched} ref={input => { if (input) input.indeterminate = phasePartiallyWatched; }} onClick={event => event.stopPropagation()} onChange={() => togglePhaseWatched(phase)} aria-checked={phasePartiallyWatched ? 'mixed' : phaseWatched} aria-label={`Mark all of Phase ${phase} as watched`} />}</div>;
+        const phaseName = phase === 'All' ? 'All phases' : phaseMeta?.name || `Phase ${phase}`;
+        return <div key={phase} className="phase-menu-row"><button className={String(phaseFilter) === String(phase) ? 'selected' : ''} onClick={() => { setPhaseFilter(phase); setPhaseMenuOpen(false); }} role="option" aria-selected={String(phaseFilter) === String(phase)}>{phaseName}</button>{phase !== 'All' && <input type="checkbox" checked={phaseWatched} ref={input => { if (input) input.indeterminate = phasePartiallyWatched; }} onClick={event => event.stopPropagation()} onChange={() => togglePhaseWatched(phase)} aria-checked={phasePartiallyWatched ? 'mixed' : phaseWatched} aria-label={`Mark all of ${phaseName} as watched`} />}</div>;
       })}
     </div>,
     document.body
