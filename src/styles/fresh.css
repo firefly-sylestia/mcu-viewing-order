@@ -7266,3 +7266,81 @@
     width: 100% !important;
   }
 }
+
+
+/* Cinematic header: genuinely viewport-floating, with layout space measured by App.jsx. */
+:root[data-header-design="cinematic"] .movie-site .site-header {
+  position: fixed !important;
+  top: 10px !important;
+  left: 50% !important;
+  right: auto !important;
+  z-index: 1200 !important;
+  width: min(1480px, calc(100% - 36px)) !important;
+  margin: 0 !important;
+  transform: translateX(-50%) !important;
+  isolation: isolate !important;
+  overflow: visible !important;
+  border-radius: 28px !important;
+  background: rgba(238, 244, 253, .68) !important;
+  box-shadow: 0 20px 54px -30px rgba(17, 34, 60, .48), 0 5px 18px -12px rgba(20, 35, 58, .2) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(165%) !important;
+  backdrop-filter: blur(32px) saturate(165%) !important;
+}
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site .site-header {
+  background: rgba(17, 24, 36, .76) !important;
+  box-shadow: 0 22px 60px -30px rgba(0, 0, 0, .82), 0 5px 18px -12px rgba(0, 0, 0, .45) !important;
+}
+:root[data-header-design="cinematic"] .movie-site {
+  padding-top: var(--cinematic-header-space, 190px) !important;
+}
+:root[data-header-design="cinematic"] .movie-site .site-header > .header-top,
+:root[data-header-design="cinematic"] .movie-site .site-header > .header-bar {
+  position: relative !important;
+  overflow: hidden !important;
+  background: rgba(250, 252, 255, .58) !important;
+  box-shadow: 0 8px 24px -18px rgba(22, 40, 68, .3), inset 0 1px 0 rgba(255,255,255,.62) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(155%) !important;
+  backdrop-filter: blur(28px) saturate(155%) !important;
+}
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site .site-header > .header-top,
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site .site-header > .header-bar {
+  background: rgba(29, 37, 51, .68) !important;
+  box-shadow: 0 8px 24px -18px rgba(0, 0, 0, .72), inset 0 1px 0 rgba(255,255,255,.09) !important;
+}
+/* Fine metallic dust only: tiny pinpoints, no flares, stars, streaks or large sparkles. */
+:root[data-header-design="cinematic"] .movie-site .site-header > .header-top::after,
+:root[data-header-design="cinematic"] .movie-site .site-header > .header-bar::after {
+  content: "" !important;
+  display: block !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 3 !important;
+  border-radius: inherit !important;
+  pointer-events: none !important;
+  opacity: .52 !important;
+  background-image:
+    radial-gradient(circle at 8% 22%, rgba(255,255,255,.92) 0 1px, transparent 1.35px),
+    radial-gradient(circle at 21% 76%, rgba(119,151,198,.7) 0 .8px, transparent 1.25px),
+    radial-gradient(circle at 39% 31%, rgba(255,255,255,.78) 0 .8px, transparent 1.2px),
+    radial-gradient(circle at 57% 82%, rgba(119,151,198,.66) 0 .8px, transparent 1.2px),
+    radial-gradient(circle at 73% 18%, rgba(255,255,255,.84) 0 .9px, transparent 1.3px),
+    radial-gradient(circle at 91% 63%, rgba(139,169,211,.72) 0 .8px, transparent 1.2px) !important;
+  background-size: 100% 100% !important;
+}
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site .site-header > .header-top::after,
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site .site-header > .header-bar::after {
+  opacity: .68 !important;
+  background-image:
+    radial-gradient(circle at 8% 22%, rgba(224,235,255,.92) 0 1px, transparent 1.35px),
+    radial-gradient(circle at 21% 76%, rgba(113,157,224,.8) 0 .8px, transparent 1.25px),
+    radial-gradient(circle at 39% 31%, rgba(230,239,255,.78) 0 .8px, transparent 1.2px),
+    radial-gradient(circle at 57% 82%, rgba(113,157,224,.78) 0 .8px, transparent 1.2px),
+    radial-gradient(circle at 73% 18%, rgba(224,235,255,.84) 0 .9px, transparent 1.3px),
+    radial-gradient(circle at 91% 63%, rgba(139,177,239,.82) 0 .8px, transparent 1.2px) !important;
+}
+@media (max-width: 760px) {
+  :root[data-header-design="cinematic"] .movie-site .site-header {
+    top: 6px !important;
+    width: calc(100% - 16px) !important;
+  }
+}
