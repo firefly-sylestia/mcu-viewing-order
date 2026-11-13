@@ -9375,3 +9375,43 @@
     filter: blur(0);
   }
 }
+
+/* Stable bottom-nav indicator: keep its origin fixed and animate only its X offset. */
+:root .movie-site .bottom-nav .nav-blob,
+:root .movie-site .bottom-nav[data-holding="true"] .nav-blob {
+  left: 5px !important;
+  width: calc((100% - 10px - (var(--nav-count, 5) - 1) * var(--nav-gap, 4px)) / var(--nav-count, 5)) !important;
+  transform: translate3d(calc(var(--nav-index, 0) * (100% + var(--nav-gap, 4px))), 0, 0) !important;
+  transition: transform 640ms cubic-bezier(.18, .82, .22, 1), background 260ms ease, box-shadow 260ms ease !important;
+  will-change: transform;
+}
+:root .movie-site .bottom-nav[data-holding="true"] .nav-blob {
+  transition-duration: 120ms, 260ms, 260ms !important;
+}
+@media (max-width: 560px) {
+  :root .movie-site .bottom-nav .nav-blob,
+  :root .movie-site .bottom-nav[data-holding="true"] .nav-blob {
+    left: 4px !important;
+    width: calc((100% - 8px - (var(--nav-count, 5) - 1) * var(--nav-gap, 3px)) / var(--nav-count, 5)) !important;
+  }
+}
+
+/* The page slide and nav indicator remain animated even when OS reduced-motion is set. */
+:root .movie-site .nav-page-transition {
+  animation: navPageSlideIn 460ms cubic-bezier(.18, .82, .22, 1) both !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root .movie-site .nav-page-transition {
+    animation: navPageSlideIn 460ms cubic-bezier(.18, .82, .22, 1) both !important;
+  }
+  :root .movie-site .bottom-nav .nav-blob {
+    transition: transform 640ms cubic-bezier(.18, .82, .22, 1) !important;
+  }
+}
+/* Even if Performance mode is deliberately enabled, keep primary navigation usable. */
+.performance-mode .movie-site .nav-page-transition {
+  animation: navPageSlideIn 460ms cubic-bezier(.18, .82, .22, 1) both !important;
+}
+.performance-mode .movie-site .bottom-nav .nav-blob {
+  transition: transform 640ms cubic-bezier(.18, .82, .22, 1) !important;
+}

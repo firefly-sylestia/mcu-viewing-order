@@ -55,6 +55,12 @@ const readStored = (key, fallback) => {
     return fallback
   }
 }
+// Keep the legacy performance mode off by default; it globally suppresses animations.
+try {
+  localStorage.setItem('performance-mode', '0');
+  document.documentElement.classList.remove('performance-mode');
+} catch {}
+
 const storedTheme = readStored('theme', 'light')
 document.documentElement.setAttribute('data-theme', storedTheme)
 

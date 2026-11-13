@@ -251,13 +251,24 @@ function SettingsPanel({ installApp, installAvailable, appInstalled, query = '',
   const { theme, setTheme } = useAppTheme();
   const { variant, setVariant } = useUiVariant();
   const [hapticsOn, setHapticsOn] = useState(() => getHapticsEnabled());
+  const [performanceModeOn, setPerformanceModeOn] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [draft, setDraft] = useState(profileName);
   const [editing, setEditing] = useState(false);
   const inputRef = useRef(null);
   const [confirmingLogout, setConfirmingLogout] = useState(false);
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+    document.documentElement.classList.remove('performance-mode');
+    try { localStorage.setItem('performance-mode', '0'); } catch {}
+  }, []);
+
+  const updatePerformanceMode = (enabled) => {
+    setPerformanceModeOn(enabled);
+    document.documentElement.classList.toggle('performance-mode', enabled);
+    try { localStorage.setItem('performance-mode', enabled ? '1' : '0'); } catch {}
+  };
 
   const saveName = () => {
     const trimmed = draft.trim();
@@ -335,6 +346,28 @@ function SettingsPanel({ installApp, installAvailable, appInstalled, query = '',
               <span className="theme-toggle-thumb">
                 <Vibrate size={14} />
               </span>
+            </span>
+          </button>
+        </div>
+      </div>
+
+        <div className="settings-row">
+          <div className="settings-row-label">
+            <span className="settings-row-icon"><Sparkles size={18} /></span>
+            <div>
+              <strong>Performance mode</strong>
+              <small>{performanceModeOn ? 'Reduced visual effects and animations' : 'Off · full animations and transitions enabled'}</small>
+            </div>
+          </div>
+          <button
+            className="theme-toggle"
+            role="switch"
+            aria-checked={performanceModeOn}
+            onClick={() => updatePerformanceMode(!performanceModeOn)}
+            aria-label={`Turn performance mode ${performanceModeOn ? 'off' : 'on'}`}
+          >
+            <span className={`theme-toggle-track ${performanceModeOn ? 'dark' : 'light'}`}>
+              <span className="theme-toggle-thumb"><Sparkles size={14} /></span>
             </span>
           </button>
         </div>
