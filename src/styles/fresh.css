@@ -9002,3 +9002,48 @@
 :root[data-theme="light"][data-header-design="cinematic"] .movie-site .site-header .stats-universe-tabs button.active {
   background: rgba(20,25,35,.19) !important;
 }
+
+
+/* Use a real backdrop element for the next-title artwork. Earlier cinematic
+   preset rules repeatedly disable ::before/::after, so pseudo-elements are
+   not reliable for this image layer. */
+:root[data-header-design="cinematic"] .movie-site .site-header {
+  position: relative !important;
+  isolation: isolate !important;
+  overflow: hidden !important;
+}
+:root[data-header-design="cinematic"] .movie-site .site-header .header-image-backdrop {
+  display: block !important;
+  position: absolute !important;
+  inset: -34px !important;
+  z-index: 0 !important;
+  pointer-events: none !important;
+  border-radius: inherit !important;
+  background-image: var(--header-next-art, none) !important;
+  background-size: cover !important;
+  background-position: center 38% !important;
+  background-repeat: no-repeat !important;
+  filter: blur(24px) saturate(1.22) !important;
+  transform: scale(1.13) !important;
+  opacity: .58 !important;
+}
+:root[data-header-design="cinematic"] .movie-site .site-header > .header-image-backdrop {
+  z-index: 0 !important;
+}
+:root[data-header-design="cinematic"] .movie-site .site-header > .header-universe-backdrop {
+  z-index: 1 !important;
+}
+:root[data-header-design="cinematic"] .movie-site .site-header > .header-top,
+:root[data-header-design="cinematic"] .movie-site .site-header > .header-bar {
+  position: relative !important;
+  z-index: 2 !important;
+}
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site .site-header .header-image-backdrop {
+  display: block !important;
+  opacity: .66 !important;
+  filter: blur(24px) saturate(1.22) !important;
+  background-image: var(--header-next-art, none) !important;
+}
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site .site-header {
+  background: rgba(0,0,0,.02) !important;
+}

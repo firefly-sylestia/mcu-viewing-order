@@ -1276,6 +1276,7 @@ export default function App() {
   <div className="site-glow" />
       {section !== 'profile' && (
       <header className="site-header header-cinematic" data-header="cinematic" style={{ "--header-next-art": nextUp?.backdrop ? `url("${nextUp.backdrop}")` : nextUp?.poster ? `url("${nextUp.poster}")` : "none" }}>
+  <div className="header-image-backdrop" aria-hidden="true" />
   <div className="header-universe-backdrop" aria-hidden="true"><span>{UNIVERSE_LOGOS[universe]}</span></div>
   <div className="header-top">
   {section === 'profile' ? null : <>
