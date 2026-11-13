@@ -9968,3 +9968,34 @@
     clip-path: inset(0 round 23px 23px 42px 42px / 22px 22px 34px 34px) !important;
   }
 }
+
+
+/* Match the edge-to-edge system status area to the installed app's theme.
+   The graphite dark edge is intentionally near-black, not washed-out grey. */
+:root[data-theme="dark"] {
+  color-scheme: dark !important;
+  background-color: #111318 !important;
+}
+:root[data-theme="dark"] body,
+:root[data-theme="dark"] #root {
+  background-color: #111318 !important;
+}
+:root[data-theme="dark"][data-top-atmosphere="on"] .movie-site {
+  --top-atmosphere-edge: #111318 !important;
+}
+:root[data-top-atmosphere="on"] .movie-site::before {
+  filter: none !important;
+  opacity: 1 !important;
+}
+:root[data-top-atmosphere="on"][data-theme="dark"] .movie-site::before {
+  background-color: #111318 !important;
+  background-image:
+    linear-gradient(to bottom, #111318 0%, rgba(17,19,24,.96) 14%, rgba(17,19,24,.62) 36%, transparent 78%),
+    var(--top-atmosphere-art, none) !important;
+}
+:root[data-top-atmosphere="on"][data-theme="light"] .movie-site::before {
+  background-color: #ffffff !important;
+  background-image:
+    linear-gradient(to bottom, #ffffff 0%, rgba(255,255,255,.96) 14%, rgba(255,255,255,.62) 36%, transparent 78%),
+    var(--top-atmosphere-art, none) !important;
+}

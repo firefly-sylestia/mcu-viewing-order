@@ -30,10 +30,20 @@ function useUiVariant() {
 
 function applyBrowserTheme(theme) {
   const isDark = theme === 'dark';
-  const color = isDark ? '#000000' : '#ffffff';
+  const color = isDark ? '#111318' : '#ffffff';
   document.documentElement.setAttribute('data-theme', theme);
   document.documentElement.style.colorScheme = theme;
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', color);
+  // Recreate the meta node instead of mutating it: Chromium-based installed
+  // PWAs can miss runtime updates to an existing theme-color element.
+  const previousMeta = document.querySelector('meta[name="theme-color"]');
+  const themeMeta = document.createElement('meta');
+  themeMeta.name = 'theme-color';
+  themeMeta.content = color;
+  if (previousMeta) previousMeta.replaceWith(themeMeta);
+  else document.head.appendChild(themeMeta);
+  // Keep the edge-to-edge system area backed by the exact same opaque color.
+  document.documentElement.style.backgroundColor = color;
+  document.body.style.backgroundColor = color;
   document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')?.setAttribute('content', isDark ? 'black-translucent' : 'default');
 }
 
