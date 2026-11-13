@@ -9441,3 +9441,97 @@
     display: none !important;
   }
 }
+
+
+/* Align the cinematic Home, List and Insights headers to the same full page
+   rail as the content below, on desktop and mobile alike. */
+:root[data-header-design="cinematic"] .movie-site .site-header {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  max-width: 1280px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+@media (max-width: 760px) {
+  :root[data-header-design="cinematic"] .movie-site .site-header {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 10px 0 18px !important;
+  }
+}
+
+/* Insights progress lives in the header. Only its track is a glass surface;
+   the percentage remains clean text directly on the header artwork. */
+:root[data-header-design="cinematic"] .movie-site.page-analytics .site-header .header-bar {
+  display: flex !important;
+  align-items: center !important;
+  gap: 18px !important;
+}
+:root[data-header-design="cinematic"] .movie-site.page-analytics .site-header .header-tools {
+  margin-left: 0 !important;
+  flex: 0 0 auto !important;
+}
+:root[data-header-design="cinematic"] .movie-site.page-analytics .stats-header-progress {
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  flex: 1 1 auto !important;
+  min-width: 100px !important;
+  margin-left: auto !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--fx-text, currentColor) !important;
+}
+:root[data-header-design="cinematic"] .movie-site.page-analytics .stats-progress-label {
+  flex: 0 0 auto !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  letter-spacing: -.02em !important;
+  white-space: nowrap !important;
+}
+:root[data-header-design="cinematic"] .movie-site.page-analytics .stats-progress-track {
+  position: relative !important;
+  display: block !important;
+  flex: 1 1 auto !important;
+  min-width: 56px !important;
+  height: 7px !important;
+  overflow: hidden !important;
+  border-radius: 999px !important;
+  background: color-mix(in srgb, currentColor 12%, transparent) !important;
+  border: 1px solid color-mix(in srgb, currentColor 9%, transparent) !important;
+  box-shadow: inset 0 1px 3px color-mix(in srgb, currentColor 10%, transparent) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(145%) !important;
+  backdrop-filter: blur(12px) saturate(145%) !important;
+}
+:root[data-header-design="cinematic"] .movie-site.page-analytics .stats-progress-track > span {
+  display: block !important;
+  height: 100% !important;
+  border-radius: inherit !important;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--brand-accent, #668fce) 78%, white), color-mix(in srgb, var(--brand-accent, #668fce) 92%, white)) !important;
+  box-shadow: 0 0 12px color-mix(in srgb, var(--brand-accent, #668fce) 35%, transparent) !important;
+  transition: width .55s cubic-bezier(.2,.75,.25,1) !important;
+}
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site.page-analytics .stats-progress-track {
+  background: rgba(225,235,250,.10) !important;
+  border-color: rgba(225,235,250,.10) !important;
+}
+@media (max-width: 760px) {
+  :root[data-header-design="cinematic"] .movie-site.page-analytics .site-header .header-bar {
+    align-items: stretch !important;
+    flex-wrap: wrap !important;
+  }
+  :root[data-header-design="cinematic"] .movie-site.page-analytics .stats-header-progress {
+    flex: 1 0 100% !important;
+    width: 100% !important;
+    margin: 4px 0 0 !important;
+    gap: 12px !important;
+  }
+}

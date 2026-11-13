@@ -1328,6 +1328,10 @@ export default function App() {
     <button data-universe="all" className={statsUniverses.length === 4 ? 'active' : ''} aria-pressed={statsUniverses.length === 4} onClick={() => { hapticTap(); setStatsUniverses(['marvel','sony','xmen','dc']); }}>All</button>
     {['marvel','sony','xmen','dc'].map(key => <button key={key} data-universe={key} className={statsUniverses.includes(key) && statsUniverses.length !== 4 ? 'active' : ''} aria-label={key === 'xmen' ? 'X-Men' : key[0].toUpperCase()+key.slice(1)} title={key === 'xmen' ? 'X-Men' : key[0].toUpperCase()+key.slice(1)} aria-pressed={statsUniverses.includes(key) && statsUniverses.length !== 4} onClick={() => { hapticTap(); setStatsUniverses(current => current.length === 4 ? [key] : current.includes(key) ? (current.length > 1 ? current.filter(item => item !== key) : current) : [...current,key]); }}><span className="universe-logo" aria-hidden="true">{UNIVERSE_LOGOS[key]}</span></button>)}
   </div> : null}
+  {section === 'analytics' && <div className="stats-header-progress" aria-label={`${stats.percent}% complete`}>
+    <span className="stats-progress-label">{stats.percent}% complete</span>
+    <div className="stats-progress-track"><span style={{ width: `${stats.percent}%` }} /></div>
+  </div>}
   {section === 'profile' ? null : section === 'analytics' ? null : <>
   <div className={`header-phase-menu ${section === 'home' ? 'home-hidden-phase' : ''}`}>
   <button ref={phaseButtonRef} className={`header-phase-btn ${phaseFilter !== 'All' ? 'active' : ''}`} onClick={() => { const rect = phaseButtonRef.current?.getBoundingClientRect(); if (rect) setPhaseMenuPosition({ top: rect.bottom + 7, left: rect.left }); setPhaseMenuOpen(open => !open); }} aria-expanded={phaseMenuOpen} aria-haspopup="listbox">
@@ -2067,7 +2071,7 @@ function RatingChips({ item }) {
 }
 
 function AnalyticsPanel({ stats, large = false }) {
-  return <section className={`analytics-panel ${large ? 'large' : ''}`}><div><p className="eyebrow">Analytics</p><h2>{stats.percent}% complete</h2><div className="progress"><span style={{ width: `${stats.percent}%` }} /></div></div><div className="stat-grid"><div><b>{stats.total}</b><span>Total</span></div><div><b>{stats.watching}</b><span>Watching</span></div><div><b>{stats.watched}</b><span>Watched</span></div><div><b>{stats.dropped}</b><span>Dropped</span></div><div><b>{stats.bookmarked}</b><span>Saved</span></div><div><b>{stats.watchedTime}</b><span>Watch Time</span></div></div></section>;
+  return <section className={`analytics-panel ${large ? 'large' : ''}`}><div className="stat-grid"><div><b>{stats.total}</b><span>Total</span></div><div><b>{stats.watching}</b><span>Watching</span></div><div><b>{stats.watched}</b><span>Watched</span></div><div><b>{stats.dropped}</b><span>Dropped</span></div><div><b>{stats.bookmarked}</b><span>Saved</span></div><div><b>{stats.watchedTime}</b><span>Watch Time</span></div></div></section>;
 }
 
 function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, onOpenItem, activeItems }) {
