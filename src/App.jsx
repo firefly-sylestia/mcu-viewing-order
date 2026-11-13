@@ -1017,7 +1017,13 @@ export default function App() {
     if (!needRatings.length) return;
     let cancelled = false;
     const fetchOmdbBatch = async (idx) => {
-      if (cancelled || idx >= needRatings.length) return;
+      if (cancelled) return;
+      if (idx >= needRatings.length) {
+        // Re-enrich the catalogue once after the full queue, not after every
+        // six-title batch. Avoid repeated full-catalogue work during scrolling.
+        setOmdbVersion(v => v + 1);
+        return;
+      }
       // A little more parallelism makes visible ratings populate quickly without
       // flooding the OMDb proxy with one request per title at once.
       const batch = needRatings.slice(idx, idx + 6);
@@ -1041,7 +1047,7 @@ export default function App() {
           }
         } catch {}
       }));
-      if (!cancelled) { setOmdbVersion(v => v + 1); fetchOmdbBatch(idx + 6); }
+      if (!cancelled) fetchOmdbBatch(idx + 6);
     };
     fetchOmdbBatch(0);
     return () => { cancelled = true; };
