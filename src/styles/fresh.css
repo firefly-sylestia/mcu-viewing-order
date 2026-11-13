@@ -9089,10 +9089,6 @@
 }
 
 
-/* Give the light-mode Marvel / Sony / X-Men / DC rail a touch more presence. */
-:root[data-theme="light"][data-header-design="cinematic"] .movie-site .site-header .universe-tabs {
-  background: rgba(248,250,255,.30) !important;
-}
 
 
 /* Dark Home/List: the page-scoped row surface has higher specificity.
@@ -9109,4 +9105,19 @@
 :root[data-theme="dark"][data-header-design="cinematic"] .movie-site.page-home .site-header > .header-top::before,
 :root[data-theme="dark"][data-header-design="cinematic"] .movie-site.page-list .site-header > .header-top::before {
   opacity: 0 !important;
+}
+
+
+/* Put the light glass tint on the individual universe controls, not their
+   outer rail. Give the List search field the same treatment, 10 points lighter. */
+:root[data-theme="light"][data-header-design="cinematic"] .movie-site .site-header .universe-tabs > button {
+  background: rgba(248,250,255,.30) !important;
+  border-radius: 999px !important;
+}
+:root[data-theme="light"][data-header-design="cinematic"] .movie-site.page-list .site-header .header-search {
+  background: rgba(248,250,255,.20) !important;
+  border-radius: 999px !important;
+}
+:root[data-theme="light"][data-header-design="cinematic"] .movie-site.page-list .site-header .header-search:focus-within {
+  background: rgba(248,250,255,.20) !important;
 }
