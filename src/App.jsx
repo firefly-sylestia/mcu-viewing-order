@@ -264,39 +264,78 @@ export default function App() {
     return () => window.removeEventListener('ui-variant-changed', onVariant);
   }, []);
 
-  // One subtle tick each time the vertical list advances to another poster row.
-  // The row crossing the viewport's reading line defines the haptic cadence.
+  // Row cadence + page-edge feedback. Works for home grids, list rows,
+  // and nested scroll containers without firing repeatedly during momentum.
   useEffect(() => {
     if (typeof window === 'undefined' || typeof document === 'undefined') return undefined;
     const touchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
     if (!touchDevice) return undefined;
 
+    const edgeState = new WeakMap();
     let activeRow = null;
-    let lastPulseAt = 0;
+    let lastRowPulseAt = 0;
     let raf = 0;
-    const readingLine = () => Math.round(window.innerHeight * 0.46);
+    let pendingTarget = null;
 
-    const onScroll = () => {
+    const scrollElementFor = (target) => {
+      if (target === document || target === document.documentElement || target === document.body) {
+        return document.scrollingElement || document.documentElement;
+      }
+      return target && typeof target.scrollTop === 'number' ? target : null;
+    };
+
+    const onScroll = (event) => {
+      pendingTarget = event.target;
       if (raf) return;
       raf = window.requestAnimationFrame(() => {
         raf = 0;
-        const x = Math.round(window.innerWidth * 0.5);
-        const y = readingLine();
-        const element = document.elementFromPoint(x, y);
-        const row = element?.closest?.('.list-row');
-        const rowId = row?.getAttribute('aria-label') || row?.dataset?.rowId || null;
+        const target = pendingTarget;
+        pendingTarget = null;
+        const scroller = scrollElementFor(target);
+        if (!scroller) return;
 
-        if (row && rowId && activeRow !== null && rowId !== activeRow) {
-          const now = performance.now();
-          // A short guard prevents multiple pulses when momentum scroll crosses
-          // a row boundary in adjacent animation frames.
-          if (now - lastPulseAt >= 105) {
-            hapticScroll();
-            lastPulseAt = now;
+        const top = Math.max(0, scroller.scrollTop || 0);
+        const max = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
+        const atTop = top <= 2;
+        const atEnd = max > 8 && top >= max - 3;
+        const previous = edgeState.get(scroller) || { top: true, end: false };
+
+        if (atTop && !previous.top && top < 8) hapticScrollEdge();
+        if (atEnd && !previous.end) hapticScrollEdge();
+        edgeState.set(scroller, { top: atTop, end: atEnd });
+
+        // Identify the poster row crossing a stable reading line. Grid cards
+        // sharing an offsetTop are one row; list entries each count as a row.
+        const line = Math.round(window.innerHeight * 0.47);
+        const cards = Array.from(document.querySelectorAll('.movie-grid > .movie-card, .list-grid > .list-row, .movie-grid > .continue-card'));
+        let candidate = null;
+        let bestDistance = Infinity;
+        for (const card of cards) {
+          const rect = card.getBoundingClientRect();
+          if (rect.bottom <= line || rect.top >= line) continue;
+          const distance = Math.abs((rect.left + rect.right) / 2 - window.innerWidth / 2);
+          if (distance < bestDistance) {
+            bestDistance = distance;
+            candidate = card;
           }
         }
-        if (rowId) activeRow = rowId;
-        else if (!row) activeRow = null;
+
+        if (candidate) {
+          const isListRow = candidate.classList.contains('list-row');
+          const rowKey = isListRow
+            ? `list:${candidate.dataset.rowId || candidate.getAttribute('aria-label') || candidate.querySelector('h3,h2,.list-title')?.textContent || candidate.offsetTop}`
+            : `grid:${candidate.parentElement?.className || 'grid'}:${candidate.offsetTop}`;
+          if (activeRow !== null && rowKey !== activeRow) {
+            const now = performance.now();
+            if (now - lastRowPulseAt >= 90) {
+              hapticScroll();
+              lastRowPulseAt = now;
+            }
+          }
+          activeRow = rowKey;
+        } else {
+          activeRow = null;
+        }
       });
     };
 
