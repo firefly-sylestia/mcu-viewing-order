@@ -60,7 +60,7 @@ const formatTimeAgo = (timestamp) => {
   return 'Synced ' + Math.floor(hours / 24) + 'd ago';
 };
 
-function ProfilePage({ installApp, installAvailable, appInstalled, stats, activeItems, universe, activeTab = 'insights', query = '', setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, profileName, setProfileName, user, configured, onLogin, onLogout, lastSynced, syncing, onSync, conflict, onResolveRemote, onResolveLocal, syncToast, nativePlayer, setNativePlayer, headerDesign = 'classic', setHeaderDesign }) {
+function ProfilePage({ pageHeader, setActiveTab, installApp, installAvailable, appInstalled, stats, activeItems, universe, activeTab = 'insights', query = '', setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, profileName, setProfileName, user, configured, onLogin, onLogout, lastSynced, syncing, onSync, conflict, onResolveRemote, onResolveLocal, syncToast, nativePlayer, setNativePlayer, headerDesign = 'classic', setHeaderDesign }) {
   
   const savedItems = activeItems.filter(i => i.bookmarked);
   const inProgressItems = activeItems.filter(i => i.userStatus === 'watching');
@@ -69,6 +69,10 @@ function ProfilePage({ installApp, installAvailable, appInstalled, stats, active
 
   return (
     <div className="profile-page">
+      {pageHeader}
+      <nav className="profile-page-tabs shared-switcher" role="tablist" aria-label="Profile sections">
+        {['insights', 'saved', 'settings'].map(tab => <button key={tab} type="button" role="tab" aria-selected={activeTab === tab} className={activeTab === tab ? 'active' : ''} onClick={() => setActiveTab?.(tab)}>{tab === 'insights' ? 'Insights' : tab === 'saved' ? 'Saved' : 'Settings'}</button>)}
+      </nav>
       {/* Sync Toast */}
       {syncToast?.type === 'error' && (
         <div className={`sync-toast ${syncToast.type === 'error' ? 'sync-toast-error' : ''}`}>

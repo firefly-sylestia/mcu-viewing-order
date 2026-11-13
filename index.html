@@ -21,6 +21,18 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" media="print" onload="this.media='all'" />
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" /></noscript>
     
+    <!-- Apply persistent interface choices before styles and React mount to prevent header/theme flashes. -->
+    <script>
+      try {
+        document.documentElement.setAttribute('data-header-design', 'cinematic');
+        document.documentElement.setAttribute('data-ui', localStorage.getItem('ui-variant') || 'fresh');
+        document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'light');
+      } catch {
+        document.documentElement.setAttribute('data-header-design', 'cinematic');
+        document.documentElement.setAttribute('data-ui', 'fresh');
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    </script>
     <!-- Apply the light default immediately to avoid a dark flash before the app mounts. -->
     <style>
       html, body, #root {

@@ -7734,3 +7734,118 @@
     background: rgba(6,13,24,.25) !important;
   }
 }
+
+
+/* Profile page refresh: keep the global cinematic navigation clean and move
+   identity + section controls into the page canvas itself. */
+:root .movie-site.page-profile > .site-header .header-top { display: none !important; }
+:root .movie-site.page-profile > .site-header .header-bar { padding-top: 8px !important; }
+:root .movie-site.page-profile .profile-page {
+  width: 100% !important;
+  max-width: none !important;
+  box-sizing: border-box !important;
+  margin: 0 auto !important;
+  padding: 8px 0 120px !important;
+}
+:root .movie-site.page-profile .profile-header.profile-header-compact {
+  width: 100% !important;
+  max-width: none !important;
+  box-sizing: border-box !important;
+  min-height: 142px !important;
+  margin: 0 0 18px !important;
+  padding: 24px 30px !important;
+  display: grid !important;
+  grid-template-columns: 76px minmax(220px, 1fr) minmax(220px, .9fr) auto !important;
+  grid-template-areas: "avatar identity next auth" !important;
+  align-items: center !important;
+  gap: 22px !important;
+  text-align: left !important;
+  border: 1px solid rgba(126,157,202,.24) !important;
+  border-radius: 30px !important;
+  background: linear-gradient(112deg, rgba(231,239,251,.82), rgba(209,224,245,.56) 48%, rgba(245,248,253,.78)) !important;
+  box-shadow: 0 22px 52px -38px rgba(31,57,96,.48), inset 0 1px 0 rgba(255,255,255,.76) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(165%) !important;
+  backdrop-filter: blur(32px) saturate(165%) !important;
+}
+:root .movie-site.page-profile .profile-header .profile-avatar { grid-area: avatar !important; width: 76px !important; height: 76px !important; border-radius: 24px !important; }
+:root .movie-site.page-profile .profile-header .profile-info { grid-area: identity !important; min-width: 0 !important; }
+:root .movie-site.page-profile .profile-header .profile-next-up {
+  grid-area: next !important;
+  width: 100% !important;
+  max-width: 360px !important;
+  min-width: 0 !important;
+  justify-self: end !important;
+}
+:root .movie-site.page-profile .profile-header .profile-auth { grid-area: auth !important; width: auto !important; justify-content: flex-end !important; flex-wrap: nowrap !important; }
+:root .movie-site.page-profile .profile-header .profile-title { font-size: clamp(25px, 3vw, 38px) !important; letter-spacing: -.045em !important; }
+:root .movie-site.page-profile .profile-header .profile-brand-kicker { letter-spacing: .18em !important; }
+:root .movie-site.page-profile .profile-page-tabs {
+  width: 100% !important;
+  display: flex !important;
+  justify-content: flex-start !important;
+  align-items: center !important;
+  gap: 7px !important;
+  margin: 0 0 26px !important;
+  padding: 6px !important;
+  border-radius: 999px !important;
+  background: rgba(140,160,190,.12) !important;
+  border: 1px solid rgba(125,150,188,.16) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.35) !important;
+  -webkit-backdrop-filter: blur(22px) !important;
+  backdrop-filter: blur(22px) !important;
+}
+:root .movie-site.page-profile .profile-page-tabs button {
+  min-width: 108px !important;
+  padding: 11px 22px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: transparent !important;
+  color: var(--text-secondary, #667085) !important;
+  font: inherit !important;
+  font-size: 13px !important;
+  font-weight: 650 !important;
+  cursor: pointer !important;
+  transition: background .2s ease, color .2s ease, box-shadow .2s ease !important;
+}
+:root .movie-site.page-profile .profile-page-tabs button.active {
+  color: var(--text-primary, #182235) !important;
+  background: rgba(255,255,255,.78) !important;
+  box-shadow: 0 4px 14px rgba(35,54,82,.10), inset 0 1px 0 rgba(255,255,255,.8) !important;
+}
+:root[data-theme="dark"] .movie-site.page-profile .profile-header.profile-header-compact {
+  background: linear-gradient(112deg, rgba(31,45,66,.94), rgba(19,31,49,.84) 48%, rgba(34,47,68,.92)) !important;
+  border-color: rgba(156,181,218,.18) !important;
+  box-shadow: 0 24px 58px -38px rgba(0,0,0,.76), inset 0 1px 0 rgba(255,255,255,.12) !important;
+}
+:root[data-theme="dark"] .movie-site.page-profile .profile-page-tabs {
+  background: rgba(9,16,27,.48) !important;
+  border-color: rgba(151,176,211,.13) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06) !important;
+}
+:root[data-theme="dark"] .movie-site.page-profile .profile-page-tabs button { color: rgba(220,230,245,.62) !important; }
+:root[data-theme="dark"] .movie-site.page-profile .profile-page-tabs button.active {
+  color: #e7edf7 !important;
+  background: rgba(112,139,177,.22) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 0 5px 18px rgba(0,0,0,.18) !important;
+}
+@media (max-width: 860px) {
+  :root .movie-site.page-profile .profile-page { padding: 4px 0 110px !important; }
+  :root .movie-site.page-profile .profile-header.profile-header-compact {
+    min-height: 0 !important;
+    padding: 16px !important;
+    grid-template-columns: 58px minmax(0,1fr) auto !important;
+    grid-template-areas: "avatar identity auth" "next next next" !important;
+    gap: 12px !important;
+    border-radius: 25px !important;
+  }
+  :root .movie-site.page-profile .profile-header .profile-avatar { width: 58px !important; height: 58px !important; border-radius: 19px !important; }
+  :root .movie-site.page-profile .profile-header .profile-title { font-size: 23px !important; }
+  :root .movie-site.page-profile .profile-header .profile-next-up { max-width: none !important; justify-self: stretch !important; }
+  :root .movie-site.page-profile .profile-header .profile-auth { width: auto !important; justify-content: flex-end !important; }
+  :root .movie-site.page-profile .profile-page-tabs { margin-bottom: 20px !important; }
+  :root .movie-site.page-profile .profile-page-tabs button { flex: 1 1 0 !important; min-width: 0 !important; padding: 11px 8px !important; }
+}
+@media (min-width: 861px) {
+  :root .movie-site.page-profile .profile-page { padding-left: 0 !important; padding-right: 0 !important; }
+  :root .movie-site.page-profile .profile-header .profile-next-up { max-width: 420px !important; }
+}
