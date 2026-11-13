@@ -10001,36 +10001,32 @@
 }
 
 
-/* Keep the poster atmosphere independently blurred beneath the crisp status
-   edge, so the near-black top never turns grey from filtering the whole layer. */
-:root[data-top-atmosphere="on"] .movie-site::after {
-  content: "" !important;
-  position: absolute !important;
-  z-index: 0 !important;
-  pointer-events: none !important;
-  top: -8px !important;
-  left: -34px !important;
-  right: -34px !important;
-  height: min(760px, 92vh) !important;
-  background: var(--top-atmosphere-art, none) center top / cover no-repeat !important;
-  filter: blur(28px) saturate(118%) !important;
-  opacity: .58 !important;
-  transform: translateZ(0) scale(1.04) !important;
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 34%, rgba(0,0,0,.8) 60%, transparent 100%) !important;
-  mask-image: linear-gradient(to bottom, #000 0%, #000 34%, rgba(0,0,0,.8) 60%, transparent 100%) !important;
+/* Poster artwork and theme gradient share the original single blurred layer. */
+
+
+/* Restore the original header corner silhouette while retaining the border removal. */
+:root[data-header-design="cinematic"] .movie-site .site-header,
+:root[data-header-design="cinematic"] .movie-site.page-analytics .site-header {
+  border-radius: 26px !important;
+}
+:root[data-header-design="cinematic"] .movie-site .site-header > .header-image-backdrop {
+  clip-path: inset(0 round 24px) !important;
 }
 :root[data-top-atmosphere="on"] .movie-site::before {
-  z-index: 1 !important;
+  filter: blur(25px) saturate(118%) !important;
+  opacity: .88 !important;
 }
-:root[data-top-atmosphere="on"] .movie-site > * {
-  z-index: 2 !important;
-}
-:root[data-top-atmosphere="off"] .movie-site::after {
-  content: none !important;
+@media (max-width: 620px) {
+  :root[data-header-design="cinematic"] .movie-site .site-header,
+  :root[data-header-design="cinematic"] .movie-site.page-analytics .site-header {
+    border-radius: 22px !important;
+  }
+  :root[data-header-design="cinematic"] .movie-site .site-header > .header-image-backdrop {
+    clip-path: inset(0 round 22px) !important;
+  }
 }
 @media (max-width: 760px) {
-  :root[data-top-atmosphere="on"] .movie-site::after {
-    height: min(650px, 86vh) !important;
-    filter: blur(30px) saturate(116%) !important;
+  :root[data-top-atmosphere="on"] .movie-site::before {
+    filter: blur(29px) saturate(116%) !important;
   }
 }
