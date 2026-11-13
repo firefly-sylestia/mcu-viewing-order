@@ -371,6 +371,7 @@ export default function App() {
   });
   const [heroIndex, setHeroIndex] = useState(0);
   const [section, setSection] = useState(parseHash().section || saved.section || 'home');
+  const [sectionDirection, setSectionDirection] = useState(1);
 
   const [navHoldIndex, setNavHoldIndex] = useState(null);
   const [navHolding, setNavHolding] = useState(false);
@@ -445,13 +446,19 @@ export default function App() {
     window.setTimeout(() => { navSwallowClick.current = false; }, 80);
     resetNavHold();
     const target = NAV_VISIBLE[index];
-    if (target) { setSection(target); if (target === 'home') setWatchItem(null); }
+    if (target) navigateSection(target);
+  };
+  const navigateSection = (id) => {
+    const from = NAV_VISIBLE.indexOf(section);
+    const to = NAV_VISIBLE.indexOf(id);
+    if (to !== -1 && from !== -1 && to !== from) setSectionDirection(to > from ? 1 : -1);
+    setSection(id);
+    if (id === 'home') setWatchItem(null);
   };
   const handleNavClick = (id) => {
     if (navSwallowClick.current) return;
     hapticTap();
-    setSection(id);
-    if (id === 'home') setWatchItem(null);
+    navigateSection(id);
   };
   useEffect(() => {
     if (!WATCH_ENABLED && section === 'watch') setSection('home');
@@ -1348,6 +1355,7 @@ export default function App() {
       </header>
       )}
 
+      <div key={`nav-page-${section}`} className="nav-page-transition" data-direction={sectionDirection}>
       {section === 'home' && !adBlockerDismissed && <AdBlockerDialog onDismiss={() => { setAdBlockerDismissed(true); localStorage.setItem('adblocker-dismissed', '1'); }} />}
       {section === 'home' && <>
         {uiVariant === 'control' && <ControlOverview
@@ -1436,6 +1444,7 @@ export default function App() {
             {section === 'profile' && <ProfilePage pageHeader={<ProfileHeader universe={universe} stats={stats} profileName={profileName} watchingItem={profileWatchingItem} nextUp={profileNextUpItem} onSelectItem={selectItem} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} />} activeTab={profileTab} setActiveTab={(tab) => { hapticTap(); setProfileTab(tab); setQuery(''); }} installApp={installApp} installAvailable={!!installPromptEvent} appInstalled={appInstalled} stats={profileStats} activeItems={profileItems} universe="all" query={query} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} conflict={conflict} onResolveRemote={resolveUseRemote} onResolveLocal={resolveKeepLocal} syncToast={toast} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} headerDesign={headerDesign} setHeaderDesign={setHeaderDesign} />}
       {WATCH_ENABLED && section === 'watch' && safeWatchItem && <WatchPage watchItem={safeWatchItem} activeItems={roadmapItems} onBack={() => { setWatchItem(null); window.history.replaceState(null, '', '#watch'); }} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={startWatchWithConfirm} updateAction={updateAction} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} />}
       {WATCH_ENABLED && section === 'watch' && !safeWatchItem && <WatchBrowse activeItems={activeItems} externalResults={externalSearchResults} externalLoading={externalSearchLoading} actions={actions} query={query} onStartWatch={startWatchWithConfirm} onPlayExternal={onPlayExternal} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} />}
+      </div>
 
       {warningToast && <div className="app-warning-toast" role="status"><ShieldAlert size={16} /><span>{warningToast}</span><button onClick={() => setWarningToast('')} aria-label="Dismiss warning"><X size={14} /></button></div>}
   <nav

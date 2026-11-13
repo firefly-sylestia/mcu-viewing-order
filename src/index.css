@@ -6275,3 +6275,20 @@ button { border: 0; color: inherit; cursor: pointer; }
 :root[data-theme="light"] .movie-site .bottom-nav .nav-blob {
   background: rgba(255, 255, 255, .20) !important;
 }
+
+
+/* Direction-aware page motion for bottom navigation (including reverse/back navigation). */
+.nav-page-transition {
+  --nav-page-enter-x: 18px;
+  animation: navPageSlideIn 360ms cubic-bezier(.22, 1, .36, 1) both;
+  transform-origin: center top;
+  will-change: opacity, transform;
+}
+.nav-page-transition[data-direction="-1"] { --nav-page-enter-x: -18px; }
+@keyframes navPageSlideIn {
+  from { opacity: .72; transform: translate3d(var(--nav-page-enter-x), 0, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav-page-transition { animation: none !important; transform: none !important; opacity: 1 !important; }
+}
