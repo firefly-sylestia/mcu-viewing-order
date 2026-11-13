@@ -517,7 +517,7 @@ export default function App() {
   // Auto-start watching from item-level deep link (e.g. #watch/iron-man) on mount
   useEffect(() => {
     const { section: s, slug, searchQuery: sq } = parseHash();
-    if (sq) setQuery(sq);
+    if (s === 'list' && sq) setQuery(sq);
     if (s === 'watch' && slug && allItems.length && !watchItem) {
       const found = allItems.find(i => slugifyPosterName(i.title) === slug);
       if (found) handleStartWatch(found, found.tmdbId || null, found.type === 'series' ? 'tv' : 'movie');
@@ -540,7 +540,7 @@ export default function App() {
     if (hashed !== section) {
       const target = section === 'watch' && safeWatchItem
         ? `#watch/${slugifyPosterName(safeWatchItem.item.title)}`
-        : `#${section}`;
+        : section === 'list' && query ? `#list?q=${encodeURIComponent(query)}` : `#${section}`;
       if (initialRender.current) {
         window.history.replaceState(null, '', target);
         initialRender.current = false;
@@ -563,7 +563,7 @@ export default function App() {
     const onHashChange = () => {
       const { section: s, slug, searchQuery: sq } = parseHash();
       if (s) setSection(s);
-      if (sq) setQuery(sq);
+      if (s === 'list') setQuery(sq || '');
       if (s === 'watch' && slug && allItems.length) {
         const found = allItems.find(i => slugifyPosterName(i.title) === slug);
         if (found) handleStartWatch(found, found.tmdbId || null, found.type === 'series' ? 'tv' : 'movie');
@@ -647,7 +647,7 @@ export default function App() {
 
   const profileSettingsSearch = section === 'profile' && profileTab === 'settings';
   const activeItems = useMemo(() => {
-    const activeQuery = profileSettingsSearch ? '' : query;
+    const activeQuery = section === 'list' ? query : '';
     const normalizedQuery = activeQuery.trim().toLowerCase();
     const genreLower = genre.toLowerCase();
     const effectiveRating = (item) => Number(item.rating) || Number(item.imdbRating) || 0;
@@ -679,7 +679,7 @@ export default function App() {
       return (timelineRank(a) - timelineRank(b)) * dir;
     });
     return sorted;
-  }, [enrichedItems, universe, query, profileSettingsSearch, genre, rating, ageRatingFilter, sortBy, sortDirection, phaseFilter, typeFilter]);
+  }, [enrichedItems, universe, query, section, genre, rating, ageRatingFilter, sortBy, sortDirection, phaseFilter, typeFilter]);
 
   // Unfiltered items (no search/filter) for WatchPage/WatchBrowse suggestions
   const roadmapItems = useMemo(() => {
@@ -704,40 +704,40 @@ export default function App() {
     knownItemsRef.current = { titles, tmdbIds };
   }, [allItems]);
 
-  // Fetch external search results with debounce (300ms)
+  // Search is a List-page tool only. Leaving List cancels and clears it.
   useEffect(() => {
-    if (!query || query.length < 2) {
+    if (section !== 'list' || !query || query.length < 2) {
       setExternalSearchResults([]);
       setExternalSearchLoading(false);
-      return;
+      return undefined;
     }
 
+    let cancelled = false;
     setExternalSearchLoading(true);
     const timer = setTimeout(async () => {
       try {
         const response = await fetch(apiUrl(`/api/tmdb/search?q=${encodeURIComponent(query)}`));
-        if (response.ok) {
-          const data = await response.json();
-          // Filter out results already in our database to avoid duplicates
-          const { titles, tmdbIds } = knownItemsRef.current;
-          const filtered = (data.results || []).filter(r => {
-            const titleMatch = r.title?.toLowerCase();
-            return !titles.has(titleMatch) && !tmdbIds.has(r.id);
-          });
-          setExternalSearchResults(filtered);
-        } else {
+        if (!response.ok) throw new Error('TMDB search failed');
+        const data = await response.json();
+        if (cancelled) return;
+        const { titles, tmdbIds } = knownItemsRef.current;
+        const filtered = (data.results || []).filter(r => {
+          const titleMatch = r.title?.toLowerCase();
+          return !titles.has(titleMatch) && !tmdbIds.has(r.id);
+        });
+        setExternalSearchResults(filtered);
+      } catch (error) {
+        if (!cancelled) {
+          console.error('External search error:', error);
           setExternalSearchResults([]);
         }
-      } catch (error) {
-        console.error('External search error:', error);
-        setExternalSearchResults([]);
       } finally {
-        setExternalSearchLoading(false);
+        if (!cancelled) setExternalSearchLoading(false);
       }
     }, 300);
 
-    return () => clearTimeout(timer);
-  }, [query]);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [query, section]);
 
   // Clear expired cache entries and failed items on mount to retry posters
   useEffect(() => {
@@ -1170,7 +1170,7 @@ export default function App() {
       body.style.paddingRight = previousPadding;
     };
   }, [selectedItem]);
-  const nextUp = activeItems.find(item => item.userStatus !== 'watched' && item.userStatus !== 'dropped') || activeItems[0];
+  const nextUp = roadmapItems.find(item => item.userStatus !== 'watched' && item.userStatus !== 'dropped') || roadmapItems[0];
   const playTrailer = (item) => {
     hapticTap();
     const match = getTrailerByTitle(item.title);
@@ -1300,11 +1300,11 @@ export default function App() {
     <button key={key} data-universe={key} role="tab" aria-selected={universe === key} aria-label={`${label} universe`} title={`${label} universe`} className={universe === key ? 'active' : ''} onClick={() => { hapticTap(); setUniverse(key); setHeroIndex(0); }}><span className="universe-logo" aria-hidden="true">{UNIVERSE_LOGOS[key]}</span></button>
   ))}
   </div>}
-        <div className="header-search">
+        {section === 'list' && <div className="header-search">
           <Search size={18} />
-          <input value={query} onChange={e => setQuery(e.target.value)} placeholder={section === 'profile' ? (profileTab === 'settings' ? 'Search settings…' : profileTab === 'saved' ? 'Search saved titles…' : 'Search insights…') : `Search ${universe === 'marvel' ? 'Marvel' : universe === 'xmen' ? 'X-Men' : universe === 'sony' ? 'Sony' : 'DC'} titles & TMDB…`} aria-label={section === 'profile' ? 'Search profile' : 'Search titles'} />
+          <input value={query} onChange={e => setQuery(e.target.value)} placeholder={`Search ${universe === 'marvel' ? 'Marvel' : universe === 'xmen' ? 'X-Men' : universe === 'sony' ? 'Sony' : 'DC'} titles & TMDB…`} aria-label="Search titles" />
           {query && <button className="search-clear" onClick={() => setQuery('')} aria-label="Clear search"><X size={16} /></button>}
-        </div>
+        </div>}
         <div className="header-tools">
   {section === 'analytics' ? <div className="stats-universe-tabs shared-switcher" role="group" aria-label="Filter statistics by universe">
     <button data-universe="all" className={statsUniverses.length === 4 ? 'active' : ''} aria-pressed={statsUniverses.length === 4} onClick={() => { hapticTap(); setStatsUniverses(['marvel','sony','xmen','dc']); }}>All</button>
@@ -1427,7 +1427,7 @@ export default function App() {
         )}
       </>}
 
-      {section === 'list' && <ListSection items={activeItems} sortBy={sortBy} sortDirection={sortDirection} sortKey={`${sortBy}-${sortDirection}`} externalResults={externalSearchResults} externalLoading={externalSearchLoading} query={query} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} onPlayExternal={onPlayExternal} onWarning={showWarningToast} />}
+      {section === 'list' && <ListSection items={activeItems} sortBy={sortBy} sortDirection={sortDirection} sortKey={`${sortBy}-${sortDirection}`} externalResults={externalSearchResults} externalLoading={externalSearchLoading} query="" setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} onPlayExternal={onPlayExternal} onWarning={showWarningToast} />}
       {section === 'analytics' && <><AnalyticsPanel stats={stats} large />{[['Watching','watching'],['Watched','watched'],['Dropped','dropped']].map(([label,status]) => { const items = analyticsItems.filter(item => item.userStatus === status); return items.length ? <MovieRail key={status} title={label} items={items} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} /> : null; })}</>}
             {section === 'profile' && <ProfilePage pageHeader={<ProfileHeader universe={universe} stats={stats} profileName={profileName} watchingItem={profileWatchingItem} nextUp={profileNextUpItem} onSelectItem={selectItem} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} />} activeTab={profileTab} setActiveTab={(tab) => { hapticTap(); setProfileTab(tab); setQuery(''); }} installApp={installApp} installAvailable={!!installPromptEvent} appInstalled={appInstalled} stats={profileStats} activeItems={profileItems} universe="all" query={query} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} conflict={conflict} onResolveRemote={resolveUseRemote} onResolveLocal={resolveKeepLocal} syncToast={toast} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} headerDesign={headerDesign} setHeaderDesign={setHeaderDesign} />}
       {WATCH_ENABLED && section === 'watch' && safeWatchItem && <WatchPage watchItem={safeWatchItem} activeItems={roadmapItems} onBack={() => { setWatchItem(null); window.history.replaceState(null, '', '#watch'); }} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={startWatchWithConfirm} updateAction={updateAction} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} />}
