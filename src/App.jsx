@@ -1265,6 +1265,7 @@ export default function App() {
   <SeoHead section={section} selectedTitle={selectedTitle} />
   <main className={`movie-site universe-${universe} page-${section}`} style={{ '--brand-accent': universeAccent, '--accent': universeAccent, '--theme-accent': universeAccent }}>
   <div className="site-glow" />
+      {section !== 'profile' && (
       <header className="site-header header-cinematic" data-header="cinematic">
   <div className="header-universe-backdrop" aria-hidden="true"><span>{UNIVERSE_LOGOS[universe]}</span></div>
   <div className="header-top">
@@ -1332,6 +1333,7 @@ export default function App() {
         </div>
   </div>
       </header>
+      )}
 
       {section === 'home' && !adBlockerDismissed && <AdBlockerDialog onDismiss={() => { setAdBlockerDismissed(true); localStorage.setItem('adblocker-dismissed', '1'); }} />}
       {section === 'home' && <>
