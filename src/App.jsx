@@ -1332,7 +1332,7 @@ export default function App() {
           onPhase={(phase) => setPhaseFilter(phase)}
         />}
         <section className="hero-layout" key={universe}>
-          <TopCarousel items={heroItems} initialIndex={saved.heroIndex || 0} setSelected={selectItem} />
+          <TopCarousel items={heroItems} initialIndex={(() => { try { return Number(localStorage.getItem('mcu-home-hero-index')) || saved.heroIndex || 0; } catch { return saved.heroIndex || 0; } })()} setSelected={selectItem} />
         </section>
         <UpNextBoard items={activeItems.filter(i => i.userStatus === 'unwatched').slice(0, 10)} setSelected={selectItem} onStart={(item) => startWatchWithConfirm(item, item.tmdbId || null, item.type === 'series' ? 'tv' : 'movie')} />
         <MovieRail title="Essential picks" items={activeItems.filter(i => i.essential)} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} paginated gridControls />
@@ -1511,10 +1511,7 @@ function TopCarousel({ items, initialIndex = 0, setSelected }) {
   const [heroIndex, setHeroIndex] = useState(() => Math.max(0, Number(initialIndex) || 0));
   const featured = items[heroIndex % Math.max(items.length, 1)] || items[0];
   useEffect(() => {
-    try {
-      const savedState = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...savedState, heroIndex }));
-    } catch {}
+    try { localStorage.setItem('mcu-home-hero-index', String(heroIndex)); } catch {}
   }, [heroIndex]);
   const [paused, setPaused] = useState(false);
   const [inlineTrailer, setInlineTrailer] = useState(null);
