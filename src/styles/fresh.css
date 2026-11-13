@@ -8734,3 +8734,21 @@
   background: transparent !important;
   color: rgba(248,250,255,.96) !important;
 }
+
+
+/* Dark mode uses the same poster clarity and blur strength as light mode.
+   Keep only a restrained night tint so the artwork remains recognisable. */
+:root[data-theme="dark"] .movie-site .site-header::before,
+:root[data-theme="dark"] .movie-site.page-home .site-header::before,
+:root[data-theme="dark"] .movie-site.page-list .site-header::before {
+  opacity: .62 !important;
+  filter: blur(22px) saturate(1.24) !important;
+}
+:root[data-theme="dark"] .movie-site .site-header::after,
+:root[data-theme="dark"] .movie-site.page-home .site-header::after,
+:root[data-theme="dark"] .movie-site.page-list .site-header::after {
+  background: linear-gradient(110deg,
+    rgba(3,7,13,.07),
+    rgba(3,7,13,.025) 52%,
+    rgba(3,7,13,.06)) !important;
+}
