@@ -9108,16 +9108,71 @@
 }
 
 
-/* Put the light glass tint on the individual universe controls, not their
-   outer rail. Give the List search field the same treatment, 10 points lighter. */
-:root[data-theme="light"][data-header-design="cinematic"] .movie-site .site-header .universe-tabs > button {
-  background: rgba(248,250,255,.30) !important;
+/* Keep the tint on the complete Marvel / Sony / X-Men / DC rail only.
+   Use theme surfaces so the treatment adapts naturally in light and dark mode. */
+:root[data-header-design="cinematic"] .movie-site .site-header .universe-tabs {
+  background: color-mix(in srgb, var(--fx-surface-2) 30%, transparent) !important;
+  border: 0 !important;
   border-radius: 999px !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: blur(18px) saturate(145%) !important;
+  backdrop-filter: blur(18px) saturate(145%) !important;
 }
-:root[data-theme="light"][data-header-design="cinematic"] .movie-site.page-list .site-header .header-search {
-  background: rgba(248,250,255,.20) !important;
-  border-radius: 999px !important;
+:root[data-header-design="cinematic"] .movie-site .site-header .universe-tabs > button {
+  background: transparent !important;
+  box-shadow: none !important;
 }
+:root[data-theme="light"][data-header-design="cinematic"] .movie-site.page-list .site-header .header-search,
 :root[data-theme="light"][data-header-design="cinematic"] .movie-site.page-list .site-header .header-search:focus-within {
   background: rgba(248,250,255,.20) !important;
+  border-radius: 999px !important;
+}
+
+/* List search must remain visible on desktop as well as mobile. Keep it in
+   the same header row, with enough width to be a usable search field. */
+@media (min-width: 681px) {
+  :root[data-header-design="cinematic"] .movie-site.page-list .site-header .header-bar .header-search {
+    display: flex !important;
+    order: 1 !important;
+    flex: 1 1 260px !important;
+    width: auto !important;
+    min-width: 220px !important;
+    max-width: min(440px, 38vw) !important;
+    min-height: 54px !important;
+    height: 54px !important;
+    box-sizing: border-box !important;
+  }
+  :root[data-header-design="cinematic"] .movie-site.page-list .site-header .header-bar .universe-tabs {
+    order: 0 !important;
+    flex: 0 0 auto !important;
+  }
+  :root[data-header-design="cinematic"] .movie-site.page-list .site-header .header-bar .header-tools {
+    order: 2 !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+  }
+}
+
+/* Incursion and its MCU timeline subtitle sit directly on the header artwork:
+   no rectangular strip, sharp lower corners, border, or hidden pseudo-panel. */
+:root[data-header-design="cinematic"] .movie-site .site-header > .header-top,
+:root[data-header-design="cinematic"] .movie-site .site-header > .header-top::before,
+:root[data-header-design="cinematic"] .movie-site .site-header > .header-top::after {
+  background: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+:root[data-header-design="cinematic"] .movie-site .site-header .brand {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+:root[data-header-design="cinematic"] .movie-site .site-header .brand small {
+  color: var(--fx-muted-strong) !important;
+  opacity: .82 !important;
 }
