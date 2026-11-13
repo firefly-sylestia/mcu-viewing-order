@@ -9246,3 +9246,40 @@
     transition-duration: .01ms;
   }
 }
+
+
+/* Reuse the home header's artwork treatment for an uploaded profile photo.
+   Only render the blurred wash when an actual avatar exists. */
+:root[data-header-design="cinematic"] .movie-site.page-profile .profile-header-compact {
+  position: relative !important;
+  isolation: isolate !important;
+  overflow: hidden !important;
+}
+:root[data-header-design="cinematic"] .movie-site.page-profile .profile-avatar-backdrop {
+  position: absolute !important;
+  inset: -34px !important;
+  z-index: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+  border-radius: inherit !important;
+  opacity: .54 !important;
+}
+:root[data-header-design="cinematic"] .movie-site.page-profile .profile-avatar-backdrop img {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center 35% !important;
+  filter: blur(25px) saturate(1.2) !important;
+  transform: scale(1.14) !important;
+}
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site.page-profile .profile-avatar-backdrop {
+  opacity: .62 !important;
+}
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site.page-profile .profile-avatar-backdrop img {
+  filter: blur(25px) saturate(1.2) brightness(.82) !important;
+}
+:root[data-header-design="cinematic"] .movie-site.page-profile .profile-header-compact > :not(.profile-avatar-backdrop) {
+  position: relative;
+  z-index: 1;
+}

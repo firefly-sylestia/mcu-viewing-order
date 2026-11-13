@@ -181,6 +181,7 @@ export function ProfileHeader({ universe, stats, profileName, setProfileName, us
 
   return (
     <div className={`profile-header profile-header-compact ${confirmingLogout ? "logout-confirming" : ""}`}>
+      {(localAvatar || user?.photoURL) && <div className="profile-avatar-backdrop" aria-hidden="true"><img src={localAvatar || user.photoURL} alt="" /></div>}
       <button type="button" className="profile-avatar profile-avatar-edit" onClick={() => setAvatarDialogOpen(true)} aria-label="View profile picture" title="Profile picture">
         {localAvatar || user?.photoURL ? <img src={localAvatar || user.photoURL} alt="" referrerPolicy="no-referrer" /> : <span className="avatar-initials">{avatarInitial}</span>}
       </button>
