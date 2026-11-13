@@ -8569,3 +8569,168 @@
   background: transparent !important;
   color: rgba(248,250,255,.96) !important;
 }
+
+
+/* Restore the next-title poster as a visible, deliberately blurred header
+   backdrop. Keep the glass controls themselves clear of extra surfaces. */
+:root .movie-site .site-header,
+:root .movie-site.page-home .site-header,
+:root .movie-site.page-list .site-header {
+  position: sticky !important;
+  isolation: isolate !important;
+  overflow: hidden !important;
+  background: rgba(255,255,255,.035) !important;
+  background-image: none !important;
+  -webkit-backdrop-filter: blur(16px) saturate(140%) !important;
+  backdrop-filter: blur(16px) saturate(140%) !important;
+  border: 1px solid rgba(255,255,255,.10) !important;
+  box-shadow: 0 18px 44px -32px rgba(0,0,0,.30),
+    inset 0 1px 0 rgba(255,255,255,.12) !important;
+}
+:root .movie-site .site-header::before,
+:root .movie-site.page-home .site-header::before,
+:root .movie-site.page-list .site-header::before {
+  content: "" !important;
+  display: block !important;
+  position: absolute !important;
+  inset: -34px !important;
+  z-index: 0 !important;
+  pointer-events: none !important;
+  border: 0 !important;
+  border-radius: inherit !important;
+  background-image: var(--header-next-art, none) !important;
+  background-size: cover !important;
+  background-position: center 38% !important;
+  background-repeat: no-repeat !important;
+  filter: blur(22px) saturate(1.24) !important;
+  transform: scale(1.12) !important;
+  opacity: .62 !important;
+}
+:root .movie-site .site-header::after,
+:root .movie-site.page-home .site-header::after,
+:root .movie-site.page-list .site-header::after {
+  content: "" !important;
+  display: block !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 1 !important;
+  pointer-events: none !important;
+  border-radius: inherit !important;
+  background: linear-gradient(110deg,
+    rgba(255,255,255,.10),
+    rgba(255,255,255,.025) 52%,
+    rgba(255,255,255,.075)) !important;
+  opacity: 1 !important;
+}
+:root .movie-site .site-header > *,
+:root .movie-site.page-home .site-header > *,
+:root .movie-site.page-list .site-header > * {
+  position: relative !important;
+  z-index: 2 !important;
+}
+:root .movie-site .site-header > .header-top,
+:root .movie-site .site-header > .header-bar,
+:root .movie-site.page-home .site-header > .header-top,
+:root .movie-site.page-home .site-header > .header-bar,
+:root .movie-site.page-list .site-header > .header-top,
+:root .movie-site.page-list .site-header > .header-bar {
+  background: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+:root .movie-site .site-header .universe-tabs,
+:root .movie-site .site-header .header-search,
+:root .movie-site .site-header .stats-universe-tabs,
+:root .movie-site .site-header .header-tools,
+:root .movie-site .site-header .header-tools .header-phase-btn,
+:root .movie-site .site-header .header-sort-btn,
+:root .movie-site .site-header .header-filter-btn,
+:root .movie-site .site-header .header-quick-actions .header-status-pill,
+:root .movie-site.page-home .site-header .universe-tabs,
+:root .movie-site.page-home .site-header .header-search,
+:root .movie-site.page-home .site-header .header-quick-actions .header-status-pill,
+:root .movie-site.page-list .site-header .universe-tabs,
+:root .movie-site.page-list .site-header .header-search,
+:root .movie-site.page-list .site-header .header-tools .header-phase-btn,
+:root .movie-site.page-list .site-header .header-sort-btn,
+:root .movie-site.page-list .site-header .header-filter-btn {
+  background: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+:root .movie-site .site-header .universe-tabs button,
+:root .movie-site .site-header .stats-universe-tabs button {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+:root .movie-site .site-header .universe-tabs button.active,
+:root .movie-site .site-header .stats-universe-tabs button.active {
+  background: rgba(255,255,255,.14) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.16) !important;
+}
+:root .movie-site .site-header .header-status-pill,
+:root .movie-site .site-header .header-status-pill.watching,
+:root .movie-site .site-header .header-status-pill.next {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+:root[data-theme="dark"] .movie-site .site-header,
+:root[data-theme="dark"] .movie-site.page-home .site-header,
+:root[data-theme="dark"] .movie-site.page-list .site-header {
+  background: rgba(5,9,16,.025) !important;
+  border-color: rgba(220,232,250,.08) !important;
+  box-shadow: 0 20px 48px -34px rgba(0,0,0,.48),
+    inset 0 1px 0 rgba(235,243,255,.075) !important;
+}
+:root[data-theme="dark"] .movie-site .site-header::before,
+:root[data-theme="dark"] .movie-site.page-home .site-header::before,
+:root[data-theme="dark"] .movie-site.page-list .site-header::before {
+  opacity: .56 !important;
+  filter: blur(24px) saturate(1.18) brightness(.72) !important;
+}
+:root[data-theme="dark"] .movie-site .site-header::after,
+:root[data-theme="dark"] .movie-site.page-home .site-header::after,
+:root[data-theme="dark"] .movie-site.page-list .site-header::after {
+  background: linear-gradient(110deg,
+    rgba(3,7,13,.13),
+    rgba(3,7,13,.035) 52%,
+    rgba(3,7,13,.11)) !important;
+}
+:root[data-theme="dark"] .movie-site .site-header > .header-top,
+:root[data-theme="dark"] .movie-site .site-header > .header-bar,
+:root[data-theme="dark"] .movie-site .site-header .universe-tabs,
+:root[data-theme="dark"] .movie-site .site-header .header-search,
+:root[data-theme="dark"] .movie-site .site-header .stats-universe-tabs,
+:root[data-theme="dark"] .movie-site .site-header .header-tools,
+:root[data-theme="dark"] .movie-site .site-header .header-tools .header-phase-btn,
+:root[data-theme="dark"] .movie-site .site-header .header-sort-btn,
+:root[data-theme="dark"] .movie-site .site-header .header-filter-btn,
+:root[data-theme="dark"] .movie-site .site-header .header-quick-actions .header-status-pill,
+:root[data-theme="dark"] .movie-site .site-header .universe-tabs button,
+:root[data-theme="dark"] .movie-site .site-header .stats-universe-tabs button {
+  background: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+:root[data-theme="dark"] .movie-site .site-header .universe-tabs button.active,
+:root[data-theme="dark"] .movie-site .site-header .stats-universe-tabs button.active {
+  background: rgba(235,242,255,.12) !important;
+  box-shadow: inset 0 1px 0 rgba(235,243,255,.12) !important;
+}
+:root[data-theme="dark"] .movie-site .site-header .header-status-pill,
+:root[data-theme="dark"] .movie-site .site-header .header-status-pill.watching,
+:root[data-theme="dark"] .movie-site .site-header .header-status-pill.next {
+  background: transparent !important;
+  color: rgba(248,250,255,.96) !important;
+}
