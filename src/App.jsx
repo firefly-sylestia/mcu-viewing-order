@@ -109,6 +109,9 @@ const posterFromManifest = (item, manifest) => {
   const pinned = {
     134: '134-cloak-and-dagger-s1.jpg',
     143: '143-cloak-and-dagger-s2.jpg',
+    // Superman (2025): always use the verified bundled DC one-sheet, never
+    // a stale TMDB/OMDb poster URL retained in local metadata.
+    5022: '5022-superman.jpg',
   }[Number(item?.id)];
   const value = pinned || manifest?.byId?.[String(item.id)] || manifest?.byTitle?.[item.title] || manifest?.[String(item.id)];
   if (!value) return '';
