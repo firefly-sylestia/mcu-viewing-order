@@ -8931,3 +8931,25 @@
   -webkit-backdrop-filter: blur(20px) saturate(145%) !important;
   backdrop-filter: blur(20px) saturate(145%) !important;
 }
+
+
+/* Fine-tune the cinematic header row wash. Keep the existing blur and the
+   individual All phases / sort / filter controls untouched. */
+:root[data-header-design="cinematic"] .movie-site .site-header > .header-top,
+:root[data-header-design="cinematic"] .movie-site .site-header > .header-bar {
+  background: rgba(241,243,248,.225) !important;
+  border-color: rgba(105,122,148,.025) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.22),
+    0 5px 16px -14px rgba(30,45,68,.065) !important;
+}
+
+/* Dark mode mirrors the light row treatment, with only a 2% dark tint. */
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site .site-header > .header-top,
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site .site-header > .header-bar {
+  background:
+    linear-gradient(rgba(0,0,0,.02), rgba(0,0,0,.02)),
+    rgba(241,243,248,.225) !important;
+  border-color: rgba(105,122,148,.025) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.22),
+    0 5px 16px -14px rgba(0,0,0,.065) !important;
+}
