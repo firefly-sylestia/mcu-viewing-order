@@ -312,13 +312,6 @@ function SettingsPanel({ installApp, installAvailable, appInstalled, query = '',
           </div>
         </div>
 
-        <div className="settings-row settings-row-stacked">
-          <div className="settings-row-label"><span className="settings-row-icon"><LayoutGrid size={18} /></span><div><strong>Header design</strong><small>{headerDesign === 'cinematic' ? 'Cinematic · redesigned global header' : 'Classic · current header'}</small></div></div>
-          <div className="variant-switch" role="group" aria-label="Header design">
-            <button className={headerDesign === 'classic' ? 'active' : ''} aria-pressed={headerDesign === 'classic'} onClick={() => { hapticTap(); setHeaderDesign('classic'); }}>Classic</button>
-            <button className={headerDesign === 'cinematic' ? 'active' : ''} aria-pressed={headerDesign === 'cinematic'} onClick={() => { hapticTap(); setHeaderDesign('cinematic'); }}>Cinematic</button>
-          </div>
-        </div>
         <div className="settings-row">
           <div className="settings-row-label">
             <span className="settings-row-icon"><Vibrate size={18} /></span>

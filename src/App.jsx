@@ -189,7 +189,7 @@ export default function App() {
   const [profileTab, setProfileTab] = useState('insights');
   const [statsUniverses, setStatsUniverses] = useState(['marvel', 'sony', 'xmen', 'dc']);
   const [statsUniverseMenuOpen, setStatsUniverseMenuOpen] = useState(false);
-  const [headerDesign, setHeaderDesign] = useState(() => { try { return localStorage.getItem('incursion-header-design') || 'classic'; } catch { return 'classic'; } });
+  const [headerDesign, setHeaderDesign] = useState('cinematic');
   useEffect(() => {
     document.documentElement.setAttribute('data-header-design', headerDesign);
     try { localStorage.setItem('incursion-header-design', headerDesign); } catch {}
@@ -1058,6 +1058,7 @@ export default function App() {
     const watched = analyticsItems.filter(item => item.userStatus === 'watched').length;
     const watching = analyticsItems.filter(item => item.userStatus === 'watching').length;
     const dropped = analyticsItems.filter(item => item.userStatus === 'dropped').length;
+    const unwatched = analyticsItems.filter(item => item.userStatus === 'unwatched').length;
     const bookmarked = analyticsItems.filter(item => item.bookmarked).length;
     const watchedMinutes = analyticsItems.filter(item => item.userStatus === 'watched').reduce((sum, i) => sum + (i.runtime || 0), 0);
     const watchedHours = Math.floor(watchedMinutes / 60);
@@ -1069,7 +1070,7 @@ export default function App() {
       else streak = 1;
       if (streak > best) best = streak;
     }
-    return { total, watched, watching, dropped, bookmarked, percent: Math.round((watched / total) * 100), watchedMinutes, watchedTime, streak: best };
+    return { total, watched, watching, dropped, unwatched, bookmarked, percent: Math.round((watched / total) * 100), watchedMinutes, watchedTime, streak: best };
   }, [analyticsItems]);
   const profileStats = useMemo(() => {
     const items = profileItems;
@@ -1077,6 +1078,7 @@ export default function App() {
     const watched = items.filter(item => item.userStatus === 'watched').length;
     const watching = items.filter(item => item.userStatus === 'watching').length;
     const dropped = items.filter(item => item.userStatus === 'dropped').length;
+    const unwatched = items.filter(item => item.userStatus === 'unwatched').length;
     const bookmarked = items.filter(item => item.bookmarked).length;
     const watchedMinutes = items.filter(item => item.userStatus === 'watched').reduce((sum, item) => sum + (item.runtime || 0), 0);
     const watchedHours = Math.floor(watchedMinutes / 60);
@@ -1088,7 +1090,7 @@ export default function App() {
       else streak = 1;
       if (streak > best) best = streak;
     }
-    return { total, watched, watching, dropped, bookmarked, percent: Math.round((watched / total) * 100), watchedMinutes, watchedTime, streak: best };
+    return { total, watched, watching, dropped, unwatched, bookmarked, percent: Math.round((watched / total) * 100), watchedMinutes, watchedTime, streak: best };
   }, [profileItems]);
 
   const updateAction = (item, patch) => setActions(prev => {
@@ -1262,7 +1264,7 @@ export default function App() {
   <SeoHead section={section} selectedTitle={selectedTitle} />
   <main className={`movie-site universe-${universe} page-${section}`} style={{ '--brand-accent': universeAccent, '--accent': universeAccent, '--theme-accent': universeAccent }}>
   <div className="site-glow" />
-      <header className={`site-header ${headerDesign === 'cinematic' ? 'header-cinematic' : 'header-classic'}`} data-header={headerDesign}>
+      <header className="site-header header-cinematic" data-header="cinematic">
   <div className="header-universe-backdrop" aria-hidden="true"><span>{UNIVERSE_LOGOS[universe]}</span></div>
   <div className="header-top">
   {section === 'profile' ? <ProfileHeader universe={universe} stats={stats} profileName={profileName} watchingItem={profileWatchingItem} nextUp={profileNextUpItem} onSelectItem={selectItem} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} /> : <>
@@ -1304,7 +1306,7 @@ export default function App() {
   <button ref={phaseButtonRef} className={`header-phase-btn ${phaseFilter !== 'All' ? 'active' : ''}`} onClick={() => { const rect = phaseButtonRef.current?.getBoundingClientRect(); if (rect) setPhaseMenuPosition({ top: rect.bottom + 7, left: rect.left }); setPhaseMenuOpen(open => !open); }} aria-expanded={phaseMenuOpen} aria-haspopup="listbox">
   <ListFilter size={14} /> <span>{phaseFilter === 'All' ? 'All phases' : `Phase ${phaseFilter}`}</span><ChevronDown size={13} />
   </button>
-  {phaseMenuOpen && <div className="header-phase-dropdown" style={{ top: phaseMenuPosition.top, left: phaseMenuPosition.left }} role="listbox" aria-label="Select phase">
+  {phaseMenuOpen && <div className="header-phase-dropdown" style={{ position: 'fixed', top: phaseMenuPosition.top, left: phaseMenuPosition.left, zIndex: 2147482000 }} role="listbox" aria-label="Select phase">
   <p className="phase-menu-title">Jump to phase</p>
   {['All', ...new Set(allItems.filter(item => item.universe === universe && item.phase).map(item => item.phase))].map(phase => {
     const phaseItems = phase === 'All' ? [] : allItems.filter(item => item.universe === universe && String(item.phase) === String(phase)).map(enrichItem);
@@ -1413,7 +1415,7 @@ export default function App() {
       </>}
 
       {section === 'list' && <ListSection items={activeItems} sortBy={sortBy} sortDirection={sortDirection} sortKey={`${sortBy}-${sortDirection}`} externalResults={externalSearchResults} externalLoading={externalSearchLoading} query={query} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} onPlayExternal={onPlayExternal} onWarning={showWarningToast} />}
-      {section === 'analytics' && <><AnalyticsPanel stats={stats} large /><MovieRail title="In progress" items={analyticsItems.filter(i => i.userStatus === 'watching')} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} /></>}
+      {section === 'analytics' && <><AnalyticsPanel stats={stats} large />{[['Unwatched','unwatched'],['Watching','watching'],['Watched','watched'],['Dropped','dropped']].map(([label,status]) => { const items = analyticsItems.filter(item => item.userStatus === status); return items.length ? <MovieRail key={status} title={label} items={items} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} /> : null; })}</>}
             {section === 'profile' && <ProfilePage installApp={installApp} installAvailable={!!installPromptEvent} appInstalled={appInstalled} stats={profileStats} activeItems={profileItems} universe="all" activeTab={profileTab} query={query} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} conflict={conflict} onResolveRemote={resolveUseRemote} onResolveLocal={resolveKeepLocal} syncToast={toast} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} headerDesign={headerDesign} setHeaderDesign={setHeaderDesign} />}
       {WATCH_ENABLED && section === 'watch' && safeWatchItem && <WatchPage watchItem={safeWatchItem} activeItems={roadmapItems} onBack={() => { setWatchItem(null); window.history.replaceState(null, '', '#watch'); }} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={startWatchWithConfirm} updateAction={updateAction} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} />}
       {WATCH_ENABLED && section === 'watch' && !safeWatchItem && <WatchBrowse activeItems={activeItems} externalResults={externalSearchResults} externalLoading={externalSearchLoading} actions={actions} query={query} onStartWatch={startWatchWithConfirm} onPlayExternal={onPlayExternal} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} />}
@@ -2012,7 +2014,7 @@ function RatingChips({ item }) {
 }
 
 function AnalyticsPanel({ stats, large = false }) {
-  return <section className={`analytics-panel ${large ? 'large' : ''}`}><div><p className="eyebrow">Analytics</p><h2>{stats.percent}% complete</h2><div className="progress"><span style={{ width: `${stats.percent}%` }} /></div></div><div className="stat-grid"><div><b>{stats.total}</b><span>Total</span></div><div><b>{stats.watched}</b><span>Watched</span></div><div><b>{stats.watching}</b><span>Watching</span></div><div><b>{stats.dropped}</b><span>Dropped</span></div><div><b>{stats.bookmarked}</b><span>Saved</span></div><div><b>{stats.watchedTime}</b><span>Watch Time</span></div></div></section>;
+  return <section className={`analytics-panel ${large ? 'large' : ''}`}><div><p className="eyebrow">Analytics</p><h2>{stats.percent}% complete</h2><div className="progress"><span style={{ width: `${stats.percent}%` }} /></div></div><div className="stat-grid"><div><b>{stats.total}</b><span>Total</span></div><div><b>{stats.unwatched || 0}</b><span>Unwatched</span></div><div><b>{stats.watching}</b><span>Watching</span></div><div><b>{stats.watched}</b><span>Watched</span></div><div><b>{stats.dropped}</b><span>Dropped</span></div><div><b>{stats.bookmarked}</b><span>Saved</span></div><div><b>{stats.watchedTime}</b><span>Watch Time</span></div></div></section>;
 }
 
 function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, onOpenItem, activeItems }) {

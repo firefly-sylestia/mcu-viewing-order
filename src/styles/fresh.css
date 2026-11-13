@@ -7568,3 +7568,54 @@
   }
   :root .movie-site.page-profile .site-header { top: 6px !important; }
 }
+
+
+/* Desktop header spans the same fluid canvas as the page content. */
+@media (min-width: 861px) {
+  :root .movie-site .site-header {
+    width: 100% !important;
+    max-width: none !important;
+    box-sizing: border-box !important;
+  }
+}
+/* The phase picker must escape header/page stacking contexts on desktop. */
+:root .movie-site .header-phase-dropdown {
+  position: fixed !important;
+  z-index: 2147482000 !important;
+  max-height: min(70vh, 620px) !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+  pointer-events: auto !important;
+}
+:root .movie-site .header-phase-dropdown button,
+:root .movie-site .header-phase-dropdown input {
+  position: relative !important;
+  z-index: 1 !important;
+  pointer-events: auto !important;
+}
+/* Profile uses the same ordinary-flow header as Home, List and Stats. */
+:root .movie-site.page-profile .site-header {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  transform: none !important;
+  z-index: 30 !important;
+  margin: 8px auto 20px !important;
+  background: linear-gradient(118deg, rgba(255,255,255,.76), rgba(230,239,252,.54) 52%, rgba(244,247,255,.68)) !important;
+  -webkit-backdrop-filter: blur(34px) saturate(165%) !important;
+  backdrop-filter: blur(34px) saturate(165%) !important;
+}
+:root[data-theme="dark"] .movie-site.page-profile .site-header {
+  background: linear-gradient(118deg, rgba(27,36,52,.82), rgba(17,25,39,.68) 52%, rgba(25,34,49,.78)) !important;
+}
+:root .movie-site.page-profile .site-header > .header-top,
+:root .movie-site.page-profile .site-header > .header-bar {
+  background: linear-gradient(115deg, rgba(255,255,255,.28), rgba(235,242,253,.16)) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(155%) !important;
+  backdrop-filter: blur(24px) saturate(155%) !important;
+}
+:root[data-theme="dark"] .movie-site.page-profile .site-header > .header-top,
+:root[data-theme="dark"] .movie-site.page-profile .site-header > .header-bar {
+  background: linear-gradient(115deg, rgba(255,255,255,.075), rgba(31,44,64,.18)) !important;
+}
