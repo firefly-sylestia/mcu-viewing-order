@@ -349,7 +349,6 @@ function SettingsPanel({ installApp, installAvailable, appInstalled, query = '',
             </span>
           </button>
         </div>
-      </div>
 
         <div className="settings-row">
           <div className="settings-row-label">
