@@ -110,7 +110,7 @@ const posterFromManifest = (item, manifest) => {
     134: '134-cloak-and-dagger-s1.jpg',
     143: '143-cloak-and-dagger-s2.jpg',
   }[Number(item?.id)];
-  const value = pinned || manifest?.byId?.[String(item.id)] || manifest?.byTitle?.[item.title];
+  const value = pinned || manifest?.byId?.[String(item.id)] || manifest?.byTitle?.[item.title] || manifest?.[String(item.id)];
   if (!value) return '';
   return value.startsWith('http') ? value : assetUrl(`/posters/${value}`);
 };
@@ -694,6 +694,7 @@ export default function App() {
   );
 
   const failedRef = useRef(new Set());
+  const posterFetchInFlightRef = useRef(new Set());
 
   // Keep a ref of all known titles/TMDB IDs for deduplication
   const knownItemsRef = useRef({ titles: new Set(), tmdbIds: new Set() });
@@ -749,8 +750,13 @@ export default function App() {
     // have instead of burning through requests and marking titles as failed.
     if (isOffline()) return undefined;
     const missing = activeItems.filter(item => {
-      const cached = item.tmdbId ? getFromCache(metadataCacheKey(item)) : null;
-      return !item.poster && !cached && !posterFromManifest(item, posterMap) && !failedRef.current.has(item.id);
+      const title = String(item.title || '').trim();
+      // Announced placeholders have no stable TMDB identity. Never spend
+      // background requests guessing artwork for titles that do not exist yet.
+      if (!item.tmdbId || !title || /\buntitled\b|^tba$/i.test(title)) return false;
+      const cached = getFromCache(metadataCacheKey(item));
+      return !item.poster && !cached?.poster && !posterFromManifest(item, posterMap)
+        && !failedRef.current.has(item.id) && !posterFetchInFlightRef.current.has(item.id);
     });
     
     if (!missing.length) return;
@@ -760,7 +766,8 @@ export default function App() {
     const fetchBatch = async (startIndex) => {
       if (cancelled || startIndex >= missing.length) return;
       const batch = missing.slice(startIndex, startIndex + batchSize);
-      
+      batch.forEach(item => posterFetchInFlightRef.current.add(item.id));
+
       const results = await Promise.allSettled(batch.map(async (item) => {
         // Prefer description endpoint for comprehensive metadata
         const params = new URLSearchParams({ title: item.title, year: String(item.year || '') });
@@ -805,10 +812,11 @@ export default function App() {
           const results = searchData.results || [];
           const expectedType = item.type === 'series' ? 'tv' : 'movie';
           const typed = results.filter(result => result.type === expectedType);
-          const exactYear = typed.find(result => String(result.year || '') === String(item.year || ''));
           const normalizedTitle = value => String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
-          const exactTitle = typed.find(result => normalizedTitle(result.title) === normalizedTitle(item.title.replace(/\s+S\d+$/i, '')));
-          const result = exactYear || exactTitle || typed[0] || results[0];
+          const expectedTitle = item.title.replace(/\s+S\d+$/i, '');
+          // Require an exact title match; year or result order alone can attach
+          // unrelated artwork to a catalogue entry.
+          const result = typed.find(candidate => normalizedTitle(candidate.title) === normalizedTitle(expectedTitle));
 
           if (result?.poster) {
             console.log(`[v0] Found poster via search fallback for ${item.title}`);
@@ -831,7 +839,10 @@ export default function App() {
         }
       }));
       
-      if (!cancelled) {
+      // Let requests populate the shared map even when StrictMode replays this
+      // effect; the in-flight set prevents the replay from duplicating a batch.
+      batch.forEach(item => posterFetchInFlightRef.current.delete(item.id));
+      {
         const updates = {};
         const failed = [];
         
@@ -890,7 +901,7 @@ export default function App() {
         
         failed.forEach(id => failedRef.current.add(id));
         if (Object.keys(updates).length) setPosterMap(prev => ({ ...prev, ...updates }));
-        fetchBatch(startIndex + batchSize);
+        if (!cancelled) fetchBatch(startIndex + batchSize);
       }
     };
     
