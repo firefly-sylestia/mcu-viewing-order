@@ -9068,3 +9068,22 @@
   position: relative !important;
   z-index: 2 !important;
 }
+
+
+/* Let the Incursion wordmark sit directly over the blurred artwork.
+   Keep the quick-action pill self-contained and leave the lower control band intact. */
+:root[data-header-design="cinematic"] .movie-site .site-header > .header-top {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+:root[data-header-design="cinematic"] .movie-site .site-header > .header-top::before {
+  opacity: 0 !important;
+}
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site .site-header > .header-top {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
