@@ -9177,9 +9177,3 @@
   opacity: .82 !important;
 }
 
-
-/* Let the navigation indicator glide instead of snapping between tabs. */
-:root .movie-site .bottom-nav .nav-blob {
-  transition: transform var(--nav-dur, .68s) cubic-bezier(.22, 1, .36, 1),
-    background .32s ease, box-shadow .32s ease, filter .24s ease !important;
-}
