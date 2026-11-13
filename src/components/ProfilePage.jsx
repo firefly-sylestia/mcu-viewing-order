@@ -60,7 +60,7 @@ const formatTimeAgo = (timestamp) => {
   return 'Synced ' + Math.floor(hours / 24) + 'd ago';
 };
 
-function ProfilePage({ installApp, installAvailable, appInstalled, stats, activeItems, universe, activeTab = 'insights', query = '', setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, profileName, setProfileName, user, configured, onLogin, onLogout, lastSynced, syncing, onSync, conflict, onResolveRemote, onResolveLocal, syncToast, nativePlayer, setNativePlayer }) {
+function ProfilePage({ installApp, installAvailable, appInstalled, stats, activeItems, universe, activeTab = 'insights', query = '', setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, profileName, setProfileName, user, configured, onLogin, onLogout, lastSynced, syncing, onSync, conflict, onResolveRemote, onResolveLocal, syncToast, nativePlayer, setNativePlayer, headerDesign = 'classic', setHeaderDesign }) {
   
   const savedItems = activeItems.filter(i => i.bookmarked);
   const inProgressItems = activeItems.filter(i => i.userStatus === 'watching');
@@ -120,7 +120,7 @@ function ProfilePage({ installApp, installAvailable, appInstalled, stats, active
 
         {activeTab === 'settings' && (
           <div id="settings-panel" role="tabpanel" className="profile-panel settings-panel">
-            <SettingsPanel installApp={installApp} installAvailable={installAvailable} appInstalled={appInstalled} query={query} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={onLogin} onLogout={onLogout} universe={universe} activeItems={activeItems} setStatus={setStatus} toggleBookmark={toggleBookmark} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} />
+            <SettingsPanel installApp={installApp} installAvailable={installAvailable} appInstalled={appInstalled} query={query} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={onLogin} onLogout={onLogout} universe={universe} activeItems={activeItems} setStatus={setStatus} toggleBookmark={toggleBookmark} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} headerDesign={headerDesign} setHeaderDesign={setHeaderDesign} />
           </div>
         )}
       </div>
@@ -240,7 +240,7 @@ export function ProfileHeader({ universe, stats, profileName, setProfileName, us
   );
 }
 
-function SettingsPanel({ installApp, installAvailable, appInstalled, query = '', profileName, setProfileName, user, configured, onLogin, onLogout, universe, activeItems, setStatus, toggleBookmark, nativePlayer, setNativePlayer }) {
+function SettingsPanel({ installApp, installAvailable, appInstalled, query = '', profileName, setProfileName, user, configured, onLogin, onLogout, universe, activeItems, setStatus, toggleBookmark, nativePlayer, setNativePlayer, headerDesign = 'classic', setHeaderDesign }) {
   const search = query.trim().toLowerCase();
   const showGroup = (terms) => !search || terms.includes(search);
   const { theme, setTheme } = useAppTheme();
@@ -312,6 +312,13 @@ function SettingsPanel({ installApp, installAvailable, appInstalled, query = '',
           </div>
         </div>
 
+        <div className="settings-row settings-row-stacked">
+          <div className="settings-row-label"><span className="settings-row-icon"><LayoutGrid size={18} /></span><div><strong>Header design</strong><small>{headerDesign === 'cinematic' ? 'Cinematic · redesigned global header' : 'Classic · current header'}</small></div></div>
+          <div className="variant-switch" role="group" aria-label="Header design">
+            <button className={headerDesign === 'classic' ? 'active' : ''} aria-pressed={headerDesign === 'classic'} onClick={() => { hapticTap(); setHeaderDesign('classic'); }}>Classic</button>
+            <button className={headerDesign === 'cinematic' ? 'active' : ''} aria-pressed={headerDesign === 'cinematic'} onClick={() => { hapticTap(); setHeaderDesign('cinematic'); }}>Cinematic</button>
+          </div>
+        </div>
         <div className="settings-row">
           <div className="settings-row-label">
             <span className="settings-row-icon"><Vibrate size={18} /></span>
