@@ -9111,7 +9111,7 @@
 /* Keep the tint on the complete Marvel / Sony / X-Men / DC rail only.
    Use theme surfaces so the treatment adapts naturally in light and dark mode. */
 :root[data-header-design="cinematic"] .movie-site .site-header .universe-tabs {
-  background: color-mix(in srgb, var(--fx-surface-2) 30%, transparent) !important;
+  background: color-mix(in srgb, var(--fx-surface-2) 18%, transparent) !important;
   border: 0 !important;
   border-radius: 999px !important;
   box-shadow: none !important;
@@ -9175,4 +9175,11 @@
 :root[data-header-design="cinematic"] .movie-site .site-header .brand small {
   color: var(--fx-muted-strong) !important;
   opacity: .82 !important;
+}
+
+
+/* Let the navigation indicator glide instead of snapping between tabs. */
+:root .movie-site .bottom-nav .nav-blob {
+  transition: transform var(--nav-dur, .68s) cubic-bezier(.22, 1, .36, 1),
+    background .32s ease, box-shadow .32s ease, filter .24s ease !important;
 }

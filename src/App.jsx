@@ -306,7 +306,7 @@ export default function App() {
         // Identify the poster row crossing a stable reading line. Grid cards
         // sharing an offsetTop are one row; list entries each count as a row.
         const line = Math.round(window.innerHeight * 0.47);
-        const cards = Array.from(document.querySelectorAll('.movie-grid > .movie-card, .list-grid > .list-row, .movie-grid > .continue-card'));
+        const cards = Array.from(document.querySelectorAll('.movie-grid .movie-card, .list-grid .list-row, .movie-grid .continue-card'));
         let candidate = null;
         let bestDistance = Infinity;
         for (const card of cards) {
@@ -1440,7 +1440,7 @@ export default function App() {
         className="bottom-nav"
         aria-label="Primary"
         data-holding={navHolding ? 'true' : 'false'}
-        style={{ '--nav-index': navHoldIndex ?? Math.max(0, NAV_VISIBLE.indexOf(section)), '--nav-count': NAV_VISIBLE.length, '--nav-dur': navHolding ? '90ms' : '.58s' }}
+        style={{ '--nav-index': navHoldIndex ?? Math.max(0, NAV_VISIBLE.indexOf(section)), '--nav-count': NAV_VISIBLE.length, '--nav-dur': navHolding ? '120ms' : '.68s' }}
         onPointerDown={handleNavPointerDown}
         onPointerMove={handleNavPointerMove}
         onPointerUp={handleNavPointerUp}
