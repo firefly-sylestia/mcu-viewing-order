@@ -8752,3 +8752,86 @@
     rgba(3,7,13,.025) 52%,
     rgba(3,7,13,.06)) !important;
 }
+
+
+/* Header controls: a restrained 10% surface, not stacked glass cards.
+   The header rows stay clear; only the actual interactive elements get depth. */
+:root .movie-site .site-header .header-top,
+:root .movie-site .site-header .header-bar {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+:root .movie-site .site-header .brand,
+:root .movie-site .site-header .header-status-pill,
+:root .movie-site .site-header .universe-tabs,
+:root .movie-site .site-header .header-search,
+:root .movie-site .site-header .header-tools .header-phase-btn,
+:root .movie-site .site-header .header-sort-btn,
+:root .movie-site .site-header .header-filter-btn,
+:root .movie-site .site-header .stats-universe-tabs {
+  background: rgba(20,25,35,.075) !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+:root .movie-site .site-header .universe-tabs button,
+:root .movie-site .site-header .stats-universe-tabs button {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+:root .movie-site .site-header .universe-tabs button.active,
+:root .movie-site .site-header .stats-universe-tabs button.active {
+  background: rgba(20,25,35,.10) !important;
+  box-shadow: none !important;
+}
+:root .movie-site .site-header .header-search input {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+:root .movie-site .site-header .header-quick-actions,
+:root .movie-site .site-header .header-tools {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="dark"] .movie-site .site-header .brand,
+:root[data-theme="dark"] .movie-site .site-header .header-status-pill,
+:root[data-theme="dark"] .movie-site .site-header .universe-tabs,
+:root[data-theme="dark"] .movie-site .site-header .header-search,
+:root[data-theme="dark"] .movie-site .site-header .header-tools .header-phase-btn,
+:root[data-theme="dark"] .movie-site .site-header .header-sort-btn,
+:root[data-theme="dark"] .movie-site .site-header .header-filter-btn,
+:root[data-theme="dark"] .movie-site .site-header .stats-universe-tabs {
+  background: rgba(235,242,255,.09) !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+:root[data-theme="dark"] .movie-site .site-header .universe-tabs button,
+:root[data-theme="dark"] .movie-site .site-header .stats-universe-tabs button {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+:root[data-theme="dark"] .movie-site .site-header .universe-tabs button.active,
+:root[data-theme="dark"] .movie-site .site-header .stats-universe-tabs button.active {
+  background: rgba(235,242,255,.12) !important;
+  box-shadow: none !important;
+}
+:root[data-theme="dark"] .movie-site .site-header .header-search input {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+:root[data-theme="dark"] .movie-site .site-header .header-quick-actions,
+:root[data-theme="dark"] .movie-site .site-header .header-tools {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
