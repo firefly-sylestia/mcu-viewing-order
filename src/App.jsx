@@ -69,24 +69,26 @@ const HeaderBackdrop = React.memo(function HeaderBackdrop({ src }) {
   return <div className="header-image-backdrop" aria-hidden="true"><img src={src} alt="" width="1280" height="720" loading="eager" fetchPriority="high" decoding="async" /></div>;
 });
 
-const HeaderQuickAction = React.memo(function HeaderQuickAction({ item, watching, onSelect }) {
-  if (!item) return null;
-  return <button className={`header-status-pill ${watching ? 'watching' : 'next'}`} onClick={() => onSelect(item)} title={`Open ${watching ? 'current' : 'next'}: ${item.title}`}>
-    <span className="header-pill-poster">{item.poster ? <img src={item.poster} alt="" width="300" height="450" loading="eager" fetchPriority="high" decoding="async" referrerPolicy="no-referrer" /> : <Play size={14} fill="currentColor" />}</span>
-    <span className="header-pill-label"><small>{watching ? 'Watching now' : 'Up next'}</small><b>{item.title}</b><em>{watching ? `${elapsedPctLabel(item)} complete` : `${item.year} · ${runtimeLabel(item.runtime, item.type)}`}</em></span>
-  </button>;
-});
-, (previous, next) => (
-  previous.item?.id === next.item?.id &&
-  previous.item?.title === next.item?.title &&
-  previous.item?.poster === next.item?.poster &&
-  previous.item?.year === next.item?.year &&
-  previous.item?.runtime === next.item?.runtime &&
-  previous.item?.type === next.item?.type &&
-  previous.item?.watchedDuration === next.item?.watchedDuration &&
-  previous.watching === next.watching &&
-  previous.onSelect === next.onSelect
-));
+const HeaderQuickAction = React.memo(
+  function HeaderQuickAction({ item, watching, onSelect }) {
+    if (!item) return null;
+    return <button className={`header-status-pill ${watching ? 'watching' : 'next'}`} onClick={() => onSelect(item)} title={`Open ${watching ? 'current' : 'next'}: ${item.title}`}>
+      <span className="header-pill-poster">{item.poster ? <img src={item.poster} alt="" width="300" height="450" loading="eager" fetchPriority="high" decoding="async" referrerPolicy="no-referrer" /> : <Play size={14} fill="currentColor" />}</span>
+      <span className="header-pill-label"><small>{watching ? 'Watching now' : 'Up next'}</small><b>{item.title}</b><em>{watching ? `${elapsedPctLabel(item)} complete` : `${item.year} · ${runtimeLabel(item.runtime, item.type)}`}</em></span>
+    </button>;
+  },
+  (previous, next) => (
+    previous.item?.id === next.item?.id &&
+    previous.item?.title === next.item?.title &&
+    previous.item?.poster === next.item?.poster &&
+    previous.item?.year === next.item?.year &&
+    previous.item?.runtime === next.item?.runtime &&
+    previous.item?.type === next.item?.type &&
+    previous.item?.watchedDuration === next.item?.watchedDuration &&
+    previous.watching === next.watching &&
+    previous.onSelect === next.onSelect
+  )
+);
 
 const watchTimeLabel = (item) => {
   const ms = item.watchedDuration || 0;
