@@ -9087,3 +9087,9 @@
   border-color: transparent !important;
   box-shadow: none !important;
 }
+
+
+/* Give the light-mode Marvel / Sony / X-Men / DC rail a touch more presence. */
+:root[data-theme="light"][data-header-design="cinematic"] .movie-site .site-header .universe-tabs {
+  background: rgba(248,250,255,.30) !important;
+}
