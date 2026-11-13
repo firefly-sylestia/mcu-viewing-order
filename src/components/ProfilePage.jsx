@@ -251,7 +251,9 @@ function SettingsPanel({ installApp, installAvailable, appInstalled, query = '',
   const { theme, setTheme } = useAppTheme();
   const { variant, setVariant } = useUiVariant();
   const [hapticsOn, setHapticsOn] = useState(() => getHapticsEnabled());
-  const [performanceModeOn, setPerformanceModeOn] = useState(false);
+  const [performanceModeOn, setPerformanceModeOn] = useState(() => {
+    try { return localStorage.getItem('performance-mode') === '1'; } catch { return false; }
+  });
   const [mounted, setMounted] = useState(false);
   const [draft, setDraft] = useState(profileName);
   const [editing, setEditing] = useState(false);
@@ -260,9 +262,8 @@ function SettingsPanel({ installApp, installAvailable, appInstalled, query = '',
 
   useEffect(() => {
     setMounted(true);
-    document.documentElement.classList.remove('performance-mode');
-    try { localStorage.setItem('performance-mode', '0'); } catch {}
-  }, []);
+    document.documentElement.classList.toggle('performance-mode', performanceModeOn);
+  }, [performanceModeOn]);
 
   const updatePerformanceMode = (enabled) => {
     setPerformanceModeOn(enabled);

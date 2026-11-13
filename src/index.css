@@ -3845,9 +3845,10 @@ button { border: 0; color: inherit; cursor: pointer; }
 }
 
 .web-rail .rail-scroll {
-  will-change: scroll-position;
-  transform: translateZ(0);
-  backface-visibility: hidden;
+  /* Keep native scrolling; forced GPU promotion of every rail wastes memory
+     and can cause poster tiles to flash when returning to the top. */
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-inline: contain;
 }
 
 @media (max-width: 560px) {

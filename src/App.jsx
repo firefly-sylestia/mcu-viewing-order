@@ -64,6 +64,19 @@ const runtimeLabel = (minutes = 0, type = 'film') => {
   return h ? `${h}h ${m ? `${m}m` : ''}`.trim() : `${m}m`;
 };
 
+const HeaderBackdrop = React.memo(function HeaderBackdrop({ src }) {
+  if (!src) return null;
+  return <div className="header-image-backdrop" aria-hidden="true"><img src={src} alt="" width="1280" height="720" loading="eager" fetchPriority="high" decoding="async" /></div>;
+});
+
+const HeaderQuickAction = React.memo(function HeaderQuickAction({ item, watching, onSelect }) {
+  if (!item) return null;
+  return <button className={`header-status-pill ${watching ? 'watching' : 'next'}`} onClick={() => onSelect(item)} title={`Open ${watching ? 'current' : 'next'}: ${item.title}`}>
+    <span className="header-pill-poster">{item.poster ? <img src={item.poster} alt="" width="300" height="450" loading="eager" fetchPriority="high" decoding="async" referrerPolicy="no-referrer" /> : <Play size={14} fill="currentColor" />}</span>
+    <span className="header-pill-label"><small>{watching ? 'Watching now' : 'Up next'}</small><b>{item.title}</b><em>{watching ? `${elapsedPctLabel(item)} complete` : `${item.year} · ${runtimeLabel(item.runtime, item.type)}`}</em></span>
+  </button>;
+});
+
 const watchTimeLabel = (item) => {
   const ms = item.watchedDuration || 0;
   if (ms < 30000) return 'Just started';
@@ -1140,6 +1153,9 @@ export default function App() {
     };
   }, [selectedItem]);
   const nextUp = roadmapItems.find(item => item.userStatus !== 'watched' && item.userStatus !== 'dropped') || roadmapItems[0];
+  const headerWatchingItem = useMemo(() => activeItems.find(item => item.userStatus === 'watching') || null, [activeItems]);
+  const headerQuickItem = headerWatchingItem || nextUp;
+  const headerArtwork = nextUp?.backdrop || nextUp?.poster || '';
   const playTrailer = useCallback((item) => {
     hapticTap();
     const match = getTrailerByTitle(item.title);
@@ -1244,22 +1260,13 @@ export default function App() {
   <main className={`movie-site universe-${universe} page-${section}`} style={{ '--brand-accent': universeAccent, '--accent': universeAccent, '--theme-accent': universeAccent }}>
   <div className="site-glow" />
       {section !== 'profile' && (
-      <header className="site-header header-cinematic" data-header="cinematic" style={{ "--header-next-art": nextUp?.backdrop ? `url("${nextUp.backdrop}")` : nextUp?.poster ? `url("${nextUp.poster}")` : "none" }}>
-  {(nextUp?.backdrop || nextUp?.poster) && <div className="header-image-backdrop" aria-hidden="true"><img src={nextUp.backdrop || nextUp.poster} alt="" /></div>}
+      <header className="site-header header-cinematic" data-header="cinematic" style={{ "--header-next-art": headerArtwork ? `url("${headerArtwork}")` : "none" }}>
+  <HeaderBackdrop src={headerArtwork} />
   <div className="header-universe-backdrop" aria-hidden="true"><span>{UNIVERSE_LOGOS[universe]}</span></div>
   <div className="header-top">
   {section === 'profile' ? null : <>
   <div className="header-quick-actions" aria-label="Quick viewing controls">
-  {(() => {
-    // Exactly one quick card: whatever is playing now wins, otherwise the next title.
-    const watchingItem = activeItems.find(item => item.userStatus === 'watching');
-    const quickItem = watchingItem || nextUp;
-    if (!quickItem) return null;
-    return <button className={`header-status-pill ${watchingItem ? 'watching' : 'next'}`} onClick={() => selectItem(quickItem)} title={`Open ${watchingItem ? 'current' : 'next'}: ${quickItem.title}`}>
-      <span className="header-pill-poster">{quickItem.poster ? <img src={quickItem.poster} alt="" width="300" height="450" loading="lazy" decoding="async" referrerPolicy="no-referrer" /> : <Play size={14} fill="currentColor" />}</span>
-      <span className="header-pill-label"><small>{watchingItem ? 'Watching now' : 'Up next'}</small><b>{quickItem.title}</b><em>{watchingItem ? `${elapsedPctLabel(watchingItem)} complete` : `${quickItem.year} · ${runtimeLabel(quickItem.runtime, quickItem.type)}`}</em></span>
-    </button>;
-  })()}
+    <HeaderQuickAction item={headerQuickItem} watching={!!headerWatchingItem} onSelect={selectItem} />
   </div>
   <button className="brand" onClick={() => { setQuery(''); setSection(section === 'profile' || section === 'analytics' ? section : 'home'); setWatchItem(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }} aria-label={section === 'profile' ? 'Profile' : section === 'analytics' ? 'Insights' : 'Go to Incursion home'}><b>{section === 'profile' ? 'Profile' : section === 'analytics' ? 'Insights' : 'Incursion'}</b><small>{section === 'profile' ? 'Your space' : section === 'analytics' ? 'Your viewing activity' : `${universeName} timeline`}</small></button>
   </>}

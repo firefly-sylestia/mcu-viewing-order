@@ -55,11 +55,9 @@ const readStored = (key, fallback) => {
     return fallback
   }
 }
-// Keep the legacy performance mode off by default; it globally suppresses animations.
-try {
-  localStorage.setItem('performance-mode', '0');
-  document.documentElement.classList.remove('performance-mode');
-} catch {}
+// Restore the user's explicit Performance mode preference before first paint.
+const performanceMode = readStored('performance-mode', '0') === '1';
+document.documentElement.classList.toggle('performance-mode', performanceMode);
 
 const storedTheme = readStored('theme', 'light')
 document.documentElement.setAttribute('data-theme', storedTheme)
