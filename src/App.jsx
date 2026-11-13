@@ -16,7 +16,7 @@ import { useCloudSync } from './hooks/useCloudSync';
 import { getFromCache, setCache, clearExpiredCache } from './utils/mediaCache';
 import { buildDownloadUrl, buildPlayerUrl } from './utils/mediaProviders';
 import { apiUrl, assetUrl, isOffline } from './utils/apiBase';
-import { hapticTap, hapticSelect, hapticSuccess, hapticWarning } from './utils/haptics';
+import { hapticTap, hapticSelect, hapticSuccess, hapticWarning, hapticScroll, hapticScrollEdge } from './utils/haptics';
 import { UNIVERSE_LOGOS } from './constants/logos';
 import './index.css';
 import './styles/fresh.css';
@@ -264,41 +264,58 @@ export default function App() {
     return () => window.removeEventListener('ui-variant-changed', onVariant);
   }, []);
 
-  // Restrained tactile navigation: occasional scroll ticks and one pulse
-  // when a user reaches either end of the document (never on initial render).
+  // Tactile scroll feedback works for both document scrolling and nested
+  // scroll containers. Boundary pulses fire once per arrival, not continuously.
   useEffect(() => {
     const touchDevice = (typeof window !== 'undefined') &&
       (('ontouchstart' in window) || (navigator.maxTouchPoints > 0));
     if (!touchDevice) return undefined;
-    let lastTickAt = window.scrollY;
-    let topLatched = window.scrollY <= 3;
+
+    let lastTickAt = 0;
+    let lastPosition = 0;
+    let topLatched = true;
     let bottomLatched = false;
     let raf = 0;
-    const onScroll = () => {
+    let pendingTarget = null;
+
+    const onScroll = (event) => {
+      pendingTarget = event.target;
       if (raf) return;
       raf = window.requestAnimationFrame(() => {
         raf = 0;
-        const y = Math.max(0, window.scrollY || 0);
-        const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-        const atTop = y <= 3;
-        const atBottom = max > 24 && y >= max - 3;
+        const target = pendingTarget;
+        pendingTarget = null;
+        const element = target === document || target === document.documentElement ||
+          target === document.body
+          ? (document.scrollingElement || document.documentElement)
+          : target;
+        if (!element || typeof element.scrollTop !== 'number') return;
 
-        if (atTop && !topLatched) hapticScrollEdge();
-        if (atBottom && !bottomLatched) hapticScrollEdge();
+        const y = Math.max(0, element.scrollTop || 0);
+        const max = Math.max(0, element.scrollHeight - element.clientHeight);
+        const atTop = y <= 3;
+        const atBottom = max > 24 && y >= max - 4;
+        const moved = Math.abs(y - lastPosition) > 1;
+
+        if (moved && atTop && !topLatched) hapticScrollEdge();
+        if (moved && atBottom && !bottomLatched) hapticScrollEdge();
         topLatched = atTop;
         bottomLatched = atBottom;
 
-        // A very light tick every ~720px prevents constant buzzing during
-        // momentum scroll while still giving a subtle sense of movement.
-        if (!atTop && !atBottom && Math.abs(y - lastTickAt) >= 720) {
+        // Light tactile ticks are intentionally sparse during long scrolls.
+        if (moved && !atTop && !atBottom && Math.abs(y - lastTickAt) >= 680) {
           hapticScroll();
           lastTickAt = y;
         }
         if (atTop || atBottom) lastTickAt = y;
+        lastPosition = y;
       });
     };
+
+    document.addEventListener('scroll', onScroll, { passive: true, capture: true });
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => {
+      document.removeEventListener('scroll', onScroll, true);
       window.removeEventListener('scroll', onScroll);
       if (raf) window.cancelAnimationFrame(raf);
     };
@@ -1505,6 +1522,7 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
   }
   const move = (dir) => {
     setInlineTrailer(null);
+    hapticSelect();
     setHeroIndex((heroIndex + dir + items.length) % Math.max(items.length, 1));
   };
   const handleTouchStart = (event) => {
@@ -1544,7 +1562,12 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
   const selectPoster = (item, rawIndex, offset) => {
     if (didSwipe.current) { didSwipe.current = false; return; }
     setInlineTrailer(null);
-    offset ? setHeroIndex(rawIndex) : setSelected(item);
+    if (offset) {
+      hapticSelect();
+      setHeroIndex(rawIndex);
+    } else {
+      setSelected(item);
+    }
   };
 
   useEffect(() => {
@@ -1614,7 +1637,7 @@ function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) 
         const activeDot = items.length <= 6
           ? heroIndex % items.length === dotIndex
           : Math.round((heroIndex % items.length) * 5 / (items.length - 1)) === dotIndex;
-        return <button key={dotIndex} aria-label={`Show carousel group ${dotIndex + 1}`} className={activeDot ? 'active' : ''} onClick={() => { setHeroIndex(targetIndex); setInlineTrailer(null); }} />;
+        return <button key={dotIndex} aria-label={`Show carousel group ${dotIndex + 1}`} className={activeDot ? 'active' : ''} onClick={() => { hapticSelect(); setHeroIndex(targetIndex); setInlineTrailer(null); }} />;
       })}</div><button onClick={() => move(1)} aria-label="Next title"><ChevronRight /></button></div>
   </section>;
 }
