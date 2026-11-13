@@ -9767,3 +9767,54 @@
     transform: none !important;
   }
 }
+
+
+/* Compact page-step arrows beside the List page counter. These stay in the
+   results bar, so page changes never require scrolling down to the footer. */
+:root .list-page-control {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  flex: 0 0 auto !important;
+}
+:root .list-page-step {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 30px !important;
+  height: 30px !important;
+  min-width: 30px !important;
+  padding: 0 !important;
+  border: 1px solid color-mix(in srgb, var(--fx-text) 10%, transparent) !important;
+  border-radius: 50% !important;
+  color: var(--fx-text) !important;
+  background: color-mix(in srgb, var(--fx-surface-2, #8993a5) 35%, transparent) !important;
+  transition: background .18s ease, opacity .18s ease, transform .18s ease !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+:root .list-page-step:not(:disabled):active {
+  transform: scale(.92) !important;
+}
+:root .list-page-step:disabled {
+  opacity: .28 !important;
+  cursor: default !important;
+}
+:root .list-page-step:not(:disabled):hover {
+  background: color-mix(in srgb, var(--fx-accent, #668fce) 15%, transparent) !important;
+}
+:root[data-theme="light"] .list-page-step {
+  background: rgba(240,243,248,.78) !important;
+  border-color: rgba(35,48,68,.10) !important;
+}
+:root[data-theme="dark"] .list-page-step {
+  background: rgba(220,230,245,.08) !important;
+  border-color: rgba(220,230,245,.12) !important;
+}
+@media (max-width: 680px) {
+  :root .list-page-control { gap: 4px !important; }
+  :root .list-page-step {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+  }
+}

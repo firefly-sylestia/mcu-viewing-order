@@ -1882,7 +1882,7 @@ function ListSection({ items, sortBy = 'order', sortDirection = 'asc', sortKey, 
     <div className="list-results-bar">
       <div className="list-results-meta"><span className="list-results-count">{items.length ? `${String(firstItem + 1).padStart(2, '0')}–${String(Math.min(firstItem + pageSize, items.length)).padStart(2, '0')}` : '00'} <i>of</i> {String(items.length).padStart(2, '0')} <small>titles</small></span><span className="list-sort-description">{sortDescription}</span></div>
       <div className="list-results-actions">
-        <span className="list-page-indicator" aria-label={`Page ${currentPage} of ${pageCount}`}><strong>{String(currentPage).padStart(2, '0')}</strong><i>/</i>{String(pageCount).padStart(2, '0')}</span>
+        <div className="list-page-control" role="group" aria-label="Change list page"><button className="list-page-step" onClick={() => { hapticTap(); goToPage(currentPage - 1); }} disabled={currentPage === 1} aria-label="Previous page"><ChevronLeft size={15} /></button><span className="list-page-indicator" aria-label={`Page ${currentPage} of ${pageCount}`}><strong>{String(currentPage).padStart(2, '0')}</strong><i>/</i>{String(pageCount).padStart(2, '0')}</span><button className="list-page-step" onClick={() => { hapticTap(); goToPage(currentPage + 1); }} disabled={currentPage === pageCount} aria-label="Next page"><ChevronRight size={15} /></button></div>
         <div className={`list-view-toggle ${viewMode}`} role="group" aria-label="List view mode">
           <button className={viewMode === 'list' ? 'active' : ''} onClick={() => { hapticTap(); setViewMode('list'); }}>List</button>
           <button className={viewMode === 'grid' ? 'active' : ''} onClick={() => { hapticTap(); setViewMode('grid'); }}>Grid</button>
