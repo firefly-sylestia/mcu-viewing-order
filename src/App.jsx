@@ -1192,7 +1192,15 @@ export default function App() {
     </button>;
   })()}
   </div>
-  <button className="brand" onClick={() => { setQuery(''); setSection(section === 'profile' || section === 'analytics' ? section : 'home'); setWatchItem(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }} aria-label={section === 'profile' ? 'Profile' : section === 'analytics' ? 'Insights' : 'Go to Incursion home'}><b>{section === 'profile' ? 'Profile' : section === 'analytics' ? 'Insights' : 'Incursion'}</b><small>{section === 'profile' ? 'Your space' : section === 'analytics' ? 'Your viewing activity' : `${universeName} timeline`}</small></button>
+  <button className="brand" onClick={() => { setQuery(''); setSection(section === 'profile' || section === 'analytics' ? section : 'home'); setWatchItem(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }} aria-label={section === 'profile' ? 'Profile' : section === 'analytics' ? 'Insights' : 'Go to Incursion home'}><span className="incursion-brand-mark" aria-hidden="true">
+    <svg viewBox="0 0 48 48" focusable="false">
+      <path className="brand-orbit brand-orbit-a" d="M24 3.8a20.2 20.2 0 1 0 20.2 20.2" />
+      <path className="brand-orbit brand-orbit-b" d="M24 10.2a13.8 13.8 0 1 0 13.8 13.8" />
+      <path className="brand-core" d="M27.5 8.5 16 25h8l-3.5 14.5L33 22h-8z" />
+      <circle className="brand-point" cx="40.2" cy="9.2" r="2.2" />
+    </svg>
+  </span>
+  <span className="incursion-brand-copy"><b>{section === 'profile' ? 'Profile' : section === 'analytics' ? 'Insights' : 'Incursion'}</b><small>{section === 'profile' ? 'Your space' : section === 'analytics' ? 'Your viewing activity' : `${universeName} timeline`}</small></span></button>
   </>}
   </div>
   <div className="header-bar">
