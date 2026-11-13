@@ -1358,11 +1358,11 @@ export default function App() {
   </button>
   </>}
         </div>
+  </div>
   {section === 'analytics' && <div className="stats-header-progress" aria-label={`${stats.percent}% complete`}>
     <span className="stats-progress-label">{stats.percent}% complete</span>
     <div className="stats-progress-track"><span style={{ width: `${stats.percent}%` }} /></div>
   </div>}
-  </div>
       </header>
       )}
 

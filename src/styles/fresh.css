@@ -9601,3 +9601,95 @@
     height: 12px !important;
   }
 }
+
+
+/* Final Insights header structure: keep the progress row inside the header,
+   but outside the universe-selector flex row so it cannot escape or compress. */
+:root[data-header-design="cinematic"] .movie-site.page-analytics .site-header {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+  gap: 12px !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow: visible !important;
+  box-sizing: border-box !important;
+}
+:root[data-header-design="cinematic"] .movie-site.page-analytics .site-header .header-bar {
+  display: flex !important;
+  flex: 0 0 auto !important;
+  flex-direction: row !important;
+  align-items: stretch !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+  box-sizing: border-box !important;
+}
+:root[data-header-design="cinematic"] .movie-site.page-analytics .site-header .header-tools {
+  display: flex !important;
+  flex: 1 1 100% !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+}
+:root[data-header-design="cinematic"] .movie-site.page-analytics .stats-universe-tabs {
+  display: flex !important;
+  flex: 1 1 100% !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+:root[data-header-design="cinematic"] .movie-site.page-analytics .stats-header-progress {
+  display: flex !important;
+  flex: 0 0 auto !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 8px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+}
+:root[data-header-design="cinematic"] .movie-site.page-analytics .stats-progress-track {
+  display: block !important;
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 13px !important;
+  box-sizing: border-box !important;
+}
+@media (max-width: 760px) {
+  :root[data-header-design="cinematic"] .movie-site.page-analytics .site-header {
+    gap: 11px !important;
+  }
+}
+
+/* Give the desktop Home search its own quiet translucent surface rather than
+   letting it disappear into the header artwork. */
+@media (min-width: 761px) {
+  :root[data-header-design="cinematic"] .movie-site.page-home .site-header .home-header-search {
+    background: color-mix(in srgb, var(--fx-surface-2, #8993a5) 72%, transparent) !important;
+    border: 1px solid color-mix(in srgb, var(--fx-text) 11%, transparent) !important;
+    box-shadow: inset 0 1px 0 color-mix(in srgb, white 20%, transparent),
+      0 5px 16px -12px color-mix(in srgb, var(--fx-text) 35%, transparent) !important;
+    -webkit-backdrop-filter: blur(18px) saturate(155%) !important;
+    backdrop-filter: blur(18px) saturate(155%) !important;
+  }
+  :root[data-theme="dark"][data-header-design="cinematic"] .movie-site.page-home .site-header .home-header-search {
+    background: rgba(220, 228, 242, .11) !important;
+    border-color: rgba(220, 228, 242, .15) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 5px 16px -12px rgba(0,0,0,.55) !important;
+  }
+  :root[data-theme="light"][data-header-design="cinematic"] .movie-site.page-home .site-header .home-header-search {
+    background: rgba(255,255,255,.68) !important;
+    border-color: rgba(30,42,60,.10) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.82), 0 5px 16px -12px rgba(30,42,60,.24) !important;
+  }
+}
