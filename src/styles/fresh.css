@@ -9693,3 +9693,38 @@
     box-shadow: inset 0 1px 0 rgba(255,255,255,.82), 0 5px 16px -12px rgba(30,42,60,.24) !important;
   }
 }
+
+
+/* Restore the full perimeter of the Insights header and make its progress
+   indicator more compact without losing the track's visible side edges. */
+:root[data-header-design="cinematic"] .movie-site.page-analytics .site-header {
+  border: 1px solid color-mix(in srgb, var(--fx-text) 12%, transparent) !important;
+  border-radius: 24px !important;
+}
+:root[data-header-design="cinematic"] .movie-site.page-analytics .stats-header-progress {
+  padding: 0 2px !important;
+  gap: 5px !important;
+}
+:root[data-header-design="cinematic"] .movie-site.page-analytics .stats-progress-label {
+  font-size: 12px !important;
+  line-height: 1.15 !important;
+}
+:root[data-header-design="cinematic"] .movie-site.page-analytics .stats-progress-track {
+  height: 8px !important;
+  border: 1px solid color-mix(in srgb, var(--fx-text) 22%, transparent) !important;
+  border-radius: 999px !important;
+  overflow: hidden !important;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.12) !important;
+}
+:root[data-theme="light"][data-header-design="cinematic"] .movie-site.page-analytics .site-header {
+  border-color: rgba(32, 42, 58, .13) !important;
+}
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site.page-analytics .site-header {
+  border-color: rgba(220, 230, 245, .16) !important;
+}
+:root[data-theme="light"][data-header-design="cinematic"] .movie-site.page-analytics .stats-progress-track {
+  border-color: rgba(30, 42, 60, .20) !important;
+}
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site.page-analytics .stats-progress-track {
+  border-color: rgba(225, 235, 250, .24) !important;
+}
