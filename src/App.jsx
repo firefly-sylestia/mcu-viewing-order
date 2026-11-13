@@ -264,59 +264,47 @@ export default function App() {
     return () => window.removeEventListener('ui-variant-changed', onVariant);
   }, []);
 
-  // Tactile scroll feedback works for both document scrolling and nested
-  // scroll containers. Boundary pulses fire once per arrival, not continuously.
+  // One subtle tick each time the vertical list advances to another poster row.
+  // The row crossing the viewport's reading line defines the haptic cadence.
   useEffect(() => {
-    const touchDevice = (typeof window !== 'undefined') &&
-      (('ontouchstart' in window) || (navigator.maxTouchPoints > 0));
+    if (typeof window === 'undefined' || typeof document === 'undefined') return undefined;
+    const touchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
     if (!touchDevice) return undefined;
 
-    let lastTickAt = 0;
-    let lastPosition = 0;
-    let topLatched = true;
-    let bottomLatched = false;
+    let activeRow = null;
+    let lastPulseAt = 0;
     let raf = 0;
-    let pendingTarget = null;
+    const readingLine = () => Math.round(window.innerHeight * 0.46);
 
-    const onScroll = (event) => {
-      pendingTarget = event.target;
+    const onScroll = () => {
       if (raf) return;
       raf = window.requestAnimationFrame(() => {
         raf = 0;
-        const target = pendingTarget;
-        pendingTarget = null;
-        const element = target === document || target === document.documentElement ||
-          target === document.body
-          ? (document.scrollingElement || document.documentElement)
-          : target;
-        if (!element || typeof element.scrollTop !== 'number') return;
+        const x = Math.round(window.innerWidth * 0.5);
+        const y = readingLine();
+        const element = document.elementFromPoint(x, y);
+        const row = element?.closest?.('.list-row');
+        const rowId = row?.getAttribute('aria-label') || row?.dataset?.rowId || null;
 
-        const y = Math.max(0, element.scrollTop || 0);
-        const max = Math.max(0, element.scrollHeight - element.clientHeight);
-        const atTop = y <= 3;
-        const atBottom = max > 24 && y >= max - 4;
-        const moved = Math.abs(y - lastPosition) > 1;
-
-        if (moved && atTop && !topLatched) hapticScrollEdge();
-        if (moved && atBottom && !bottomLatched) hapticScrollEdge();
-        topLatched = atTop;
-        bottomLatched = atBottom;
-
-        // Light tactile ticks are intentionally sparse during long scrolls.
-        if (moved && !atTop && !atBottom && Math.abs(y - lastTickAt) >= 680) {
-          hapticScroll();
-          lastTickAt = y;
+        if (row && rowId && activeRow !== null && rowId !== activeRow) {
+          const now = performance.now();
+          // A short guard prevents multiple pulses when momentum scroll crosses
+          // a row boundary in adjacent animation frames.
+          if (now - lastPulseAt >= 105) {
+            hapticScroll();
+            lastPulseAt = now;
+          }
         }
-        if (atTop || atBottom) lastTickAt = y;
-        lastPosition = y;
+        if (rowId) activeRow = rowId;
+        else if (!row) activeRow = null;
       });
     };
 
     document.addEventListener('scroll', onScroll, { passive: true, capture: true });
-    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
     return () => {
       document.removeEventListener('scroll', onScroll, true);
-      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
       if (raf) window.cancelAnimationFrame(raf);
     };
   }, []);

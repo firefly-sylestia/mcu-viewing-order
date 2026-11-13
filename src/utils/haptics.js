@@ -57,6 +57,6 @@ export const hapticSuccess = () => buzz([8, 28, 14]);
 /** Clear but brief warning pulse for destructive or blocked actions. */
 export const hapticWarning = () => buzz(22);
 /** Barely-there scroll tick; deliberately much softer than a normal tap. */
-export const hapticScroll = () => buzz(3);
+export const hapticScroll = () => buzz(8);
 /** Soft boundary pulse when the page reaches its top or bottom. */
 export const hapticScrollEdge = () => buzz(11);
