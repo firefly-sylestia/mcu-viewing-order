@@ -17,7 +17,7 @@ import { useCloudSync } from './hooks/useCloudSync';
 import { getFromCache, setCache, clearExpiredCache } from './utils/mediaCache';
 import { buildDownloadUrl, buildPlayerUrl } from './utils/mediaProviders';
 import { apiUrl, assetUrl, isOffline } from './utils/apiBase';
-import { hapticTap, hapticSelect, hapticSuccess, hapticWarning, hapticScroll, hapticScrollEdge } from './utils/haptics';
+import { hapticTap, hapticSelect, hapticSuccess, hapticWarning, hapticScrollEdge } from './utils/haptics';
 import { UNIVERSE_LOGOS } from './constants/logos';
 import './styles/fresh.css';
 import './styles/dark-header-fix.css';
@@ -266,16 +266,13 @@ export default function App() {
     return () => window.removeEventListener('ui-variant-changed', onVariant);
   }, []);
 
-  // Row cadence + page-edge feedback. Works for home grids, list rows,
-  // and nested scroll containers without firing repeatedly during momentum.
+  // Only pulse when a scroll container reaches its top or bottom edge.
   useEffect(() => {
     if (typeof window === 'undefined' || typeof document === 'undefined') return undefined;
     const touchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
     if (!touchDevice) return undefined;
 
     const edgeState = new WeakMap();
-    let activeRow = null;
-    let lastRowPulseAt = 0;
     let raf = 0;
     let pendingTarget = null;
 
@@ -305,39 +302,6 @@ export default function App() {
         if (atTop && !previous.top && top < 8) hapticScrollEdge();
         if (atEnd && !previous.end) hapticScrollEdge();
         edgeState.set(scroller, { top: atTop, end: atEnd });
-
-        // Identify the poster row crossing a stable reading line. Grid cards
-        // sharing an offsetTop are one row; list entries each count as a row.
-        const line = Math.round(window.innerHeight * 0.47);
-        const cards = Array.from(document.querySelectorAll('.movie-grid .movie-card, .list-grid .list-row, .movie-grid .continue-card'));
-        let candidate = null;
-        let bestDistance = Infinity;
-        for (const card of cards) {
-          const rect = card.getBoundingClientRect();
-          if (rect.bottom <= line || rect.top >= line) continue;
-          const distance = Math.abs((rect.left + rect.right) / 2 - window.innerWidth / 2);
-          if (distance < bestDistance) {
-            bestDistance = distance;
-            candidate = card;
-          }
-        }
-
-        if (candidate) {
-          const isListRow = candidate.classList.contains('list-row');
-          const rowKey = isListRow
-            ? `list:${candidate.dataset.rowId || candidate.getAttribute('aria-label') || candidate.querySelector('h3,h2,.list-title')?.textContent || candidate.offsetTop}`
-            : `grid:${candidate.parentElement?.className || 'grid'}:${candidate.offsetTop}`;
-          if (activeRow !== null && rowKey !== activeRow) {
-            const now = performance.now();
-            if (now - lastRowPulseAt >= 90) {
-              hapticScroll();
-              lastRowPulseAt = now;
-            }
-          }
-          activeRow = rowKey;
-        } else {
-          activeRow = null;
-        }
       });
     };
 
