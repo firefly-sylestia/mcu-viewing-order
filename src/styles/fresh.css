@@ -9283,3 +9283,30 @@
   position: relative;
   z-index: 1;
 }
+
+
+/* Keep the universe rail free of the browser's early touch flash/press scale.
+   The travelling highlight is the only selection animation. */
+:root[data-header-design="cinematic"] .movie-site .site-header .universe-tabs > button {
+  -webkit-tap-highlight-color: transparent !important;
+  touch-action: manipulation;
+}
+:root[data-header-design="cinematic"] .movie-site .site-header .universe-tabs > button:active {
+  transform: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+@media (hover: none) {
+  :root[data-header-design="cinematic"] .movie-site .site-header .universe-tabs > button:hover {
+    transform: none !important;
+    background: transparent !important;
+    color: inherit !important;
+  }
+}
+
+/* Sony and X-Men use monochrome artwork that must stay inverted in dark mode.
+   The generic active-logo rule above was clearing that filter on selection. */
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site .site-header .universe-tabs button[data-universe="sony"] .universe-logo-monochrome,
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site .site-header .universe-tabs button[data-universe="xmen"] .universe-logo-monochrome {
+  filter: invert(1) !important;
+}
