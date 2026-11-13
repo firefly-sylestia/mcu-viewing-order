@@ -7,7 +7,7 @@ import { XMEN_RAW, XMEN_PHASES } from './data/xmenData';
 import { SONY_RAW, SONY_PHASES } from './data/sonyData';
 import { getTrailerByTitle, trailerEmbedUrl } from './data/trailerData';
 import { STORY_BRIDGES } from './data/connections';
-import { STORY_ORDER_OVERRIDES, DOOMSDAY_SECRET_WARS_TITLES, getTitleGuidance } from './data/timelineModes';
+import { STORY_ORDER_OVERRIDES, DOOMSDAY_COUNTDOWN_TITLES, SECRET_WARS_PREP_TITLES, getTitleGuidance } from './data/timelineModes';
 import ProfilePage, { ProfileHeader } from './components/ProfilePage';
 import AuthModal from './components/AuthModal';
 import SeoHead from './components/SeoHead';
@@ -349,7 +349,8 @@ export default function App() {
   const genre = currentListPreferences.genre ?? (universe === 'marvel' ? saved.genre : 'All') ?? 'All';
   const rating = currentListPreferences.rating ?? (universe === 'marvel' ? saved.rating : 0) ?? 0;
   const ageRatingFilter = currentListPreferences.ageRatingFilter ?? (universe === 'marvel' ? saved.ageRatingFilter : 'All') ?? 'All';
-  const sortBy = currentListPreferences.sortBy ?? (universe === 'marvel' ? saved.sortBy : 'order') ?? 'order';
+  const legacySortBy = universe === 'marvel' && saved.sortBy === 'doomsday-secret-wars' ? 'secret-wars-prep' : saved.sortBy;
+  const sortBy = currentListPreferences.sortBy ?? (universe === 'marvel' ? legacySortBy : 'order') ?? 'order';
   const sortDirection = currentListPreferences.sortDirection ?? 'asc';
   const typeFilter = currentListPreferences.typeFilter ?? (universe === 'marvel' ? saved.typeFilter : 'All') ?? 'All';
   const setListPreference = (key, value) => setListPreferences(current => ({
@@ -3262,8 +3263,8 @@ const SORT_OPTIONS = [
 const getSortOptionsForUniverse = (universe) => {
   const common = SORT_OPTIONS.filter(option => !['doomsday-countdown', 'secret-wars-prep'].includes(option.value));
   if (universe === 'marvel') return SORT_OPTIONS;
-  if (universe === 'xmen') return common.filter(option => option.value !== 'essential').map(option => option.value === 'order' ? { ...option, label: 'X-Men Release Order' } : option);
-  if (universe === 'sony') return common.filter(option => option.value !== 'essential').map(option => option.value === 'order' ? { ...option, label: 'Sony Release Order' } : option);
+  if (universe === 'xmen') return [...common.filter(option => option.value !== 'essential'), SORT_OPTIONS.find(option => option.value === 'doomsday-countdown'), SORT_OPTIONS.find(option => option.value === 'secret-wars-prep')].map(option => option.value === 'order' ? { ...option, label: 'X-Men Release Order' } : option);
+  if (universe === 'sony') return [...common.filter(option => option.value !== 'essential'), SORT_OPTIONS.find(option => option.value === 'secret-wars-prep')].map(option => option.value === 'order' ? { ...option, label: 'Sony Release Order' } : option);
   return common.filter(option => option.value !== 'essential').map(option => option.value === 'order' ? { ...option, label: 'DC Viewing Order' } : option);
 };
 

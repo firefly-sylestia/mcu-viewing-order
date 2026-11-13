@@ -190,7 +190,7 @@ export const DOOMSDAY_COUNTDOWN_TITLES = new Set([
 export const SECRET_WARS_PREP_TITLES = new Set([
   'X-Men', 'X2: X-Men United', 'X-Men: The Last Stand', 'X-Men: Days of Future Past',
   'Spider-Man', 'Spider-Man 2', 'Spider-Man 3', 'The Amazing Spider-Man',
-  'The Amazing Spider-Man 2', 'Captain America: The First Avenger', 'Iron Man',
+  'The Amazing Spider-Man 2', 'Spider-Man: Into the Spider-Verse', 'Spider-Man: Across the Spider-Verse', 'Captain America: The First Avenger', 'Iron Man',
   'The Avengers', 'Captain America: The Winter Soldier', 'Guardians of the Galaxy',
   'Avengers: Age of Ultron', 'Captain America: Civil War', 'Doctor Strange',
   'Thor: Ragnarok', 'Avengers: Infinity War', 'Avengers: Endgame', 'Loki S1',
