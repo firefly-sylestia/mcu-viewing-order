@@ -67,6 +67,13 @@
     "65": "065-avengers-doomsday.jpg",
     "66": "066-daredevil-born-again-s3.jpg",
     "67": "067-avengers-secret-wars.jpg",
+    "68": "068-armor-wars-teaser.svg",
+    "71": "071-ghost-rider-teaser.svg",
+    "72": "072-black-panther-3-teaser.svg",
+    "73": "073-zodiac-teaser.svg",
+    "74": "074-marvel-zombies-winter-soldier.svg",
+    "75": "075-marvel-zombies-fist-of-khonshu.svg",
+    "76": "076-marvel-zombies-last-guardian.svg",
     "77": "https://pbs.twimg.com/media/HQlGn79aMAA1iK0?format=jpg&name=large",
     "101": "007-agent-carter-(one-shot).jpg",
     "102": "102-agent-carter-s1-and-s2.jpg",
@@ -350,6 +357,13 @@
     "Superman: Man of Tomorrow": "5049-superman-man-of-tomorrow.jpg",
     "Lanterns S1": "https://image.tmdb.org/t/p/w500/gpC7h43xPMEV3goYMQShfJbTtLq.jpg",
     "Peacemaker Season 2": "https://snworksceo.imgix.net/cds/55cab51c-6f1b-4f17-b80d-c3b908c8293f.sized-1000x1000.jpg?dpr=2&w=1000",
-    "Avengers Endgame: Encore": "https://pbs.twimg.com/media/HQlGn79aMAA1iK0?format=jpg&name=large"
+    "Avengers Endgame: Encore": "https://pbs.twimg.com/media/HQlGn79aMAA1iK0?format=jpg&name=large",
+    "Armor Wars": "068-armor-wars-teaser.svg",
+    "Ghost Rider": "071-ghost-rider-teaser.svg",
+    "Black Panther 3": "072-black-panther-3-teaser.svg",
+    "Zodiac": "073-zodiac-teaser.svg",
+    "Marvel Zombies: The Winter Soldier": "074-marvel-zombies-winter-soldier.svg",
+    "Marvel Zombies: The Fist of Khonshu": "075-marvel-zombies-fist-of-khonshu.svg",
+    "Marvel Zombies: The Last Guardian": "076-marvel-zombies-last-guardian.svg"
   }
 }
