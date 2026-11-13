@@ -9304,6 +9304,21 @@
   }
 }
 
+/* Touching a universe tab must not create a second, button-shaped selection flash.
+   Clear both the pressed state and the tap-induced focus state; the rail ::before
+   remains the sole visual selection indicator. Keyboard focus stays accessible. */
+:root[data-header-design="cinematic"] .movie-site .site-header .universe-tabs > button:active,
+:root[data-header-design="cinematic"] .movie-site .site-header .universe-tabs > button:focus:not(:focus-visible) {
+  transform: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+  filter: none !important;
+}
+:root[data-header-design="cinematic"] .movie-site .site-header .universe-tabs > button:active {
+  transition: none !important;
+}
+
 /* Sony and X-Men use monochrome artwork that must stay inverted in dark mode.
    The generic active-logo rule above was clearing that filter on selection. */
 :root[data-theme="dark"][data-header-design="cinematic"] .movie-site .site-header .universe-tabs button[data-universe="sony"] .universe-logo-monochrome,
