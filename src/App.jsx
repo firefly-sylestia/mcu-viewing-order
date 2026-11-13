@@ -37,7 +37,6 @@ const parseHash = () => {
   return { section: VALID_HASHES.includes(cleanSection) ? cleanSection : null, slug, searchQuery };
 };
 
-const STATUS = ['unwatched', 'watching', 'watched', 'dropped'];
 const STATUS_LABELS = { unwatched: 'Unwatched', watching: 'Watching', watched: 'Watched', dropped: 'Dropped' };
 const marvelPalette = ['#641220', '#85182a', '#a11d33', '#b21e35', '#bd1f36', '#da1e37'];
 const dcPalette = ['#061226', '#08204a', '#0b3a78', '#0d4f9c', '#1367c8', '#2f80ed'];
@@ -1098,10 +1097,6 @@ export default function App() {
     } : prev[key]?.media;
     return { ...prev, [key]: { ...(prev[key] || prev[item.id] || {}), ...(media ? { media } : {}), ...patch } };
   }), []);
-  const cycleStatus = useCallback((item) => {
-    const current = actions[mediaKey(item)]?.status || actions[item.id]?.status || 'unwatched';
-    updateAction(item, { status: STATUS[(STATUS.indexOf(current) + 1) % STATUS.length] });
-  }, [actions, updateAction]);
   const setStatus = useCallback((item, status) => {
     if (status === 'watched') hapticSuccess(); else hapticSelect();
     updateAction(item, { status });
@@ -1337,7 +1332,7 @@ export default function App() {
         <UpNextBoard items={activeItems.filter(i => i.userStatus === 'unwatched').slice(0, 10)} setSelected={selectItem} onStart={(item) => startWatchWithConfirm(item, item.tmdbId || null, item.type === 'series' ? 'tv' : 'movie')} />
         <MovieRail title="Essential picks" items={activeItems.filter(i => i.essential)} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} paginated gridControls />
         <MovieRail title="Recently watched" items={activeItems.filter(i => i.userStatus === 'watched').slice(-24).reverse()} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} empty="Mark titles as watched to see them here." paginated gridControls />
-        {activeItems.filter(i => i.userStatus === 'watching').length > 0 &&          <ContinueWatching items={activeItems.filter(i => i.userStatus === 'watching')} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} onResume={startWatchWithConfirm} />}
+        {activeItems.filter(i => i.userStatus === 'watching').length > 0 &&          <ContinueWatching items={activeItems.filter(i => i.userStatus === 'watching')} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} onResume={startWatchWithConfirm} />}
         {externalTrackedItems.length > 0 && (
           <MovieRail
             title="Your TMDB"
@@ -1757,7 +1752,7 @@ const MemoMovieCard = React.memo(MovieCard, (previous, next) => (
   previous.style?.animationDelay === next.style?.animationDelay
 ));
 
-function ListSection({ items, sortBy = 'order', sortDirection = 'asc', sortKey, externalResults = [], externalLoading = false, query = '', setSelected, setStatus, toggleBookmark, playTrailer, onPlayExternal, onWarning }) {
+function ListSection({ items, sortBy = 'order', sortDirection = 'asc', sortKey, externalResults = [], externalLoading = false, query = '', setSelected, setStatus, toggleBookmark, onPlayExternal, onWarning }) {
   const pageSize = 12;
   const [page, setPage] = useState(1);
   const [viewMode, setViewMode] = useState('list');
