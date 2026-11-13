@@ -266,7 +266,7 @@ export default function App() {
     return () => window.removeEventListener('ui-variant-changed', onVariant);
   }, []);
 
-  // Only pulse when a scroll container reaches its top or bottom edge.
+  // Give a single soft pulse when a scrollable surface reaches either edge.
   useEffect(() => {
     if (typeof window === 'undefined' || typeof document === 'undefined') return undefined;
     const touchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
@@ -274,42 +274,44 @@ export default function App() {
 
     const edgeState = new WeakMap();
     let raf = 0;
-    let pendingTarget = null;
+    let pendingTargets = new Set();
 
-    const scrollElementFor = (target) => {
-      if (target === document || target === document.documentElement || target === document.body) {
+    const resolveScroller = (target) => {
+      if (target === document || target === document.documentElement || target === document.body || target === window) {
         return document.scrollingElement || document.documentElement;
       }
       return target && typeof target.scrollTop === 'number' ? target : null;
     };
 
-    const onScroll = (event) => {
-      pendingTarget = event.target;
-      if (raf) return;
-      raf = window.requestAnimationFrame(() => {
-        raf = 0;
-        const target = pendingTarget;
-        pendingTarget = null;
-        const scroller = scrollElementFor(target);
+    const checkEdges = () => {
+      raf = 0;
+      const targets = pendingTargets;
+      pendingTargets = new Set();
+      targets.forEach((target) => {
+        const scroller = resolveScroller(target);
         if (!scroller) return;
 
         const top = Math.max(0, scroller.scrollTop || 0);
         const max = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
-        const atTop = top <= 2;
-        const atEnd = max > 8 && top >= max - 3;
-        const previous = edgeState.get(scroller) || { top: true, end: false };
+        const atTop = top <= 3;
+        const atEnd = max > 3 && top >= max - 12;
+        const previous = edgeState.get(scroller) || { top: atTop, end: false };
 
-        if (atTop && !previous.top && top < 8) hapticScrollEdge();
+        if (atTop && !previous.top) hapticScrollEdge();
         if (atEnd && !previous.end) hapticScrollEdge();
         edgeState.set(scroller, { top: atTop, end: atEnd });
       });
     };
 
+    const onScroll = (event) => {
+      pendingTargets.add(event.target);
+      if (raf) return;
+      raf = window.requestAnimationFrame(checkEdges);
+    };
+
     document.addEventListener('scroll', onScroll, { passive: true, capture: true });
-    window.addEventListener('resize', onScroll, { passive: true });
     return () => {
       document.removeEventListener('scroll', onScroll, true);
-      window.removeEventListener('resize', onScroll);
       if (raf) window.cancelAnimationFrame(raf);
     };
   }, []);

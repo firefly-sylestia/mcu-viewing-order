@@ -64,4 +64,4 @@ export const hapticWarning = () => buzz(22);
 /** Barely-there scroll tick; deliberately much softer than a normal tap. */
 export const hapticScroll = () => buzz(13);
 /** Soft boundary pulse when the page reaches its top or bottom. */
-export const hapticScrollEdge = () => buzz(18);
+export const hapticScrollEdge = () => buzz(8);
