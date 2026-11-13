@@ -54,7 +54,7 @@ const NAV_TAB_META = {
   profile: { label: 'Profile', Icon: UserRound },
 };
 const NAV_VISIBLE = NAV_ORDER.filter((id) => WATCH_ENABLED || id !== 'watch');
-const SORT_LABELS = { order: 'Order', phase: 'Phase', rating: 'Rating', imdb: 'IMDb', tomato: 'Tomato', meta: 'Meta', popularity: 'Popular', year: 'Year', title: 'Title', essential: 'Essential' };
+const SORT_LABELS = { order: 'Order', phase: 'Phase', chronological: 'Timeline', 'doomsday-countdown': 'Doomsday', 'secret-wars-prep': 'Secret Wars', rating: 'Rating', imdb: 'IMDb', tomato: 'Tomato', meta: 'Meta', popularity: 'Popular', year: 'Year', title: 'Title', essential: 'Essential' };
 const universeFullName = (value) => value === 'marvel' ? 'Marvel Cinematic Universe' : value === 'xmen' ? 'X-Men Universe' : value === 'sony' ? 'Sony Spider-Man Universe' : 'DC Universe';
 const universeShortName = (value) => value === 'marvel' ? 'MCU' : value === 'xmen' ? 'X-Men' : value === 'sony' ? 'Sony' : 'DC';
 const runtimeLabel = (minutes = 0, type = 'film') => {
@@ -344,18 +344,30 @@ export default function App() {
   }, []);
 
   const [selected, setSelected] = useState(null);
-  const [genre, setGenre] = useState(saved.genre || 'All');
-  const [rating, setRating] = useState(saved.rating || 0);
-  const [ageRatingFilter, setAgeRatingFilter] = useState(saved.ageRatingFilter || 'All');
-  const [sortBy, setSortBy] = useState(saved.sortBy || 'order');
-  const [sortDirection, setSortDirection] = useState('asc');
+  const [listPreferences, setListPreferences] = useState(saved.listPreferences || {});
+  const currentListPreferences = listPreferences[universe] || {};
+  const genre = currentListPreferences.genre ?? (universe === 'marvel' ? saved.genre : 'All') ?? 'All';
+  const rating = currentListPreferences.rating ?? (universe === 'marvel' ? saved.rating : 0) ?? 0;
+  const ageRatingFilter = currentListPreferences.ageRatingFilter ?? (universe === 'marvel' ? saved.ageRatingFilter : 'All') ?? 'All';
+  const sortBy = currentListPreferences.sortBy ?? (universe === 'marvel' ? saved.sortBy : 'order') ?? 'order';
+  const sortDirection = currentListPreferences.sortDirection ?? 'asc';
+  const typeFilter = currentListPreferences.typeFilter ?? (universe === 'marvel' ? saved.typeFilter : 'All') ?? 'All';
+  const setListPreference = (key, value) => setListPreferences(current => ({
+    ...current,
+    [universe]: { ...(current[universe] || {}), [key]: value },
+  }));
+  const setGenre = value => setListPreference('genre', value);
+  const setRating = value => setListPreference('rating', value);
+  const setAgeRatingFilter = value => setListPreference('ageRatingFilter', value);
+  const setSortBy = value => setListPreference('sortBy', value);
+  const setSortDirection = value => setListPreference('sortDirection', value);
+  const setTypeFilter = value => setListPreference('typeFilter', value);
   const [phaseFilters, setPhaseFilters] = useState(saved.phaseFilters || { marvel: saved.phaseFilter || 'All', sony: 'All', xmen: 'All', dc: 'All' });
   const phaseFilter = phaseFilters[universe] ?? 'All';
   const setPhaseFilter = useCallback((value) => setPhaseFilters(current => ({ ...current, [universe]: value })), [universe]);
   const [phaseMenuOpen, setPhaseMenuOpen] = useState(false);
   const phaseButtonRef = useRef(null);
   const [phaseMenuPosition, setPhaseMenuPosition] = useState({ top: 0, left: 0 });
-  const [typeFilter, setTypeFilter] = useState(saved.typeFilter || 'All');
   const [heroRotation] = useState(() => {
     try {
       const key = 'mcu-carousel-pool-rotation';
@@ -544,8 +556,8 @@ export default function App() {
   const allItems = useMemo(() => [...RAW.map(item => enhance(item, 'marvel')), ...DC_RAW.map(item => enhance(item, 'dc')), ...XMEN_RAW.map(item => enhance(item, 'xmen')), ...SONY_RAW.map(item => enhance(item, 'sony'))], []);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ universe, query, genre, rating, ageRatingFilter, sortBy, sortDirection, phaseFilters, phaseFilter, typeFilter, actions, section, watchItem, profileName }));
-  }, [universe, query, genre, rating, ageRatingFilter, sortBy, sortDirection, phaseFilters, phaseFilter, typeFilter, actions, section, watchItem, profileName]);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ universe, query, listPreferences, genre, rating, ageRatingFilter, sortBy, sortDirection, phaseFilters, phaseFilter, typeFilter, actions, section, watchItem, profileName }));
+  }, [universe, query, listPreferences, genre, rating, ageRatingFilter, sortBy, sortDirection, phaseFilters, phaseFilter, typeFilter, actions, section, watchItem, profileName]);
 
   const initialRender = useRef(true);
   useEffect(() => {
@@ -670,13 +682,14 @@ export default function App() {
       if (ageRatingFilter !== 'All' && (item.ageRating || (item.type === 'series' ? 'TV-14' : 'PG-13')) !== ageRatingFilter) return false;
       if (phaseFilter !== 'All' && String(item.phase || '') !== String(phaseFilter)) return false;
       if (typeFilter !== 'All' && (typeFilter === 'Movies' ? item.type !== 'film' : item.type !== 'series')) return false;
-      if (sortBy === 'doomsday-secret-wars' && !DOOMSDAY_SECRET_WARS_TITLES.has(item.title)) return false;
+      if (sortBy === 'doomsday-countdown' && !DOOMSDAY_COUNTDOWN_TITLES.has(item.title)) return false;
+      if (sortBy === 'secret-wars-prep' && !SECRET_WARS_PREP_TITLES.has(item.title)) return false;
       if (sortBy === 'essential' && !item.essential) return false;
       return effectiveRating(item) >= rating;
     });
     const timelineRank = (item) => {
       if (sortBy === 'chronological') return Number(item.storyYear || item.year || 9999) * 1000 + item.order;
-      if (sortBy === 'doomsday-secret-wars') return STORY_ORDER_OVERRIDES.get(item.title) ?? item.order;
+      if (sortBy === 'doomsday-countdown' || sortBy === 'secret-wars-prep') return STORY_ORDER_OVERRIDES.get(item.title) ?? item.order;
       return item.order;
     };
     const dir = sortDirection === 'asc' ? 1 : -1;
@@ -1078,7 +1091,7 @@ export default function App() {
     fetchOmdbBatch(0);
     return () => { cancelled = true; };
   }, [activeItems, section, heroItems]);
-  const genres = ['All', 'Action', 'Adventure', 'Drama', 'Sci-fi', 'Essential', 'Series'];
+  const genres = ['All', ...Array.from(new Set(enrichedItems.flatMap(item => item.genres || []))).sort((a, b) => a.localeCompare(b))];
   const profileItems = useMemo(() => allItems.map(enrichItem), [allItems, enrichItem]);
   const profileWatchingItem = profileItems.find(item => item.userStatus === 'watching');
   const profileNextUpItem = profileItems.find(item => item.userStatus !== 'watched' && item.userStatus !== 'dropped') || profileItems[0];
@@ -1212,7 +1225,11 @@ export default function App() {
       window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(`${item.title} official trailer`)}`, '_blank', 'noopener');
     }
   }, []);
-  const resetFilters = () => { setQuery(''); setGenre('All'); setRating(0); setAgeRatingFilter('All'); setPhaseFilter('All'); setTypeFilter('All'); setSortBy('order'); setSortDirection('asc'); };
+  const resetFilters = () => {
+    setQuery('');
+    setGenre('All'); setRating(0); setAgeRatingFilter('All'); setPhaseFilter('All'); setTypeFilter('All');
+    setSortBy('order'); setSortDirection('asc');
+  };
   const handleStartWatch = useCallback((item, tmdbId, mediaType) => {
     if (!WATCH_ENABLED) {
       setStatus(item, 'watching');
@@ -1490,7 +1507,7 @@ export default function App() {
       {selectedItem && <DetailView item={selectedItem} onClose={() => selectItem(null)} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={startWatchWithConfirm} onOpenItem={selectItem} activeItems={roadmapItems} />}
       {trailer && <TrailerModal trailer={trailer} onClose={() => setTrailer(null)} />}
       {filtersOpen && <Filters genre={genre} setGenre={setGenre} rating={rating} setRating={setRating} ageRatingFilter={ageRatingFilter} setAgeRatingFilter={setAgeRatingFilter} universe={universe} typeFilter={typeFilter} setTypeFilter={setTypeFilter} genres={genres} count={activeItems.length} onClose={() => setFiltersOpen(false)} />}
-      {sortOpen && <SortSheet sortBy={sortBy} setSortBy={setSortBy} sortDirection={sortDirection} setSortDirection={setSortDirection} count={activeItems.length} onClose={() => setSortOpen(false)} />}
+      {sortOpen && <SortSheet universe={universe} sortBy={sortBy} setSortBy={setSortBy} sortDirection={sortDirection} setSortDirection={setSortDirection} count={activeItems.length} onClose={() => setSortOpen(false)} />}
       {installDialogOpen && !appInstalled && <InstallAppDialog onInstall={installApp} canInstall={!!installPromptEvent} onDismiss={dismissInstallDialog} onHelp={() => setInstallHelpOpen(true)} />}
       {installHelpOpen && <InstallHelpDialog onClose={() => setInstallHelpOpen(false)} />}
       {authOpen && <AuthModal onClose={() => setAuthOpen(false)} onLogin={login} onSignup={signup} onResetPassword={resetPassword} onUpdatePassword={updatePassword} configured={configured} recovery={recovery} />}
@@ -3228,8 +3245,10 @@ const AGE_RATINGS = ['PG-13', 'R', 'TV-14', 'TV-PG', 'TV-MA', 'Not Rated'];
 
 const SORT_OPTIONS = [
   { value: 'order', label: 'Viewing Order' },
-  { value: 'chronological', label: 'Original Chronological' },
-  { value: 'doomsday-secret-wars', label: 'Doomsday → Secret Wars' },
+  { value: 'phase', label: 'Universe Era / Phase' },
+  { value: 'chronological', label: 'Story Chronological' },
+  { value: 'doomsday-countdown', label: 'Marvel Doomsday Countdown' },
+  { value: 'secret-wars-prep', label: 'Secret Wars Preparation' },
   { value: 'essential', label: 'Essential Only' },
   { value: 'rating', label: 'TMDB Rating' },
   { value: 'imdb', label: 'IMDb Rating' },
@@ -3239,6 +3258,14 @@ const SORT_OPTIONS = [
   { value: 'year', label: 'Release Year' },
   { value: 'title', label: 'Title A–Z' },
 ];
+
+const getSortOptionsForUniverse = (universe) => {
+  const common = SORT_OPTIONS.filter(option => !['doomsday-countdown', 'secret-wars-prep'].includes(option.value));
+  if (universe === 'marvel') return SORT_OPTIONS;
+  if (universe === 'xmen') return common.filter(option => option.value !== 'essential').map(option => option.value === 'order' ? { ...option, label: 'X-Men Release Order' } : option);
+  if (universe === 'sony') return common.filter(option => option.value !== 'essential').map(option => option.value === 'order' ? { ...option, label: 'Sony Release Order' } : option);
+  return common.filter(option => option.value !== 'essential').map(option => option.value === 'order' ? { ...option, label: 'DC Viewing Order' } : option);
+};
 
 function Sheet({ titleId, eyebrow, title, meta, onClose, children, footer }) {
   useEffect(() => {
@@ -3330,7 +3357,8 @@ function Filters({ genre, setGenre, rating, setRating, ageRatingFilter, setAgeRa
   </Sheet>;
 }
 
-function SortSheet({ sortBy, setSortBy, sortDirection, setSortDirection, count, onClose }) {
+function SortSheet({ universe, sortBy, setSortBy, sortDirection, setSortDirection, count, onClose }) {
+  const options = getSortOptionsForUniverse(universe);
   const isDefault = sortBy === 'order' && sortDirection === 'asc';
   return <Sheet
     titleId="sort-dialog-title"
@@ -3357,7 +3385,7 @@ function SortSheet({ sortBy, setSortBy, sortDirection, setSortDirection, count, 
       </button>
     </div>
     <div className="sort-option-list">
-      {SORT_OPTIONS.map(opt => (
+      {options.map(opt => (
         <button key={opt.value} className={`sort-option ${sortBy === opt.value ? 'selected' : ''}`} aria-pressed={sortBy === opt.value} onClick={() => { hapticTap(); setSortBy(opt.value); }}>
           <span className="sort-option-label">{opt.label}</span>
           {sortBy === opt.value ? <span className="sort-option-check"><Check size={13} /></span> : <span className="sort-option-mark" aria-hidden="true" />}

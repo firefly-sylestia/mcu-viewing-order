@@ -174,11 +174,29 @@ export const STORY_ORDER_OVERRIDES = new Map([
   ['Daredevil: Born Again S1', 450], ['Captain America: Brave New World', 460], ['Thunderbolts*', 470], ['Fantastic Four: First Steps', 480], ['Avengers: Doomsday', 490], ['Avengers: Secret Wars', 500],
 ]);
 
-export const DOOMSDAY_SECRET_WARS_TITLES = new Set([
-  'Captain America: The First Avenger', 'Iron Man', 'The Avengers', 'Captain America: The Winter Soldier', 'Guardians of the Galaxy',
-  'Avengers: Age of Ultron', 'Captain America: Civil War', 'Doctor Strange', 'Thor: Ragnarok', 'Avengers: Infinity War', 'Avengers: Endgame',
-  'Loki S1', 'WandaVision S1', 'Spider-Man: No Way Home', 'Doctor Strange: Multiverse of Madness', 'Loki S2', 'Deadpool & Wolverine',
-  'The Marvels', 'Fantastic Four: First Steps', 'Captain America: Brave New World', 'Thunderbolts*', 'Avengers: Doomsday', 'Avengers: Secret Wars',
+// Disney+ / Marvel's official Countdown to Doomsday playlist. Loki S1 and S2
+// are two seasons within one playlist entry.
+export const DOOMSDAY_COUNTDOWN_TITLES = new Set([
+  'X-Men', 'X2: X-Men United', 'Captain America: The First Avenger', 'The Avengers',
+  'Avengers: Infinity War', 'Avengers: Endgame', 'Loki S1', 'Loki S2',
+  'Shang-Chi & the Legend of the Ten Rings', 'Spider-Man: No Way Home',
+  'Black Panther: Wakanda Forever', 'Doctor Strange: Multiverse of Madness',
+  'Deadpool & Wolverine', 'Captain America: Brave New World', 'Thunderbolts*',
+  'Fantastic Four: First Steps',
+]);
+
+// A broader, clearly labelled editorial preparation path for Secret Wars.
+// Marvel has not published a separate official Secret Wars countdown playlist.
+export const SECRET_WARS_PREP_TITLES = new Set([
+  'X-Men', 'X2: X-Men United', 'X-Men: The Last Stand', 'X-Men: Days of Future Past',
+  'Spider-Man', 'Spider-Man 2', 'Spider-Man 3', 'The Amazing Spider-Man',
+  'The Amazing Spider-Man 2', 'Captain America: The First Avenger', 'Iron Man',
+  'The Avengers', 'Captain America: The Winter Soldier', 'Guardians of the Galaxy',
+  'Avengers: Age of Ultron', 'Captain America: Civil War', 'Doctor Strange',
+  'Thor: Ragnarok', 'Avengers: Infinity War', 'Avengers: Endgame', 'Loki S1',
+  'WandaVision S1', 'Spider-Man: No Way Home', 'Doctor Strange: Multiverse of Madness',
+  'Loki S2', 'Deadpool & Wolverine', 'The Marvels', 'Thunderbolts*',
+  'Fantastic Four: First Steps',
 ]);
 
 // Title-specific notes intentionally call out major prerequisite and post-credit spoilers.
