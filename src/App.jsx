@@ -1318,7 +1318,7 @@ export default function App() {
   return (
   <>
   <SeoHead section={section} selectedTitle={selectedTitle} />
-  <main className={`movie-site universe-${universe} page-${section}`} style={{ '--brand-accent': universeAccent, '--accent': universeAccent, '--theme-accent': universeAccent }}>
+  <main className={`movie-site universe-${universe} page-${section}`} style={{ '--brand-accent': universeAccent, '--accent': universeAccent, '--theme-accent': universeAccent, '--top-atmosphere-art': headerArtwork ? `url("${headerArtwork}")` : 'none' }}>
   <div className="site-glow" />
       {section !== 'profile' && (
       <header className="site-header header-cinematic" data-header="cinematic" style={{ "--header-next-art": headerArtwork ? `url("${headerArtwork}")` : "none" }}>

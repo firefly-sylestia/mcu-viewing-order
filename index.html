@@ -8,11 +8,11 @@
     <meta name="application-name" content="Incursion" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
-    <meta name="theme-color" content="#f6f7fb" />
+    <meta name="theme-color" content="#ffffff" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="Incursion" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="color-scheme" content="light" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="color-scheme" content="light dark" />
     
     <!-- Fonts: preloaded then applied asynchronously so text renders immediately -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -26,7 +26,13 @@
       try {
         document.documentElement.setAttribute('data-header-design', 'cinematic');
         document.documentElement.setAttribute('data-ui', localStorage.getItem('ui-variant') || 'fresh');
-        document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'light');
+        const initialTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', initialTheme);
+        document.documentElement.setAttribute('data-top-atmosphere', localStorage.getItem('top-atmosphere') === '0' ? 'off' : 'on');
+        document.documentElement.style.colorScheme = initialTheme;
+        const themeColor = initialTheme === 'dark' ? '#000000' : '#ffffff';
+        document.querySelector('meta[name="theme-color"]')?.setAttribute('content', themeColor);
+        document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')?.setAttribute('content', initialTheme === 'dark' ? 'black-translucent' : 'default');
       } catch {
         document.documentElement.setAttribute('data-header-design', 'cinematic');
         document.documentElement.setAttribute('data-ui', 'fresh');

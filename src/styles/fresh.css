@@ -9866,3 +9866,60 @@
     max-width: 78px !important;
   }
 }
+
+
+/* Optional edge-to-content poster atmosphere. The upper edge is a true theme
+   color for the system status bar, then softly reveals the next title artwork
+   before disappearing into the page's untouched surface color. */
+:root[data-top-atmosphere="on"] .movie-site {
+  position: relative !important;
+  isolation: isolate !important;
+}
+:root[data-top-atmosphere="on"] .movie-site::before {
+  content: "" !important;
+  position: absolute !important;
+  z-index: 0 !important;
+  pointer-events: none !important;
+  top: -8px !important;
+  left: -24px !important;
+  right: -24px !important;
+  height: min(760px, 92vh) !important;
+  background-color: var(--top-atmosphere-edge, #fff) !important;
+  background-image:
+    linear-gradient(to bottom,
+      var(--top-atmosphere-edge, #fff) 0%,
+      color-mix(in srgb, var(--top-atmosphere-edge, #fff) 88%, transparent) 15%,
+      color-mix(in srgb, var(--top-atmosphere-edge, #fff) 42%, transparent) 37%,
+      transparent 78%),
+    var(--top-atmosphere-art, none) !important;
+  background-size: 100% 100%, cover !important;
+  background-position: center top, center top !important;
+  background-repeat: no-repeat !important;
+  filter: blur(25px) saturate(118%) !important;
+  opacity: .88 !important;
+  transform: translateZ(0) scale(1.035) !important;
+  transform-origin: top center !important;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 48%, rgba(0,0,0,.78) 68%, transparent 100%) !important;
+  mask-image: linear-gradient(to bottom, #000 0%, #000 48%, rgba(0,0,0,.78) 68%, transparent 100%) !important;
+}
+:root[data-top-atmosphere="on"][data-theme="light"] .movie-site {
+  --top-atmosphere-edge: #ffffff;
+}
+:root[data-top-atmosphere="on"][data-theme="dark"] .movie-site {
+  --top-atmosphere-edge: #000000;
+}
+:root[data-top-atmosphere="on"] .movie-site > * {
+  position: relative;
+  z-index: 1;
+}
+:root[data-top-atmosphere="off"] .movie-site::before {
+  content: none !important;
+}
+@media (max-width: 760px) {
+  :root[data-top-atmosphere="on"] .movie-site::before {
+    height: min(650px, 86vh) !important;
+    left: -34px !important;
+    right: -34px !important;
+    filter: blur(29px) saturate(116%) !important;
+  }
+}

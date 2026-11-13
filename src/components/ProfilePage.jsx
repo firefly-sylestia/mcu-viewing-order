@@ -28,19 +28,28 @@ function useUiVariant() {
   return { variant, setVariant };
 }
 
+function applyBrowserTheme(theme) {
+  const isDark = theme === 'dark';
+  const color = isDark ? '#000000' : '#ffffff';
+  document.documentElement.setAttribute('data-theme', theme);
+  document.documentElement.style.colorScheme = theme;
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', color);
+  document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')?.setAttribute('content', isDark ? 'black-translucent' : 'default');
+}
+
 function useAppTheme() {
   const [theme, setThemeState] = useState(() => {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('theme');
-      const resolved = stored || document.documentElement.getAttribute('data-theme') || 'dark';
-      document.documentElement.setAttribute('data-theme', resolved);
+      const resolved = stored || document.documentElement.getAttribute('data-theme') || 'light';
+      applyBrowserTheme(resolved);
       return resolved;
     }
-    return 'dark';
+    return 'light';
   });
 
   const setTheme = (newTheme) => {
-    document.documentElement.setAttribute('data-theme', newTheme);
+    applyBrowserTheme(newTheme);
     try { localStorage.setItem('theme', newTheme); } catch {}
     setThemeState(newTheme);
   };
@@ -249,6 +258,13 @@ function SettingsPanel({ installApp, installAvailable, appInstalled, query = '',
   const search = query.trim().toLowerCase();
   const showGroup = (terms) => !search || terms.includes(search);
   const { theme, setTheme } = useAppTheme();
+  const [topAtmosphereOn, setTopAtmosphereOn] = useState(() => {
+    try { return localStorage.getItem('top-atmosphere') !== '0'; } catch { return true; }
+  });
+  useEffect(() => {
+    document.documentElement.setAttribute('data-top-atmosphere', topAtmosphereOn ? 'on' : 'off');
+    try { localStorage.setItem('top-atmosphere', topAtmosphereOn ? '1' : '0'); } catch {}
+  }, [topAtmosphereOn]);
   const { variant, setVariant } = useUiVariant();
   const [hapticsOn, setHapticsOn] = useState(() => getHapticsEnabled());
   const [performanceModeOn, setPerformanceModeOn] = useState(() => {
@@ -304,6 +320,26 @@ function SettingsPanel({ installApp, installAvailable, appInstalled, query = '',
               <span className="theme-toggle-thumb">
                 {theme === 'dark' ? <Moon size={14} /> : <Sun size={14} />}
               </span>
+            </span>
+          </button>
+        </div>
+        <div className="settings-row">
+          <div className="settings-row-label">
+            <span className="settings-row-icon"><Sparkles size={18} /></span>
+            <div>
+              <strong>Top atmosphere</strong>
+              <small>{topAtmosphereOn ? 'Blurred poster fade behind the header' : 'Standard page background'}</small>
+            </div>
+          </div>
+          <button
+            className="theme-toggle"
+            role="switch"
+            aria-checked={topAtmosphereOn}
+            onClick={() => { hapticTap(); setTopAtmosphereOn(value => !value); }}
+            aria-label={`Turn top atmosphere ${topAtmosphereOn ? 'off' : 'on'}`}
+          >
+            <span className={`theme-toggle-track ${topAtmosphereOn ? 'dark' : 'light'}`}>
+              <span className="theme-toggle-thumb"><Sparkles size={14} /></span>
             </span>
           </button>
         </div>
