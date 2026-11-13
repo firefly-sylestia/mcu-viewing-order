@@ -9999,3 +9999,38 @@
     linear-gradient(to bottom, #ffffff 0%, rgba(255,255,255,.96) 14%, rgba(255,255,255,.62) 36%, transparent 78%),
     var(--top-atmosphere-art, none) !important;
 }
+
+
+/* Keep the poster atmosphere independently blurred beneath the crisp status
+   edge, so the near-black top never turns grey from filtering the whole layer. */
+:root[data-top-atmosphere="on"] .movie-site::after {
+  content: "" !important;
+  position: absolute !important;
+  z-index: 0 !important;
+  pointer-events: none !important;
+  top: -8px !important;
+  left: -34px !important;
+  right: -34px !important;
+  height: min(760px, 92vh) !important;
+  background: var(--top-atmosphere-art, none) center top / cover no-repeat !important;
+  filter: blur(28px) saturate(118%) !important;
+  opacity: .58 !important;
+  transform: translateZ(0) scale(1.04) !important;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 34%, rgba(0,0,0,.8) 60%, transparent 100%) !important;
+  mask-image: linear-gradient(to bottom, #000 0%, #000 34%, rgba(0,0,0,.8) 60%, transparent 100%) !important;
+}
+:root[data-top-atmosphere="on"] .movie-site::before {
+  z-index: 1 !important;
+}
+:root[data-top-atmosphere="on"] .movie-site > * {
+  z-index: 2 !important;
+}
+:root[data-top-atmosphere="off"] .movie-site::after {
+  content: none !important;
+}
+@media (max-width: 760px) {
+  :root[data-top-atmosphere="on"] .movie-site::after {
+    height: min(650px, 86vh) !important;
+    filter: blur(30px) saturate(116%) !important;
+  }
+}
