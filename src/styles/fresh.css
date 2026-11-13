@@ -7849,3 +7849,37 @@
   :root .movie-site.page-profile .profile-page { padding-left: 0 !important; padding-right: 0 !important; }
   :root .movie-site.page-profile .profile-header .profile-next-up { max-width: 420px !important; }
 }
+
+
+/* Keep profile identity in normal page flow; modal layers must always win. */
+:root .movie-site.page-profile .profile-header.profile-header-compact {
+  position: relative !important;
+  inset: auto !important;
+  top: auto !important;
+  z-index: 0 !important;
+  transform: none !important;
+  isolation: auto !important;
+}
+:root .movie-site .site-header { z-index: 20 !important; }
+:root .detail-overlay,
+:root .filter-overlay,
+:root .confirm-overlay,
+:root .search-overlay,
+:root .auth-overlay,
+:root .avatar-dialog-backdrop,
+:root .avatar-fullscreen-overlay {
+  position: fixed !important;
+  z-index: 2147483000 !important;
+  isolation: isolate !important;
+}
+:root .header-phase-dropdown {
+  position: fixed !important;
+  z-index: 2147483001 !important;
+  width: min(300px, calc(100vw - 24px)) !important;
+  max-height: min(68vh, 560px) !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+  -webkit-overflow-scrolling: touch;
+  pointer-events: auto !important;
+  isolation: isolate !important;
+}

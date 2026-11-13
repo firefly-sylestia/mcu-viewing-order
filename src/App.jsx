@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Search, SlidersHorizontal, House, Bookmark, Play, UserRound, X, ArrowLeft, Star, BarChart3, Check, Clock, ListFilter, RotateCcw, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Calendar, Timer, Sparkles, LogOut, Cloud, Download, Camera, Info, ShieldAlert, Clapperboard, ArrowUpDown, ExternalLink } from 'lucide-react';
 import { RAW } from './data/mcuData';
 import { DC_RAW } from './data/dcData';
@@ -1304,15 +1305,18 @@ export default function App() {
   <button ref={phaseButtonRef} className={`header-phase-btn ${phaseFilter !== 'All' ? 'active' : ''}`} onClick={() => { const rect = phaseButtonRef.current?.getBoundingClientRect(); if (rect) setPhaseMenuPosition({ top: rect.bottom + 7, left: rect.left }); setPhaseMenuOpen(open => !open); }} aria-expanded={phaseMenuOpen} aria-haspopup="listbox">
   <ListFilter size={14} /> <span>{phaseFilter === 'All' ? 'All phases' : `Phase ${phaseFilter}`}</span><ChevronDown size={13} />
   </button>
-  {phaseMenuOpen && <div className="header-phase-dropdown" style={{ position: 'fixed', top: phaseMenuPosition.top, left: phaseMenuPosition.left, zIndex: 2147482000 }} role="listbox" aria-label="Select phase">
-  <p className="phase-menu-title">Jump to phase</p>
-  {['All', ...new Set(allItems.filter(item => item.universe === universe && item.phase).map(item => item.phase))].map(phase => {
-    const phaseItems = phase === 'All' ? [] : allItems.filter(item => item.universe === universe && String(item.phase) === String(phase)).map(enrichItem);
-    const phaseWatched = phaseItems.length > 0 && phaseItems.every(item => item.userStatus === 'watched');
-    const phasePartiallyWatched = phaseItems.some(item => item.userStatus === 'watched') && !phaseWatched;
-    return <div key={phase} className="phase-menu-row"><button className={String(phaseFilter) === String(phase) ? 'selected' : ''} onClick={() => { setPhaseFilter(phase); setPhaseMenuOpen(false); }} role="option" aria-selected={String(phaseFilter) === String(phase)}>{phase === 'All' ? 'All phases' : `Phase ${phase}`}</button>{phase !== 'All' && <input type="checkbox" checked={phaseWatched} ref={input => { if (input) input.indeterminate = phasePartiallyWatched; }} onClick={event => event.stopPropagation()} onChange={() => togglePhaseWatched(phase)} aria-checked={phasePartiallyWatched ? 'mixed' : phaseWatched} aria-label={`Mark all of Phase ${phase} as watched`} />}</div>;
-  })}
-  </div>}
+  {phaseMenuOpen && typeof document !== 'undefined' && createPortal(
+    <div className="header-phase-dropdown" style={{ position: 'fixed', top: phaseMenuPosition.top, left: phaseMenuPosition.left, zIndex: 2147483000 }} role="listbox" aria-label="Select phase">
+      <p className="phase-menu-title">Jump to phase</p>
+      {['All', ...new Set(allItems.filter(item => item.universe === universe && item.phase).map(item => item.phase))].map(phase => {
+        const phaseItems = phase === 'All' ? [] : allItems.filter(item => item.universe === universe && String(item.phase) === String(phase)).map(enrichItem);
+        const phaseWatched = phaseItems.length > 0 && phaseItems.every(item => item.userStatus === 'watched');
+        const phasePartiallyWatched = phaseItems.some(item => item.userStatus === 'watched') && !phaseWatched;
+        return <div key={phase} className="phase-menu-row"><button className={String(phaseFilter) === String(phase) ? 'selected' : ''} onClick={() => { setPhaseFilter(phase); setPhaseMenuOpen(false); }} role="option" aria-selected={String(phaseFilter) === String(phase)}>{phase === 'All' ? 'All phases' : `Phase ${phase}`}</button>{phase !== 'All' && <input type="checkbox" checked={phaseWatched} ref={input => { if (input) input.indeterminate = phasePartiallyWatched; }} onClick={event => event.stopPropagation()} onChange={() => togglePhaseWatched(phase)} aria-checked={phasePartiallyWatched ? 'mixed' : phaseWatched} aria-label={`Mark all of Phase ${phase} as watched`} />}</div>;
+      })}
+    </div>,
+    document.body
+  )}
   </div>
   <button className={`header-sort-btn ${sortBy !== 'order' ? 'active' : ''}`} onClick={() => { hapticTap(); setFiltersOpen(false); setSortOpen(true); }} aria-haspopup="dialog" title={`Sorted by ${SORT_LABELS[sortBy]} ${sortDirection === 'asc' ? '↑' : '↓'} — tap to change`}>
     <ArrowUpDown size={15} />
