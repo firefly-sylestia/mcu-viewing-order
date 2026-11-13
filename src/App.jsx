@@ -76,6 +76,17 @@ const HeaderQuickAction = React.memo(function HeaderQuickAction({ item, watching
     <span className="header-pill-label"><small>{watching ? 'Watching now' : 'Up next'}</small><b>{item.title}</b><em>{watching ? `${elapsedPctLabel(item)} complete` : `${item.year} · ${runtimeLabel(item.runtime, item.type)}`}</em></span>
   </button>;
 });
+, (previous, next) => (
+  previous.item?.id === next.item?.id &&
+  previous.item?.title === next.item?.title &&
+  previous.item?.poster === next.item?.poster &&
+  previous.item?.year === next.item?.year &&
+  previous.item?.runtime === next.item?.runtime &&
+  previous.item?.type === next.item?.type &&
+  previous.item?.watchedDuration === next.item?.watchedDuration &&
+  previous.watching === next.watching &&
+  previous.onSelect === next.onSelect
+));
 
 const watchTimeLabel = (item) => {
   const ms = item.watchedDuration || 0;
@@ -1758,7 +1769,7 @@ function MovieCard({ item, setSelected, setStatus, toggleBookmark, onWarning, st
 }
 
 const CARD_RENDER_FIELDS = [
-  'id', 'title', 'accent', 'phase', 'year', 'runtime', 'type', 'userStatus',
+  'id', 'title', 'poster', 'accent', 'phase', 'order', 'year', 'runtime', 'type', 'userStatus',
   'watchedDuration', 'releaseStatus', 'releaseDate', 'rating', 'imdbRating',
   'tomatoRating', 'metaRating', 'tmdbId', 'bookmarked', 'essential', 'universe',
 ];
