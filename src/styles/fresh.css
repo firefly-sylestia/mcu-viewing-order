@@ -9004,46 +9004,45 @@
 }
 
 
-/* Use a real backdrop element for the next-title artwork. Earlier cinematic
-   preset rules repeatedly disable ::before/::after, so pseudo-elements are
-   not reliable for this image layer. */
+/* Render the artwork as a real image node so CSS background layers cannot
+   silently lose the source URL. Keep the header sticky and the image behind rows. */
 :root[data-header-design="cinematic"] .movie-site .site-header {
-  position: relative !important;
+  position: sticky !important;
   isolation: isolate !important;
   overflow: hidden !important;
 }
-:root[data-header-design="cinematic"] .movie-site .site-header .header-image-backdrop {
+:root[data-header-design="cinematic"] .movie-site .site-header > .header-image-backdrop {
   display: block !important;
   position: absolute !important;
   inset: -34px !important;
   z-index: 0 !important;
+  overflow: hidden !important;
   pointer-events: none !important;
   border-radius: inherit !important;
-  background-image: var(--header-next-art, none) !important;
-  background-size: cover !important;
-  background-position: center 38% !important;
-  background-repeat: no-repeat !important;
+}
+:root[data-header-design="cinematic"] .movie-site .site-header > .header-image-backdrop img {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center 38% !important;
   filter: blur(24px) saturate(1.22) !important;
   transform: scale(1.13) !important;
   opacity: .58 !important;
 }
-:root[data-header-design="cinematic"] .movie-site .site-header > .header-image-backdrop {
-  z-index: 0 !important;
-}
-:root[data-header-design="cinematic"] .movie-site .site-header > .header-universe-backdrop {
-  z-index: 1 !important;
-}
-:root[data-header-design="cinematic"] .movie-site .site-header > .header-top,
-:root[data-header-design="cinematic"] .movie-site .site-header > .header-bar {
-  position: relative !important;
-  z-index: 2 !important;
-}
-:root[data-theme="dark"][data-header-design="cinematic"] .movie-site .site-header .header-image-backdrop {
-  display: block !important;
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site .site-header > .header-image-backdrop img {
   opacity: .66 !important;
-  filter: blur(24px) saturate(1.22) !important;
-  background-image: var(--header-next-art, none) !important;
+  filter: blur(24px) saturate(1.22) brightness(.9) !important;
 }
-:root[data-theme="dark"][data-header-design="cinematic"] .movie-site .site-header {
+/* The dark header rows must let the artwork show through; keep only the
+   requested 2% dark wash rather than a pale opaque surface. */
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site .site-header > .header-top,
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site .site-header > .header-bar {
   background: rgba(0,0,0,.02) !important;
+  background-image: none !important;
+  border-color: rgba(205,222,246,.035) !important;
+  box-shadow: inset 0 1px 0 rgba(235,243,255,.045),
+    0 5px 16px -14px rgba(0,0,0,.12) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(145%) !important;
+  backdrop-filter: blur(20px) saturate(145%) !important;
 }

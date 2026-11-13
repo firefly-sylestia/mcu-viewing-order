@@ -1276,7 +1276,7 @@ export default function App() {
   <div className="site-glow" />
       {section !== 'profile' && (
       <header className="site-header header-cinematic" data-header="cinematic" style={{ "--header-next-art": nextUp?.backdrop ? `url("${nextUp.backdrop}")` : nextUp?.poster ? `url("${nextUp.poster}")` : "none" }}>
-  <div className="header-image-backdrop" aria-hidden="true" />
+  {(nextUp?.backdrop || nextUp?.poster) && <div className="header-image-backdrop" aria-hidden="true"><img src={nextUp.backdrop || nextUp.poster} alt="" /></div>}
   <div className="header-universe-backdrop" aria-hidden="true"><span>{UNIVERSE_LOGOS[universe]}</span></div>
   <div className="header-top">
   {section === 'profile' ? null : <>
