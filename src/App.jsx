@@ -335,7 +335,6 @@ export default function App() {
       return next - 1;
     } catch { return Math.floor(Date.now() / 86400000); }
   });
-  const [heroIndex, setHeroIndex] = useState(0);
   const [section, setSection] = useState(parseHash().section || saved.section || 'home');
   const [sectionDirection, setSectionDirection] = useState(1);
 
@@ -507,8 +506,8 @@ export default function App() {
   const allItems = useMemo(() => [...RAW.map(item => enhance(item, 'marvel')), ...DC_RAW.map(item => enhance(item, 'dc')), ...XMEN_RAW.map(item => enhance(item, 'xmen')), ...SONY_RAW.map(item => enhance(item, 'sony'))], []);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ universe, query, genre, rating, ageRatingFilter, sortBy, sortDirection, phaseFilter, typeFilter, actions, section, watchItem, profileName, heroIndex }));
-  }, [universe, query, genre, rating, ageRatingFilter, sortBy, sortDirection, phaseFilter, typeFilter, actions, section, watchItem, profileName, heroIndex]);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ universe, query, genre, rating, ageRatingFilter, sortBy, sortDirection, phaseFilter, typeFilter, actions, section, watchItem, profileName }));
+  }, [universe, query, genre, rating, ageRatingFilter, sortBy, sortDirection, phaseFilter, typeFilter, actions, section, watchItem, profileName]);
 
   const initialRender = useRef(true);
   useEffect(() => {
@@ -1028,7 +1027,6 @@ export default function App() {
     fetchOmdbBatch(0);
     return () => { cancelled = true; };
   }, [activeItems, section, heroItems]);
-  const featured = heroItems[heroIndex % Math.max(heroItems.length, 1)] || activeItems[0];
   const genres = ['All', 'Action', 'Adventure', 'Drama', 'Sci-fi', 'Essential', 'Series'];
   const profileItems = useMemo(() => allItems.map(enrichItem), [allItems, enrichItem]);
   const profileWatchingItem = profileItems.find(item => item.userStatus === 'watching');
@@ -1079,7 +1077,7 @@ export default function App() {
     return { total, watched, watching, dropped, unwatched, bookmarked, percent: Math.round((watched / total) * 100), watchedMinutes, watchedTime, streak: best };
   }, [profileItems]);
 
-  const updateAction = (item, patch) => setActions(prev => {
+  const updateAction = useCallback((item, patch) => setActions(prev => {
     const key = mediaKey(item);
     const media = item.external ? {
       id: item.id,
@@ -1099,15 +1097,15 @@ export default function App() {
       accent: item.accent,
     } : prev[key]?.media;
     return { ...prev, [key]: { ...(prev[key] || prev[item.id] || {}), ...(media ? { media } : {}), ...patch } };
-  });
-  const cycleStatus = (item) => {
+  }), []);
+  const cycleStatus = useCallback((item) => {
     const current = actions[mediaKey(item)]?.status || actions[item.id]?.status || 'unwatched';
     updateAction(item, { status: STATUS[(STATUS.indexOf(current) + 1) % STATUS.length] });
-  };
-  const setStatus = (item, status) => {
+  }, [actions, updateAction]);
+  const setStatus = useCallback((item, status) => {
     if (status === 'watched') hapticSuccess(); else hapticSelect();
     updateAction(item, { status });
-  };
+  }, [updateAction]);
   const toggleWatched = (item) => setStatus(item, item.userStatus === 'watched' ? 'unwatched' : 'watched');
   const togglePhaseWatched = (phase) => {
   const phaseItems = allItems
@@ -1120,16 +1118,16 @@ export default function App() {
     return { ...next, [key]: { ...existing, status: shouldWatch ? 'watched' : 'unwatched' } };
   }, { ...prev }));
   };
-  const toggleBookmark = (item) => {
+  const toggleBookmark = useCallback((item) => {
     const next = !(actions[mediaKey(item)]?.bookmarked || actions[item.id]?.bookmarked);
     if (next) hapticSuccess(); else hapticTap();
     updateAction(item, { bookmarked: next });
-  };
-  const selectItem = (item) => {
+  }, [actions, updateAction]);
+  const selectItem = useCallback((item) => {
     setSelected(item);
     if (item) window.history.replaceState(null, '', `#detail/${slugifyPosterName(item.title)}`);
     else window.history.replaceState(null, '', `#${section}`);
-  };
+  }, [section]);
   const selectedItem = selected ? activeItems.find(item => item.id === selected.id) || selected : null;
   // Freeze the page behind the detail dialog while it is open (declared here
   // because it depends on selectedItem, which does not exist higher up).
@@ -1147,7 +1145,7 @@ export default function App() {
     };
   }, [selectedItem]);
   const nextUp = roadmapItems.find(item => item.userStatus !== 'watched' && item.userStatus !== 'dropped') || roadmapItems[0];
-  const playTrailer = (item) => {
+  const playTrailer = useCallback((item) => {
     hapticTap();
     const match = getTrailerByTitle(item.title);
     const youtubeId = match?.primary?.youtubeId || match?.youtubeId;
@@ -1159,7 +1157,7 @@ export default function App() {
     } else {
       window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(`${item.title} official trailer`)}`, '_blank', 'noopener');
     }
-  };
+  }, []);
   const resetFilters = () => { setQuery(''); setGenre('All'); setRating(0); setAgeRatingFilter('All'); setPhaseFilter('All'); setTypeFilter('All'); setSortBy('order'); setSortDirection('asc'); };
   const handleStartWatch = useCallback((item, tmdbId, mediaType) => {
     if (!WATCH_ENABLED) {
@@ -1274,7 +1272,7 @@ export default function App() {
   <div className="header-bar">
   {section !== 'profile' && section !== 'analytics' && <div className="universe-tabs" role="tablist" aria-label="Universe" style={{ "--universe-index": ["marvel", "sony", "xmen", "dc"].indexOf(universe), "--universe-active-color": ({ marvel: "#e6394f", sony: "#e0654a", xmen: "#8fa0bd", dc: "#3b82f6" })[universe] || "#8fa0bd" }}>
   {[['marvel', 'Marvel'], ['sony', 'Sony'], ['xmen', 'X-Men'], ['dc', 'DC']].map(([key, label]) => (
-    <button key={key} data-universe={key} role="tab" aria-selected={universe === key} aria-label={`${label} universe`} title={`${label} universe`} className={universe === key ? 'active' : ''} onClick={() => { hapticTap(); setUniverse(key); setHeroIndex(0); }}><span className="universe-logo" aria-hidden="true">{UNIVERSE_LOGOS[key]}</span></button>
+    <button key={key} data-universe={key} role="tab" aria-selected={universe === key} aria-label={`${label} universe`} title={`${label} universe`} className={universe === key ? 'active' : ''} onClick={() => { hapticTap(); setUniverse(key); }}><span className="universe-logo" aria-hidden="true">{UNIVERSE_LOGOS[key]}</span></button>
   ))}
   </div>}
         {section === 'list' && <div className="header-search">
@@ -1334,7 +1332,7 @@ export default function App() {
           onPhase={(phase) => setPhaseFilter(phase)}
         />}
         <section className="hero-layout" key={universe}>
-          <TopCarousel items={heroItems} featured={featured} heroIndex={heroIndex} setHeroIndex={setHeroIndex} setSelected={selectItem} />
+          <TopCarousel items={heroItems} initialIndex={saved.heroIndex || 0} setSelected={selectItem} />
         </section>
         <UpNextBoard items={activeItems.filter(i => i.userStatus === 'unwatched').slice(0, 10)} setSelected={selectItem} onStart={(item) => startWatchWithConfirm(item, item.tmdbId || null, item.type === 'series' ? 'tv' : 'movie')} />
         <MovieRail title="Essential picks" items={activeItems.filter(i => i.essential)} setSelected={selectItem} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} paginated gridControls />
@@ -1509,7 +1507,15 @@ function ControlOverview({ stats, items, nextUp, universeLabel, onOpen, onStart,
   </section>;
 }
 
-function TopCarousel({ items, featured, heroIndex, setHeroIndex, setSelected }) {
+function TopCarousel({ items, initialIndex = 0, setSelected }) {
+  const [heroIndex, setHeroIndex] = useState(() => Math.max(0, Number(initialIndex) || 0));
+  const featured = items[heroIndex % Math.max(items.length, 1)] || items[0];
+  useEffect(() => {
+    try {
+      const savedState = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...savedState, heroIndex }));
+    } catch {}
+  }, [heroIndex]);
   const [paused, setPaused] = useState(false);
   const [inlineTrailer, setInlineTrailer] = useState(null);
   const touchStartPoint = useRef(null);
@@ -1708,8 +1714,8 @@ function MovieRail({ title, items, setSelected, cycleStatus, setStatus, toggleBo
     <div className="section-title"><h2>{title}</h2><div className="section-title-actions"><span>{items.length} titles</span>{gridControls && <div className="rail-density-toggle" role="group" aria-label={`${title} grid columns`}>{[2, 3].map(count => <button key={count} className={gridDensity === count ? 'active' : ''} onClick={() => setGridDensity(count)}>{count}</button>)}</div>}</div></div>
     {items.length
       ? <>
-          <div key={`density-${gridDensity}`} className={`${scrollable ? 'movie-grid web-grid rail-scroll' : 'movie-grid web-grid'} grid-${gridDensity}${variant === 'upnext' ? ' upnext-grid' : ''}`}>
-            {visibleItems.map(item => <MovieCard key={item.id} item={item} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />)}
+          <div className={`${scrollable ? 'movie-grid web-grid rail-scroll' : 'movie-grid web-grid'} grid-${gridDensity}${variant === 'upnext' ? ' upnext-grid' : ''}`}>
+            {visibleItems.map(item => <MemoMovieCard key={item.id} item={item} setSelected={setSelected} setStatus={setStatus} toggleBookmark={toggleBookmark} />)}
           </div>
           {paginated && pageCount > 1 && <nav className="pagination" aria-label={`${title} pages`}>
             <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} aria-label="Previous page"><ChevronLeft size={18} /></button>
@@ -1721,7 +1727,7 @@ function MovieRail({ title, items, setSelected, cycleStatus, setStatus, toggleBo
   </section>;
 }
 
-function MovieCard({ item, setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, onWarning, style }) {
+function MovieCard({ item, setSelected, setStatus, toggleBookmark, onWarning, style }) {
   const guidance = getTitleGuidance(item);
   return <article className="movie-card" style={{ '--accent': item.accent, ...style }}>
     <button className="poster-button" onClick={() => setSelected(item)}>
@@ -1738,6 +1744,16 @@ function MovieCard({ item, setSelected, cycleStatus, setStatus, toggleBookmark, 
     <div className="card-actions"><button onClick={() => setStatus(item, item.userStatus === 'watched' ? 'unwatched' : 'watched')} className={`watch-chip ${item.userStatus === 'watched' ? 'watched' : ''}`} aria-label={item.userStatus === 'watched' ? `Mark ${item.title} as unwatched` : `Mark ${item.title} as watched`} aria-pressed={item.userStatus === 'watched'}>{item.userStatus === 'watched' ? <><Check size={16} /><span>Watched</span></> : <><Play size={16} /><span>Watch</span></>}</button><button onClick={() => toggleBookmark(item)} className={`bookmark-chip ${item.bookmarked ? 'saved' : ''}`} aria-label={item.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button></div>
   </article>;
 }
+
+const MemoMovieCard = React.memo(MovieCard, (previous, next) => (
+  previous.item === next.item &&
+  previous.setSelected === next.setSelected &&
+  previous.setStatus === next.setStatus &&
+  previous.toggleBookmark === next.toggleBookmark &&
+  previous.onWarning === next.onWarning &&
+  previous.style?.['--accent'] === next.style?.['--accent'] &&
+  previous.style?.animationDelay === next.style?.animationDelay
+));
 
 function ListSection({ items, sortBy = 'order', sortDirection = 'asc', sortKey, externalResults = [], externalLoading = false, query = '', setSelected, setStatus, toggleBookmark, playTrailer, onPlayExternal, onWarning }) {
   const pageSize = 12;
@@ -1816,7 +1832,7 @@ function ListSection({ items, sortBy = 'order', sortDirection = 'asc', sortKey, 
         </div>
       </div>
     </div>
-    {viewMode === 'grid' ? <div key={`grid-${sortKey}`} className="movie-grid web-grid list-card-grid">{visibleItems.map((item, i) => <MovieCard key={item.id} item={item} setSelected={setSelected} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} onWarning={onWarning} style={{ animationDelay: `${i * 30}ms` }} />)}</div> : <div key={`list-${sortKey}`} className="list-grid">{visibleItems.map((item, index) => <article className="list-row" key={item.id} data-state={item.userStatus} data-saved={item.bookmarked ? 'true' : 'false'} style={{ '--accent': item.accent, animationDelay: `${index * 30}ms` }} onClick={() => { if (suppressClickRef.current) return; hapticTap(); setSelected(item); }} onTouchStart={(event) => handleRowTouchStart(event, item)} onTouchMove={handleRowTouchMove} onTouchEnd={handleRowTouchEnd} onTouchCancel={handleRowTouchEnd} role="button" tabIndex={0} aria-label={`View ${item.title} details`} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(item); } }}>
+    {viewMode === 'grid' ? <div key={`grid-${sortKey}`} className="movie-grid web-grid list-card-grid">{visibleItems.map((item, i) => <MemoMovieCard key={item.id} item={item} setSelected={setSelected} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} onWarning={onWarning} style={{ animationDelay: `${i * 30}ms` }} />)}</div> : <div key={`list-${sortKey}`} className="list-grid">{visibleItems.map((item, index) => <article className="list-row" key={item.id} data-state={item.userStatus} data-saved={item.bookmarked ? 'true' : 'false'} style={{ '--accent': item.accent, animationDelay: `${index * 30}ms` }} onClick={() => { if (suppressClickRef.current) return; hapticTap(); setSelected(item); }} onTouchStart={(event) => handleRowTouchStart(event, item)} onTouchMove={handleRowTouchMove} onTouchEnd={handleRowTouchEnd} onTouchCancel={handleRowTouchEnd} role="button" tabIndex={0} aria-label={`View ${item.title} details`} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(item); } }}>
       <span className="list-index">{String(firstItem + index + 1).padStart(2, '0')}</span>
       <div className="list-poster"><PosterArt item={item} /></div>
       <div className="list-copy"><div className="list-title-line"><strong>{item.title}</strong><span className="phase-badge">Phase {item.phase || '—'}</span>{getTitleGuidance(item) && <button className="warning-info-button" onClick={(event) => { event.stopPropagation(); onWarning(item); }} aria-label={`Show viewing guidance for ${item.title}`}><Info size={13} /></button>}{item.essential && <span>Essential</span>}{item.userStatus !== 'unwatched' && <span className={`list-state ${item.userStatus}`}>{STATUS_LABELS[item.userStatus]}</span>}</div><div className="list-ratings-line">{item.rating && <span className="list-rating"><Star size={9} fill="currentColor" />{Number(item.rating).toFixed(1)}</span>}{item.imdbRating && <span className="list-rating list-rating-imdb">★{item.imdbRating}</span>}{item.tomatoRating && <span className={`list-rating list-rating-tomato ${getTomatoTier(item.tomatoRating).cls}`}>{getTomatoTier(item.tomatoRating).emoji}{item.tomatoRating}</span>}{item.metaRating && <span className="list-rating list-rating-meta">M{parseInt(item.metaRating)}</span>}{!(item.rating || item.imdbRating || item.tomatoRating || item.metaRating) && (item.tmdbId ? <span className="list-rating list-rating-loading" aria-label="Ratings loading"><span className="rating-skeleton" /></span> : <span className="list-rating list-rating-na">N/A</span>)}</div><div className="list-meta-line"><span>{item.year}</span><span>{item.type === 'film' ? 'Film' : 'Series'}</span><span>{runtimeLabel(item.runtime, item.type)}</span>{item.season ? <span>Season {item.season}</span> : null}{item.phase ? <span>Phase {item.phase}</span> : null}</div><p className="list-desc">{item.desc || `${item.title} in the complete ${item.universe === 'marvel' ? 'MCU' : 'DC'} story timeline.`}</p><div className="list-tags">{(item.genres || []).slice(0,3).map(g => <span key={g}>{g}</span>)}</div></div>
