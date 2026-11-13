@@ -976,6 +976,13 @@ export default function App() {
     return unique.sort(timelineSort);
   }, [allItems, universe, enrichItem, heroRotation]);
 
+  // Keep the home rail datasets stable between unrelated UI updates. This avoids
+  // rebuilding large arrays (and waking every rail) during carousel/header work.
+  const homeUpNextItems = useMemo(() => activeItems.filter(item => item.userStatus === 'unwatched').slice(0, 10), [activeItems]);
+  const homeEssentialItems = useMemo(() => activeItems.filter(item => item.essential), [activeItems]);
+  const homeRecentlyWatchedItems = useMemo(() => activeItems.filter(item => item.userStatus === 'watched').slice(-24).reverse(), [activeItems]);
+  const homeContinueWatchingItems = useMemo(() => activeItems.filter(item => item.userStatus === 'watching'), [activeItems]);
+
   // Fetch OMDb ratings (IMDb, Rotten Tomatoes, Metacritic) for ALL items
   // Items visible on screen are prioritised so the ratings users see populate first.
   const omdbFetchedRef = useRef(new Set());
@@ -992,10 +999,10 @@ export default function App() {
 
     if (section === 'home') {
       gather(heroItems);                                                        // Hero carousel
-      gather(activeItems.filter(i => i.userStatus === 'unwatched').slice(0, 10)); // Up next rail
-      gather(activeItems.filter(i => i.userStatus === 'watching'));              // Continue watching
-      gather(activeItems.filter(i => i.essential));                              // Essential picks
-      gather(activeItems.filter(i => i.userStatus === 'watched').slice(-24).reverse()); // Recently watched
+      gather(homeUpNextItems); // Up next rail
+      gather(homeContinueWatchingItems);              // Continue watching
+      gather(homeEssentialItems);                              // Essential picks
+      gather(homeRecentlyWatchedItems); // Recently watched
       gather(activeItems);                                                      // Everything else
     } else {
       gather(activeItems);
@@ -1336,10 +1343,10 @@ export default function App() {
         <section className="hero-layout" key={universe}>
           <TopCarousel items={heroItems} initialIndex={(() => { try { return Number(localStorage.getItem('mcu-home-hero-index')) || saved.heroIndex || 0; } catch { return saved.heroIndex || 0; } })()} setSelected={selectItem} />
         </section>
-        <UpNextBoard items={activeItems.filter(i => i.userStatus === 'unwatched').slice(0, 10)} setSelected={selectItem} onStart={(item) => startWatchWithConfirm(item, item.tmdbId || null, item.type === 'series' ? 'tv' : 'movie')} />
-        <MovieRail title="Essential picks" items={activeItems.filter(i => i.essential)} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} paginated gridControls />
-        <MovieRail title="Recently watched" items={activeItems.filter(i => i.userStatus === 'watched').slice(-24).reverse()} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} empty="Mark titles as watched to see them here." paginated gridControls />
-        {activeItems.filter(i => i.userStatus === 'watching').length > 0 &&          <ContinueWatching items={activeItems.filter(i => i.userStatus === 'watching')} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} onResume={startWatchWithConfirm} />}
+        <UpNextBoard items={homeUpNextItems} setSelected={selectItem} onStart={(item) => startWatchWithConfirm(item, item.tmdbId || null, item.type === 'series' ? 'tv' : 'movie')} />
+        <MovieRail title="Essential picks" items={homeEssentialItems} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} paginated gridControls />
+        <MovieRail title="Recently watched" items={homeRecentlyWatchedItems} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} empty="Mark titles as watched to see them here." paginated gridControls />
+        {homeContinueWatchingItems.length > 0 &&          <ContinueWatching items={homeContinueWatchingItems} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} onResume={startWatchWithConfirm} />}
         {externalTrackedItems.length > 0 && (
           <MovieRail
             title="Your TMDB"
@@ -2605,7 +2612,7 @@ function WatchBrowse({ activeItems, externalResults = [], externalLoading = fals
   const pageSize = 12;
   const [upNextPage, setUpNextPage] = useState(1);
   const [upNextGridDensity, setUpNextGridDensity] = useState(4);
-  const inProgress = activeItems.filter(i => i.userStatus === 'watching');
+  const inProgress = homeContinueWatchingItems;
   const allUpNext = activeItems.filter(i => i.userStatus === 'unwatched');
   const upNextPageCount = Math.max(1, Math.ceil(allUpNext.length / pageSize));
   const currentUpNextPage = Math.min(upNextPage, upNextPageCount);
