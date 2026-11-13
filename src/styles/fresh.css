@@ -9046,3 +9046,25 @@
   -webkit-backdrop-filter: blur(20px) saturate(145%) !important;
   backdrop-filter: blur(20px) saturate(145%) !important;
 }
+
+
+/* Keep the real artwork image behind every dark-mode header control.
+   The older page-scoped wildcard rule raises every direct child to z-index 2,
+   so explicitly override it for the artwork and universe watermark layers. */
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site.page-home .site-header > .header-image-backdrop,
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site.page-list .site-header > .header-image-backdrop {
+  position: absolute !important;
+  z-index: 0 !important;
+}
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site.page-home .site-header > .header-universe-backdrop,
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site.page-list .site-header > .header-universe-backdrop {
+  position: absolute !important;
+  z-index: 1 !important;
+}
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site.page-home .site-header > .header-top,
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site.page-home .site-header > .header-bar,
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site.page-list .site-header > .header-top,
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site.page-list .site-header > .header-bar {
+  position: relative !important;
+  z-index: 2 !important;
+}
