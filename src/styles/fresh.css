@@ -9093,3 +9093,20 @@
 :root[data-theme="light"][data-header-design="cinematic"] .movie-site .site-header .universe-tabs {
   background: rgba(248,250,255,.30) !important;
 }
+
+
+/* Dark Home/List: the page-scoped row surface has higher specificity.
+   Remove only the upper Incursion band so the wordmark sits on the artwork. */
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site.page-home .site-header > .header-top,
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site.page-list .site-header > .header-top {
+  background: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site.page-home .site-header > .header-top::before,
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site.page-list .site-header > .header-top::before {
+  opacity: 0 !important;
+}
