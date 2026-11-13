@@ -8191,3 +8191,74 @@
   box-shadow: 0 0 0 1px rgba(225,237,255,.20),
     0 8px 20px -16px rgba(0,0,0,.7) !important;
 }
+
+
+/* Make both header bands true frosted panes. Keep their parent layers
+   transparent so backdrop-filter can sample the blurred artwork beneath. */
+:root .movie-site .site-header::before {
+  background: linear-gradient(110deg,
+    rgba(248,250,254,.18),
+    rgba(238,243,250,.10) 48%,
+    rgba(247,249,253,.16)) !important;
+}
+:root .movie-site .site-header > .header-top,
+:root .movie-site .site-header > .header-bar {
+  position: relative !important;
+  isolation: isolate !important;
+  background: rgba(255,255,255,.075) !important;
+  -webkit-backdrop-filter: blur(38px) saturate(155%) !important;
+  backdrop-filter: blur(38px) saturate(155%) !important;
+  border: 1px solid rgba(255,255,255,.16) !important;
+  box-shadow: 0 10px 26px -18px rgba(18,30,48,.30),
+    inset 0 1px 0 rgba(255,255,255,.30) !important;
+}
+:root .movie-site .site-header .universe-tabs,
+:root .movie-site .site-header .header-search,
+:root .movie-site .site-header .stats-universe-tabs,
+:root .movie-site .site-header .header-tools .header-phase-btn,
+:root .movie-site .site-header .header-sort-btn,
+:root .movie-site .site-header .header-filter-btn,
+:root .movie-site .site-header .header-quick-actions .header-status-pill {
+  background: rgba(255,255,255,.095) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(160%) !important;
+  backdrop-filter: blur(32px) saturate(160%) !important;
+  border-color: rgba(255,255,255,.17) !important;
+}
+:root .movie-site .site-header .header-tools {
+  background: transparent !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+:root[data-theme="dark"] .movie-site .site-header::before {
+  background: linear-gradient(110deg,
+    rgba(5,10,18,.20),
+    rgba(8,15,26,.12) 48%,
+    rgba(5,10,18,.18)) !important;
+}
+:root[data-theme="dark"] .movie-site .site-header > .header-top,
+:root[data-theme="dark"] .movie-site .site-header > .header-bar {
+  background: rgba(220,234,255,.035) !important;
+  -webkit-backdrop-filter: blur(42px) saturate(165%) !important;
+  backdrop-filter: blur(42px) saturate(165%) !important;
+  border-color: rgba(224,236,255,.10) !important;
+  box-shadow: 0 12px 30px -18px rgba(0,0,0,.60),
+    inset 0 1px 0 rgba(235,244,255,.12) !important;
+}
+:root[data-theme="dark"] .movie-site .site-header .universe-tabs,
+:root[data-theme="dark"] .movie-site .site-header .header-search,
+:root[data-theme="dark"] .movie-site .site-header .stats-universe-tabs,
+:root[data-theme="dark"] .movie-site .site-header .header-tools .header-phase-btn,
+:root[data-theme="dark"] .movie-site .site-header .header-sort-btn,
+:root[data-theme="dark"] .movie-site .site-header .header-filter-btn,
+:root[data-theme="dark"] .movie-site .site-header .header-quick-actions .header-status-pill {
+  background: rgba(225,238,255,.055) !important;
+  -webkit-backdrop-filter: blur(36px) saturate(170%) !important;
+  backdrop-filter: blur(36px) saturate(170%) !important;
+  border-color: rgba(224,236,255,.10) !important;
+  color: rgba(247,250,255,.96) !important;
+}
+:root[data-theme="dark"] .movie-site .site-header .universe-tabs button.active,
+:root[data-theme="dark"] .movie-site .site-header .stats-universe-tabs button.active {
+  background: rgba(230,240,255,.16) !important;
+  color: #fff !important;
+}
