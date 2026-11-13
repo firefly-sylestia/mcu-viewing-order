@@ -9743,3 +9743,27 @@
     clip-path: inset(0 round 22px) !important;
   }
 }
+
+
+/* Mobile universe tabs: suppress every transient tap/pressed/focus flash.
+   Keep the rail's travelling active-state indicator unchanged. */
+@media (max-width: 760px) {
+  :root[data-header-design="cinematic"] .movie-site .site-header .universe-tabs,
+  :root[data-header-design="cinematic"] .movie-site .site-header .universe-tabs > button,
+  :root[data-header-design="cinematic"] .movie-site .site-header .stats-universe-tabs > button {
+    -webkit-tap-highlight-color: transparent !important;
+    tap-highlight-color: transparent !important;
+    touch-action: manipulation !important;
+  }
+  :root[data-header-design="cinematic"] .movie-site .site-header .universe-tabs > button:active,
+  :root[data-header-design="cinematic"] .movie-site .site-header .universe-tabs > button:focus:not(:focus-visible),
+  :root[data-header-design="cinematic"] .movie-site .site-header .stats-universe-tabs > button:active,
+  :root[data-header-design="cinematic"] .movie-site .site-header .stats-universe-tabs > button:focus:not(:focus-visible) {
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+    filter: none !important;
+    transform: none !important;
+  }
+}
