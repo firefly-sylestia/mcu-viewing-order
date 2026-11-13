@@ -10119,3 +10119,18 @@
 :root .movie-site .site-glow {
   transition-duration: 357ms, 357ms !important;
 }
+
+
+/* Stats universe controls: suppress only the transient pressed/tap flash.
+   The persistent selected-state blob and its active styling are untouched. */
+:root .movie-site.page-analytics .stats-universe-tabs button {
+  -webkit-tap-highlight-color: transparent !important;
+  tap-highlight-color: transparent !important;
+}
+:root .movie-site.page-analytics .stats-universe-tabs button:active {
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+  transform: none !important;
+}
