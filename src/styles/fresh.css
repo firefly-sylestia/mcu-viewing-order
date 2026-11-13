@@ -9818,3 +9818,51 @@
     min-width: 32px !important;
   }
 }
+
+
+/* Keep the List sort pill dimensionally stable when its selected label changes.
+   Long names truncate inside the pill instead of pushing the Filters control. */
+:root[data-header-design="cinematic"] .movie-site.page-list .site-header .header-tools {
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+  min-width: 0 !important;
+}
+:root[data-header-design="cinematic"] .movie-site.page-list .site-header .header-sort-btn {
+  box-sizing: border-box !important;
+  display: inline-flex !important;
+  flex: 0 0 142px !important;
+  width: 142px !important;
+  min-width: 142px !important;
+  max-width: 142px !important;
+  justify-content: center !important;
+  gap: 7px !important;
+  overflow: hidden !important;
+}
+:root[data-header-design="cinematic"] .movie-site.page-list .site-header .header-sort-label {
+  display: block !important;
+  flex: 0 1 auto !important;
+  min-width: 0 !important;
+  max-width: 88px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+:root[data-header-design="cinematic"] .movie-site.page-list .site-header .header-sort-arrow {
+  flex: 0 0 auto !important;
+}
+:root[data-header-design="cinematic"] .movie-site.page-list .site-header .header-filter-btn {
+  flex: 0 0 auto !important;
+  white-space: nowrap !important;
+}
+@media (max-width: 620px) {
+  :root[data-header-design="cinematic"] .movie-site.page-list .site-header .header-sort-btn {
+    flex-basis: 132px !important;
+    width: 132px !important;
+    min-width: 132px !important;
+    max-width: 132px !important;
+  }
+  :root[data-header-design="cinematic"] .movie-site.page-list .site-header .header-sort-label {
+    max-width: 78px !important;
+  }
+}
