@@ -10172,3 +10172,42 @@
 :root .movie-site.page-analytics .stats-universe-tabs.shared-switcher > button:focus-visible {
   color: var(--fx-text) !important;
 }
+
+
+/* Stats universe tabs: remove the pressed/touch feedback layer entirely.
+   Keep only the persistent selected underline; tapping must not flash, fill,
+   scale, ripple, or animate the button surface. */
+@media (hover: none), (pointer: coarse) {
+  :root .movie-site.page-analytics .stats-universe-tabs.shared-switcher > button,
+  :root .movie-site.page-analytics .stats-universe-tabs.shared-switcher > button:active,
+  :root .movie-site.page-analytics .stats-universe-tabs.shared-switcher > button:focus,
+  :root .movie-site.page-analytics .stats-universe-tabs.shared-switcher > button:focus-visible,
+  :root .movie-site.page-analytics .stats-universe-tabs.shared-switcher > button:hover {
+    -webkit-tap-highlight-color: rgba(0,0,0,0) !important;
+    tap-highlight-color: transparent !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    outline: 0 !important;
+    filter: none !important;
+    transform: none !important;
+    animation: none !important;
+    transition: color 200ms ease !important;
+  }
+  :root .movie-site.page-analytics .stats-universe-tabs.shared-switcher > button::before {
+    content: none !important;
+    display: none !important;
+    animation: none !important;
+  }
+  :root .movie-site.page-analytics .stats-universe-tabs.shared-switcher > button::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+:root .movie-site.page-analytics .stats-universe-tabs.shared-switcher > button {
+  -webkit-tap-highlight-color: transparent !important;
+  -webkit-touch-callout: none !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
