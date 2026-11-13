@@ -9350,3 +9350,28 @@
 :root[data-theme="dark"][data-header-design="cinematic"] .movie-site.page-profile .profile-header.profile-header-compact {
   border-color: rgba(126,164,218,.32) !important;
 }
+
+/* Bottom-nav page changes: a visible, directional slide with a soft fade. */
+.nav-page-transition {
+  animation: navPageSlideIn 420ms cubic-bezier(.2, .78, .22, 1) both !important;
+  transform-origin: center top;
+  backface-visibility: hidden;
+}
+.nav-page-transition[data-direction="1"] {
+  --nav-page-enter-x: 30px;
+}
+.nav-page-transition[data-direction="-1"] {
+  --nav-page-enter-x: -30px;
+}
+@keyframes navPageSlideIn {
+  from {
+    opacity: .58;
+    transform: translate3d(var(--nav-page-enter-x, 30px), 0, 0);
+    filter: blur(1.5px);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+    filter: blur(0);
+  }
+}
