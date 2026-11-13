@@ -7166,3 +7166,103 @@
     height: 18px !important;
   }
 }
+
+
+/* Final cinematic header corrections (override legacy layout rules above). */
+:root[data-header-design="cinematic"] .movie-site .site-header {
+  position: sticky !important;
+  top: 10px !important;
+  z-index: 1000 !important;
+  width: min(1480px, calc(100% - 36px)) !important;
+  margin: 10px auto 28px !important;
+  padding: 8px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  border: 0 !important;
+  border-radius: 28px !important;
+  background: rgba(238, 244, 253, .58) !important;
+  box-shadow: 0 18px 46px -28px rgba(14, 28, 52, .42) !important;
+  -webkit-backdrop-filter: blur(30px) saturate(155%) !important;
+  backdrop-filter: blur(30px) saturate(155%) !important;
+}
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site .site-header {
+  background: rgba(18, 24, 35, .62) !important;
+  box-shadow: 0 20px 54px -30px rgba(0, 0, 0, .78) !important;
+}
+:root[data-header-design="cinematic"] .movie-site .site-header > .header-top,
+:root[data-header-design="cinematic"] .movie-site .site-header > .header-bar {
+  border: 0 !important;
+  background: rgba(248, 251, 255, .48) !important;
+  box-shadow: 0 8px 24px -18px rgba(22, 40, 68, .3) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(150%) !important;
+  backdrop-filter: blur(26px) saturate(150%) !important;
+}
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site .site-header > .header-top,
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site .site-header > .header-bar {
+  background: rgba(29, 36, 49, .58) !important;
+  box-shadow: 0 8px 24px -18px rgba(0, 0, 0, .72) !important;
+}
+/* Remove the star/glitter overlay completely while retaining the soft glass. */
+:root[data-header-design="cinematic"] .movie-site .site-header > .header-top::before,
+:root[data-header-design="cinematic"] .movie-site .site-header > .header-bar::before,
+:root[data-header-design="cinematic"] .movie-site .site-header::before,
+:root[data-header-design="cinematic"] .movie-site .site-header::after {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+}
+/* Keep the four universe tabs inside their track; the DC active pill must not spill out. */
+:root[data-header-design="cinematic"] .movie-site.page-home .site-header .universe-tabs,
+:root[data-header-design="cinematic"] .movie-site.page-list .site-header .universe-tabs {
+  display: flex !important;
+  width: max-content !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  gap: 3px !important;
+  padding: 4px !important;
+}
+:root[data-header-design="cinematic"] .movie-site.page-home .site-header .universe-tabs button,
+:root[data-header-design="cinematic"] .movie-site.page-list .site-header .universe-tabs button {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  width: auto !important;
+  max-width: none !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+  transform: none !important;
+}
+:root[data-header-design="cinematic"] .movie-site .site-header .universe-tabs button[data-universe="dc"] {
+  margin-right: 0 !important;
+  transform: none !important;
+}
+:root[data-header-design="cinematic"] .movie-site.page-list .site-header .universe-tabs button[data-universe="sony"] .universe-logo,
+:root[data-header-design="cinematic"] .movie-site.page-list .site-header .universe-tabs button[data-universe="sony"] .universe-logo-mask {
+  width: 42px !important;
+  min-width: 42px !important;
+  max-width: 42px !important;
+  height: 12px !important;
+  min-height: 12px !important;
+  transform: none !important;
+}
+:root[data-header-design="cinematic"] .movie-site.page-list .site-header .universe-tabs button[data-universe="sony"] .universe-logo-img {
+  width: auto !important;
+  height: 12px !important;
+  max-width: 42px !important;
+  transform: none !important;
+}
+@media (max-width: 760px) {
+  :root[data-header-design="cinematic"] .movie-site .site-header {
+    top: 6px !important;
+    width: calc(100% - 16px) !important;
+    margin: 6px auto 18px !important;
+    padding: 6px !important;
+    border-radius: 23px !important;
+  }
+  :root[data-header-design="cinematic"] .movie-site.page-home .site-header .universe-tabs,
+  :root[data-header-design="cinematic"] .movie-site.page-list .site-header .universe-tabs {
+    width: 100% !important;
+  }
+}
