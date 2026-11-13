@@ -9923,3 +9923,48 @@
     filter: blur(29px) saturate(116%) !important;
   }
 }
+
+
+/* Final header silhouette: remove the perimeter stroke completely and shape
+   the lower corners so the header visually nests into the rounded universe rail. */
+:root[data-header-design="cinematic"] .movie-site .site-header,
+:root[data-header-design="cinematic"] .movie-site.page-analytics .site-header {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  border-radius: 26px 26px 48px 48px / 24px 24px 38px 38px !important;
+}
+:root[data-header-design="cinematic"] .movie-site .site-header::before,
+:root[data-header-design="cinematic"] .movie-site .site-header::after,
+:root[data-header-design="cinematic"] .movie-site .site-header > .header-image-backdrop,
+:root[data-header-design="cinematic"] .movie-site .site-header > .header-image-backdrop::before,
+:root[data-header-design="cinematic"] .movie-site .site-header > .header-image-backdrop::after {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  border-radius: inherit !important;
+}
+:root[data-header-design="cinematic"] .movie-site .site-header > .header-image-backdrop {
+  inset: 0 !important;
+  overflow: hidden !important;
+  clip-path: inset(0 round 26px 26px 48px 48px / 24px 24px 38px 38px) !important;
+}
+:root[data-header-design="cinematic"] .movie-site .site-header > .header-top,
+:root[data-header-design="cinematic"] .movie-site .site-header > .header-bar,
+:root[data-header-design="cinematic"] .movie-site .site-header > .header-top::before,
+:root[data-header-design="cinematic"] .movie-site .site-header > .header-top::after,
+:root[data-header-design="cinematic"] .movie-site .site-header > .header-bar::before,
+:root[data-header-design="cinematic"] .movie-site .site-header > .header-bar::after {
+  border-color: transparent !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+@media (max-width: 620px) {
+  :root[data-header-design="cinematic"] .movie-site .site-header,
+  :root[data-header-design="cinematic"] .movie-site.page-analytics .site-header {
+    border-radius: 23px 23px 42px 42px / 22px 22px 34px 34px !important;
+  }
+  :root[data-header-design="cinematic"] .movie-site .site-header > .header-image-backdrop {
+    clip-path: inset(0 round 23px 23px 42px 42px / 22px 22px 34px 34px) !important;
+  }
+}
