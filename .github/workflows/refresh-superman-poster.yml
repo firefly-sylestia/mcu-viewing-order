@@ -1,4 +1,5 @@
 name: Refresh Superman Poster
+# Re-run the one-time local artwork refresh after the manifest correction.
 
 on:
   push:
