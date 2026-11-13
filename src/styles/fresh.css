@@ -7097,3 +7097,72 @@
     transform: none !important;
   }
 }
+
+
+/* Floating cinematic header: detached glass surface with real depth and backdrop blur. */
+:root[data-header-design="cinematic"] .movie-site .site-header {
+  position: sticky !important;
+  top: 12px !important;
+  z-index: 80 !important;
+  isolation: isolate;
+  margin: 12px auto 26px !important;
+  padding: 9px !important;
+  border-radius: 30px !important;
+  background: color-mix(in srgb, var(--fx-surface, #fff) 28%, transparent) !important;
+  box-shadow: 0 22px 58px -30px rgba(16, 28, 48, .34),
+    0 7px 22px -15px rgba(24, 42, 68, .22) !important;
+  backdrop-filter: blur(28px) saturate(155%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(155%) !important;
+}
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site .site-header {
+  background: rgba(17, 23, 34, .34) !important;
+  box-shadow: 0 24px 64px -32px rgba(0, 0, 0, .82),
+    0 8px 28px -18px rgba(0, 0, 0, .62) !important;
+}
+:root[data-header-design="cinematic"] .movie-site .site-header > .header-top,
+:root[data-header-design="cinematic"] .movie-site .site-header > .header-bar {
+  box-shadow: 0 12px 30px -22px rgba(18, 31, 52, .34),
+    inset 0 1px 0 rgba(255,255,255,.48) !important;
+  backdrop-filter: blur(30px) saturate(170%) !important;
+  -webkit-backdrop-filter: blur(30px) saturate(170%) !important;
+}
+@media (max-width: 760px) {
+  :root[data-header-design="cinematic"] .movie-site .site-header {
+    top: 7px !important;
+    margin: 7px auto 20px !important;
+    padding: 6px !important;
+    border-radius: 25px !important;
+  }
+}
+
+/* Remove the extra profile tab tint; the shared animated selection blob is the only active marker there. */
+:root[data-header-design="cinematic"] .movie-site.page-profile .site-header .profile-header-tabs button.active,
+:root[data-header-design="cinematic"] .movie-site.page-profile .site-header .profile-header-tabs button[aria-selected="true"] {
+  background: transparent !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  color: var(--fx-text) !important;
+}
+
+/* Keep the Sony wordmark itself identical in size on Home and List, including its inner image. */
+:root .movie-site.page-list .site-header .universe-tabs button[data-universe="sony"] .universe-logo-mask {
+  width: 60px !important;
+  min-width: 60px !important;
+  height: 18px !important;
+  transform: none !important;
+}
+:root .movie-site.page-list .site-header .universe-tabs button[data-universe="sony"] .universe-logo-mask img,
+:root .movie-site.page-list .site-header .universe-tabs button[data-universe="sony"] .universe-logo-mask .universe-logo-img {
+  width: auto !important;
+  height: 18px !important;
+  max-width: 60px !important;
+  transform: none !important;
+}
+@media (max-width: 620px) {
+  :root .movie-site.page-list .site-header .universe-tabs button[data-universe="sony"] .universe-logo-mask {
+    width: 60px !important;
+    min-width: 60px !important;
+    height: 18px !important;
+  }
+}
