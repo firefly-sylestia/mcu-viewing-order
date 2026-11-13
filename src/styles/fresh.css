@@ -10132,3 +10132,43 @@
   filter: none !important;
   transform: none !important;
 }
+
+
+/* Stats universe selection: no filled button flash or filled selected pill.
+   Selected universes are marked only by a slim colour-matched indicator. */
+:root .movie-site.page-analytics .stats-universe-tabs.shared-switcher > button,
+:root .movie-site.page-analytics .stats-universe-tabs.shared-switcher > button:hover,
+:root .movie-site.page-analytics .stats-universe-tabs.shared-switcher > button:focus,
+:root .movie-site.page-analytics .stats-universe-tabs.shared-switcher > button:focus-visible,
+:root .movie-site.page-analytics .stats-universe-tabs.shared-switcher > button:active,
+:root .movie-site.page-analytics .stats-universe-tabs.shared-switcher > button.active,
+:root .movie-site.page-analytics .stats-universe-tabs.shared-switcher > button[aria-pressed="true"] {
+  -webkit-tap-highlight-color: transparent !important;
+  tap-highlight-color: transparent !important;
+  background: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  filter: none !important;
+  outline: none !important;
+}
+:root .movie-site.page-analytics .stats-universe-tabs.shared-switcher > button {
+  position: relative !important;
+}
+:root .movie-site.page-analytics .stats-universe-tabs.shared-switcher > button.active::after,
+:root .movie-site.page-analytics .stats-universe-tabs.shared-switcher > button[aria-pressed="true"]::after {
+  content: "" !important;
+  position: absolute !important;
+  left: 30% !important;
+  right: 30% !important;
+  bottom: 5px !important;
+  height: 2px !important;
+  border-radius: 999px !important;
+  background: var(--stats-hover, var(--fx-accent)) !important;
+  box-shadow: 0 0 8px color-mix(in srgb, var(--stats-hover, var(--fx-accent)) 42%, transparent) !important;
+  pointer-events: none !important;
+}
+:root .movie-site.page-analytics .stats-universe-tabs.shared-switcher > button:hover,
+:root .movie-site.page-analytics .stats-universe-tabs.shared-switcher > button:focus-visible {
+  color: var(--fx-text) !important;
+}
