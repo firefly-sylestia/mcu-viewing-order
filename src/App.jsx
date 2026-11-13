@@ -263,6 +263,46 @@ export default function App() {
     window.addEventListener('ui-variant-changed', onVariant);
     return () => window.removeEventListener('ui-variant-changed', onVariant);
   }, []);
+  // Restrained tactile navigation: occasional scroll ticks and one pulse
+  // when a user reaches either end of the document (never on initial render).
+  useEffect(() => {
+    const touchDevice = (typeof window !== 'undefined') &&
+      (('ontouchstart' in window) || (navigator.maxTouchPoints > 0));
+    if (!touchDevice) return undefined;
+    let lastTickAt = window.scrollY;
+    let topLatched = window.scrollY <= 3;
+    let bottomLatched = false;
+    let raf = 0;
+    const onScroll = () => {
+      if (raf) return;
+      raf = window.requestAnimationFrame(() => {
+        raf = 0;
+        const y = Math.max(0, window.scrollY || 0);
+        const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+        const atTop = y <= 3;
+        const atBottom = max > 24 && y >= max - 3;
+
+        if (atTop && !topLatched) hapticScrollEdge();
+        if (atBottom && !bottomLatched) hapticScrollEdge();
+        topLatched = atTop;
+        bottomLatched = atBottom;
+
+        // A very light tick every ~720px prevents constant buzzing during
+        // momentum scroll while still giving a subtle sense of movement.
+        if (!atTop && !atBottom && Math.abs(y - lastTickAt) >= 720) {
+          hapticScroll();
+          lastTickAt = y;
+        }
+        if (atTop || atBottom) lastTickAt = y;
+      });
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      if (raf) window.cancelAnimationFrame(raf);
+    };
+  }, []);
+
   const [selected, setSelected] = useState(null);
   const [genre, setGenre] = useState(saved.genre || 'All');
   const [rating, setRating] = useState(saved.rating || 0);

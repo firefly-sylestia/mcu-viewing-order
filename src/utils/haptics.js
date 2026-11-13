@@ -48,11 +48,15 @@ const buzz = (pattern) => {
   }
 };
 
-/** Soft confirmation for taps, chips, tabs and toggles. */
-export const hapticTap = (ms = 8) => buzz(ms);
-/** Slightly stronger confirmation for saving / completing an action. */
-export const hapticSelect = (ms = 14) => buzz(ms);
-/** Two-beat pulse for success states (marked watched, bookmarked, synced). */
-export const hapticSuccess = () => buzz([12, 40, 22]);
-/** Single longer buzz for destructive or blocked actions. */
-export const hapticWarning = () => buzz(34);
+/** Refined, restrained feedback: short pulses feel crisp rather than buzzy. */
+export const hapticTap = (ms = 6) => buzz(Math.min(ms, 8));
+/** A slightly more defined selection pulse for meaningful choices. */
+export const hapticSelect = (ms = 10) => buzz(Math.min(ms, 12));
+/** A quiet two-part confirmation for completed actions. */
+export const hapticSuccess = () => buzz([8, 28, 14]);
+/** Clear but brief warning pulse for destructive or blocked actions. */
+export const hapticWarning = () => buzz(22);
+/** Barely-there scroll tick; deliberately much softer than a normal tap. */
+export const hapticScroll = () => buzz(3);
+/** Soft boundary pulse when the page reaches its top or bottom. */
+export const hapticScrollEdge = () => buzz(11);
