@@ -9728,3 +9728,18 @@
 :root[data-theme="dark"][data-header-design="cinematic"] .movie-site.page-analytics .stats-progress-track {
   border-color: rgba(225, 235, 250, .24) !important;
 }
+
+
+/* Insights keeps its progress row inside the header, so the outer header
+   cannot clip overflow. Clip only the blurred artwork to the header outline. */
+:root[data-header-design="cinematic"] .movie-site.page-analytics .site-header > .header-image-backdrop {
+  inset: 0 !important;
+  border-radius: inherit !important;
+  overflow: hidden !important;
+  clip-path: inset(0 round 24px) !important;
+}
+@media (max-width: 620px) {
+  :root[data-header-design="cinematic"] .movie-site.page-analytics .site-header > .header-image-backdrop {
+    clip-path: inset(0 round 22px) !important;
+  }
+}
