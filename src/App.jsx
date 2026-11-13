@@ -2629,7 +2629,7 @@ function WatchBrowse({ activeItems, externalResults = [], externalLoading = fals
   const pageSize = 12;
   const [upNextPage, setUpNextPage] = useState(1);
   const [upNextGridDensity, setUpNextGridDensity] = useState(4);
-  const inProgress = homeContinueWatchingItems;
+  const inProgress = activeItems.filter(i => i.userStatus === 'watching');
   const allUpNext = activeItems.filter(i => i.userStatus === 'unwatched');
   const upNextPageCount = Math.max(1, Math.ceil(allUpNext.length / pageSize));
   const currentUpNextPage = Math.min(upNextPage, upNextPageCount);
