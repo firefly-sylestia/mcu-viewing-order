@@ -10032,18 +10032,16 @@
 }
 
 
-/* Keep the footer's final info control clear of the fixed floating navigation. */
+/* The footer scrolls underneath the fixed navigation; the nav stays on top. */
 :root .movie-site .site-footer {
-  padding-bottom: max(104px, calc(env(safe-area-inset-bottom, 0px) + 96px)) !important;
+  padding-bottom: 0 !important;
 }
 :root .movie-site .site-footer .footer-bottom {
   position: relative !important;
-  z-index: 1 !important;
+  z-index: auto !important;
 }
-@media (min-width: 761px) {
-  :root .movie-site .site-footer {
-    padding-bottom: 112px !important;
-  }
+:root .movie-site .bottom-nav {
+  z-index: 1000 !important;
 }
 
 /* Stats universe rail: quieter translucent track with distinct, reliable
