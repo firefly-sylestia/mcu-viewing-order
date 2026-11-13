@@ -1,5 +1,5 @@
 name: Refresh Superman Poster
-# Re-run the one-time local artwork refresh after the manifest correction.
+# Refresh the local Superman (2025) artwork from its verified TMDB movie page (ID 1061474).
 
 on:
   push:
