@@ -1,5 +1,5 @@
-const SHELL_CACHE = 'incursion-shell-v6';
-const IMAGE_CACHE = 'incursion-images-v1';
+const SHELL_CACHE = 'incursion-shell-v7';
+const IMAGE_CACHE = 'incursion-images-v2';
 self.addEventListener('install', event => {
   event.waitUntil((async () => { const cache = await caches.open(SHELL_CACHE); await cache.addAll(['/', '/manifest.webmanifest', '/incursion-app-icon.svg?v=2']); await self.skipWaiting(); })());
 });

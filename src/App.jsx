@@ -136,7 +136,7 @@ const posterFromManifest = (item, manifest) => {
     143: '143-cloak-and-dagger-s2.jpg',
     // Superman (2025): always use the verified bundled DC one-sheet, never
     // a stale TMDB/OMDb poster URL retained in local metadata.
-    5022: '5022-superman.jpg',
+    5022: '5022-superman-v2.jpg',
   }[Number(item?.id)];
   const value = pinned || manifest?.byId?.[String(item.id)] || manifest?.byTitle?.[item.title] || manifest?.[String(item.id)];
   if (!value) return '';
@@ -210,6 +210,8 @@ export default function App() {
   const saved = useMemo(readSavedState, []);
   const [universe, setUniverse] = useState(saved.universe || 'marvel');
   const [query, setQuery] = useState(saved.query || '');
+  const [focusListSearch, setFocusListSearch] = useState(false);
+  const listSearchInputRef = useRef(null);
   const [externalSearchResults, setExternalSearchResults] = useState([]);
   const [externalSearchLoading, setExternalSearchLoading] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -362,6 +364,15 @@ export default function App() {
   });
   const [section, setSection] = useState(parseHash().section || saved.section || 'home');
   const [sectionDirection, setSectionDirection] = useState(1);
+  useEffect(() => {
+    if (section !== 'list' || !focusListSearch) return undefined;
+    const frame = window.requestAnimationFrame(() => {
+      listSearchInputRef.current?.focus({ preventScroll: true });
+      setFocusListSearch(false);
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [section, focusListSearch]);
+
 
   const [navHoldIndex, setNavHoldIndex] = useState(null);
   const [navHolding, setNavHolding] = useState(false);
@@ -1303,9 +1314,13 @@ export default function App() {
     <button key={key} data-universe={key} role="tab" aria-selected={universe === key} aria-label={`${label} universe`} title={`${label} universe`} className={universe === key ? 'active' : ''} onClick={() => { hapticTap(); setUniverse(key); }}><span className="universe-logo" aria-hidden="true">{UNIVERSE_LOGOS[key]}</span></button>
   ))}
   </div>}
+        {section === 'home' && <div className="header-search home-header-search">
+          <Search size={18} />
+          <input type="search" readOnly value="" placeholder="Search titles & TMDB…" aria-label="Open title search" onClick={() => { setFocusListSearch(true); navigateSection('list'); }} />
+        </div>}
         {section === 'list' && <div className="header-search">
           <Search size={18} />
-          <input value={query} onChange={e => setQuery(e.target.value)} placeholder={`Search ${universe === 'marvel' ? 'Marvel' : universe === 'xmen' ? 'X-Men' : universe === 'sony' ? 'Sony' : 'DC'} titles & TMDB…`} aria-label="Search titles" />
+          <input ref={listSearchInputRef} value={query} onChange={e => setQuery(e.target.value)} placeholder={`Search ${universe === 'marvel' ? 'Marvel' : universe === 'xmen' ? 'X-Men' : universe === 'sony' ? 'Sony' : 'DC'} titles & TMDB…`} aria-label="Search titles" />
           {query && <button className="search-clear" onClick={() => setQuery('')} aria-label="Clear search"><X size={16} /></button>}
         </div>}
         <div className="header-tools">

@@ -9415,3 +9415,29 @@
 .performance-mode .movie-site .bottom-nav .nav-blob {
   transition: transform 640ms cubic-bezier(.18, .82, .22, 1) !important;
 }
+
+
+/* Home search is a desktop header entry point; activating it opens List and
+   transfers focus to the real search field there. Keep mobile header compact. */
+@media (min-width: 761px) {
+  :root[data-header-design="cinematic"] .movie-site.page-home .site-header .home-header-search {
+    display: flex !important;
+    order: 1 !important;
+    flex: 0 1 340px !important;
+    width: auto !important;
+    min-width: 220px !important;
+    max-width: min(360px, 30vw) !important;
+    min-height: 54px !important;
+    height: 54px !important;
+    box-sizing: border-box !important;
+    cursor: text;
+  }
+  :root[data-header-design="cinematic"] .movie-site.page-home .site-header .home-header-search input {
+    cursor: text;
+  }
+}
+@media (max-width: 760px) {
+  :root .movie-site.page-home .site-header .home-header-search {
+    display: none !important;
+  }
+}
