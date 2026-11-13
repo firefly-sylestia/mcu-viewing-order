@@ -311,7 +311,7 @@ function SettingsPanel({ installApp, installAvailable, appInstalled, query = '',
   return (
     <div className="settings-section">
       {/* Theme Toggle */}
-      <div className="settings-group" hidden={!showGroup('appearance theme interface haptics dark light layout vibration')}>
+      <div className="settings-group" hidden={!showGroup('appearance theme interface haptics dark light layout vibration liquid glass navigation reflection refraction')}>
         <h3 className="settings-group-title">Appearance</h3>
         <div className="settings-row">
           <div className="settings-row-label">
