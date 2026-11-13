@@ -3,6 +3,31 @@ import { createPortal } from 'react-dom';
 import { Play, Bookmark, RotateCcw, Clock, Check, X, Pencil, Trophy, LogIn, LogOut, Cloud, RefreshCw, Sun, Moon, Settings, Upload, Download, Clapperboard, Sparkles, LayoutGrid, Vibrate, ChevronDown, Maximize2, } from 'lucide-react';
 import { getHapticsEnabled, setHapticsEnabled, hapticsSupported, hapticTap, hapticSuccess } from '../utils/haptics';
 
+const UI_VARIANT_KEY = 'ui-variant';
+const UI_VARIANTS = [
+  { id: 'classic', label: 'Classic' },
+  { id: 'fresh', label: 'Fresh' },
+  // Kept for anyone already on it, but no longer offered in Settings.
+  { id: 'control', label: 'Control', hidden: true },
+];
+const VISIBLE_UI_VARIANTS = UI_VARIANTS.filter(option => !option.hidden);
+
+function useUiVariant() {
+  const [variant, setVariantState] = useState(() => {
+    if (typeof window === 'undefined') return 'fresh';
+    return localStorage.getItem(UI_VARIANT_KEY) || 'fresh';
+  });
+
+  const setVariant = (next) => {
+    document.documentElement.setAttribute('data-ui', next);
+    try { localStorage.setItem(UI_VARIANT_KEY, next); } catch {}
+    window.dispatchEvent(new CustomEvent('ui-variant-changed', { detail: next }));
+    setVariantState(next);
+  };
+
+  return { variant, setVariant };
+}
+
 function applyBrowserTheme(theme) {
   const isDark = theme === 'dark';
   const color = isDark ? '#111318' : '#ffffff';
@@ -54,7 +79,7 @@ const formatTimeAgo = (timestamp) => {
   return 'Synced ' + Math.floor(hours / 24) + 'd ago';
 };
 
-function ProfilePage({ pageHeader, setActiveTab, installApp, installAvailable, appInstalled, stats, activeItems, universe, activeTab = 'insights', query = '', setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, profileName, setProfileName, user, configured, onLogin, onLogout, lastSynced, syncing, onSync, conflict, onResolveRemote, onResolveLocal, syncToast, nativePlayer, setNativePlayer, headerDesign = 'classic', setHeaderDesign }) {
+function ProfilePage({ pageHeader, setActiveTab, installApp, installAvailable, appInstalled, stats, activeItems, universe, activeTab = 'insights', query = '', setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, profileName, setProfileName, user, configured, onLogin, onLogout, lastSynced, syncing, onSync, conflict, onResolveRemote, onResolveLocal, syncToast, nativePlayer, setNativePlayer, headerDesign = 'classic', setHeaderDesign, liquidGlassNavOn = false, setLiquidGlassNavOn }) {
   
   const savedItems = activeItems.filter(i => i.bookmarked);
   const inProgressItems = activeItems.filter(i => i.userStatus === 'watching');
@@ -118,7 +143,7 @@ function ProfilePage({ pageHeader, setActiveTab, installApp, installAvailable, a
 
         {activeTab === 'settings' && (
           <div id="settings-panel" role="tabpanel" className="profile-panel settings-panel">
-            <SettingsPanel installApp={installApp} installAvailable={installAvailable} appInstalled={appInstalled} query={query} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={onLogin} onLogout={onLogout} universe={universe} activeItems={activeItems} setStatus={setStatus} toggleBookmark={toggleBookmark} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} headerDesign={headerDesign} setHeaderDesign={setHeaderDesign} />
+            <SettingsPanel installApp={installApp} installAvailable={installAvailable} appInstalled={appInstalled} query={query} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={onLogin} onLogout={onLogout} universe={universe} activeItems={activeItems} setStatus={setStatus} toggleBookmark={toggleBookmark} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} headerDesign={headerDesign} setHeaderDesign={setHeaderDesign} liquidGlassNavOn={liquidGlassNavOn} setLiquidGlassNavOn={setLiquidGlassNavOn} />
           </div>
         )}
       </div>
@@ -239,7 +264,7 @@ export function ProfileHeader({ universe, stats, profileName, setProfileName, us
   );
 }
 
-function SettingsPanel({ installApp, installAvailable, appInstalled, query = '', profileName, setProfileName, user, configured, onLogin, onLogout, universe, activeItems, setStatus, toggleBookmark, nativePlayer, setNativePlayer, headerDesign = 'classic', setHeaderDesign }) {
+function SettingsPanel({ installApp, installAvailable, appInstalled, query = '', profileName, setProfileName, user, configured, onLogin, onLogout, universe, activeItems, setStatus, toggleBookmark, nativePlayer, setNativePlayer, headerDesign = 'classic', setHeaderDesign, liquidGlassNavOn = false, setLiquidGlassNavOn }) {
   const search = query.trim().toLowerCase();
   const showGroup = (terms) => !search || terms.includes(search);
   const { theme, setTheme } = useAppTheme();
@@ -250,6 +275,7 @@ function SettingsPanel({ installApp, installAvailable, appInstalled, query = '',
     document.documentElement.setAttribute('data-top-atmosphere', topAtmosphereOn ? 'on' : 'off');
     try { localStorage.setItem('top-atmosphere', topAtmosphereOn ? '1' : '0'); } catch {}
   }, [topAtmosphereOn]);
+  const { variant, setVariant } = useUiVariant();
   const [hapticsOn, setHapticsOn] = useState(() => getHapticsEnabled());
   const [performanceModeOn, setPerformanceModeOn] = useState(() => {
     try { return localStorage.getItem('performance-mode') === '1'; } catch { return false; }
@@ -285,7 +311,7 @@ function SettingsPanel({ installApp, installAvailable, appInstalled, query = '',
   return (
     <div className="settings-section">
       {/* Theme Toggle */}
-      <div className="settings-group" hidden={!showGroup('appearance theme haptics dark light layout vibration')}>
+      <div className="settings-group" hidden={!showGroup('appearance theme interface haptics dark light layout vibration liquid glass navigation reflection refraction')}>
         <h3 className="settings-group-title">Appearance</h3>
         <div className="settings-row">
           <div className="settings-row-label">
@@ -327,6 +353,44 @@ function SettingsPanel({ installApp, installAvailable, appInstalled, query = '',
             </span>
           </button>
         </div>
+        <div className="settings-row">
+          <div className="settings-row-label">
+            <span className="settings-row-icon"><Sparkles size={18} /></span>
+            <div>
+              <strong>Liquid Glass navigation</strong>
+              <small>{liquidGlassNavOn ? "Chromatic refraction and reflective glass enabled" : "Standard navigation · glass effects off"}</small>
+            </div>
+          </div>
+          <button className="theme-toggle" role="switch" aria-checked={liquidGlassNavOn}
+            onClick={() => { hapticTap(); setLiquidGlassNavOn?.(value => !value); }}
+            aria-label={"Turn Liquid Glass navigation " + (liquidGlassNavOn ? "off" : "on")}>
+            <span className={"theme-toggle-track " + (liquidGlassNavOn ? "dark" : "light")}>
+              <span className="theme-toggle-thumb"><Sparkles size={14} /></span>
+            </span>
+          </button>
+        </div>
+        <div className="settings-row settings-row-stacked">
+          <div className="settings-row-label">
+            <span className="settings-row-icon"><Sparkles size={18} /></span>
+            <div>
+              <strong>Interface</strong>
+              <small>{UI_VARIANTS.find(option => option.id === variant)?.label || 'Fresh'} layout</small>
+            </div>
+          </div>
+          <div className="variant-switch" role="group" aria-label="Interface layout">
+            {VISIBLE_UI_VARIANTS.map(option => (
+              <button
+                key={option.id}
+                className={variant === option.id ? 'active' : ''}
+                aria-pressed={variant === option.id}
+                onClick={() => { hapticTap(); setVariant(option.id); }}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="settings-row">
           <div className="settings-row-label">
             <span className="settings-row-icon"><Vibrate size={18} /></span>
