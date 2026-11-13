@@ -7019,3 +7019,81 @@
 :root[data-theme="dark"][data-header-design="cinematic"] .movie-site .site-header .universe-tabs,:root[data-theme="dark"][data-header-design="cinematic"] .movie-site .site-header .header-tools,:root[data-theme="dark"][data-header-design="cinematic"] .movie-site .site-header .profile-header-tabs,:root[data-theme="dark"][data-header-design="cinematic"] .movie-site .site-header .stats-universe-tabs,:root[data-theme="dark"][data-header-design="cinematic"] .movie-site .site-header .header-search,:root[data-theme="dark"][data-header-design="cinematic"] .movie-site .site-header .header-status-pill{border-color:rgba(163,185,219,.16)!important;background:rgba(15,23,37,.42)!important;box-shadow:0 8px 24px -16px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.11)!important}
 :root[data-theme="dark"][data-header-design="cinematic"] .movie-site .site-header .universe-tabs button.active,:root[data-theme="dark"][data-header-design="cinematic"] .movie-site .site-header .profile-header-tabs button[aria-selected="true"],:root[data-theme="dark"][data-header-design="cinematic"] .movie-site .site-header .stats-universe-tabs button.active{background:linear-gradient(135deg,rgba(74,139,245,.34),rgba(87,145,231,.14))!important;box-shadow:0 4px 18px -9px rgba(52,127,241,.8),inset 0 0 0 1px rgba(111,168,255,.24),inset 0 1px 0 rgba(255,255,255,.14)!important}
 @media(max-width:760px){:root[data-header-design="cinematic"] .movie-site .site-header{gap:10px!important}:root[data-header-design="cinematic"] .movie-site .site-header>.header-top{padding:13px 14px!important}:root[data-header-design="cinematic"] .movie-site .site-header>.header-bar{padding:12px!important}}
+
+
+/* Cinematic header: remove coloured selection flashes and all hard edge strokes. */
+:root[data-header-design="cinematic"] .movie-site .site-header > .header-top,
+:root[data-header-design="cinematic"] .movie-site .site-header > .header-bar,
+:root[data-header-design="cinematic"] .movie-site .site-header .universe-tabs,
+:root[data-header-design="cinematic"] .movie-site .site-header .header-tools,
+:root[data-header-design="cinematic"] .movie-site .site-header .profile-header-tabs,
+:root[data-header-design="cinematic"] .movie-site .site-header .stats-universe-tabs,
+:root[data-header-design="cinematic"] .movie-site .site-header .header-search,
+:root[data-header-design="cinematic"] .movie-site .site-header .header-status-pill,
+:root[data-header-design="cinematic"] .movie-site .site-header .universe-tabs button,
+:root[data-header-design="cinematic"] .movie-site .site-header .profile-header-tabs button,
+:root[data-header-design="cinematic"] .movie-site .site-header .stats-universe-tabs button,
+:root[data-header-design="cinematic"] .movie-site .site-header .header-phase-btn,
+:root[data-header-design="cinematic"] .movie-site .site-header .header-sort-btn,
+:root[data-header-design="cinematic"] .movie-site .site-header .header-filter-btn {
+  border: 0 !important;
+  outline: 0 !important;
+}
+
+:root[data-header-design="cinematic"] .movie-site .site-header .universe-tabs button.active,
+:root[data-header-design="cinematic"] .movie-site .site-header .profile-header-tabs button[aria-selected="true"],
+:root[data-header-design="cinematic"] .movie-site .site-header .stats-universe-tabs button.active {
+  color: var(--fx-text) !important;
+  background: rgba(125, 137, 155, .13) !important;
+  box-shadow: 0 5px 16px -13px rgba(20, 28, 42, .38),
+    inset 0 1px 0 rgba(255, 255, 255, .34) !important;
+  filter: none !important;
+}
+
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site .site-header .universe-tabs button.active,
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site .site-header .profile-header-tabs button[aria-selected="true"],
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site .site-header .stats-universe-tabs button.active {
+  color: #e1e6ef !important;
+  background: rgba(205, 215, 231, .10) !important;
+  box-shadow: 0 5px 18px -14px rgba(0, 0, 0, .72),
+    inset 0 1px 0 rgba(255, 255, 255, .08) !important;
+}
+
+:root[data-header-design="cinematic"] .movie-site .site-header .universe-tabs button.active .universe-logo,
+:root[data-header-design="cinematic"] .movie-site .site-header .universe-tabs button.active .universe-logo-img {
+  filter: none !important;
+}
+
+:root[data-header-design="cinematic"] .movie-site .site-header .header-search,
+:root[data-header-design="cinematic"] .movie-site .site-header .header-search:focus-within,
+:root[data-header-design="cinematic"] .movie-site .site-header .header-search:focus,
+:root[data-header-design="cinematic"] .movie-site .site-header .header-search:focus-visible {
+  border: 0 !important;
+  outline: 0 !important;
+  background: rgba(125, 137, 155, .12) !important;
+  box-shadow: 0 6px 18px -15px rgba(20, 28, 42, .42),
+    inset 0 1px 0 rgba(255, 255, 255, .30) !important;
+}
+
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site .site-header .header-search,
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site .site-header .header-search:focus-within,
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site .site-header .header-search:focus,
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site .site-header .header-search:focus-visible {
+  background: rgba(205, 215, 231, .075) !important;
+  box-shadow: 0 7px 20px -16px rgba(0, 0, 0, .8),
+    inset 0 1px 0 rgba(255, 255, 255, .075) !important;
+}
+
+/* Sony wordmark is the same visual size on List as it is on Home. */
+:root .movie-site.page-list .site-header .universe-tabs button[data-universe="sony"] .universe-logo-mask {
+  width: 60px !important;
+  height: 18px !important;
+  transform: none !important;
+}
+@media (max-width: 620px) {
+  :root .movie-site.page-list .site-header .universe-tabs button[data-universe="sony"] .universe-logo-mask {
+    width: 60px !important;
+    height: 18px !important;
+    transform: none !important;
+  }
+}
