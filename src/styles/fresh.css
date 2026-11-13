@@ -9177,3 +9177,28 @@
   opacity: .82 !important;
 }
 
+
+
+/* Fine-tuned motion: keep the held navigation indicator centred on the finger. */
+:root .movie-site .bottom-nav .nav-blob {
+  transition: transform var(--nav-dur, .58s) cubic-bezier(.22, .78, .22, 1),
+    background .3s ease, box-shadow .3s ease, filter .2s ease !important;
+}
+:root .movie-site .bottom-nav[data-holding="true"] .nav-blob {
+  transform: translateX(calc(var(--nav-index) * (100% + var(--nav-gap, 6px)))) scale(1.015, 1.035) !important;
+}
+
+/* The header's sliding selection highlight moves with a softer, more even glide. */
+:root .movie-site.page-profile .profile-header-tabs.shared-switcher::before {
+  transition: transform .62s cubic-bezier(.22, .78, .22, 1) !important;
+  will-change: transform;
+}
+
+/* Universe switcher: softly rectangular rather than capsule-shaped. */
+:root[data-header-design="cinematic"] .movie-site .site-header .universe-tabs {
+  border-radius: 16px !important;
+}
+:root[data-header-design="cinematic"] .movie-site .site-header .universe-tabs button {
+  border-radius: 11px !important;
+  transition: background .28s ease, color .28s ease, box-shadow .28s ease, transform .22s ease !important;
+}

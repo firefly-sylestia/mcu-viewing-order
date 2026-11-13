@@ -1440,7 +1440,7 @@ export default function App() {
         className="bottom-nav"
         aria-label="Primary"
         data-holding={navHolding ? 'true' : 'false'}
-        style={{ '--nav-index': navHoldIndex ?? Math.max(0, NAV_VISIBLE.indexOf(section)), '--nav-count': NAV_VISIBLE.length, '--nav-dur': navHolding ? '90ms' : '.58s' }}
+        style={{ '--nav-index': navHoldIndex ?? Math.max(0, NAV_VISIBLE.indexOf(section)), '--nav-count': NAV_VISIBLE.length, '--nav-dur': navHolding ? '150ms' : '.58s' }}
         onPointerDown={handleNavPointerDown}
         onPointerMove={handleNavPointerMove}
         onPointerUp={handleNavPointerUp}
