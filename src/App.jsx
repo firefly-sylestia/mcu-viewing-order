@@ -1296,7 +1296,7 @@ export default function App() {
   </>}
   </div>
   <div className="header-bar">
-  {section !== 'profile' && section !== 'analytics' && <div className="universe-tabs" role="tablist" aria-label="Universe">
+  {section !== 'profile' && section !== 'analytics' && <div className="universe-tabs" role="tablist" aria-label="Universe" style={{ "--universe-index": ["marvel", "sony", "xmen", "dc"].indexOf(universe), "--universe-active-color": ({ marvel: "#e6394f", sony: "#e0654a", xmen: "#8fa0bd", dc: "#3b82f6" })[universe] || "#8fa0bd" }}>
   {[['marvel', 'Marvel'], ['sony', 'Sony'], ['xmen', 'X-Men'], ['dc', 'DC']].map(([key, label]) => (
     <button key={key} data-universe={key} role="tab" aria-selected={universe === key} aria-label={`${label} universe`} title={`${label} universe`} className={universe === key ? 'active' : ''} onClick={() => { hapticTap(); setUniverse(key); setHeroIndex(0); }}><span className="universe-logo" aria-hidden="true">{UNIVERSE_LOGOS[key]}</span></button>
   ))}
