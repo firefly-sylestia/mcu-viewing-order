@@ -9325,3 +9325,28 @@
 :root[data-theme="dark"][data-header-design="cinematic"] .movie-site .site-header .universe-tabs button[data-universe="xmen"] .universe-logo-monochrome {
   filter: invert(1) !important;
 }
+
+
+/* Give the Up Next title pill a faint surface of its own over the header art. */
+:root[data-header-design="cinematic"] .movie-site .site-header .header-quick-actions .header-status-pill {
+  background: color-mix(in srgb, var(--fx-surface-2) 16%, transparent) !important;
+  border: 1px solid color-mix(in srgb, var(--fx-text) 9%, transparent) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(145%) !important;
+  backdrop-filter: blur(14px) saturate(145%) !important;
+}
+:root[data-theme="light"][data-header-design="cinematic"] .movie-site .site-header .header-quick-actions .header-status-pill {
+  background: rgba(255,255,255,.20) !important;
+  border-color: rgba(117,145,184,.13) !important;
+}
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site .site-header .header-quick-actions .header-status-pill {
+  background: rgba(17,27,43,.22) !important;
+  border-color: rgba(166,190,224,.14) !important;
+}
+
+/* Restore the softly colored blue edge around the profile identity panel. */
+:root[data-header-design="cinematic"] .movie-site.page-profile .profile-header.profile-header-compact {
+  border: 1px solid rgba(105,145,205,.38) !important;
+}
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site.page-profile .profile-header.profile-header-compact {
+  border-color: rgba(126,164,218,.32) !important;
+}
