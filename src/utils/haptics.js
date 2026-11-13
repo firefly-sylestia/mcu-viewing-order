@@ -25,7 +25,9 @@ const readPreference = () => {
 let enabled = readPreference();
 
 const canVibrate = () => typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function';
-// Resolve support at call time; browsers can expose vibration only after activation.\nexport const hapticsSupported = canVibrate();\nexport const isHapticsSupported = () => canVibrate();
+// Resolve support at call time; browsers can expose vibration only after activation.
+export const hapticsSupported = canVibrate();
+export const isHapticsSupported = () => canVibrate();
 
 export const getHapticsEnabled = () => enabled;
 
