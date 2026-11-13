@@ -1275,7 +1275,7 @@ export default function App() {
     const quickItem = watchingItem || nextUp;
     if (!quickItem) return null;
     return <button className={`header-status-pill ${watchingItem ? 'watching' : 'next'}`} onClick={() => selectItem(quickItem)} title={`Open ${watchingItem ? 'current' : 'next'}: ${quickItem.title}`}>
-      <span className="header-pill-poster">{quickItem.poster ? <img src={quickItem.poster} alt="" loading="lazy" referrerPolicy="no-referrer" /> : <Play size={14} fill="currentColor" />}</span>
+      <span className="header-pill-poster">{quickItem.poster ? <img src={quickItem.poster} alt="" width="300" height="450" loading="lazy" decoding="async" referrerPolicy="no-referrer" /> : <Play size={14} fill="currentColor" />}</span>
       <span className="header-pill-label"><small>{watchingItem ? 'Watching now' : 'Up next'}</small><b>{quickItem.title}</b><em>{watchingItem ? `${elapsedPctLabel(watchingItem)} complete` : `${quickItem.year} · ${runtimeLabel(quickItem.runtime, quickItem.type)}`}</em></span>
     </button>;
   })()}
@@ -1844,7 +1844,7 @@ function ListSection({ items, sortBy = 'order', sortDirection = 'asc', sortKey, 
           {externalResults.map(result => (
             <div key={result.id} className="external-result-card" onClick={() => onPlayExternal(result)}>
               <div className="external-poster">
-                <img src={result.poster} alt={result.title} loading="lazy" />
+                <img src={result.poster} alt={result.title} width="300" height="450" loading="lazy" decoding="async" />
                 <div className="external-badge">{items.length > 0 ? 'TMDB' : 'New'}</div>
                 <button className="external-play-btn" onClick={(e) => { e.stopPropagation(); onPlayExternal(result); }} aria-label={`Play ${result.title}`}>
                   <Play size={24} fill="white" />
@@ -2330,7 +2330,7 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, on
 
   return <div className="detail-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
     <article role="dialog" aria-modal="true" aria-labelledby="detail-title" style={{ '--accent': item.accent }} className="detail-modal">
-      {item.poster && <div className="detail-bg" aria-hidden="true"><img className="detail-backdrop" src={item.poster} alt="" /><div className="detail-backdrop-shade" /></div>}
+      {item.poster && <div className="detail-bg" aria-hidden="true"><img className="detail-backdrop" src={item.poster} alt="" width="300" height="450" decoding="async" /><div className="detail-backdrop-shade" /></div>}
       <span
         className="detail-grabber"
         aria-hidden="true"
@@ -2474,7 +2474,7 @@ function RoadmapBoard({ segments = [], complete = 0, total = 0, title = 'Viewing
           <span className="rm-node" aria-hidden="true">{watched ? <Check size={13} /> : String(index + 1).padStart(2, '0')}</span>
           <button type="button" className="rm-card" onClick={() => onPlay(item)} title={`View ${item.title} details`} style={{ '--accent': item.accent }}>
             <span className="rm-poster">
-              {item.poster ? <img src={item.poster} alt="" loading="lazy" /> : <FallbackPoster item={item} />}
+              {item.poster ? <img src={item.poster} alt="" width="300" height="450" loading="lazy" decoding="async" /> : <FallbackPoster item={item} />}
             </span>
             <span className="rm-copy">
               <span className="rm-state">{step.isActive ? 'Now playing' : watched ? 'Watched' : `Chapter ${index + 1}`}{item.season ? ` · Season ${item.season}` : ''}</span>
@@ -2487,7 +2487,7 @@ function RoadmapBoard({ segments = [], complete = 0, total = 0, title = 'Viewing
             <span className="rm-branch-label">Connected stories</span>
             <div className="rm-branch-items">
               {branch.map(intItem => <button type="button" key={intItem.id} className="rm-chip" onClick={() => onPlay(intItem)} style={{ '--accent': intItem.accent }} title={intItem.connectionNote || intItem.title}>
-                <span className="rm-chip-poster">{intItem.poster ? <img src={intItem.poster} alt="" loading="lazy" /> : null}</span>
+                <span className="rm-chip-poster">{intItem.poster ? <img src={intItem.poster} alt="" width="300" height="450" loading="lazy" decoding="async" /> : null}</span>
                 <span className="rm-chip-copy">
                   <strong>{intItem.title}</strong>
                   {intItem.connectionNote ? <small>{intItem.connectionNote}</small> : null}
@@ -2535,7 +2535,7 @@ function UpNextBoard({ items = [], setSelected, onStart }) {
         <div className="unb-queue-items">
           {queue.map((item, index) => <button key={item.id} className="unb-item" onClick={() => setSelected(item)} style={{ '--accent': item.accent }}>
             <span className="unb-item-index">{String(index + 1).padStart(2, '0')}</span>
-            <span className="unb-item-poster">{item.poster ? <img src={item.poster} alt="" loading="lazy" referrerPolicy="no-referrer" /> : <FallbackPoster item={item} />}</span>
+            <span className="unb-item-poster">{item.poster ? <img src={item.poster} alt="" width="300" height="450" loading="lazy" decoding="async" referrerPolicy="no-referrer" /> : <FallbackPoster item={item} />}</span>
             <span className="unb-item-copy"><strong>{item.title}</strong><small>{item.year} · {runtimeLabel(item.runtime, item.type)}</small></span>
             <ChevronRight size={15} className="unb-item-arrow" aria-hidden="true" />
           </button>)}
