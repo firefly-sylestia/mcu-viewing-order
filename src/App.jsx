@@ -19,7 +19,6 @@ import { buildDownloadUrl, buildPlayerUrl } from './utils/mediaProviders';
 import { apiUrl, assetUrl, isOffline } from './utils/apiBase';
 import { hapticTap, hapticSelect, hapticSuccess, hapticWarning, hapticScroll, hapticScrollEdge } from './utils/haptics';
 import { UNIVERSE_LOGOS } from './constants/logos';
-import './index.css';
 import './styles/fresh.css';
 import './styles/dark-header-fix.css';
 
@@ -202,6 +201,9 @@ export default function App() {
   const [installDialogOpen, setInstallDialogOpen] = useState(false);
   const [installHelpOpen, setInstallHelpOpen] = useState(false);
 
+  // Installation is intentionally user-initiated from Settings. Never interrupt
+  // a first visit with an unsolicited modal; this also avoids an accessibility
+  // failure caused by an unexpected dialog appearing after the page loads.
   useEffect(() => {
     const onBeforeInstall = (event) => {
       event.preventDefault();
@@ -217,10 +219,6 @@ export default function App() {
     window.addEventListener('appinstalled', onInstalled);
     try {
       if (localStorage.getItem('incursion-pwa-installed') === '1') setAppInstalled(true);
-      if (!localStorage.getItem('incursion-pwa-intro-dismissed') && !localStorage.getItem('incursion-pwa-installed') && !window.matchMedia('(display-mode: standalone)').matches && window.navigator.standalone !== true) {
-        const timer = window.setTimeout(() => setInstallDialogOpen(true), 1800);
-        return () => { window.clearTimeout(timer); window.removeEventListener('beforeinstallprompt', onBeforeInstall); window.removeEventListener('appinstalled', onInstalled); };
-      }
     } catch {}
     return () => {
       window.removeEventListener('beforeinstallprompt', onBeforeInstall);

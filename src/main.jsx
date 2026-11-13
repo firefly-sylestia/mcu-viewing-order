@@ -1,13 +1,45 @@
-import { Component, StrictMode } from 'react'
+import { Component, StrictMode, useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
-import { Analytics } from '@vercel/analytics/react'
-import { SpeedInsights } from '@vercel/speed-insights/react'
 import '@fontsource-variable/geom/wght.css'
 import './index.css'
 import App from './App.jsx'
 import { motionCssVars } from './constants/motion'
 
 const AppRuntime = () => <App />
+
+// Telemetry is non-essential to the first interaction. Load it only after the
+// browser has idle time so analytics bundles do not compete with the app shell.
+function DeferredTelemetry() {
+  const [modules, setModules] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+    let idleId = null
+    let timerId = null
+    const load = () => {
+      Promise.all([
+        import('@vercel/analytics/react'),
+        import('@vercel/speed-insights/react'),
+      ]).then(([analytics, speed]) => {
+        if (!cancelled) setModules({ Analytics: analytics.Analytics, SpeedInsights: speed.SpeedInsights })
+      }).catch(() => {})
+    }
+    if ('requestIdleCallback' in window) {
+      idleId = window.requestIdleCallback(load, { timeout: 5000 })
+    } else {
+      timerId = window.setTimeout(load, 2500)
+    }
+    return () => {
+      cancelled = true
+      if (idleId !== null) window.cancelIdleCallback?.(idleId)
+      if (timerId !== null) window.clearTimeout(timerId)
+    }
+  }, [])
+
+  if (!modules) return null
+  const { Analytics, SpeedInsights } = modules
+  return <><Analytics /><SpeedInsights /></>
+}
 
 Object.entries(motionCssVars).forEach(([key, value]) => {
   document.documentElement.style.setProperty(key, value)
@@ -105,8 +137,7 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <AppErrorBoundary>
       <AppRuntime />
-      <Analytics />
-      <SpeedInsights />
+      <DeferredTelemetry />
     </AppErrorBoundary>
   </StrictMode>,
 )
