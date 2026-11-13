@@ -326,26 +326,6 @@ export default function App() {
   const [heroIndex, setHeroIndex] = useState(0);
   const [section, setSection] = useState(parseHash().section || saved.section || 'home');
 
-  // The cinematic header is viewport-fixed (not sticky inside a page wrapper).
-  // Measure it so the document keeps its natural starting position underneath.
-  useEffect(() => {
-    const main = document.querySelector('.movie-site');
-    const header = main?.querySelector('.site-header');
-    if (!main || !header || header.dataset.header !== 'cinematic') return undefined;
-    const syncHeaderSpace = () => {
-      const height = Math.ceil(header.getBoundingClientRect().height);
-      main.style.setProperty('--cinematic-header-space', `${height + 34}px`);
-    };
-    syncHeaderSpace();
-    const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(syncHeaderSpace) : null;
-    observer?.observe(header);
-    window.addEventListener('resize', syncHeaderSpace, { passive: true });
-    return () => {
-      observer?.disconnect();
-      window.removeEventListener('resize', syncHeaderSpace);
-      main.style.removeProperty('--cinematic-header-space');
-    };
-  }, [headerDesign, section, profileTab]);
   const [navHoldIndex, setNavHoldIndex] = useState(null);
   const [navHolding, setNavHolding] = useState(false);
   const navRef = useRef(null);

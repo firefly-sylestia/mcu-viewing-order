@@ -7344,3 +7344,74 @@
     width: calc(100% - 16px) !important;
   }
 }
+
+
+/* Header behavior: normal document flow everywhere except the profile page. */
+:root[data-header-design="cinematic"] .movie-site .site-header {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  transform: none !important;
+  z-index: 20 !important;
+  width: auto !important;
+  max-width: 1280px !important;
+  margin: 12px auto 20px !important;
+  padding: 14px 18px !important;
+  border-radius: var(--fx-r-lg, 24px) !important;
+  background: var(--fx-surface) !important;
+  box-shadow: var(--fx-shadow-md) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(145%) !important;
+  backdrop-filter: blur(22px) saturate(145%) !important;
+}
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site .site-header {
+  background: var(--fx-surface) !important;
+}
+:root[data-header-design="cinematic"] .movie-site:not(.page-profile) {
+  padding-top: 0 !important;
+}
+
+/* Profile alone keeps a viewport-sticky header with clear, nav-like blurred glass. */
+:root[data-header-design="cinematic"] .movie-site.page-profile .site-header {
+  position: sticky !important;
+  top: 10px !important;
+  z-index: 1000 !important;
+  margin: 10px auto 20px !important;
+  background: rgba(255, 255, 255, .025) !important;
+  box-shadow: 0 12px 34px -24px rgba(0, 0, 0, .2) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(155%) !important;
+  backdrop-filter: blur(32px) saturate(155%) !important;
+}
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site.page-profile .site-header {
+  background: rgba(12, 17, 26, .025) !important;
+  box-shadow: 0 14px 38px -24px rgba(0, 0, 0, .38) !important;
+}
+:root[data-header-design="cinematic"] .movie-site.page-profile .site-header > .header-top,
+:root[data-header-design="cinematic"] .movie-site.page-profile .site-header > .header-bar {
+  background: transparent !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+/* No glitter or decorative sparkle layers on either header row. */
+:root[data-header-design="cinematic"] .movie-site .site-header::before,
+:root[data-header-design="cinematic"] .movie-site .site-header::after,
+:root[data-header-design="cinematic"] .movie-site .site-header > .header-top::before,
+:root[data-header-design="cinematic"] .movie-site .site-header > .header-top::after,
+:root[data-header-design="cinematic"] .movie-site .site-header > .header-bar::before,
+:root[data-header-design="cinematic"] .movie-site .site-header > .header-bar::after {
+  content: none !important;
+  display: none !important;
+  background-image: none !important;
+}
+@media (max-width: 760px) {
+  :root[data-header-design="cinematic"] .movie-site .site-header {
+    margin: 8px 8px 18px !important;
+    padding: 8px !important;
+    border-radius: 23px !important;
+  }
+  :root[data-header-design="cinematic"] .movie-site.page-profile .site-header {
+    top: 6px !important;
+    margin: 6px 8px 18px !important;
+  }
+}
