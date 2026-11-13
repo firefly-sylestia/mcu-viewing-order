@@ -1275,7 +1275,7 @@ export default function App() {
   <main className={`movie-site universe-${universe} page-${section}`} style={{ '--brand-accent': universeAccent, '--accent': universeAccent, '--theme-accent': universeAccent }}>
   <div className="site-glow" />
       {section !== 'profile' && (
-      <header className="site-header header-cinematic" data-header="cinematic">
+      <header className="site-header header-cinematic" data-header="cinematic" style={{ "--header-next-art": nextUp?.backdrop ? `url("${nextUp.backdrop}")` : nextUp?.poster ? `url("${nextUp.poster}")` : "none" }}>
   <div className="header-universe-backdrop" aria-hidden="true"><span>{UNIVERSE_LOGOS[universe]}</span></div>
   <div className="header-top">
   {section === 'profile' ? null : <>

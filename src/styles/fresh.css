@@ -7965,3 +7965,71 @@
     transition: box-shadow .28s ease, border-color .28s ease, background .28s ease !important;
   }
 }
+
+
+/* Keep the profile identity header exactly on its earlier, quieter finish. */
+:root .movie-site.page-profile .profile-header.profile-header-compact {
+  isolation: auto !important;
+  overflow: visible !important;
+  border: 1px solid rgba(126,157,202,.24) !important;
+  background: linear-gradient(112deg, rgba(231,239,251,.82), rgba(209,224,245,.56) 48%, rgba(245,248,253,.78)) !important;
+  box-shadow: 0 22px 52px -38px rgba(31,57,96,.48), inset 0 1px 0 rgba(255,255,255,.76) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(165%) !important;
+  backdrop-filter: blur(32px) saturate(165%) !important;
+}
+:root .movie-site.page-profile .profile-header.profile-header-compact::before { content: none !important; }
+:root[data-theme="dark"] .movie-site.page-profile .profile-header.profile-header-compact {
+  background: linear-gradient(112deg, rgba(31,45,66,.94), rgba(19,31,49,.84) 48%, rgba(34,47,68,.92)) !important;
+  border-color: rgba(156,181,218,.18) !important;
+  box-shadow: 0 24px 58px -38px rgba(0,0,0,.76), inset 0 1px 0 rgba(255,255,255,.12) !important;
+}
+
+/* Home and List headers borrow their atmosphere from the actual next title
+   artwork, rather than introducing a generic blue/silver tint. */
+:root .movie-site.page-home .site-header,
+:root .movie-site.page-list .site-header {
+  background-color: var(--fx-surface) !important;
+  background-image:
+    linear-gradient(105deg,
+      color-mix(in srgb, var(--fx-surface) 72%, transparent) 0%,
+      color-mix(in srgb, var(--fx-surface) 84%, transparent) 48%,
+      color-mix(in srgb, var(--fx-surface) 72%, transparent) 100%),
+    var(--header-next-art, none) !important;
+  background-size: cover, cover !important;
+  background-position: center, center 38% !important;
+  background-repeat: no-repeat !important;
+  border: 1px solid color-mix(in srgb, var(--brand-accent, #da1e37) 18%, transparent) !important;
+  box-shadow:
+    0 26px 58px -36px rgba(0,0,0,.40),
+    0 8px 20px -12px color-mix(in srgb, var(--brand-accent, #da1e37) 22%, transparent),
+    inset 0 1px 0 rgba(255,255,255,.42),
+    inset 0 -1px 0 rgba(0,0,0,.08) !important;
+  -webkit-backdrop-filter: blur(34px) saturate(155%) !important;
+  backdrop-filter: blur(34px) saturate(155%) !important;
+}
+:root .movie-site.page-home .site-header::before,
+:root .movie-site.page-list .site-header::before {
+  background: linear-gradient(180deg, rgba(255,255,255,.25), transparent 42%),
+    linear-gradient(90deg, color-mix(in srgb, var(--fx-surface) 16%, transparent), transparent 58%) !important;
+  opacity: .8 !important;
+}
+:root[data-theme="dark"] .movie-site.page-home .site-header,
+:root[data-theme="dark"] .movie-site.page-list .site-header {
+  background-image:
+    linear-gradient(105deg,
+      color-mix(in srgb, var(--fx-surface) 66%, transparent) 0%,
+      color-mix(in srgb, var(--fx-surface) 82%, transparent) 48%,
+      color-mix(in srgb, var(--fx-surface) 68%, transparent) 100%),
+    var(--header-next-art, none) !important;
+  border-color: color-mix(in srgb, var(--brand-accent, #da1e37) 24%, transparent) !important;
+  box-shadow:
+    0 30px 68px -36px rgba(0,0,0,.72),
+    0 8px 24px -12px color-mix(in srgb, var(--brand-accent, #da1e37) 24%, transparent),
+    inset 0 1px 0 rgba(255,255,255,.14),
+    inset 0 -1px 0 rgba(0,0,0,.26) !important;
+}
+:root[data-theme="dark"] .movie-site.page-home .site-header::before,
+:root[data-theme="dark"] .movie-site.page-list .site-header::before {
+  background: linear-gradient(180deg, rgba(255,255,255,.13), transparent 42%),
+    linear-gradient(90deg, rgba(0,0,0,.12), transparent 58%) !important;
+}
