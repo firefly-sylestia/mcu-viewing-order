@@ -1414,15 +1414,6 @@ export default function App() {
       <div key={`nav-page-${section}`} className="nav-page-transition" data-direction={sectionDirection}>
       {section === 'home' && !adBlockerDismissed && <AdBlockerDialog onDismiss={() => { setAdBlockerDismissed(true); localStorage.setItem('adblocker-dismissed', '1'); }} />}
       {section === 'home' && <>
-        {uiVariant === 'control' && <ControlOverview
-          stats={stats}
-          items={activeItems}
-          nextUp={nextUp}
-          universeLabel={universe === 'marvel' ? 'Marvel Cinematic Universe' : universe === 'xmen' ? 'X-Men Universe' : universe === 'sony' ? 'Sony Spider-Man Universe' : 'DC Universe'}
-          onOpen={selectItem}
-          onStart={(item) => startWatchWithConfirm(item, item.tmdbId || null, item.type === 'series' ? 'tv' : 'movie')}
-          onPhase={(phase) => setPhaseFilter(phase)}
-        />}
         <section className="hero-layout" key={universe}>
           <TopCarousel items={heroItems} initialIndex={(() => { try { return Number(localStorage.getItem('mcu-home-hero-index')) || saved.heroIndex || 0; } catch { return saved.heroIndex || 0; } })()} setSelected={selectItem} />
         </section>
