@@ -2023,30 +2023,76 @@ const STATUS_META = {
 
 function StatusSelect({ item, setStatus, compact = false }) {
   const [open, setOpen] = React.useState(false);
+  const [menuRect, setMenuRect] = React.useState(null);
   const ref = useRef(null);
+  const menuRef = useRef(null);
+  const triggerRef = useRef(null);
   const triggerLabel = compact && item.userStatus === 'unwatched' ? 'Unseen' : STATUS_LABELS[item.userStatus];
-  React.useEffect(() => {
-    const handleClick = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
+
+  const placeMenu = useCallback(() => {
+    const trigger = triggerRef.current;
+    if (!trigger) return;
+    const rect = trigger.getBoundingClientRect();
+    const width = Math.min(280, window.innerWidth - 24);
+    const height = 152;
+    const left = Math.max(12, Math.min(rect.left + rect.width / 2 - width / 2, window.innerWidth - width - 12));
+    const below = window.innerHeight - rect.bottom;
+    const top = below >= height + 12 || below >= rect.top ? rect.bottom + 8 : Math.max(12, rect.top - height - 8);
+    setMenuRect({ left, top, width });
   }, []);
-  return <div className={`status-select ${item.userStatus} ${compact ? 'compact' : ''} ${open ? 'open' : ''}`} ref={ref}>
-    <button className="status-trigger" onClick={() => { hapticTap(); setOpen(!open); }} aria-haspopup="listbox" aria-expanded={open}>
-      <span className="status-dot" aria-hidden="true" />
-      <span className="status-label">{triggerLabel}</span>
-      <ChevronDown size={13} className="status-chevron" aria-hidden="true" />
-    </button>
-    {open && <div className="status-dropdown" role="listbox" aria-label={`Set status for ${item.title}`}>
+
+  useEffect(() => {
+    const handleClick = (event) => {
+      if (ref.current?.contains(event.target) || menuRef.current?.contains(event.target)) return;
+      setOpen(false);
+    };
+    document.addEventListener('mousedown', handleClick);
+    document.addEventListener('touchstart', handleClick, { passive: true });
+    return () => {
+      document.removeEventListener('mousedown', handleClick);
+      document.removeEventListener('touchstart', handleClick);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    placeMenu();
+    const closeOnEscape = (event) => { if (event.key === 'Escape') setOpen(false); };
+    window.addEventListener('resize', placeMenu);
+    window.addEventListener('scroll', placeMenu, true);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      window.removeEventListener('resize', placeMenu);
+      window.removeEventListener('scroll', placeMenu, true);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [open, placeMenu]);
+
+  const menu = open && menuRect ? createPortal(
+    <div ref={menuRef} className="status-dropdown status-dropdown-portal" style={{ left: menuRect.left, top: menuRect.top, width: menuRect.width }} role="listbox" aria-label={`Set status for ${item.title}`}>
       {STATUS.map(status => {
         const Icon = STATUS_META[status].icon;
         return <button key={status} className={`status-option ${status} ${item.userStatus === status ? 'active' : ''}`} role="option" aria-selected={item.userStatus === status} onClick={() => { if (status === 'watched') hapticSuccess(); else hapticSelect(); setStatus(item, status); setOpen(false); }}>
-          <Icon size={15} className="status-option-icon" />
+          <Icon size={18} className="status-option-icon" />
           <span className="status-option-label">{STATUS_LABELS[status]}</span>
-          {item.userStatus === status && <Check size={14} className="status-option-check" />}
+          {item.userStatus === status && <Check size={15} className="status-option-check" />}
+          <small>{STATUS_META[status].detail}</small>
         </button>;
       })}
-    </div>}
-  </div>;
+    </div>,
+    document.body
+  ) : null;
+
+  return <>
+    <div className={`status-select ${item.userStatus} ${compact ? 'compact' : ''} ${open ? 'open' : ''}`} ref={ref}>
+      <button ref={triggerRef} className="status-trigger" onClick={() => { hapticTap(); setOpen(value => !value); }} aria-haspopup="listbox" aria-expanded={open}>
+        <span className="status-dot" aria-hidden="true" />
+        <span className="status-label">{triggerLabel}</span>
+        <ChevronDown size={13} className="status-chevron" aria-hidden="true" />
+      </button>
+    </div>
+    {menu}
+  </>;
 }
 
 /* ── Server Dropdown ─────────────────────────────────────────────────────────── */
