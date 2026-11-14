@@ -10444,3 +10444,70 @@
     radial-gradient(ellipse at 84% 88%, rgba(0,0,0,.24), transparent 56%),
     linear-gradient(112deg, rgba(8,10,16,.08), transparent 48%, rgba(8,10,16,.20)) !important;
 }
+
+
+/* Compact Stats identity: keep the avatar/name close to the controls below. */
+:root .movie-site.page-analytics .site-header .header-bar {
+  gap: 6px !important;
+}
+:root .movie-site.page-analytics .site-header .header-bar .stats-page-identity {
+  min-height: 50px !important;
+  height: 50px;
+  gap: 11px !important;
+  margin: 0 !important;
+  padding: 0 2px !important;
+}
+:root .movie-site.page-analytics .site-header .header-bar .stats-page-avatar {
+  width: 48px !important;
+  height: 48px !important;
+  flex-basis: 48px !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,.10) !important;
+}
+:root .movie-site.page-analytics .site-header .header-bar .stats-page-identity strong {
+  font-size: 1.04rem !important;
+  line-height: 1.15;
+}
+@media (max-width: 620px) {
+  :root .movie-site.page-analytics .site-header .header-bar .stats-page-identity {
+    min-height: 46px !important;
+    height: 46px;
+  }
+  :root .movie-site.page-analytics .site-header .header-bar .stats-page-avatar {
+    width: 44px !important;
+    height: 44px !important;
+    flex-basis: 44px !important;
+  }
+}
+
+/* A softer portrait wash with a longer fade into the profile header surface. */
+:root[data-header-design="cinematic"] .movie-site.page-profile .profile-avatar-backdrop {
+  inset: -30px !important;
+  opacity: .58 !important;
+  filter: saturate(1.08) !important;
+}
+:root[data-header-design="cinematic"] .movie-site.page-profile .profile-avatar-backdrop img {
+  filter: blur(24px) saturate(1.16) brightness(1.02) !important;
+  transform: scale(1.12) !important;
+}
+:root[data-header-design="cinematic"] .movie-site.page-profile .profile-avatar-backdrop::after {
+  background:
+    radial-gradient(ellipse at 20% 12%, rgba(255,255,255,.12), transparent 56%),
+    radial-gradient(ellipse at 82% 88%, rgba(20,24,38,.10), transparent 64%),
+    linear-gradient(112deg, rgba(255,255,255,.08), transparent 58%, rgba(16,20,32,.08)) !important;
+  mix-blend-mode: normal !important;
+}
+:root[data-theme="light"][data-header-design="cinematic"] .movie-site.page-profile .profile-avatar-backdrop {
+  opacity: .52 !important;
+}
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site.page-profile .profile-avatar-backdrop {
+  opacity: .62 !important;
+}
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site.page-profile .profile-avatar-backdrop img {
+  filter: blur(24px) saturate(1.16) brightness(.82) !important;
+}
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site.page-profile .profile-avatar-backdrop::after {
+  background:
+    radial-gradient(ellipse at 20% 12%, rgba(255,255,255,.06), transparent 56%),
+    radial-gradient(ellipse at 82% 88%, rgba(0,0,0,.16), transparent 64%),
+    linear-gradient(112deg, rgba(8,10,16,.06), transparent 58%, rgba(8,10,16,.14)) !important;
+}
