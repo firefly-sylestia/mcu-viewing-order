@@ -10727,3 +10727,14 @@
     max-width: calc(100vw - 48px) !important;
   }
 }
+
+
+/* CineSrc watch theatre: restrained cinematic glass surfaces. */
+.movie-site.page-watch .watch-page { width:min(1240px,calc(100% - 32px)); margin:0 auto; padding:24px 0 100px; }
+.movie-site.page-watch .watch-header { border:1px solid var(--line,rgba(128,138,155,.18)); border-radius:24px; padding:16px 20px; background:rgba(150,160,180,.10); backdrop-filter:blur(24px) saturate(1.35); -webkit-backdrop-filter:blur(24px) saturate(1.35); }
+.movie-site.page-watch .watch-player { overflow:hidden; border-radius:22px; background:#050608; box-shadow:0 22px 70px rgba(0,0,0,.24),0 0 0 1px rgba(255,255,255,.1); }
+.movie-site.page-watch .watch-player iframe { display:block; width:100%; aspect-ratio:16/9; border:0; background:#050608; }
+.movie-site.page-watch .watch-info,.movie-site.page-watch .watch-episode-picker,.movie-site.page-watch .watch-upnext,.movie-site.page-watch .rm-board { border:1px solid var(--line,rgba(128,138,155,.18)); background:rgba(150,160,180,.09); backdrop-filter:blur(22px) saturate(1.25); -webkit-backdrop-filter:blur(22px) saturate(1.25); box-shadow:0 14px 42px rgba(0,0,0,.07); }
+.movie-site.page-watch .watch-ep-mark { font-size:10px; opacity:.72; padding:5px 8px; border-radius:999px; background:rgba(150,160,180,.15); cursor:pointer; }
+.movie-site.page-watch .watch-ep-mark:hover { opacity:1; }
+.movie-site.page-watch .cinesrc-provider-mark { display:inline-grid; place-items:center; width:24px; height:24px; border-radius:8px; color:var(--accent); background:rgba(150,160,180,.18); }

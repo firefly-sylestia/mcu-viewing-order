@@ -47,7 +47,7 @@ const sonyPalette = ['#16305c', '#1b3f7a', '#1f4f96', '#245fb4', '#2c72cf', '#3b
 
 const NAV_ORDER = ['home', 'list', 'analytics', 'watch', 'profile'];
 // The watch page is parked for now: its tab and entry points are hidden, the code stays intact.
-const WATCH_ENABLED = false;
+const WATCH_ENABLED = true;
 const NAV_TAB_META = {
   home: { label: 'Home', Icon: House },
   list: { label: 'List', Icon: ListFilter },
@@ -2986,18 +2986,7 @@ const saveServerPref = (tmdbId, server) => {
   const [switching, setSwitching] = useState(false);
   const [toast, setToast] = useState('');
   const [contextExpanded, setContextExpanded] = useState(false);
-  const [selectedServer, setSelectedServerRaw] = useState(() => {
-    const cached = readServerCache();
-    const pref = item.tmdbId ? cached[item.tmdbId] : null;
-    return pref || 'videasy';
-  });
-
-  // Auto-save server preference per title
-  const setSelectedServer = (server) => {
-    setSelectedServerRaw(server);
-    if (currentItem?.tmdbId) saveServerPref(currentItem.tmdbId, server);
-  };
-
+  const selectedServer = 'CineSrc';
   const currentItem = activeItems.find(i => i.id === item.id) || item;
   const isSeries = currentItem.type === 'series' && currentItem.tmdbId;
   const [episodes, setEpisodes] = useState([]);
@@ -3007,7 +2996,8 @@ const saveServerPref = (tmdbId, server) => {
   const loadTimeoutRef = useRef(null);
   const [iframeTimedOut, setIframeTimedOut] = useState(false);
   const [restartCounter, setRestartCounter] = useState(0);
-  const iframeKey = `${selectedServer}-${isSeries ? `ep-${currentItem.tmdbId}-${currentItem.season || 1}-${selectedEpisode}` : currentItem.tmdbId || item.id}-r${restartCounter}`;
+  const iframeRef = useRef(null);
+  const iframeKey = `cinesrc-${isSeries ? `ep-${currentItem.tmdbId}-${currentItem.season || 1}-${selectedEpisode}` : currentItem.tmdbId || item.id}-r${restartCounter}`;
 
   // Detect iframe load failures: start 10s timer on iframe key change, cancel on load
   useEffect(() => {
@@ -3059,15 +3049,14 @@ const saveServerPref = (tmdbId, server) => {
   }, [currentItem.tmdbId, currentItem.season, currentItem.epStart, currentItem.epEnd, isSeries]);
 
   const initProgressRef = useRef(Math.floor((currentItem.watchedDuration || 0) / 1000));
-  const playerUrl = useMemo(() => buildPlayerUrl({
-    provider: selectedServer,
-    mediaType: currentItem.type === 'series' ? 'tv' : 'movie',
-    tmdbId: currentItem.tmdbId || tmdbId,
-    title: item.title,
-    season: currentItem.season || 1,
-    episode: isSeries ? selectedEpisode : undefined,
-    progressSeconds: Math.max(0, initProgressRef.current || 0),
-  }), [selectedServer, currentItem.type, currentItem.tmdbId, currentItem.season, tmdbId, item.title, isSeries, selectedEpisode]);
+  const playerUrl = useMemo(() => {
+    const id = currentItem.tmdbId || tmdbId;
+    if (!id) return '';
+    const params = new URLSearchParams({ autoplay: 'true', controls: 'true', back: 'close', autonext: 'true', color: (currentItem.accent || '#e50914') });
+    return currentItem.type === 'series'
+      ? `https://cinesrc.st/embed/tv/${id}?s=${currentItem.season || 1}&e=${selectedEpisode}&${params.toString()}`
+      : `https://cinesrc.st/embed/movie/${id}?${params.toString()}`;
+  }, [currentItem.tmdbId, currentItem.type, currentItem.season, currentItem.accent, tmdbId, selectedEpisode]);
   const roadmapInfo = useMemo(() => getRoadmap(currentItem, activeItems), [activeItems, currentItem]);
 
   const currentOrder = currentItem.order || currentItem.id;
@@ -3101,6 +3090,7 @@ const saveServerPref = (tmdbId, server) => {
   const itemRef = useRef(item);
   const updateActionRef = useRef(updateAction);
   const setStatusRef = useRef(setStatus);
+  const handleBackRef = useRef(null);
 
   useEffect(() => { itemRef.current = item; }, [item]);
   useEffect(() => { updateActionRef.current = updateAction; }, [updateAction]);
@@ -3110,6 +3100,7 @@ const saveServerPref = (tmdbId, server) => {
     updateActionRef.current(itemRef.current, { watchedDuration: elapsedRef.current, watchStartedAt: null });
     onBack();
   }, [onBack]);
+  useEffect(() => { handleBackRef.current = handleBack; }, [handleBack]);
 
   useEffect(() => { elapsedRef.current = elapsed; }, [elapsed]);
 
@@ -3121,8 +3112,6 @@ const saveServerPref = (tmdbId, server) => {
 
   useEffect(() => {
     setElapsed(Math.min(currentItem.watchedDuration || 0, totalMs));
-    const interval = setInterval(() => setElapsed(prev => prev + 5000), 5000);
-    return () => clearInterval(interval);
   }, [currentItem.id, totalMs, restartCounter]);
 
   useEffect(() => {
@@ -3136,10 +3125,34 @@ const saveServerPref = (tmdbId, server) => {
   }, []);
 
   useEffect(() => {
-    if (isComplete && currentItem.userStatus === 'watching') {
-      setStatusRef.current(currentItem, 'watched');
-    }
-  }, [isComplete, currentItem.userStatus, currentItem.id]);
+    if (!isSeries && isComplete && currentItem.userStatus === 'watching') setStatusRef.current(currentItem, 'watched');
+  }, [isSeries, isComplete, currentItem.userStatus, currentItem.id]);
+
+  useEffect(() => {
+    const onPlayerMessage = (event) => {
+      if (event.origin !== 'https://cinesrc.st' || event.source !== iframeRef.current?.contentWindow) return;
+      const data = event.data;
+      if (!data || typeof data !== 'object' || typeof data.type !== 'string') return;
+      if (data.type === 'cinesrc:timeupdate' && Number.isFinite(Number(data.currentTime))) {
+        const ms = Math.max(0, Number(data.currentTime) * 1000);
+        elapsedRef.current = ms; setElapsed(ms);
+      }
+      if (data.type === 'cinesrc:nextepisode' && data.internalNavigation === true) {
+        const episode = Number(data.episode);
+        if (Number.isInteger(episode) && episode > 0) setSelectedEpisode(episode);
+      }
+      if (data.type === 'cinesrc:ended') {
+        if (isSeries) {
+          const next = Array.from(new Set([...(itemRef.current.watchedEpisodes || []), selectedEpisode])).sort((x,y) => x-y);
+          updateActionRef.current(itemRef.current, { watchedEpisodes: next });
+        } else setStatusRef.current(itemRef.current, 'watched');
+      }
+      if (data.type === 'cinesrc:error') setToast('The stream could not be loaded. Try refreshing the player.');
+      if (data.type === 'cinesrc:close') handleBackRef.current?.();
+    };
+    window.addEventListener('message', onPlayerMessage);
+    return () => window.removeEventListener('message', onPlayerMessage);
+  }, [isSeries, selectedEpisode]);
 
   useEffect(() => {
     if (isSeries && allEpisodesWatched && currentItem.userStatus === 'watching') {
@@ -3175,9 +3188,8 @@ const saveServerPref = (tmdbId, server) => {
           <h1>{currentItem.title}</h1>
         </div>
         <div className="watch-server-select">
-          <Cloud size={15} aria-hidden="true" />
-          <span>Server</span>
-          <ServerDropdown server={selectedServer} onSelect={setSelectedServer} />
+          <span className="cinesrc-provider-mark"><Play size={13} fill="currentColor" /></span>
+          <span>CineSrc player</span>
         </div>
       </header>
       {toast && (
@@ -3207,7 +3219,7 @@ const saveServerPref = (tmdbId, server) => {
             }}>Switch back to embedded player</button>
           </div>
         ) : (
-          <iframe key={iframeKey} src={playerUrl} title={`Watch ${item.title}`} frameBorder="0" allowFullScreen allow="encrypted-media" loading="eager" onLoad={() => { clearTimeout(loadTimeoutRef.current); setToast(''); saveServerPref(currentItem.tmdbId, selectedServer); }} />
+          {playerUrl ? <iframe ref={iframeRef} key={iframeKey} src={playerUrl} title={`Watch ${item.title}`} frameBorder="0" allowFullScreen allow="autoplay; fullscreen; picture-in-picture; encrypted-media" loading="eager" onLoad={() => { clearTimeout(loadTimeoutRef.current); setToast(''); }} /> : <div className="watch-native-launch"><h2>Player unavailable</h2><p>This title has no TMDB ID yet.</p></div>}
         )}
       </div>
       <div className="watch-progress-bar"><span style={{ width: `${progress}%` }} /></div>
@@ -3222,7 +3234,7 @@ const saveServerPref = (tmdbId, server) => {
           <span className="watch-controlbar-chip">{Math.round(progress)}% watched</span>
           {roadmapInfo && <span className="watch-controlbar-chip">{roadmapInfo.complete}/{roadmapInfo.siblings.length} parts</span>}
         </div>
-        <span className="watch-controlbar-server">{selectedServer}</span>
+        <span className="watch-controlbar-server">CineSrc</span>
       </div>
       </div>
         <div className="watch-info">
@@ -3257,11 +3269,12 @@ const saveServerPref = (tmdbId, server) => {
                 return <button
                   key={ep.episode}
                   className={`watch-episode-row ${isWatched ? 'watched' : ''} ${isSelected ? 'selected' : ''}`}
-                  onClick={() => { setSelectedEpisode(ep.episode); toggleEpisode(ep.episode); }}
+                  onClick={() => { setSelectedEpisode(ep.episode); }}
                 >
                   <span className="watch-ep-num">{String(ep.episode).padStart(2, '0')}</span>
                   <span className="watch-ep-title">{ep.title}</span>
                   <span className="watch-ep-check">{isWatched ? <Check size={15} /> : <Play size={15} />}</span>
+                   <span className="watch-ep-mark" onClick={(event) => { event.stopPropagation(); toggleEpisode(ep.episode); }} role="button" tabIndex={0} aria-label={isWatched ? 'Mark episode unwatched' : 'Mark episode watched'} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.stopPropagation(); toggleEpisode(ep.episode); } }}>{isWatched ? 'Undo' : 'Watched'}</span>
                 </button>;
               })}
             </div>
