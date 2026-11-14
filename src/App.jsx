@@ -224,6 +224,13 @@ export default function App() {
   const [quietBrowsingOn, setQuietBrowsingOn] = useState(() => {
     try { return localStorage.getItem('quiet-browsing') === '1'; } catch { return false; }
   });
+  const [headerDesign, setHeaderDesign] = useState(() => {
+    try { return localStorage.getItem('incursion-header-design') || 'cinematic'; } catch { return 'cinematic'; }
+  });
+  useEffect(() => {
+    document.documentElement.setAttribute('data-header-design', headerDesign);
+    try { localStorage.setItem('incursion-header-design', headerDesign); } catch {}
+  }, [headerDesign]);
   // Briefly simplify GPU-heavy layers when the browser restores this page.
   // Mobile browsers can show compositor tile artifacts after an app/tab switch.
   useEffect(() => {
@@ -1380,6 +1387,7 @@ export default function App() {
       {section !== 'profile' && (
       <header className="site-header header-cinematic" data-header="cinematic" style={{ "--header-next-art": headerArtwork ? `url("${headerArtwork}")` : "none" }}>
   <HeaderBackdrop src={headerArtwork} />
+  <div className="header-universe-backdrop" aria-hidden="true"><span>{UNIVERSE_LOGOS[universe]}</span></div>
   <div className="header-top">
   {section === 'profile' ? null : <>
   <div className="header-quick-actions" aria-label="Quick viewing controls">
