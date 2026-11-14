@@ -3252,127 +3252,84 @@ const saveServerPref = (tmdbId, server) => {
     setSwitching(false);
   };
   return (
-    <section className="watch-page" style={{ '--accent': currentItem.accent }}>
-      <header className="watch-header">
-        <button onClick={handleBack} aria-label="Back to browsing"><ChevronLeft size={22} /> <span>Back</span></button>
-        <div>
-          <span className="watch-kicker">{universeShortName(currentItem.universe)} · #{String(currentItem.order || currentItem.id).padStart(2, '0')}</span>
+    <section className="watch-v2" style={{ '--accent': currentItem.accent || '#da1e37' }}>
+      <header className="watch-v2-header">
+        <button className="watch-v2-back" onClick={handleBack} aria-label="Back"><ChevronLeft size={22} /></button>
+        <div className="watch-v2-heading">
+          <span>{universeShortName(currentItem.universe)} · #{String(currentItem.order || currentItem.id).padStart(2, '0')}</span>
           <h1>{currentItem.title}</h1>
         </div>
-        <div className="watch-server-select">
-          <span className="cinesrc-provider-mark"><Play size={13} fill="currentColor" /></span>
-          <span>CineSrc player</span>
-        </div>
+        <span className="watch-v2-provider">CineSrc</span>
       </header>
-      {toast && (
-        <div className="watch-toast">
-          <span>{toast}</span>
-          <button className="watch-toast-close" onClick={() => { setToast(''); setIframeTimedOut(false); }} aria-label="Dismiss"><X size={14} /></button>
-        </div>
-      )}
-      <div className="watch-theater">
-      <div className="watch-main">
-      <div className="watch-stage">
-      <div className="watch-player">
-        {nativePlayer ? (
-          <div className="watch-native-launch">
-            <div className="watch-native-icon-ring">
-              <Play size={36} fill="currentColor" />
+
+      {toast && <div className="watch-v2-toast" role="status"><span>{toast}</span><button onClick={() => { setToast(''); setIframeTimedOut(false); }} aria-label="Dismiss"><X size={15} /></button></div>}
+
+      <div className="watch-v2-player-wrap">
+        <div className="watch-v2-player">
+          {nativePlayer ? (
+            <div className="watch-native-launch">
+              <div className="watch-native-icon-ring"><Play size={30} fill="currentColor" /></div>
+              <h2>External player</h2>
+              <p>Open {currentItem.title} in your browser player.</p>
+              <a className="watch-native-btn" href={playerUrl} target="_blank" rel="noopener noreferrer"><Play size={17} fill="currentColor" /><span>Open player</span></a>
+              <button className="watch-native-embed-link" onClick={() => { setNativePlayer(false); localStorage.setItem('native-player', '0'); }}>Use embedded player</button>
             </div>
-            <h2>External player</h2>
-            <p>Opens {item.title} in a new tab using the native browser player.</p>
-            <a className="watch-native-btn" href={playerUrl} target="_blank" rel="noopener noreferrer">
-              <Play size={18} fill="currentColor" />
-              <span>Open {item.title}</span>
-            </a>
-            <button className="watch-native-embed-link" onClick={() => {
-              setNativePlayer(false);
-              localStorage.setItem('native-player', '0');
-            }}>Switch back to embedded player</button>
+          ) : playerUrl ? (
+            <iframe ref={iframeRef} key={iframeKey} src={playerUrl} title={`Watch ${currentItem.title}`} frameBorder="0" allowFullScreen allow="autoplay; fullscreen; picture-in-picture; encrypted-media" loading="eager" onLoad={() => { clearTimeout(loadTimeoutRef.current); setToast(''); }} />
+          ) : <div className="watch-native-launch"><h2>Player unavailable</h2><p>This title has no TMDB ID yet.</p></div>}
+        </div>
+      </div>
+
+      <div className="watch-v2-progress">
+        <div className="watch-v2-progress-track"><span style={{ width: `${progress}%` }} /></div>
+        <div className="watch-v2-progress-meta">
+          <span>{Math.round(progress)}% watched{roadmapInfo ? ` · ${roadmapInfo.complete}/${roadmapInfo.siblings.length} parts` : ''}</span>
+          {!nativePlayer && <button onClick={() => { setRestartCounter(c => c + 1); setToast(''); setIframeTimedOut(false); }}><RotateCcw size={14} /> Restart</button>}
+        </div>
+      </div>
+
+      <section className="watch-v2-details">
+        <div className="watch-v2-detail-copy">
+          <div className="watch-v2-meta">
+            {currentItem.year && <span>{currentItem.year}</span>}
+            <span>{runtimeLabel(currentItem.runtime, currentItem.type)}</span>
+            {currentItem.rating != null && <span><Star size={13} fill="currentColor" /> {currentItem.rating?.toFixed ? currentItem.rating.toFixed(1) : currentItem.rating}</span>}
           </div>
-        ) : (
-          playerUrl ? <iframe ref={iframeRef} key={iframeKey} src={playerUrl} title={`Watch ${item.title}`} frameBorder="0" allowFullScreen allow="autoplay; fullscreen; picture-in-picture; encrypted-media" loading="eager" onLoad={() => { clearTimeout(loadTimeoutRef.current); setToast(''); }} /> : <div className="watch-native-launch"><h2>Player unavailable</h2><p>This title has no TMDB ID yet.</p></div>
-        )}
-      </div>
-      <div className="watch-progress-bar"><span style={{ width: `${progress}%` }} /></div>
-      <div className="watch-controlbar">
-        {!nativePlayer && (
-          <button className="watch-restart-btn" onClick={() => { setRestartCounter(c => c + 1); setToast(''); setIframeTimedOut(false); }} title="Restart from beginning">
-            <RotateCcw size={13} /> Restart
-          </button>
-        )}
-        <div className="watch-controlbar-meta">
-          {isSeries && <span className="watch-controlbar-chip">S{currentItem.season || 1} · E{selectedEpisode}</span>}
-          <span className="watch-controlbar-chip">{Math.round(progress)}% watched</span>
-          {roadmapInfo && <span className="watch-controlbar-chip">{roadmapInfo.complete}/{roadmapInfo.siblings.length} parts</span>}
+          <p>{currentItem.desc || `Watch ${currentItem.title} in the complete viewing order.`}</p>
         </div>
-        <span className="watch-controlbar-server">CineSrc</span>
-      </div>
-      </div>
-        <div className="watch-info">
-        <p className="watch-eyebrow">Story details</p>
-        <div className="watch-meta">
-          <span>{currentItem.year}</span>
-          <span>·</span>
-          <span>{runtimeLabel(currentItem.runtime, currentItem.type)}</span>
-          <span>·</span>
-          <span className="watch-rating"><Star size={14} fill="currentColor" /> {currentItem.rating?.toFixed ? currentItem.rating.toFixed(1) : (currentItem.rating ?? 'N/A')}</span>
-        </div>
-        <p className="watch-desc">{currentItem.desc || `Watch ${currentItem.title} in the complete ${currentItem.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} viewing order.`}</p>
-        <div className="watch-actions">
+        <div className="watch-v2-actions">
           <StatusSelect item={currentItem} setStatus={setStatus} />
-          <button onClick={() => toggleBookmark(currentItem)} className={`watch-action-btn ${currentItem.bookmarked ? 'saved' : ''}`} aria-label={currentItem.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={18} fill={currentItem.bookmarked ? 'currentColor' : 'none'} /></button>
-          <span className="watch-age-badge">{currentItem.ageRating || (currentItem.type === 'series' ? 'TV-14' : 'PG-13')}</span>
-          {currentItem.userStatus !== 'watched' && <button onClick={() => { setStatus(currentItem, 'watched'); setToast('Marked as watched'); setTimeout(() => setToast(''), 2000); }} className="watch-action-btn mark-watched" aria-label="Mark as Watched"><Check size={18} /><span>Mark Watched</span></button>}
+          <button onClick={() => toggleBookmark(currentItem)} className={`watch-v2-icon-action ${currentItem.bookmarked ? 'saved' : ''}`} aria-label={currentItem.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={18} fill={currentItem.bookmarked ? 'currentColor' : 'none'} /></button>
+          {currentItem.userStatus !== 'watched' && <button className="watch-v2-done" onClick={() => { setStatus(currentItem, 'watched'); setToast('Marked as watched'); setTimeout(() => setToast(''), 2000); }}><Check size={16} /> Watched</button>}
         </div>
-        </div>
-      </div>
-      <aside className="watch-side">
-        {isSeries && episodes.length > 0 && (
-          <div className="watch-episode-picker">
-            <div className="watch-episode-head">
-              <h2>Episodes</h2>
-              <span>{episodeLoading ? 'Loading…' : `${watchedInRange.length}/${episodeRangeTotal} watched`}</span>
-            </div>
-            <div className="watch-episode-list">
-              {episodes.map(ep => {
-                const isWatched = watchedEpisodes.includes(ep.episode);
-                const isSelected = selectedEpisode === ep.episode;
-                return <button
-                  key={ep.episode}
-                  className={`watch-episode-row ${isWatched ? 'watched' : ''} ${isSelected ? 'selected' : ''}`}
-                  onClick={() => { setSelectedEpisode(ep.episode); setPlayerEpisode(ep.episode); }}
-                >
-                  <span className="watch-ep-num">{String(ep.episode).padStart(2, '0')}</span>
-                  <span className="watch-ep-title">{ep.title}</span>
-                  <span className="watch-ep-check">{isWatched ? <Check size={15} /> : <Play size={15} />}</span>
-                   <span className="watch-ep-mark" onClick={(event) => { event.stopPropagation(); toggleEpisode(ep.episode); }} role="button" tabIndex={0} aria-label={isWatched ? 'Mark episode unwatched' : 'Mark episode watched'} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.stopPropagation(); toggleEpisode(ep.episode); } }}>{isWatched ? 'Undo' : 'Watched'}</span>
-                </button>;
-              })}
-            </div>
+      </section>
+
+      {isSeries && (
+        <section className="watch-v2-episodes">
+          <div className="watch-v2-section-head">
+            <div><span>SEASON {currentItem.season || 1}</span><h2>Episodes</h2></div>
+            <small>{episodeLoading ? 'Loading…' : `${watchedInRange.length}/${episodeRangeTotal} watched`}</small>
           </div>
-        )}
-      {upNext.length > 0 && (
-        <div className="watch-upnext">
-          <h2>Up Next</h2>
-          <div className="watch-upnext-rail">
-            {upNext.map(rec => (
-              <button key={rec.id} className="watch-rec-card" onClick={() => handleSwitchItem(rec)} style={{ '--accent': rec.accent }}>
-                <div className="watch-rec-poster">
-                  {rec.poster ? <img src={rec.poster} alt={rec.title} width="200" height="284" loading="lazy" /> : <FallbackPoster item={rec} />}
-                </div>
-                <span>{rec.title}</span>
-                <small>{rec.year}</small>
-              </button>
-            ))}
-          </div>
-        </div>
+          {episodes.length > 0 ? <div className="watch-v2-episode-list">
+            {episodes.map(ep => {
+              const isWatched = watchedEpisodes.includes(ep.episode);
+              const isSelected = selectedEpisode === ep.episode;
+              return <div key={ep.episode} className={`watch-v2-episode ${isSelected ? 'active' : ''} ${isWatched ? 'done' : ''}`}>
+                <button className="watch-v2-episode-play" onClick={() => { setSelectedEpisode(ep.episode); setPlayerEpisode(ep.episode); }}>
+                  <span>{String(ep.episode).padStart(2, '0')}</span>
+                  <span className="watch-v2-episode-name">{ep.title || `Episode ${ep.episode}`}</span>
+                  {isSelected ? <span className="watch-v2-now">Playing</span> : <Play size={14} />}
+                </button>
+                <button className="watch-v2-episode-check" onClick={() => toggleEpisode(ep.episode)} aria-label={isWatched ? 'Mark episode unwatched' : 'Mark episode watched'}>{isWatched ? <Check size={16} /> : <span />}</button>
+              </div>;
+            })}
+          </div> : <p className="watch-v2-empty">{episodeLoading ? 'Fetching episode list…' : 'Episode information is unavailable.'}</p>}
+        </section>
       )}
-      </aside>
-      </div>
+
       <RoadmapBoard
-        segments={roadmapInfo ? roadmapInfo.segments : contextItems.map(item => ({ type: 'part', item, isActive: item.id === currentItem.id }))}
-        complete={roadmapInfo ? roadmapInfo.complete : contextItems.filter(item => item.userStatus === 'watched').length}
+        segments={roadmapInfo ? roadmapInfo.segments : contextItems.map(entry => ({ type: 'part', item: entry, isActive: entry.id === currentItem.id }))}
+        complete={roadmapInfo ? roadmapInfo.complete : contextItems.filter(entry => entry.userStatus === 'watched').length}
         total={roadmapInfo ? roadmapInfo.siblings.length : contextItems.length}
         title={roadmapInfo ? 'Viewing roadmap' : 'Viewing order'}
         eyebrow={roadmapInfo ? 'Recommended sequence' : 'Story context'}
