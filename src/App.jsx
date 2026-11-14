@@ -224,6 +224,36 @@ export default function App() {
   const [quietBrowsingOn, setQuietBrowsingOn] = useState(() => {
     try { return localStorage.getItem('quiet-browsing') === '1'; } catch { return false; }
   });
+  // Briefly simplify GPU-heavy layers when the browser restores this page.
+  // Mobile browsers can show compositor tile artifacts after an app/tab switch.
+  useEffect(() => {
+    let recoveryTimer = null;
+    const root = document.documentElement;
+    const beginRecovery = () => {
+      if (recoveryTimer) window.clearTimeout(recoveryTimer);
+      root.setAttribute('data-render-recovery', 'on');
+      recoveryTimer = window.setTimeout(() => {
+        root.removeAttribute('data-render-recovery');
+        recoveryTimer = null;
+      }, 850);
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') beginRecovery();
+      else if (recoveryTimer) {
+        window.clearTimeout(recoveryTimer);
+        recoveryTimer = null;
+      }
+    };
+    const onPageShow = (event) => { if (event.persisted) beginRecovery(); };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('pageshow', onPageShow);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('pageshow', onPageShow);
+      if (recoveryTimer) window.clearTimeout(recoveryTimer);
+      root.removeAttribute('data-render-recovery');
+    };
+  }, []);
   useEffect(() => {
     if (!quietBrowsingOn) return undefined;
     const keepNavigationInTab = (event) => {

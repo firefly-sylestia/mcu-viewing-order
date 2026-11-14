@@ -11268,3 +11268,31 @@
 :root[data-theme="dark"] .movie-site .site-header .brand small {
   color: #e0e5ed !important;
 }
+
+
+/* Mobile browser resume recovery: temporarily flatten expensive compositing
+   layers after returning from another app/tab, then restore the full design. */
+:root[data-render-recovery="on"] .movie-site *,
+:root[data-render-recovery="on"] .movie-site *::before,
+:root[data-render-recovery="on"] .movie-site *::after {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  transition: none !important;
+}
+:root[data-render-recovery="on"] .movie-site::before,
+:root[data-render-recovery="on"] .movie-site .header-image-backdrop,
+:root[data-render-recovery="on"] .movie-site .header-image-backdrop img,
+:root[data-render-recovery="on"] .movie-site .profile-avatar-backdrop,
+:root[data-render-recovery="on"] .movie-site .profile-avatar-backdrop img,
+:root[data-render-recovery="on"] .movie-site .carousel-backdrop,
+:root[data-render-recovery="on"] .movie-site .carousel-backdrop img {
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+:root[data-render-recovery="on"] .movie-site .nav-page-transition,
+:root[data-render-recovery="on"] .movie-site .hero-layout,
+:root[data-render-recovery="on"] .movie-site .smooth-stack,
+:root[data-render-recovery="on"] .movie-site .stack-poster {
+  animation: none !important;
+  transform: none !important;
+}
