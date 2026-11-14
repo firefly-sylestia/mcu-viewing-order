@@ -2834,82 +2834,57 @@ function WatchBrowse({ activeItems, externalResults = [], externalLoading = fals
   );
 
   return (
-    <section className="watch-browse">
-      <div className="wb-hero">
-        <div className="wb-hero-bg" />
-        <div className="wb-hero-content">
-          <p className="wb-hero-eyebrow">Watch hub · {activeItems.length} titles tracked</p>
-          <h1>{nextWatch ? nextWatch.title : 'Ready to watch?'}</h1>
-          <p className="wb-hero-desc">{nextWatch ? (nextWatch.desc || nextWatch.overview || 'Continue the timeline from where you paused.') : 'Pick up where you left off or discover your next story.'}</p>
-          <div className="wb-hero-actions">
-            {nextWatch && (
-              <button className="wb-hero-cta" onClick={() => handleResume(nextWatch)}>
-                <Play size={17} fill="currentColor" />
-                <span className="wb-hero-cta-label">{inProgress.length ? 'Resume' : 'Start watching'}</span>
-                <span className="wb-hero-cta-title">{nextWatch.title}</span>
-              </button>
-            )}
-            {nextWatch && <button className="wb-hero-secondary" onClick={() => setSelected(nextWatch)}>Details</button>}
-          </div>
-          <div className="wb-hero-stats">
-            <div className="wb-stat">
-              <span className="wb-stat-value">{watched}</span>
-              <span className="wb-stat-label">Watched</span>
-            </div>
-            <div className="wb-stat-divider" />
-            <div className="wb-stat">
-              <span className="wb-stat-value">{pct}%</span>
-              <span className="wb-stat-label">Complete</span>
-            </div>
-            <div className="wb-stat-divider" />
-            <div className="wb-stat">
-              <span className="wb-stat-value">{allUpNext.length}</span>
-              <span className="wb-stat-label">Remaining</span>
-            </div>
-          </div>
-          {query && (
-            <div className="wb-search-chip">
-              <Search size={14} />
-              <span>"{query}"</span>
-              <span className="wb-search-chip-count">{externalLoading ? 'searching…' : `${activeItems.length + externalResults.length} results`}</span>
-            </div>
-          )}
+    <main className="watch-hub-v3">
+      <header className="wh3-top">
+        <div>
+          <span className="wh3-kicker">YOUR SCREENING ROOM</span>
+          <h1>Watch</h1>
+          <p>Your films and series, ready when you are.</p>
         </div>
-        <div className="wb-hero-art">
-          {nextWatch && <PosterArt item={nextWatch} loading="eager" />}
+        <div className="wh3-total"><Clapperboard size={17} /><span>{activeItems.length} titles</span></div>
+      </header>
+
+      <section className="wh3-overview" aria-label="Viewing progress">
+        <div className="wh3-progress-copy">
+          <span className="wh3-overline">YOUR PROGRESS</span>
+          <strong>{pct}% <small>complete</small></strong>
+          <div className="wh3-progress-track"><span style={{width:`${pct}%`}} /></div>
         </div>
-      </div>
+        <div className="wh3-stat"><strong>{watched}</strong><span>Watched</span></div>
+        <div className="wh3-stat"><strong>{inProgress.length}</strong><span>In progress</span></div>
+        <div className="wh3-stat"><strong>{allUpNext.length}</strong><span>To watch</span></div>
+      </section>
+
+      {nextWatch && (
+        <section className="wh3-resume">
+          <button className="wh3-resume-poster" onClick={() => setSelected(nextWatch)} aria-label={`Details for ${nextWatch.title}`}>
+            <PosterArt item={nextWatch} loading="eager" />
+          </button>
+          <div className="wh3-resume-copy">
+            <span className="wh3-overline">{inProgress.length ? 'PICK UP WHERE YOU LEFT OFF' : 'UP NEXT IN YOUR ORDER'}</span>
+            <h2>{nextWatch.title}</h2>
+            <p>{nextWatch.year || ''}{nextWatch.year && nextWatch.type ? ' · ' : ''}{nextWatch.type === 'series' ? 'Series' : 'Movie'}{inProgress.length ? ` · ${elapsedPctLabel(nextWatch)} complete` : ''}</p>
+            <div className="wh3-resume-actions">
+              <button className="wh3-primary" onClick={() => handleResume(nextWatch)}><Play size={15} fill="currentColor" />{inProgress.length ? 'Resume' : 'Watch now'}</button>
+              <button className="wh3-secondary" onClick={() => setSelected(nextWatch)}>Details</button>
+            </div>
+          </div>
+        </section>
+      )}
 
       {inProgress.length > 0 && (
-        <section className="wb-section">
-          <div className="wb-section-head">
-            <h2>Continue Watching</h2>
-            <span className="wb-section-count">{inProgress.length} in progress</span>
-          </div>
-          <div className="wb-scroll">
+        <section className="wh3-section">
+          <div className="wh3-section-title"><div><span className="wh3-overline">IN PROGRESS</span><h2>Continue watching</h2></div><span>{inProgress.length}</span></div>
+          <div className="wh3-continue-list">
             {inProgress.map(item => (
-              <article key={item.id} className="wb-card wb-continue-card" style={{ '--accent': item.accent }}>
-                <button className="wb-card-media" onClick={() => setSelected(item)}>
-                  <PosterArt item={item} />
-                  <div className="wb-continue-overlay">
-                    <div className="wb-progress-ring">
-                      <svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="3" /><circle cx="18" cy="18" r="15" fill="none" stroke="currentColor" strokeWidth="3" strokeDasharray={`${Math.min((parseInt(elapsedPctLabel(item)) || 0), 99) * 0.94} 94`} strokeLinecap="round" transform="rotate(-90 18 18)" /></svg>
-                      <Play size={16} fill="currentColor" />
-                    </div>
-                  </div>
-                </button>
-                <div className="wb-card-info">
-                  <button className="wb-card-title" onClick={() => setSelected(item)}>{item.title}</button>
-                  <div className="wb-card-meta">
-                    <span>{elapsedPctLabel(item)} complete</span>
-                    {renderRatingBadges(item)}
-                  </div>
+              <article className="wh3-continue-item" key={item.id}>
+                <button className="wh3-mini-poster" onClick={() => setSelected(item)}><PosterArt item={item} /></button>
+                <div className="wh3-continue-info">
+                  <button className="wh3-title-link" onClick={() => setSelected(item)}>{item.title}</button>
+                  <span>{item.year || '—'} · {elapsedPctLabel(item)} complete</span>
+                  <div className="wh3-mini-track"><i style={{width:`${Math.max(0,Math.min(100,parseInt(elapsedPctLabel(item))||0))}%`}} /></div>
                 </div>
-                <div className="wb-card-actions">
-                  <button onClick={(e) => { e.stopPropagation(); handleResume(item); }} className="wb-action-btn wb-action-primary"><Play size={14} fill="currentColor" /> Resume</button>
-                  <StatusSelect item={item} setStatus={setStatus} compact />
-                  <button onClick={() => toggleBookmark(item)} className={`wb-action-btn wb-action-icon ${item.bookmarked ? 'saved' : ''}`} aria-label={item.bookmarked ? 'Remove bookmark' : 'Bookmark'}><Bookmark size={16} fill={item.bookmarked ? 'currentColor' : 'none'} /></button>
-                </div>
+                <button className="wh3-resume-icon" onClick={() => handleResume(item)} aria-label={`Resume ${item.title}`}><Play size={16} fill="currentColor" /></button>
               </article>
             ))}
           </div>
@@ -2917,116 +2892,48 @@ function WatchBrowse({ activeItems, externalResults = [], externalLoading = fals
       )}
 
       {allUpNext.length > 0 && (
-        <section className="wb-section">            <div className="wb-section-head">
-            <h2>Start Watching</h2>
-            <span className="wb-section-count">{allUpNext.length} available</span>
-            <div className="wb-density-toggle" role="group" aria-label="Start Watching grid columns">
-              {[2, 3, 4].map(count => <button key={count} className={upNextGridDensity === count ? 'active' : ''} onClick={() => setUpNextGridDensity(count)} aria-label={`${count} columns`}>{count}</button>)}
-            </div>
-          </div>
-          <div key={`wbgrid-${upNextGridDensity}`} className={`wb-grid wb-grid-${upNextGridDensity}`}>
+        <section className="wh3-section">
+          <div className="wh3-section-title"><div><span className="wh3-overline">YOUR LIST</span><h2>Ready to watch</h2></div><span>{allUpNext.length} titles</span></div>
+          <div className="wh3-grid">
             {upNext.map(item => (
-              <article key={item.id} className="wb-card" style={{ '--accent': item.accent }}>
-                <button className="wb-card-media" onClick={() => setSelected(item)}>
-                  <PosterArt item={item} />
-                  <div className="wb-card-overlay">
-                    <button className="wb-play-btn" onClick={(e) => { e.stopPropagation(); handleResume(item); }} aria-label={`Watch ${item.title}`}>
-                      <Play size={20} fill="currentColor" />
-                    </button>
+              <article className="wh3-card" key={item.id}>
+                <button className="wh3-poster" onClick={() => setSelected(item)} aria-label={`Details for ${item.title}`}><PosterArt item={item} /><span className="wh3-poster-play"><Play size={17} fill="currentColor" /></span></button>
+                <div className="wh3-card-body">
+                  <button className="wh3-title-link" onClick={() => setSelected(item)}>{item.title}</button>
+                  <span>{item.year || '—'} · {item.type === 'series' ? 'Series' : runtimeLabel(item.runtime,item.type)}</span>
+                  <div className="wh3-card-actions">
+                    <button className="wh3-card-watch" onClick={() => handleResume(item)}><Play size={13} fill="currentColor" /> Watch</button>
+                    <button className={`wh3-card-save ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={15} fill={item.bookmarked ? 'currentColor' : 'none'} /></button>
+                    <StatusSelect item={item} setStatus={setStatus} compact />
                   </div>
-                </button>
-                <div className="wb-card-info">
-                  <button className="wb-card-title" onClick={() => setSelected(item)}>{item.title}</button>
-                  <div className="wb-card-meta">
-                    <span>{item.year} · {runtimeLabel(item.runtime, item.type)}</span>
-                    {renderRatingBadges(item)}
-                  </div>
-                </div>
-                <div className="wb-card-actions">
-                  <button onClick={() => handleResume(item)} className="wb-action-btn wb-action-primary"><Play size={14} fill="currentColor" /> Watch</button>
-                  <button onClick={() => toggleBookmark(item)} className={`wb-action-btn wb-action-save ${item.bookmarked ? 'saved' : ''}`}><Bookmark size={14} fill={item.bookmarked ? 'currentColor' : 'none'} /> {item.bookmarked ? 'Saved' : 'Save'}</button>
                 </div>
               </article>
             ))}
           </div>
-          {upNextPageCount > 1 && <nav className="pagination" aria-label="Start watching pages"><button onClick={() => setUpNextPage(p => Math.max(1, p - 1))} disabled={currentUpNextPage === 1} aria-label="Previous page"><ChevronLeft size={18} /></button>{Array.from({ length: upNextPageCount }, (_, i) => i + 1).map(n => <button key={n} className={currentUpNextPage === n ? 'active' : ''} aria-current={currentUpNextPage === n ? 'page' : undefined} onClick={() => setUpNextPage(n)}>{n}</button>)}<button onClick={() => setUpNextPage(p => Math.min(upNextPageCount, p + 1))} disabled={currentUpNextPage === upNextPageCount} aria-label="Next page"><ChevronRight size={18} /></button></nav>}
+          {upNextPageCount > 1 && <nav className="wh3-pagination" aria-label="Watch list pages"><button onClick={() => setUpNextPage(p => Math.max(1,p-1))} disabled={currentUpNextPage===1} aria-label="Previous page"><ChevronLeft size={17}/></button><span>{currentUpNextPage} / {upNextPageCount}</span><button onClick={() => setUpNextPage(p => Math.min(upNextPageCount,p+1))} disabled={currentUpNextPage===upNextPageCount} aria-label="Next page"><ChevronRight size={17}/></button></nav>}
         </section>
       )}
 
       {externalResults.length > 0 && (
-        <section className="wb-section">
-          <div className="wb-section-head">
-            <h2>TMDB Results</h2>
-            <span className="wb-section-count">{externalResults.length} found</span>
-          </div>
-          <div className="wb-grid">
+        <section className="wh3-section">
+          <div className="wh3-section-title"><div><span className="wh3-overline">DISCOVER</span><h2>Search results</h2></div><span>{externalResults.length} found</span></div>
+          <div className="wh3-grid">
             {externalResults.map(result => {
-              const actionKey = `tmdb:${result.type}:${result.id}`;
-              const action = actions[actionKey] || {};
-              const extItem = {
-                id: `tmdb-${result.type}-${result.id}`,
-                external: true,
-                title: result.title,
-                type: result.type === 'tv' ? 'series' : 'film',
-                poster: result.poster,
-                backdrop: result.backdrop,
-                year: result.year,
-                rating: result.rating,
-                overview: result.overview,
-                desc: result.overview,
-                genres: result.genres || [],
-                runtime: result.runtime || (result.type === 'tv' ? 45 : 120),
-                tmdbId: result.id,
-                mediaType: result.type,
-                universe: 'tmdb',
-                accent: '#4a5568',
-                userStatus: action.status || 'unwatched',
-                bookmarked: Boolean(action.bookmarked),
-                _raw: result,
-              };
-              return (
-                <article key={extItem.id} className="wb-card" style={{ '--accent': '#4a5568' }}>
-                  <button className="wb-card-media" onClick={() => onPlayExternal(result)}>
-                    <PosterArt item={extItem} />
-                    <div className="wb-card-overlay">
-                      <button className="wb-play-btn" onClick={(e) => { e.stopPropagation(); onPlayExternal(result); }} aria-label={`Watch ${result.title}`}>
-                        <Play size={20} fill="currentColor" />
-                      </button>
-                    </div>
-                  </button>
-                  <div className="wb-card-info">
-                    <button className="wb-card-title" onClick={() => onPlayExternal(result)}>{result.title}</button>
-                    <div className="wb-card-meta">
-                      <span>{result.year || 'Date TBA'} · {result.type === 'tv' ? 'Series' : 'Movie'}</span>
-                      {result.rating && <span className="wb-rating-badge wb-tmdb"><Star size={10} fill="currentColor" />{result.rating}</span>}
-                    </div>
-                  </div>
-                  <div className="wb-card-actions">
-                    <button onClick={() => onPlayExternal(result)} className="wb-action-btn wb-action-primary"><Play size={14} fill="currentColor" /> Watch</button>
-                    <StatusSelect item={extItem} setStatus={setStatus} compact />
-                    <button onClick={() => toggleBookmark(extItem)} className={`wb-action-btn wb-action-icon ${extItem.bookmarked ? 'saved' : ''}`} aria-label={extItem.bookmarked ? 'Remove bookmark' : 'Bookmark title'}><Bookmark size={16} fill={extItem.bookmarked ? 'currentColor' : 'none'} /></button>
-                  </div>
-                </article>
-              );
+              const action=actions[`tmdb:${result.type}:${result.id}`]||{};
+              const extItem={id:`tmdb-${result.type}-${result.id}`,external:true,title:result.title,type:result.type==='tv'?'series':'film',poster:result.poster,backdrop:result.backdrop,year:result.year,rating:result.rating,overview:result.overview,desc:result.overview,genres:result.genres||[],runtime:result.runtime||(result.type==='tv'?45:120),tmdbId:result.id,mediaType:result.type,universe:'tmdb',accent:'#4a5568',userStatus:action.status||'unwatched',bookmarked:Boolean(action.bookmarked),_raw:result};
+              return <article className="wh3-card" key={extItem.id}>
+                <button className="wh3-poster" onClick={() => onPlayExternal(result)} aria-label={`Watch ${result.title}`}><PosterArt item={extItem}/><span className="wh3-poster-play"><Play size={17} fill="currentColor"/></span></button>
+                <div className="wh3-card-body"><button className="wh3-title-link" onClick={() => onPlayExternal(result)}>{result.title}</button><span>{result.year||'Date TBA'} · {result.type==='tv'?'Series':'Movie'}</span><div className="wh3-card-actions"><button className="wh3-card-watch" onClick={() => onPlayExternal(result)}><Play size={13} fill="currentColor"/> Watch</button><button className="wh3-card-save" onClick={() => toggleBookmark(extItem)} aria-label="Save title"><Bookmark size={15}/></button><StatusSelect item={extItem} setStatus={setStatus} compact/></div></div>
+              </article>;
             })}
           </div>
         </section>
       )}
 
-      {inProgress.length === 0 && allUpNext.length === 0 && externalResults.length === 0 && !externalLoading && (
-        <div className="wb-empty">
-          <div className="wb-empty-icon"><Play size={32} /></div>
-          <h2>Nothing to watch yet</h2>
-          <p>Search above to find movies & shows in TMDB.</p>
-        </div>
-      )}
-      {externalLoading && (
-        <div className="wb-empty">
-          <div className="wb-empty-icon"><Sparkles size={32} /></div>
-          <p>Searching TMDB...</p>
-        </div>
-      )}
-    </section>
+      {inProgress.length===0 && allUpNext.length===0 && externalResults.length===0 && !externalLoading && <div className="wh3-empty"><Clapperboard size={26}/><h2>Your watchlist is waiting</h2><p>Search for a movie or series to add it here.</p></div>}
+      {externalLoading && <div className="wh3-loading"><span/>Finding titles…</div>}
+      {query && <p className="wh3-query">Results for “{query}”</p>}
+    </main>
   );
 }
 
