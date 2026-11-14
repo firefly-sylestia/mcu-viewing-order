@@ -11149,3 +11149,25 @@
     -webkit-filter: none !important;
   }
 }
+
+
+/* Optional borderless header surface. Off by default; the existing header
+   remains untouched unless the Appearance toggle is enabled. */
+:root[data-header-surface="borderless"] .movie-site .site-header {
+  background: transparent !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+:root[data-header-surface="borderless"] .movie-site .site-header::before,
+:root[data-header-surface="borderless"] .movie-site .site-header::after,
+:root[data-header-surface="borderless"] .movie-site .site-header .header-image-backdrop,
+:root[data-header-surface="borderless"] .movie-site .site-header .header-universe-backdrop {
+  display: none !important;
+}
+:root[data-header-surface="borderless"] .movie-site .site-header > .header-top,
+:root[data-header-surface="borderless"] .movie-site .site-header > .header-bar {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}

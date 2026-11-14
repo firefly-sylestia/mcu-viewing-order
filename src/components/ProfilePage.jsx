@@ -54,7 +54,7 @@ const formatTimeAgo = (timestamp) => {
   return 'Synced ' + Math.floor(hours / 24) + 'd ago';
 };
 
-function ProfilePage({ pageHeader, setActiveTab, installApp, installAvailable, appInstalled, stats, activeItems, universe, activeTab = 'insights', query = '', setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, profileName, setProfileName, user, configured, onLogin, onLogout, lastSynced, syncing, onSync, conflict, onResolveRemote, onResolveLocal, syncToast, nativePlayer, setNativePlayer, quietBrowsingOn = false, setQuietBrowsingOn, liquidGlassNavOn = false, setLiquidGlassNavOn, liquidGlassNavConfig, setLiquidGlassNavConfig }) {
+function ProfilePage({ pageHeader, setActiveTab, installApp, installAvailable, appInstalled, stats, activeItems, universe, activeTab = 'insights', query = '', setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, profileName, setProfileName, user, configured, onLogin, onLogout, lastSynced, syncing, onSync, conflict, onResolveRemote, onResolveLocal, syncToast, nativePlayer, setNativePlayer, quietBrowsingOn = false, setQuietBrowsingOn, borderlessHeaderOn = false, setBorderlessHeaderOn, liquidGlassNavOn = false, setLiquidGlassNavOn, liquidGlassNavConfig, setLiquidGlassNavConfig }) {
   
   const savedItems = activeItems.filter(i => i.bookmarked);
   const inProgressItems = activeItems.filter(i => i.userStatus === 'watching');
@@ -118,7 +118,7 @@ function ProfilePage({ pageHeader, setActiveTab, installApp, installAvailable, a
 
         {activeTab === 'settings' && (
           <div id="settings-panel" role="tabpanel" className="profile-panel settings-panel">
-            <SettingsPanel installApp={installApp} installAvailable={installAvailable} appInstalled={appInstalled} query={query} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={onLogin} onLogout={onLogout} universe={universe} activeItems={activeItems} setStatus={setStatus} toggleBookmark={toggleBookmark} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} quietBrowsingOn={quietBrowsingOn} setQuietBrowsingOn={setQuietBrowsingOn} liquidGlassNavOn={liquidGlassNavOn} setLiquidGlassNavOn={setLiquidGlassNavOn} liquidGlassNavConfig={liquidGlassNavConfig} setLiquidGlassNavConfig={setLiquidGlassNavConfig} />
+            <SettingsPanel installApp={installApp} installAvailable={installAvailable} appInstalled={appInstalled} query={query} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={onLogin} onLogout={onLogout} universe={universe} activeItems={activeItems} setStatus={setStatus} toggleBookmark={toggleBookmark} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} quietBrowsingOn={quietBrowsingOn} setQuietBrowsingOn={setQuietBrowsingOn} borderlessHeaderOn={borderlessHeaderOn} setBorderlessHeaderOn={setBorderlessHeaderOn} liquidGlassNavOn={liquidGlassNavOn} setLiquidGlassNavOn={setLiquidGlassNavOn} liquidGlassNavConfig={liquidGlassNavConfig} setLiquidGlassNavConfig={setLiquidGlassNavConfig} />
           </div>
         )}
       </div>
@@ -239,7 +239,7 @@ export function ProfileHeader({ universe, stats, profileName, setProfileName, us
   );
 }
 
-function SettingsPanel({ installApp, installAvailable, appInstalled, query = '', profileName, setProfileName, user, configured, onLogin, onLogout, universe, activeItems, setStatus, toggleBookmark, nativePlayer, setNativePlayer, quietBrowsingOn = false, setQuietBrowsingOn, liquidGlassNavOn = false, setLiquidGlassNavOn, liquidGlassNavConfig = {}, setLiquidGlassNavConfig }) {
+function SettingsPanel({ installApp, installAvailable, appInstalled, query = '', profileName, setProfileName, user, configured, onLogin, onLogout, universe, activeItems, setStatus, toggleBookmark, nativePlayer, setNativePlayer, quietBrowsingOn = false, setQuietBrowsingOn, borderlessHeaderOn = false, setBorderlessHeaderOn, liquidGlassNavOn = false, setLiquidGlassNavOn, liquidGlassNavConfig = {}, setLiquidGlassNavConfig }) {
   const search = query.trim().toLowerCase();
   const showGroup = (terms) => !search || terms.includes(search);
   const { theme, setTheme } = useAppTheme();
@@ -328,6 +328,21 @@ function SettingsPanel({ installApp, installAvailable, appInstalled, query = '',
             </span>
           </button>
         </div>
+        <div className="settings-row">
+          <div className="settings-row-label">
+            <span className="settings-row-icon"><Sparkles size={18} /></span>
+            <div>
+              <strong>Borderless header</strong>
+              <small>{borderlessHeaderOn ? 'Artwork and outlines hidden · blur surfaces retained' : 'Use the current header appearance'}</small>
+            </div>
+          </div>
+          <button className="theme-toggle" type="button" role="switch" aria-checked={borderlessHeaderOn}
+            onClick={() => { hapticTap(); setBorderlessHeaderOn?.(value => !value); }}
+            aria-label={`Turn borderless header ${borderlessHeaderOn ? 'off' : 'on'}`}>
+            <span className={`theme-toggle-track ${borderlessHeaderOn ? 'dark' : 'light'}`}><span className="theme-toggle-thumb"><Sparkles size={14} /></span></span>
+          </button>
+        </div>
+        <p className="settings-data-desc">Removes the blurred poster artwork and header outlines while keeping the existing translucent blur surfaces and their opacity.</p>
         <div className="settings-row liquid-glass-settings-row">
           <div className="settings-row-label">
             <span className="settings-row-icon"><Sparkles size={18} /></span>
