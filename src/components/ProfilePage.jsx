@@ -79,7 +79,7 @@ const formatTimeAgo = (timestamp) => {
   return 'Synced ' + Math.floor(hours / 24) + 'd ago';
 };
 
-function ProfilePage({ pageHeader, setActiveTab, installApp, installAvailable, appInstalled, stats, activeItems, universe, activeTab = 'insights', query = '', setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, profileName, setProfileName, user, configured, onLogin, onLogout, lastSynced, syncing, onSync, conflict, onResolveRemote, onResolveLocal, syncToast, nativePlayer, setNativePlayer, headerDesign = 'classic', setHeaderDesign, liquidGlassNavOn = false, setLiquidGlassNavOn }) {
+function ProfilePage({ pageHeader, setActiveTab, installApp, installAvailable, appInstalled, stats, activeItems, universe, activeTab = 'insights', query = '', setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, profileName, setProfileName, user, configured, onLogin, onLogout, lastSynced, syncing, onSync, conflict, onResolveRemote, onResolveLocal, syncToast, nativePlayer, setNativePlayer, headerDesign = 'classic', setHeaderDesign, liquidGlassNavOn = false, setLiquidGlassNavOn, liquidGlassNavConfig, setLiquidGlassNavConfig }) {
   
   const savedItems = activeItems.filter(i => i.bookmarked);
   const inProgressItems = activeItems.filter(i => i.userStatus === 'watching');
@@ -143,7 +143,7 @@ function ProfilePage({ pageHeader, setActiveTab, installApp, installAvailable, a
 
         {activeTab === 'settings' && (
           <div id="settings-panel" role="tabpanel" className="profile-panel settings-panel">
-            <SettingsPanel installApp={installApp} installAvailable={installAvailable} appInstalled={appInstalled} query={query} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={onLogin} onLogout={onLogout} universe={universe} activeItems={activeItems} setStatus={setStatus} toggleBookmark={toggleBookmark} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} headerDesign={headerDesign} setHeaderDesign={setHeaderDesign} liquidGlassNavOn={liquidGlassNavOn} setLiquidGlassNavOn={setLiquidGlassNavOn} />
+            <SettingsPanel installApp={installApp} installAvailable={installAvailable} appInstalled={appInstalled} query={query} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={onLogin} onLogout={onLogout} universe={universe} activeItems={activeItems} setStatus={setStatus} toggleBookmark={toggleBookmark} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} headerDesign={headerDesign} setHeaderDesign={setHeaderDesign} liquidGlassNavOn={liquidGlassNavOn} setLiquidGlassNavOn={setLiquidGlassNavOn} liquidGlassNavConfig={liquidGlassNavConfig} setLiquidGlassNavConfig={setLiquidGlassNavConfig} />
           </div>
         )}
       </div>
@@ -153,6 +153,7 @@ function ProfilePage({ pageHeader, setActiveTab, installApp, installAvailable, a
 
 export function ProfileHeader({ universe, stats, profileName, setProfileName, user, onLogin, onLogout, watchingItem, nextUp, onSelectItem, syncing = false, lastSynced, onSync }) {
   const [confirmingLogout, setConfirmingLogout] = useState(false);
+  const [liquidGlassDialogOpen, setLiquidGlassDialogOpen] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState(profileName || user?.displayName || '');
   const [avatarDialogOpen, setAvatarDialogOpen] = useState(false);
@@ -264,7 +265,7 @@ export function ProfileHeader({ universe, stats, profileName, setProfileName, us
   );
 }
 
-function SettingsPanel({ installApp, installAvailable, appInstalled, query = '', profileName, setProfileName, user, configured, onLogin, onLogout, universe, activeItems, setStatus, toggleBookmark, nativePlayer, setNativePlayer, headerDesign = 'classic', setHeaderDesign, liquidGlassNavOn = false, setLiquidGlassNavOn }) {
+function SettingsPanel({ installApp, installAvailable, appInstalled, query = '', profileName, setProfileName, user, configured, onLogin, onLogout, universe, activeItems, setStatus, toggleBookmark, nativePlayer, setNativePlayer, headerDesign = 'classic', setHeaderDesign, liquidGlassNavOn = false, setLiquidGlassNavOn, liquidGlassNavConfig = {}, setLiquidGlassNavConfig }) {
   const search = query.trim().toLowerCase();
   const showGroup = (terms) => !search || terms.includes(search);
   const { theme, setTheme } = useAppTheme();
@@ -353,22 +354,47 @@ function SettingsPanel({ installApp, installAvailable, appInstalled, query = '',
             </span>
           </button>
         </div>
-        <div className="settings-row">
+        <div className="settings-row liquid-glass-settings-row">
           <div className="settings-row-label">
             <span className="settings-row-icon"><Sparkles size={18} /></span>
             <div>
               <strong>Liquid Glass navigation</strong>
-              <small>{liquidGlassNavOn ? "Chromatic refraction and reflective glass enabled" : "Standard navigation · glass effects off"}</small>
+              <small>{liquidGlassNavOn ? "Real-time refraction and elastic glass enabled" : "Your standard navigation stays unchanged"}</small>
             </div>
           </div>
-          <button className="theme-toggle" role="switch" aria-checked={liquidGlassNavOn}
-            onClick={() => { hapticTap(); setLiquidGlassNavOn?.(value => !value); }}
-            aria-label={"Turn Liquid Glass navigation " + (liquidGlassNavOn ? "off" : "on")}>
-            <span className={"theme-toggle-track " + (liquidGlassNavOn ? "dark" : "light")}>
-              <span className="theme-toggle-thumb"><Sparkles size={14} /></span>
-            </span>
-          </button>
+          <div className="liquid-glass-row-actions">
+            <button className="liquid-glass-customize" type="button" onClick={() => setLiquidGlassDialogOpen(true)}>Customize</button>
+            <button className="theme-toggle" role="switch" aria-checked={liquidGlassNavOn}
+              onClick={() => { hapticTap(); setLiquidGlassNavOn?.(value => !value); }}
+              aria-label={"Turn Liquid Glass navigation " + (liquidGlassNavOn ? "off" : "on")}>
+              <span className={"theme-toggle-track " + (liquidGlassNavOn ? "dark" : "light")}>
+                <span className="theme-toggle-thumb"><Sparkles size={14} /></span>
+              </span>
+            </button>
+          </div>
         </div>
+        {liquidGlassDialogOpen && (
+          <div className="liquid-glass-dialog-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setLiquidGlassDialogOpen(false); }}>
+            <section className="liquid-glass-dialog" role="dialog" aria-modal="true" aria-labelledby="liquid-glass-dialog-title">
+              <header className="liquid-glass-dialog-head">
+                <div><span className="liquid-glass-dialog-kicker">Navigation appearance</span><h2 id="liquid-glass-dialog-title">Liquid Glass</h2><p>Shape the refraction, clarity and movement of your navigation.</p></div>
+                <button type="button" className="liquid-glass-dialog-close" onClick={() => setLiquidGlassDialogOpen(false)} aria-label="Close"><X size={19} /></button>
+              </header>
+              <div className="liquid-glass-preview"><span className="liquid-glass-preview-shine" /><span className="liquid-glass-preview-icons">⌂　▤　▥　◉</span><small>{liquidGlassNavOn ? 'Live effect enabled' : 'Preview · enable to apply'}</small></div>
+              <div className="liquid-glass-mode-picker" role="group" aria-label="Refraction style">
+                {['standard','polar','prominent'].map(mode => <button type="button" key={mode} className={liquidGlassNavConfig.mode === mode ? 'active' : ''} onClick={() => setLiquidGlassNavConfig(current => ({ ...current, mode }))}>{mode === 'standard' ? 'Classic' : mode === 'polar' ? 'Prismatic' : 'Sculpted'}</button>)}
+              </div>
+              <div className="liquid-glass-controls">
+                <label><span><b>Refraction</b><output>{liquidGlassNavConfig.displacementScale}</output></span><input type="range" min="20" max="100" step="1" value={liquidGlassNavConfig.displacementScale} onChange={event => setLiquidGlassNavConfig(current => ({ ...current, displacementScale: Number(event.target.value) }))} /></label>
+                <label><span><b>Frosted clarity</b><output>{Math.round(liquidGlassNavConfig.blurAmount * 100)}%</output></span><input type="range" min="0.03" max="0.3" step="0.01" value={liquidGlassNavConfig.blurAmount} onChange={event => setLiquidGlassNavConfig(current => ({ ...current, blurAmount: Number(event.target.value) }))} /></label>
+                <label><span><b>Colour richness</b><output>{liquidGlassNavConfig.saturation}%</output></span><input type="range" min="110" max="240" step="5" value={liquidGlassNavConfig.saturation} onChange={event => setLiquidGlassNavConfig(current => ({ ...current, saturation: Number(event.target.value) }))} /></label>
+                <label><span><b>Edge prism</b><output>{liquidGlassNavConfig.aberrationIntensity.toFixed(1)}</output></span><input type="range" min="0" max="4" step="0.1" value={liquidGlassNavConfig.aberrationIntensity} onChange={event => setLiquidGlassNavConfig(current => ({ ...current, aberrationIntensity: Number(event.target.value) }))} /></label>
+                <label><span><b>Elastic movement</b><output>{liquidGlassNavConfig.elasticity.toFixed(2)}</output></span><input type="range" min="0" max="0.45" step="0.01" value={liquidGlassNavConfig.elasticity} onChange={event => setLiquidGlassNavConfig(current => ({ ...current, elasticity: Number(event.target.value) }))} /></label>
+              </div>
+              <footer className="liquid-glass-dialog-footer"><button type="button" className="liquid-glass-reset" onClick={() => setLiquidGlassNavConfig({ displacementScale: 58, blurAmount: 0.12, saturation: 175, aberrationIntensity: 1.8, elasticity: 0.18, mode: 'prominent' })}>Reset</button><button type="button" className="liquid-glass-done" onClick={() => { setLiquidGlassDialogOpen(false); if (!liquidGlassNavOn) setLiquidGlassNavOn?.(true); }}>Apply</button></footer>
+            </section>
+          </div>
+        )}
         <div className="settings-row settings-row-stacked">
           <div className="settings-row-label">
             <span className="settings-row-icon"><Sparkles size={18} /></span>

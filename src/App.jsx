@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import LiquidGlass from 'liquid-glass-react';
 import { createPortal } from 'react-dom';
 import { Search, SlidersHorizontal, House, Bookmark, Play, UserRound, X, ArrowLeft, Star, BarChart3, Check, Clock, ListFilter, RotateCcw, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Calendar, Timer, Sparkles, LogOut, Cloud, Download, Camera, Info, ShieldAlert, Clapperboard, ArrowUpDown, ExternalLink } from 'lucide-react';
 import { RAW, PHASES } from './data/mcuData';
@@ -398,6 +399,14 @@ export default function App() {
     document.documentElement.setAttribute('data-liquid-glass-nav', liquidGlassNavOn ? 'on' : 'off');
     try { localStorage.setItem('liquid-glass-nav', liquidGlassNavOn ? '1' : '0'); } catch {}
   }, [liquidGlassNavOn]);
+  const [liquidGlassNavConfig, setLiquidGlassNavConfig] = useState(() => {
+    const defaults = { displacementScale: 58, blurAmount: 0.12, saturation: 175, aberrationIntensity: 1.8, elasticity: 0.18, mode: 'prominent' };
+    try { return { ...defaults, ...JSON.parse(localStorage.getItem('liquid-glass-nav-config') || '{}') }; }
+    catch { return defaults; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem('liquid-glass-nav-config', JSON.stringify(liquidGlassNavConfig)); } catch {}
+  }, [liquidGlassNavConfig]);
   const navRef = useRef(null);
   const navHoldTimer = useRef(null);
   const navDragRef = useRef(false);
@@ -1491,13 +1500,50 @@ export default function App() {
 
       {section === 'list' && <ListSection items={activeItems} sortBy={sortBy} sortDirection={sortDirection} sortKey={`${sortBy}-${sortDirection}`} externalResults={externalSearchResults} externalLoading={externalSearchLoading} query="" setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} onPlayExternal={onPlayExternal} onWarning={showWarningToast} />}
       {section === 'analytics' && <><AnalyticsPanel stats={stats} large />{[['Watching','watching'],['Watched','watched'],['Dropped','dropped']].map(([label,status]) => { const items = analyticsItems.filter(item => item.userStatus === status); return items.length ? <MovieRail key={status} title={label} items={items} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} /> : null; })}</>}
-            {section === 'profile' && <ProfilePage pageHeader={<ProfileHeader universe={universe} stats={stats} profileName={profileName} watchingItem={profileWatchingItem} nextUp={profileNextUpItem} onSelectItem={selectItem} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} />} activeTab={profileTab} setActiveTab={(tab) => { hapticTap(); setProfileTab(tab); setQuery(''); }} installApp={installApp} installAvailable={!!installPromptEvent} appInstalled={appInstalled} stats={profileStats} activeItems={profileItems} universe="all" query={query} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} conflict={conflict} onResolveRemote={resolveUseRemote} onResolveLocal={resolveKeepLocal} syncToast={toast} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} headerDesign={headerDesign} setHeaderDesign={setHeaderDesign} liquidGlassNavOn={liquidGlassNavOn} setLiquidGlassNavOn={setLiquidGlassNavOn} />}
+            {section === 'profile' && <ProfilePage pageHeader={<ProfileHeader universe={universe} stats={stats} profileName={profileName} watchingItem={profileWatchingItem} nextUp={profileNextUpItem} onSelectItem={selectItem} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} />} activeTab={profileTab} setActiveTab={(tab) => { hapticTap(); setProfileTab(tab); setQuery(''); }} installApp={installApp} installAvailable={!!installPromptEvent} appInstalled={appInstalled} stats={profileStats} activeItems={profileItems} universe="all" query={query} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} conflict={conflict} onResolveRemote={resolveUseRemote} onResolveLocal={resolveKeepLocal} syncToast={toast} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} headerDesign={headerDesign} setHeaderDesign={setHeaderDesign} liquidGlassNavOn={liquidGlassNavOn} setLiquidGlassNavOn={setLiquidGlassNavOn} liquidGlassNavConfig={liquidGlassNavConfig} setLiquidGlassNavConfig={setLiquidGlassNavConfig} />}
       {WATCH_ENABLED && section === 'watch' && safeWatchItem && <WatchPage watchItem={safeWatchItem} activeItems={roadmapItems} onBack={() => { setWatchItem(null); window.history.replaceState(null, '', '#watch'); }} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={startWatchWithConfirm} updateAction={updateAction} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} />}
       {WATCH_ENABLED && section === 'watch' && !safeWatchItem && <WatchBrowse activeItems={activeItems} externalResults={externalSearchResults} externalLoading={externalSearchLoading} actions={actions} query={query} onStartWatch={startWatchWithConfirm} onPlayExternal={onPlayExternal} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} />}
       </div>
 
       {warningToast && <div className="app-warning-toast" role="status"><ShieldAlert size={16} /><span>{warningToast}</span><button onClick={() => setWarningToast('')} aria-label="Dismiss warning"><X size={14} /></button></div>}
-  <nav
+      {liquidGlassNavOn ? (
+        <LiquidGlass
+          className="liquid-nav-glass"
+          displacementScale={liquidGlassNavConfig.displacementScale}
+          blurAmount={liquidGlassNavConfig.blurAmount}
+          saturation={liquidGlassNavConfig.saturation}
+          aberrationIntensity={liquidGlassNavConfig.aberrationIntensity}
+          elasticity={liquidGlassNavConfig.elasticity}
+          cornerRadius={999}
+          padding="0"
+          mode={liquidGlassNavConfig.mode}
+          overLight={document.documentElement.getAttribute('data-theme') !== 'dark'}
+          style={{ position: 'fixed', top: 'auto', bottom: 'calc(env(safe-area-inset-bottom, 0px) + 14px)', left: '50%', zIndex: 1000 }}
+        >
+            <nav
+        ref={navRef}
+        className="bottom-nav"
+        data-liquid-glass="false"
+        aria-label="Primary"
+        data-holding={navHolding ? 'true' : 'false'}
+        style={{ '--nav-index': navHoldIndex ?? Math.max(0, NAV_VISIBLE.indexOf(section)), '--nav-count': NAV_VISIBLE.length, '--nav-dur': navHolding ? '150ms' : '.58s' }}
+        onPointerDown={handleNavPointerDown}
+        onPointerMove={handleNavPointerMove}
+        onPointerUp={handleNavPointerUp}
+        onPointerCancel={resetNavHold}
+        onContextMenu={(event) => { if (navHolding) event.preventDefault(); }}
+      >
+        <span className="nav-blob" aria-hidden="true" />
+        {NAV_VISIBLE.map((id) => {
+          const { label, Icon } = NAV_TAB_META[id];
+          return <button key={id} className={section === id ? 'active' : ''} aria-label={label} title={label} aria-current={section === id ? 'page' : undefined} onClick={() => handleNavClick(id)}>
+            <Icon size={28} strokeWidth={2.1} /><span aria-hidden="true">{label}</span>
+          </button>;
+        })}
+      </nav>
+        </LiquidGlass>
+      ) : (
+          <nav
         ref={navRef}
         className="bottom-nav"
         data-liquid-glass={liquidGlassNavOn ? "true" : "false"}
@@ -1518,6 +1564,7 @@ export default function App() {
           </button>;
         })}
       </nav>
+      )}
 
       {selectedItem && <DetailView item={selectedItem} onClose={() => selectItem(null)} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={startWatchWithConfirm} onOpenItem={selectItem} activeItems={roadmapItems} />}
       {trailer && <TrailerModal trailer={trailer} onClose={() => setTrailer(null)} />}
