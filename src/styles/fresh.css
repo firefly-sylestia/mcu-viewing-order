@@ -10610,3 +10610,51 @@
     radial-gradient(ellipse at 82% 88%, rgba(0,0,0,.16), transparent 64%),
     linear-gradient(112deg, rgba(8,10,16,.06), transparent 58%, rgba(8,10,16,.14)) !important;
 }
+
+
+/* Match the optional Liquid Glass nav to the standard nav footprint.
+   Keep the refraction effect; only remove the oversized dimensions. */
+:root .movie-site .liquid-nav-glass,
+:root .movie-site .liquid-nav-glass > .glass {
+  width: min(320px, calc(100vw - 40px)) !important;
+  min-width: 0 !important;
+  max-width: calc(100vw - 40px) !important;
+}
+:root .movie-site .liquid-nav-glass .bottom-nav {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  padding: 6px !important;
+  gap: 4px !important;
+}
+:root .movie-site .liquid-nav-glass .bottom-nav button {
+  min-width: 0 !important;
+  min-height: 48px !important;
+  padding: 6px 8px !important;
+  gap: 3px !important;
+  flex: 1 1 0 !important;
+}
+:root .movie-site .liquid-nav-glass .bottom-nav button svg {
+  width: 25px !important;
+  height: 25px !important;
+}
+@media (max-width: 560px) {
+  :root .movie-site .liquid-nav-glass,
+  :root .movie-site .liquid-nav-glass > .glass {
+    width: min(320px, calc(100vw - 40px)) !important;
+    max-width: calc(100vw - 40px) !important;
+  }
+  :root .movie-site .liquid-nav-glass .bottom-nav {
+    width: 100% !important;
+    padding: 6px !important;
+    gap: 3px !important;
+  }
+  :root .movie-site .liquid-nav-glass .bottom-nav button {
+    min-height: 48px !important;
+    padding: 6px 4px !important;
+  }
+  :root .movie-site .liquid-nav-glass .bottom-nav button svg {
+    width: 25px !important;
+    height: 25px !important;
+  }
+}
