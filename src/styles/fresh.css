@@ -10657,3 +10657,50 @@
     padding: 7px 14px !important;
   }
 }
+
+
+/* Liquid Glass nav: preserve the full multi-tab layout. The shared nav rules
+   use five grid tracks, but Watch is disabled (four visible tabs); combined
+   with max-content sizing this collapses the glass child into a single track. */
+:root .movie-site .liquid-nav-glass .bottom-nav {
+  display: grid !important;
+  width: min(460px, calc(100vw - 28px)) !important;
+  min-width: 0 !important;
+  max-width: calc(100vw - 28px) !important;
+  grid-template-columns: repeat(var(--nav-count, 4), minmax(0, 1fr)) !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+:root .movie-site .liquid-nav-glass .bottom-nav button {
+  width: 100% !important;
+  min-width: 0 !important;
+  flex: initial !important;
+  min-height: 40px !important;
+  padding: 6px 5px !important;
+}
+:root .movie-site .liquid-nav-glass .bottom-nav .nav-blob {
+  width: calc((100% - 10px - (var(--nav-count, 4) - 1) * var(--nav-gap, 4px)) / var(--nav-count, 4)) !important;
+}
+@media (max-width: 560px) {
+  :root .movie-site .liquid-nav-glass,
+  :root .movie-site .liquid-nav-glass > .glass {
+    width: min(460px, calc(100vw - 24px)) !important;
+    max-width: calc(100vw - 24px) !important;
+  }
+  :root .movie-site .liquid-nav-glass .bottom-nav {
+    width: min(460px, calc(100vw - 24px)) !important;
+    max-width: calc(100vw - 24px) !important;
+    padding: 4px !important;
+    --nav-gap: 3px;
+  }
+  :root .movie-site .liquid-nav-glass .bottom-nav .nav-blob {
+    width: calc((100% - 8px - (var(--nav-count, 4) - 1) * var(--nav-gap, 3px)) / var(--nav-count, 4)) !important;
+    top: 4px !important;
+    bottom: 4px !important;
+    left: 4px !important;
+  }
+  :root .movie-site .liquid-nav-glass .bottom-nav button {
+    min-height: 38px !important;
+    padding: 5px 3px !important;
+  }
+}
