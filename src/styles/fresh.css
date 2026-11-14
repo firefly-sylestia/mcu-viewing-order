@@ -11100,3 +11100,188 @@
  :root .wh3-watch-now { min-width:68px; height:32px; padding:0 9px; font-size:10px; }
  :root .wh3-watch-now svg { width:12px; height:12px; }
 }
+
+
+/* Incursion header refresh — editorial type on the page, controls grouped in one soft blur. */
+:root .movie-site.page-home .site-header,
+:root .movie-site.page-list .site-header {
+  position: relative !important;
+  isolation: isolate;
+  overflow: visible !important;
+  margin: 10px auto 22px !important;
+  padding: 12px 18px 14px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+:root .movie-site.page-home .site-header::before,
+:root .movie-site.page-list .site-header::before {
+  content: none !important;
+}
+:root .movie-site.page-home .site-header .header-top,
+:root .movie-site.page-list .site-header .header-top {
+  position: relative;
+  z-index: 1;
+  display: flex !important;
+  min-height: 72px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin: 0 0 15px !important;
+  padding: 0 2px !important;
+}
+:root .movie-site.page-home .site-header .brand,
+:root .movie-site.page-list .site-header .brand {
+  display: flex !important;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  text-align: left;
+}
+:root .movie-site.page-home .site-header .brand b,
+:root .movie-site.page-list .site-header .brand b {
+  color: var(--fx-text) !important;
+  font-size: clamp(28px,4.2vw,42px) !important;
+  font-weight: 850 !important;
+  line-height: .98 !important;
+  letter-spacing: -.065em !important;
+}
+:root .movie-site.page-home .site-header .brand small,
+:root .movie-site.page-list .site-header .brand small {
+  color: var(--fx-muted) !important;
+  font-size: 10px !important;
+  font-weight: 650;
+  letter-spacing: .11em !important;
+  text-transform: uppercase;
+}
+:root .movie-site.page-home .site-header .header-bar,
+:root .movie-site.page-list .site-header .header-bar {
+  position: relative;
+  z-index: 2;
+  display: flex !important;
+  width: 100%;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 10px !important;
+  border: 1px solid color-mix(in srgb,var(--fx-muted) 13%,transparent) !important;
+  border-radius: 22px !important;
+  background: color-mix(in srgb,var(--fx-surface) 66%,transparent) !important;
+  box-shadow: 0 12px 34px -28px rgba(12,20,36,.28) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(155%) !important;
+  backdrop-filter: blur(26px) saturate(155%) !important;
+}
+:root .movie-site.page-home .site-header .header-bar > *,
+:root .movie-site.page-list .site-header .header-bar > * { min-width: 0; }
+:root .movie-site.page-home .site-header .header-bar .universe-tabs,
+:root .movie-site.page-list .site-header .header-bar .universe-tabs {
+  flex: 0 0 auto;
+  margin: 0 !important;
+  background: color-mix(in srgb,var(--fx-surface-2) 76%,transparent) !important;
+}
+:root .movie-site.page-home .site-header .header-bar .header-search,
+:root .movie-site.page-list .site-header .header-bar .header-search {
+  flex: 1 1 190px;
+  min-width: 145px;
+  margin: 0 !important;
+  border: 1px solid color-mix(in srgb,var(--fx-muted) 12%,transparent) !important;
+  background: color-mix(in srgb,var(--fx-surface-2) 72%,transparent) !important;
+}
+:root .movie-site.page-home .site-header .header-tools,
+:root .movie-site.page-list .site-header .header-tools {
+  display: flex !important;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 7px;
+  margin: 0 !important;
+}
+:root .movie-site.page-home .site-header .header-tools .header-phase-btn,
+:root .movie-site.page-list .site-header .header-tools .header-phase-btn,
+:root .movie-site.page-home .site-header .header-sort-btn,
+:root .movie-site.page-list .site-header .header-sort-btn,
+:root .movie-site.page-home .site-header .header-filter-btn,
+:root .movie-site.page-list .site-header .header-filter-btn {
+  border: 1px solid color-mix(in srgb,var(--fx-muted) 12%,transparent) !important;
+  background: color-mix(in srgb,var(--fx-surface-2) 72%,transparent) !important;
+}
+:root[data-theme="light"] .movie-site.page-home .site-header .header-bar,
+:root[data-theme="light"] .movie-site.page-list .site-header .header-bar {
+  background: rgba(255,255,255,.62) !important;
+}
+:root[data-theme="dark"] .movie-site.page-home .site-header .header-bar,
+:root[data-theme="dark"] .movie-site.page-list .site-header .header-bar {
+  background: rgba(20,23,31,.58) !important;
+  border-color: rgba(255,255,255,.09) !important;
+}
+
+/* Optional atmospheric wordmark: an oversized, blurred universe mark fades away
+   into the real page backdrop. Disabled by default via data-incursion-atmosphere. */
+:root[data-incursion-atmosphere="off"] .movie-site.page-home .site-header .header-universe-backdrop,
+:root[data-incursion-atmosphere="off"] .movie-site.page-list .site-header .header-universe-backdrop {
+  display: none !important;
+}
+:root[data-incursion-atmosphere="on"] .movie-site.page-home .site-header,
+:root[data-incursion-atmosphere="on"] .movie-site.page-list .site-header {
+  overflow: hidden !important;
+}
+:root[data-incursion-atmosphere="on"] .movie-site.page-home .site-header .header-universe-backdrop,
+:root[data-incursion-atmosphere="on"] .movie-site.page-list .site-header .header-universe-backdrop {
+  display: block !important;
+  inset: -24px -4% 8px !important;
+  opacity: .20 !important;
+  mask-image: linear-gradient(90deg,transparent 0%,#000 24%,#000 72%,transparent 100%),linear-gradient(180deg,#000 0%,rgba(0,0,0,.72) 45%,transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg,transparent 0%,#000 24%,#000 72%,transparent 100%),linear-gradient(180deg,#000 0%,rgba(0,0,0,.72) 45%,transparent 100%);
+  mask-composite: intersect;
+  -webkit-mask-composite: source-in;
+}
+:root[data-incursion-atmosphere="on"] .movie-site.page-home .site-header .header-universe-backdrop > span,
+:root[data-incursion-atmosphere="on"] .movie-site.page-list .site-header .header-universe-backdrop > span {
+  right: 2% !important;
+  top: 43% !important;
+  transform: translateY(-50%) scale(1.65) !important;
+  filter: blur(17px) saturate(.82) !important;
+  opacity: .72;
+}
+:root[data-incursion-atmosphere="on"] .movie-site.page-home .site-header .brand b,
+:root[data-incursion-atmosphere="on"] .movie-site.page-list .site-header .brand b {
+  background: linear-gradient(105deg,var(--fx-text) 8%,color-mix(in srgb,var(--brand-accent) 58%,var(--fx-text)) 58%,var(--fx-text) 96%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent !important;
+}
+@media(max-width:760px) {
+  :root .movie-site.page-home .site-header,
+  :root .movie-site.page-list .site-header { padding: 8px 10px 12px !important; margin-bottom: 16px !important; }
+  :root .movie-site.page-home .site-header .header-top,
+  :root .movie-site.page-list .site-header .header-top { min-height: 60px; margin-bottom: 11px !important; }
+  :root .movie-site.page-home .site-header .brand b,
+  :root .movie-site.page-list .site-header .brand b { font-size: 31px !important; }
+  :root .movie-site.page-home .site-header .header-bar,
+  :root .movie-site.page-list .site-header .header-bar {
+    display: grid !important;
+    grid-template-columns: minmax(0,1fr) minmax(0,1.2fr);
+    gap: 7px;
+    padding: 8px !important;
+    border-radius: 18px !important;
+  }
+  :root .movie-site.page-home .site-header .header-bar .universe-tabs { grid-column: 1/-1; width: 100%; justify-content: space-around; }
+  :root .movie-site.page-list .site-header .header-bar .universe-tabs { grid-column: 1/-1; width: 100%; justify-content: space-around; }
+  :root .movie-site.page-home .site-header .header-bar .header-search,
+  :root .movie-site.page-list .site-header .header-bar .header-search { grid-column: 1/-1; width: 100%; min-width: 0; }
+  :root .movie-site.page-home .site-header .header-tools,
+  :root .movie-site.page-list .site-header .header-tools { grid-column: 1/-1; width: 100%; justify-content: space-between; }
+  :root .movie-site.page-home .site-header .header-tools > *,
+  :root .movie-site.page-list .site-header .header-tools > * { flex: 1 1 0; min-width: 0; }
+  :root .movie-site.page-home .site-header .header-tools button { justify-content: center; padding-inline: 9px; }
+}

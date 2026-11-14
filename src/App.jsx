@@ -221,11 +221,13 @@ export default function App() {
   const [profileTab, setProfileTab] = useState('insights');
   const [statsUniverses, setStatsUniverses] = useState(['marvel', 'sony', 'xmen', 'dc']);
   const [statsUniverseMenuOpen, setStatsUniverseMenuOpen] = useState(false);
-  const [headerDesign, setHeaderDesign] = useState('cinematic');
+  const [incursionAtmosphereOn, setIncursionAtmosphereOn] = useState(() => {
+    try { return localStorage.getItem('incursion-atmosphere') === '1'; } catch { return false; }
+  });
   useEffect(() => {
-    document.documentElement.setAttribute('data-header-design', headerDesign);
-    try { localStorage.setItem('incursion-header-design', headerDesign); } catch {}
-  }, [headerDesign]);
+    document.documentElement.setAttribute('data-incursion-atmosphere', incursionAtmosphereOn ? 'on' : 'off');
+    try { localStorage.setItem('incursion-atmosphere', incursionAtmosphereOn ? '1' : '0'); } catch {}
+  }, [incursionAtmosphereOn]);
   const [installPromptEvent, setInstallPromptEvent] = useState(null);
   const [appInstalled, setAppInstalled] = useState(() => {
     try { return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true; } catch { return false; }
@@ -282,17 +284,10 @@ export default function App() {
     try { localStorage.setItem('incursion-pwa-intro-dismissed', '1'); } catch {}
   };
 
-  // Interface variant (classic | fresh | control) is chosen in Settings; applied on the root.
-  const [uiVariant, setUiVariant] = useState(() => {
-    try { return localStorage.getItem('ui-variant') || 'fresh'; } catch { return 'fresh'; }
-  });
+  // Fresh is the single supported interface; migrate any previous Classic choice.
   useEffect(() => {
-    document.documentElement.setAttribute('data-ui', uiVariant);
-  }, [uiVariant]);
-  useEffect(() => {
-    const onVariant = (event) => setUiVariant(event.detail || 'fresh');
-    window.addEventListener('ui-variant-changed', onVariant);
-    return () => window.removeEventListener('ui-variant-changed', onVariant);
+    document.documentElement.setAttribute('data-ui', 'fresh');
+    try { localStorage.setItem('ui-variant', 'fresh'); } catch {}
   }, []);
 
   // Give a single soft pulse when a scrollable surface reaches either edge.
@@ -1502,7 +1497,7 @@ export default function App() {
 
       {section === 'list' && <ListSection items={activeItems} sortBy={sortBy} sortDirection={sortDirection} sortKey={`${sortBy}-${sortDirection}`} externalResults={externalSearchResults} externalLoading={externalSearchLoading} query="" setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} onPlayExternal={onPlayExternal} onWarning={showWarningToast} />}
       {section === 'analytics' && <><AnalyticsPanel stats={stats} large />{[['Watching','watching'],['Watched','watched'],['Dropped','dropped']].map(([label,status]) => { const items = analyticsItems.filter(item => item.userStatus === status); return items.length ? <MovieRail key={status} title={label} items={items} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} /> : null; })}</>}
-            {section === 'profile' && <ProfilePage pageHeader={<ProfileHeader universe={universe} stats={stats} profileName={profileName} watchingItem={profileWatchingItem} nextUp={profileNextUpItem} onSelectItem={selectItem} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} />} activeTab={profileTab} setActiveTab={(tab) => { hapticTap(); setProfileTab(tab); setQuery(''); }} installApp={installApp} installAvailable={!!installPromptEvent} appInstalled={appInstalled} stats={profileStats} activeItems={profileItems} universe="all" query={query} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} conflict={conflict} onResolveRemote={resolveUseRemote} onResolveLocal={resolveKeepLocal} syncToast={toast} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} headerDesign={headerDesign} setHeaderDesign={setHeaderDesign} liquidGlassNavOn={liquidGlassNavOn} setLiquidGlassNavOn={setLiquidGlassNavOn} liquidGlassNavConfig={liquidGlassNavConfig} setLiquidGlassNavConfig={setLiquidGlassNavConfig} />}
+            {section === 'profile' && <ProfilePage pageHeader={<ProfileHeader universe={universe} stats={stats} profileName={profileName} watchingItem={profileWatchingItem} nextUp={profileNextUpItem} onSelectItem={selectItem} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} />} activeTab={profileTab} setActiveTab={(tab) => { hapticTap(); setProfileTab(tab); setQuery(''); }} installApp={installApp} installAvailable={!!installPromptEvent} appInstalled={appInstalled} stats={profileStats} activeItems={profileItems} universe="all" query={query} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} conflict={conflict} onResolveRemote={resolveUseRemote} onResolveLocal={resolveKeepLocal} syncToast={toast} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} incursionAtmosphereOn={incursionAtmosphereOn} setIncursionAtmosphereOn={setIncursionAtmosphereOn} liquidGlassNavOn={liquidGlassNavOn} setLiquidGlassNavOn={setLiquidGlassNavOn} liquidGlassNavConfig={liquidGlassNavConfig} setLiquidGlassNavConfig={setLiquidGlassNavConfig} />}
       {WATCH_ENABLED && section === 'watch' && safeWatchItem && <WatchPage watchItem={safeWatchItem} activeItems={roadmapItems} onBack={() => { setWatchItem(null); window.history.replaceState(null, '', '#watch'); }} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={startWatchWithConfirm} updateAction={updateAction} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} />}
       {WATCH_ENABLED && section === 'watch' && !safeWatchItem && <WatchBrowse activeItems={activeItems} externalResults={externalSearchResults} externalLoading={externalSearchLoading} actions={actions} query={query} onStartWatch={startWatchWithConfirm} onPlayExternal={onPlayExternal} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} />}
       </div>
