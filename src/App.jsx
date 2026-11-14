@@ -1255,6 +1255,7 @@ export default function App() {
       setSelected(item);
       return;
     }
+    if (item.universe) setUniverse(item.universe);
     setWatchItem({ item, tmdbId, mediaType });
     setStatus(item, 'watching');
     updateAction(item, { watchStartedAt: Date.now() });
