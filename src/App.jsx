@@ -1334,12 +1334,7 @@ export default function App() {
   <HeaderBackdrop src={headerArtwork} />
   <div className="header-universe-backdrop" aria-hidden="true"><span>{UNIVERSE_LOGOS[universe]}</span></div>
   <div className="header-top">
-  {section === 'analytics' ? (
-    <div className="stats-page-identity">
-      <span className="stats-page-avatar">{statsAvatar ? <img src={statsAvatar} alt="" referrerPolicy="no-referrer" /> : <UserRound size={34} strokeWidth={1.8} />}</span>
-      <strong>{statsDisplayName}</strong>
-    </div>
-  ) : section === 'profile' ? null : <>
+  {section === 'profile' ? null : <>
   <div className="header-quick-actions" aria-label="Quick viewing controls">
     <HeaderQuickAction item={headerQuickItem} watching={!!headerWatchingItem} onSelect={selectItem} />
   </div>
@@ -1347,6 +1342,10 @@ export default function App() {
   </>}
   </div>
   <div className="header-bar">
+  {section === 'analytics' && <div className="stats-page-identity">
+    <span className="stats-page-avatar">{statsAvatar ? <img src={statsAvatar} alt="" referrerPolicy="no-referrer" /> : <UserRound size={34} strokeWidth={1.8} />}</span>
+    <strong>{statsDisplayName}</strong>
+  </div>}
   {section !== 'profile' && section !== 'analytics' && <div className="universe-tabs" role="tablist" aria-label="Universe" style={{ "--universe-index": ["marvel", "sony", "xmen", "dc"].indexOf(universe), "--universe-active-color": ({ marvel: "#e6394f", sony: "#e0654a", xmen: "#8fa0bd", dc: "#3b82f6" })[universe] || "#8fa0bd" }}>
   {[['marvel', 'Marvel'], ['sony', 'Sony'], ['xmen', 'X-Men'], ['dc', 'DC']].map(([key, label]) => (
     <button key={key} data-universe={key} role="tab" aria-selected={universe === key} aria-label={`${label} universe`} title={`${label} universe`} className={universe === key ? 'active' : ''} onClick={() => { hapticTap(); setUniverse(key); }}><span className="universe-logo" aria-hidden="true">{UNIVERSE_LOGOS[key]}</span></button>

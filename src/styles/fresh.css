@@ -10389,3 +10389,58 @@
     linear-gradient(112deg, rgba(8,10,16,.12), rgba(8,10,16,.02) 48%, rgba(8,10,16,.24));
   mix-blend-mode: normal;
 }
+
+
+/* Keep the Stats identity in the visible header stack, above its filters. */
+:root .movie-site.page-analytics .site-header .header-bar .stats-page-identity {
+  display: flex !important;
+  width: 100%;
+  min-height: 72px;
+  align-items: center;
+  gap: 15px;
+  margin: 0 0 2px;
+}
+:root .movie-site.page-analytics .site-header .header-bar .stats-page-avatar {
+  width: 68px; height: 68px; flex: 0 0 68px;
+  display: grid; place-items: center; overflow: hidden; border-radius: 50%;
+  color: var(--fx-text);
+  background: color-mix(in srgb, var(--fx-surface-3) 76%, transparent);
+  border: 1px solid color-mix(in srgb, var(--fx-text) 13%, transparent);
+  box-shadow: 0 8px 24px rgba(0,0,0,.13);
+}
+:root .movie-site.page-analytics .site-header .header-bar .stats-page-avatar img {
+  display: block; width: 100%; height: 100%; object-fit: cover;
+}
+:root .movie-site.page-analytics .site-header .header-bar .stats-page-identity strong {
+  min-width: 0; overflow: hidden; color: var(--fx-text);
+  font-size: 1.15rem; font-weight: 750; letter-spacing: -.025em;
+  text-overflow: ellipsis; white-space: nowrap;
+}
+@media (max-width: 620px) {
+  :root .movie-site.page-analytics .site-header .header-bar .stats-page-identity { min-height: 68px; }
+  :root .movie-site.page-analytics .site-header .header-bar .stats-page-avatar {
+    width: 64px; height: 64px; flex-basis: 64px;
+  }
+}
+
+/* Let the uploaded profile photo provide the actual colour palette. Keep the
+   overlay atmospheric and restrained so it adapts naturally to each portrait. */
+:root[data-header-design="cinematic"] .movie-site.page-profile .profile-avatar-backdrop::after {
+  background:
+    radial-gradient(ellipse at 18% 12%, rgba(255,255,255,.16), transparent 48%),
+    radial-gradient(ellipse at 84% 88%, rgba(18,24,40,.18), transparent 56%),
+    linear-gradient(112deg, rgba(255,255,255,.12), transparent 48%, rgba(16,20,32,.12)) !important;
+  mix-blend-mode: normal !important;
+}
+:root[data-theme="light"][data-header-design="cinematic"] .movie-site.page-profile .profile-avatar-backdrop {
+  opacity: .88 !important;
+}
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site.page-profile .profile-avatar-backdrop {
+  opacity: .92 !important;
+}
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site.page-profile .profile-avatar-backdrop::after {
+  background:
+    radial-gradient(ellipse at 18% 12%, rgba(255,255,255,.08), transparent 48%),
+    radial-gradient(ellipse at 84% 88%, rgba(0,0,0,.24), transparent 56%),
+    linear-gradient(112deg, rgba(8,10,16,.08), transparent 48%, rgba(8,10,16,.20)) !important;
+}
