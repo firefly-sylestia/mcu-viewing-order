@@ -11066,3 +11066,37 @@
    transform-origin:top left;
  }
 }
+
+
+/* Watch Hub contrast and simplified watch-list rows. */
+:root .wh3-kicker,:root .wh3-overline { color:#343b47 !important; }
+:root .wh3-top p,:root .wh3-total,:root .wh3-stat span,:root .wh3-progress-copy strong small,
+:root .wh3-section-title > span,:root .wh3-continue-info > span,:root .wh3-card-body > span,
+:root .wh3-resume-copy p,:root .wh3-query { color:#505967 !important; }
+:root[data-theme="dark"] .wh3-kicker,:root[data-theme="dark"] .wh3-overline { color:#d4d9e2 !important; }
+:root[data-theme="dark"] .wh3-top p,:root[data-theme="dark"] .wh3-total,:root[data-theme="dark"] .wh3-stat span,
+:root[data-theme="dark"] .wh3-progress-copy strong small,:root[data-theme="dark"] .wh3-section-title > span,
+:root[data-theme="dark"] .wh3-continue-info > span,:root[data-theme="dark"] .wh3-card-body > span,
+:root[data-theme="dark"] .wh3-resume-copy p,:root[data-theme="dark"] .wh3-query { color:#b7bfcc !important; }
+:root .wh3-watchlist { display:flex; flex-direction:column; gap:0; border-top:1px solid var(--line,rgba(128,138,155,.18)); }
+:root .wh3-watch-row { display:grid; grid-template-columns:30px 48px minmax(0,1fr) auto; align-items:center; gap:13px; min-height:82px; padding:10px 4px; border-bottom:1px solid var(--line,rgba(128,138,155,.15)); background:transparent; }
+:root .wh3-watch-index { color:#626c79; font-size:10px; font-weight:750; font-variant-numeric:tabular-nums; }
+:root .wh3-watch-thumb { width:48px; height:66px; overflow:hidden; padding:0; border:0; border-radius:6px; background:#17191d; }
+:root .wh3-watch-thumb img { display:block; width:100%; height:100%; object-fit:cover; }
+:root .wh3-watch-info { min-width:0; display:flex; flex-direction:column; gap:6px; }
+:root .wh3-watch-info .wh3-title-link { font-size:13px; font-weight:780; }
+:root .wh3-watch-info > span { color:#626c79; font-size:10px; }
+:root .wh3-watch-info > span i { padding:0 3px; font-style:normal; }
+:root .wh3-watch-now { min-width:88px; height:35px; display:inline-flex; align-items:center; justify-content:center; gap:7px; padding:0 12px; border:1px solid rgba(180,35,57,.22); border-radius:10px; background:rgba(180,35,57,.075); color:var(--brand-accent,#b42339); font-size:11px; font-weight:800; }
+:root .wh3-watch-now:active { background:rgba(180,35,57,.14); }
+:root .wh3-search-list .wh3-watch-row { min-height:78px; }
+:root[data-theme="dark"] .wh3-watch-index,:root[data-theme="dark"] .wh3-watch-info > span { color:#aab3c1; }
+:root[data-theme="dark"] .wh3-watch-now { border-color:rgba(255,120,140,.24); background:rgba(255,120,140,.09); color:#ff9aaa; }
+@media(max-width:600px) {
+ :root .wh3-watch-row { grid-template-columns:20px 43px minmax(0,1fr) auto; gap:9px; min-height:72px; padding:8px 1px; }
+ :root .wh3-watch-thumb { width:43px; height:59px; }
+ :root .wh3-watch-info .wh3-title-link { font-size:11px; }
+ :root .wh3-watch-info > span { font-size:9px; }
+ :root .wh3-watch-now { min-width:68px; height:32px; padding:0 9px; font-size:10px; }
+ :root .wh3-watch-now svg { width:12px; height:12px; }
+}

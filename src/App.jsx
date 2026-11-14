@@ -2894,19 +2894,16 @@ function WatchBrowse({ activeItems, externalResults = [], externalLoading = fals
       {allUpNext.length > 0 && (
         <section className="wh3-section">
           <div className="wh3-section-title"><div><span className="wh3-overline">YOUR LIST</span><h2>Ready to watch</h2></div><span>{allUpNext.length} titles</span></div>
-          <div className="wh3-grid">
-            {upNext.map(item => (
-              <article className="wh3-card" key={item.id}>
-                <button className="wh3-poster" onClick={() => setSelected(item)} aria-label={`Details for ${item.title}`}><PosterArt item={item} /><span className="wh3-poster-play"><Play size={17} fill="currentColor" /></span></button>
-                <div className="wh3-card-body">
+          <div className="wh3-watchlist">
+            {upNext.map((item,index) => (
+              <article className="wh3-watch-row" key={item.id}>
+                <span className="wh3-watch-index">{String((currentUpNextPage-1)*upNextPageSize+index+1).padStart(2,'0')}</span>
+                <button className="wh3-watch-thumb" onClick={() => setSelected(item)} aria-label={`Details for ${item.title}`}><PosterArt item={item}/></button>
+                <div className="wh3-watch-info">
                   <button className="wh3-title-link" onClick={() => setSelected(item)}>{item.title}</button>
-                  <span>{item.year || '—'} · {item.type === 'series' ? 'Series' : runtimeLabel(item.runtime,item.type)}</span>
-                  <div className="wh3-card-actions">
-                    <button className="wh3-card-watch" onClick={() => handleResume(item)}><Play size={13} fill="currentColor" /> Watch</button>
-                    <button className={`wh3-card-save ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={15} fill={item.bookmarked ? 'currentColor' : 'none'} /></button>
-                    <StatusSelect item={item} setStatus={setStatus} compact />
-                  </div>
+                  <span>{item.year || '—'} <i>·</i> {item.type === 'series' ? 'Series' : runtimeLabel(item.runtime,item.type)}</span>
                 </div>
+                <button className="wh3-watch-now" onClick={() => handleResume(item)}><Play size={14} fill="currentColor"/> <span>Watch</span></button>
               </article>
             ))}
           </div>
@@ -2917,13 +2914,15 @@ function WatchBrowse({ activeItems, externalResults = [], externalLoading = fals
       {externalResults.length > 0 && (
         <section className="wh3-section">
           <div className="wh3-section-title"><div><span className="wh3-overline">DISCOVER</span><h2>Search results</h2></div><span>{externalResults.length} found</span></div>
-          <div className="wh3-grid">
-            {externalResults.map(result => {
+          <div className="wh3-watchlist wh3-search-list">
+            {externalResults.map((result,index) => {
               const action=actions[`tmdb:${result.type}:${result.id}`]||{};
               const extItem={id:`tmdb-${result.type}-${result.id}`,external:true,title:result.title,type:result.type==='tv'?'series':'film',poster:result.poster,backdrop:result.backdrop,year:result.year,rating:result.rating,overview:result.overview,desc:result.overview,genres:result.genres||[],runtime:result.runtime||(result.type==='tv'?45:120),tmdbId:result.id,mediaType:result.type,universe:'tmdb',accent:'#4a5568',userStatus:action.status||'unwatched',bookmarked:Boolean(action.bookmarked),_raw:result};
-              return <article className="wh3-card" key={extItem.id}>
-                <button className="wh3-poster" onClick={() => onPlayExternal(result)} aria-label={`Watch ${result.title}`}><PosterArt item={extItem}/><span className="wh3-poster-play"><Play size={17} fill="currentColor"/></span></button>
-                <div className="wh3-card-body"><button className="wh3-title-link" onClick={() => onPlayExternal(result)}>{result.title}</button><span>{result.year||'Date TBA'} · {result.type==='tv'?'Series':'Movie'}</span><div className="wh3-card-actions"><button className="wh3-card-watch" onClick={() => onPlayExternal(result)}><Play size={13} fill="currentColor"/> Watch</button><button className="wh3-card-save" onClick={() => toggleBookmark(extItem)} aria-label="Save title"><Bookmark size={15}/></button><StatusSelect item={extItem} setStatus={setStatus} compact/></div></div>
+              return <article className="wh3-watch-row" key={extItem.id}>
+                <span className="wh3-watch-index">{String(index+1).padStart(2,'0')}</span>
+                <button className="wh3-watch-thumb" onClick={() => onPlayExternal(result)} aria-label={`Open ${result.title}`}><PosterArt item={extItem}/></button>
+                <div className="wh3-watch-info"><button className="wh3-title-link" onClick={() => onPlayExternal(result)}>{result.title}</button><span>{result.year||'Date TBA'} <i>·</i> {result.type==='tv'?'Series':'Movie'}</span></div>
+                <button className="wh3-watch-now" onClick={() => onPlayExternal(result)}><Play size={14} fill="currentColor"/> <span>Watch</span></button>
               </article>;
             })}
           </div>
