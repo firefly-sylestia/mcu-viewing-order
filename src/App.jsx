@@ -1508,7 +1508,7 @@ export default function App() {
       {warningToast && <div className="app-warning-toast" role="status"><ShieldAlert size={16} /><span>{warningToast}</span><button onClick={() => setWarningToast('')} aria-label="Dismiss warning"><X size={14} /></button></div>}
       {liquidGlassNavOn ? (
         <LiquidGlass
-          className="liquid-nav-glass"
+          className={"liquid-nav-glass" + (liquidGlassNavConfig.mode === 'clear' ? ' liquid-nav-glass-clear' : '')}
           displacementScale={liquidGlassNavConfig.displacementScale}
           blurAmount={liquidGlassNavConfig.blurAmount}
           saturation={liquidGlassNavConfig.saturation}
@@ -1516,7 +1516,7 @@ export default function App() {
           elasticity={liquidGlassNavConfig.elasticity}
           cornerRadius={999}
           padding="0"
-          mode={liquidGlassNavConfig.mode}
+          mode={liquidGlassNavConfig.mode === 'clear' ? 'standard' : liquidGlassNavConfig.mode}
           overLight={document.documentElement.getAttribute('data-theme') !== 'dark'}
           style={{ position: 'fixed', top: 'auto', bottom: 'calc(env(safe-area-inset-bottom, 0px) + 14px)', left: '50%', zIndex: 1000 }}
         >

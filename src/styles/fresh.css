@@ -10217,10 +10217,21 @@
    The standard .bottom-nav remains untouched when the toggle is off. */
 :root .movie-site .liquid-nav-glass {
   width: max-content !important;
+  min-width: 340px !important;
   max-width: calc(100vw - 20px) !important;
   pointer-events: auto !important;
   isolation: isolate;
 }
+:root .movie-site .liquid-nav-glass > .glass { min-width:340px !important; border-radius:999px !important; }
+:root .movie-site .liquid-nav-glass .bottom-nav {
+  min-width:340px !important; justify-content:space-around !important;
+  gap:7px !important; padding:8px !important;
+}
+:root .movie-site .liquid-nav-glass .bottom-nav button {
+  flex:1 1 0 !important; min-width:62px !important; min-height:58px !important;
+  padding:9px 15px !important; gap:4px !important; font-size:10px !important;
+}
+:root .movie-site .liquid-nav-glass .bottom-nav button svg { width:29px !important; height:29px !important; }
 :root .movie-site .liquid-nav-glass > .glass {
   gap: 0 !important;
   padding: 0 !important;
@@ -10266,8 +10277,32 @@
   border-color: rgba(255,255,255,.82) !important;
 }
 @media (max-width: 560px) {
-  :root .movie-site .liquid-nav-glass { max-width: calc(100vw - 16px) !important; }
-  :root .movie-site .liquid-nav-glass .bottom-nav { max-width: calc(100vw - 16px) !important; }
+  :root .movie-site .liquid-nav-glass,
+  :root .movie-site .liquid-nav-glass > .glass,
+  :root .movie-site .liquid-nav-glass .bottom-nav {
+    min-width:0 !important; width:calc(100vw - 24px) !important; max-width:calc(100vw - 24px) !important;
+  }
+  :root .movie-site .liquid-nav-glass .bottom-nav { gap:3px !important; padding:7px !important; }
+  :root .movie-site .liquid-nav-glass .bottom-nav button { min-width:0 !important; min-height:60px !important; padding:9px 5px !important; flex:1 1 0 !important; }
+  :root .movie-site .liquid-nav-glass .bottom-nav button svg { width:29px !important; height:29px !important; }
+  .liquid-glass-mode-picker button { font-size:10px; padding-inline:2px; }
+}
+
+:root .movie-site .liquid-nav-glass-clear > .glass {
+  background:rgba(255,255,255,.035) !important;
+  box-shadow:0 16px 42px -26px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.62) !important;
+}
+:root .movie-site .liquid-nav-glass-clear .bottom-nav .nav-blob {
+  background:linear-gradient(145deg,rgba(255,255,255,.22),rgba(255,255,255,.055) 65%,rgba(255,255,255,.15)) !important;
+  border-color:rgba(255,255,255,.52) !important;
+}
+:root[data-theme="light"] .movie-site .liquid-nav-glass-clear > .glass {
+  background:rgba(255,255,255,.025) !important;
+  box-shadow:0 16px 42px -26px rgba(35,45,65,.22),inset 0 1px 0 rgba(255,255,255,.92) !important;
+}
+:root[data-theme="dark"] .movie-site .liquid-nav-glass-clear > .glass {
+  background:rgba(12,16,24,.12) !important;
+  box-shadow:0 16px 42px -26px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.34) !important;
 }
 
 /* Liquid Glass customisation dialog */
@@ -10308,7 +10343,7 @@
 .liquid-glass-preview-shine { position:absolute; inset:-60% -20%; transform:rotate(-14deg); background:linear-gradient(90deg,transparent 38%,rgba(255,255,255,.5) 49%,transparent 58%); }
 .liquid-glass-preview-icons { position:relative; color:var(--fx-text); font-size:25px; letter-spacing:3px; }
 .liquid-glass-preview small { position:relative; margin-top:4px; color:var(--fx-muted); font-size:10px; font-weight:650; }
-.liquid-glass-mode-picker { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; padding:4px; border-radius:14px; background:var(--fx-surface-3); }
+.liquid-glass-mode-picker { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:5px; padding:4px; border-radius:14px; background:var(--fx-surface-3); }
 .liquid-glass-mode-picker button { padding:9px 5px; border:0; border-radius:11px; color:var(--fx-muted); background:transparent; font-size:11px; font-weight:700; }
 .liquid-glass-mode-picker button.active { color:var(--fx-text); background:var(--fx-surface); box-shadow:0 2px 8px rgba(0,0,0,.10); }
 .liquid-glass-controls { display:grid; gap:17px; margin:20px 1px 18px; }

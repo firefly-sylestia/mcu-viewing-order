@@ -382,7 +382,7 @@ function SettingsPanel({ installApp, installAvailable, appInstalled, query = '',
               </header>
               <div className="liquid-glass-preview"><span className="liquid-glass-preview-shine" /><span className="liquid-glass-preview-icons">⌂　▤　▥　◉</span><small>{liquidGlassNavOn ? 'Live effect enabled' : 'Preview · enable to apply'}</small></div>
               <div className="liquid-glass-mode-picker" role="group" aria-label="Refraction style">
-                {['standard','polar','prominent'].map(mode => <button type="button" key={mode} className={liquidGlassNavConfig.mode === mode ? 'active' : ''} onClick={() => setLiquidGlassNavConfig(current => ({ ...current, mode }))}>{mode === 'standard' ? 'Classic' : mode === 'polar' ? 'Prismatic' : 'Sculpted'}</button>)}
+                {[{id:'clear',label:'Clear'},{id:'standard',label:'Classic'},{id:'polar',label:'Prismatic'},{id:'prominent',label:'Sculpted'}].map(option => <button type="button" key={option.id} className={liquidGlassNavConfig.mode === option.id ? 'active' : ''} onClick={() => setLiquidGlassNavConfig(current => option.id === 'clear' ? { ...current, mode:'clear', displacementScale:38, blurAmount:0.06, saturation:205, aberrationIntensity:0.8, elasticity:0.12 } : { ...current, mode:option.id })}>{option.label}</button>)}
               </div>
               <div className="liquid-glass-controls">
                 <label><span><b>Refraction</b><output>{liquidGlassNavConfig.displacementScale}</output></span><input type="range" min="20" max="100" step="1" value={liquidGlassNavConfig.displacementScale} onChange={event => setLiquidGlassNavConfig(current => ({ ...current, displacementScale: Number(event.target.value) }))} /></label>
