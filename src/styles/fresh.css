@@ -10312,3 +10312,30 @@
 @media (max-width: 600px) {
   [data-ui="fresh"] .profile-analytics .stats-profile-avatar { width: 64px; height: 64px; flex-basis: 64px; }
 }
+
+/* Stats identity is displayed in the page header, separate from the stats card. */
+:root .movie-site.page-analytics .site-header .header-top {
+  display: flex !important; min-height: 72px !important;
+  align-items: center !important; justify-content: flex-start !important;
+}
+:root .movie-site.page-analytics .site-header .stats-page-identity {
+  display: flex; align-items: center; gap: 15px; min-width: 0;
+}
+:root .movie-site.page-analytics .site-header .stats-page-avatar {
+  width: 68px; height: 68px; flex: 0 0 68px; display: grid; place-items: center;
+  overflow: hidden; border-radius: 50%; color: var(--fx-text);
+  background: color-mix(in srgb, var(--fx-surface-3) 76%, transparent);
+  border: 1px solid color-mix(in srgb, var(--fx-text) 13%, transparent);
+  box-shadow: 0 8px 24px rgba(0,0,0,.13);
+}
+:root .movie-site.page-analytics .site-header .stats-page-avatar img {
+  width: 100%; height: 100%; object-fit: cover;
+}
+:root .movie-site.page-analytics .site-header .stats-page-identity strong {
+  min-width: 0; overflow: hidden; color: var(--fx-text); font-size: 1.15rem;
+  font-weight: 750; letter-spacing: -.025em; text-overflow: ellipsis; white-space: nowrap;
+}
+@media (max-width: 620px) {
+  :root .movie-site.page-analytics .site-header .header-top { min-height: 68px !important; }
+  :root .movie-site.page-analytics .site-header .stats-page-avatar { width: 64px; height: 64px; flex-basis: 64px; }
+}

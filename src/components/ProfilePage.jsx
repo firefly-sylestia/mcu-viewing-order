@@ -558,17 +558,9 @@ function SettingsPanel({ installApp, installAvailable, appInstalled, query = '',
   );
 }
 
-function AnalyticsPanel({ stats, activeItems, inProgressItems, profileName = '', user }) {
-  const [savedAvatar] = useState(() => { try { return localStorage.getItem('incursion-profile-avatar') || ''; } catch { return ''; } });
-  const avatar = savedAvatar || user?.photoURL || '';
-  const name = (profileName || user?.displayName || user?.email?.split('@')[0] || 'Your profile').trim();
+function AnalyticsPanel({ stats, activeItems, inProgressItems }) {
   return (
-    <section className={`analytics-panel profile-analytics ${avatar ? 'has-profile-art' : ''}`}>
-      {avatar && <div className="profile-stats-backdrop" aria-hidden="true"><img src={avatar} alt="" referrerPolicy="no-referrer" /></div>}
-      <div className="stats-profile-row">
-        <span className="stats-profile-avatar">{avatar ? <img src={avatar} alt="" referrerPolicy="no-referrer" /> : <UserRound size={34} strokeWidth={1.8} />}</span>
-        <strong>{name}</strong>
-      </div>
+    <section className="analytics-panel profile-analytics">
       <div className="analytics-header">
         <p className="eyebrow">Your Progress</p>
         <h2>{stats.percent}% complete</h2>
