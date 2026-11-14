@@ -10704,3 +10704,26 @@
     padding: 5px 3px !important;
   }
 }
+
+
+/* Slightly narrower Liquid Glass navigation, without compressing its tabs. */
+:root .movie-site .liquid-nav-glass,
+:root .movie-site .liquid-nav-glass > .glass {
+  width: min(400px, calc(100vw - 48px)) !important;
+  min-width: 0 !important;
+  max-width: calc(100vw - 48px) !important;
+}
+:root .movie-site .liquid-nav-glass .bottom-nav {
+  width: min(400px, calc(100vw - 48px)) !important;
+  min-width: 0 !important;
+  max-width: calc(100vw - 48px) !important;
+}
+@media (max-width: 560px) {
+  :root .movie-site .liquid-nav-glass,
+  :root .movie-site .liquid-nav-glass > .glass,
+  :root .movie-site .liquid-nav-glass .bottom-nav {
+    width: min(360px, calc(100vw - 48px)) !important;
+    min-width: 0 !important;
+    max-width: calc(100vw - 48px) !important;
+  }
+}
