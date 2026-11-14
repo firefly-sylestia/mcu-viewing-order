@@ -11060,9 +11060,9 @@
 @media(max-width:520px) {
  :root .watch-v2-player { overflow:hidden; }
  :root .watch-v2-player iframe {
-   width:166.67%;
-   height:166.67%;
-   transform:scale(.6);
+   width:200%;
+   height:200%;
+   transform:scale(.5);
    transform-origin:top left;
  }
 }
@@ -11225,41 +11225,6 @@
   border-color: rgba(255,255,255,.09) !important;
 }
 
-/* Optional atmospheric wordmark: an oversized, blurred universe mark fades away
-   into the real page backdrop. Disabled by default via data-incursion-atmosphere. */
-:root[data-incursion-atmosphere="off"] .movie-site.page-home .site-header .header-universe-backdrop,
-:root[data-incursion-atmosphere="off"] .movie-site.page-list .site-header .header-universe-backdrop {
-  display: none !important;
-}
-:root[data-incursion-atmosphere="on"] .movie-site.page-home .site-header,
-:root[data-incursion-atmosphere="on"] .movie-site.page-list .site-header {
-  overflow: hidden !important;
-}
-:root[data-incursion-atmosphere="on"] .movie-site.page-home .site-header .header-universe-backdrop,
-:root[data-incursion-atmosphere="on"] .movie-site.page-list .site-header .header-universe-backdrop {
-  display: block !important;
-  inset: -24px -4% 8px !important;
-  opacity: .20 !important;
-  mask-image: linear-gradient(90deg,transparent 0%,#000 24%,#000 72%,transparent 100%),linear-gradient(180deg,#000 0%,rgba(0,0,0,.72) 45%,transparent 100%);
-  -webkit-mask-image: linear-gradient(90deg,transparent 0%,#000 24%,#000 72%,transparent 100%),linear-gradient(180deg,#000 0%,rgba(0,0,0,.72) 45%,transparent 100%);
-  mask-composite: intersect;
-  -webkit-mask-composite: source-in;
-}
-:root[data-incursion-atmosphere="on"] .movie-site.page-home .site-header .header-universe-backdrop > span,
-:root[data-incursion-atmosphere="on"] .movie-site.page-list .site-header .header-universe-backdrop > span {
-  right: 2% !important;
-  top: 43% !important;
-  transform: translateY(-50%) scale(1.65) !important;
-  filter: blur(17px) saturate(.82) !important;
-  opacity: .72;
-}
-:root[data-incursion-atmosphere="on"] .movie-site.page-home .site-header .brand b,
-:root[data-incursion-atmosphere="on"] .movie-site.page-list .site-header .brand b {
-  background: linear-gradient(105deg,var(--fx-text) 8%,color-mix(in srgb,var(--brand-accent) 58%,var(--fx-text)) 58%,var(--fx-text) 96%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent !important;
-}
 @media(max-width:760px) {
   :root .movie-site.page-home .site-header,
   :root .movie-site.page-list .site-header { padding: 8px 10px 12px !important; margin-bottom: 16px !important; }
