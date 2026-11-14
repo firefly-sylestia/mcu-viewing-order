@@ -11060,9 +11060,9 @@
 @media(max-width:520px) {
  :root .watch-v2-player { overflow:hidden; }
  :root .watch-v2-player iframe {
-   width:111.12%;
-   height:111.12%;
-   transform:scale(.9);
+   width:166.67%;
+   height:166.67%;
+   transform:scale(.6);
    transform-origin:top left;
  }
 }
