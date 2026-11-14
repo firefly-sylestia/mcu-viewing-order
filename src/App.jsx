@@ -225,13 +225,16 @@ export default function App() {
     try { return localStorage.getItem('quiet-browsing') === '1'; } catch { return false; }
   });
   const [borderlessHeaderOn, setBorderlessHeaderOn] = useState(() => {
-    try { return localStorage.getItem('borderless-header-style') === '1'; } catch { return false; }
+    try {
+      const saved = localStorage.getItem('borderless-header-style-v2');
+      return saved == null ? true : saved === '1';
+    } catch { return true; }
   });
   useEffect(() => {
     const root = document.documentElement;
     if (borderlessHeaderOn) root.setAttribute('data-header-surface', 'borderless');
     else root.removeAttribute('data-header-surface');
-    try { localStorage.setItem('borderless-header-style', borderlessHeaderOn ? '1' : '0'); } catch {}
+    try { localStorage.setItem('borderless-header-style-v2', borderlessHeaderOn ? '1' : '0'); } catch {}
   }, [borderlessHeaderOn]);
   const [headerDesign, setHeaderDesign] = useState(() => {
     try { return localStorage.getItem('incursion-header-design') || 'cinematic'; } catch { return 'cinematic'; }

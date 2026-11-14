@@ -11233,3 +11233,26 @@
   outline: 0 !important;
   box-shadow: none !important;
 }
+
+
+/* Extend the optional borderless treatment to the standalone profile identity
+   header. The portrait bloom is artwork, so it is removed with the card shell. */
+:root[data-header-surface="borderless"] .movie-site.page-profile .profile-header.profile-header-compact {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+}
+:root[data-header-surface="borderless"] .movie-site.page-profile .profile-header.profile-header-compact::before,
+:root[data-header-surface="borderless"] .movie-site.page-profile .profile-header.profile-header-compact::after,
+:root[data-header-surface="borderless"] .movie-site.page-profile .profile-avatar-backdrop {
+  display: none !important;
+  content: none !important;
+  background: none !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
