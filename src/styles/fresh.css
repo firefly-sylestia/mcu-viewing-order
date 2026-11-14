@@ -11128,3 +11128,24 @@
   animation: none !important;
   transform: none !important;
 }
+
+
+/* Keep the detail sheet's artwork from triggering oversized GPU blur tiles
+   on mobile Chrome; the softened colour wash is retained without live filters. */
+@media (max-width: 700px) {
+  :root .movie-site .detail-overlay {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    contain: paint;
+  }
+  :root .movie-site .detail-backdrop,
+  :root .movie-site .detail-media::before {
+    -webkit-filter: none !important;
+    filter: none !important;
+    transform: none !important;
+  }
+  :root .movie-site .detail-bg {
+    filter: none !important;
+    -webkit-filter: none !important;
+  }
+}

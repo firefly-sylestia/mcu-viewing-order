@@ -647,7 +647,7 @@ export default function App() {
   }, [query, section]);
 
   useEffect(() => {
-    const onHashChange = () => {
+    const syncLocation = () => {
       const { section: s, slug, searchQuery: sq } = parseHash();
       if (s) setSection(s);
       if (s === 'list') setQuery(sq || '');
@@ -657,11 +657,17 @@ export default function App() {
       }
       if (s === 'detail' && slug && allItems.length) {
         const found = allItems.find(i => slugifyPosterName(i.title) === slug);
-        if (found) setSelected(found);
+        setSelected(found || null);
+      } else {
+        setSelected(null);
       }
     };
-    window.addEventListener('hashchange', onHashChange);
-    return () => window.removeEventListener('hashchange', onHashChange);
+    window.addEventListener('hashchange', syncLocation);
+    window.addEventListener('popstate', syncLocation);
+    return () => {
+      window.removeEventListener('hashchange', syncLocation);
+      window.removeEventListener('popstate', syncLocation);
+    };
   }, []);
 
   useEffect(() => {
@@ -1251,8 +1257,12 @@ export default function App() {
   }, [updateAction]);
   const selectItem = useCallback((item) => {
     setSelected(item);
-    if (item) window.history.replaceState(null, '', `#detail/${slugifyPosterName(item.title)}`);
-    else window.history.replaceState(null, '', `#${section}`);
+    if (item) {
+      const nextHash = `#detail/${slugifyPosterName(item.title)}`;
+      if (window.location.hash !== nextHash) window.history.pushState({ detail: true }, '', nextHash);
+    } else {
+      window.history.replaceState(null, '', `#${section}`);
+    }
   }, [section]);
   const selectedItem = selected ? activeItems.find(item => item.id === selected.id) || selected : null;
   // Freeze the page behind the detail dialog while it is open (declared here
