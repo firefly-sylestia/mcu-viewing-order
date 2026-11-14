@@ -2076,7 +2076,7 @@ function StatusSelect({ item, setStatus, compact = false }) {
         return <button key={status} className={`status-option ${status} ${item.userStatus === status ? 'active' : ''}`} role="option" aria-selected={item.userStatus === status} onClick={() => { if (status === 'watched') hapticSuccess(); else hapticSelect(); setStatus(item, status); setOpen(false); }}>
           <Icon size={18} className="status-option-icon" />
           <span className="status-option-label">{STATUS_LABELS[status]}</span>
-          {item.userStatus === status && <Check size={15} className="status-option-check" />}
+          
           <small>{STATUS_META[status].detail}</small>
         </button>;
       })}
@@ -2597,8 +2597,7 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, on
                )}
              </section>
            )}
-           <div className="detail-progress-actions"><StatusSelect item={item} setStatus={setStatus} /><button className={`detail-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={19} fill={item.bookmarked ? 'currentColor' : 'none'} /></button>
-</div><div className="detail-download-row detail-utility-row"><button className={`detail-snap${snapError ? ' snap-failed' : ''}`} onClick={snapCard} disabled={snapping} aria-label={`Snapshot ${item.title} as shareable card`}><Camera size={17} /><span>{snapping ? '…' : snapError || 'Snap'}</span></button></div>
+           <div className="detail-progress-actions"><StatusSelect item={item} setStatus={setStatus} /><button className={`detail-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={19} fill={item.bookmarked ? 'currentColor' : 'none'} /></button><button className={`detail-snap${snapError ? ' snap-failed' : ''}`} onClick={snapCard} disabled={snapping} aria-label={`Snapshot ${item.title} as shareable card`}><Camera size={17} /><span>{snapping ? '…' : snapError || 'Snap'}</span></button>
           {itemRoadmap && (
             <RoadmapBoard
               segments={itemRoadmap.segments}

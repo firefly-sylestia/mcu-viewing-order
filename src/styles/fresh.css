@@ -10901,3 +10901,13 @@
   :root .watch-v2-section-head h2 { font-size:17px; }
   :root .watch-v2 .rm-board { margin-top:20px; padding:14px; }
 }
+
+
+/* Detail utility actions share one aligned row; status selection stays subtle. */
+:root .detail-progress-actions { display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
+:root .detail-progress-actions .detail-snap { display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:42px; padding:0 14px; border:1px solid var(--line,rgba(128,138,155,.18)); border-radius:13px; background:var(--surface,rgba(128,138,155,.07)); color:var(--text,inherit); font-size:12px; font-weight:700; }
+:root .detail-progress-actions .detail-snap:disabled { opacity:.55; }
+:root .detail-utility-row { display:none !important; }
+:root .status-dropdown-portal .status-option-check { display:none !important; }
+:root .status-dropdown-portal .status-option.active { background:rgba(128,145,175,.10) !important; border-color:rgba(128,145,175,.20) !important; box-shadow:none !important; }
+:root[data-theme="light"] .status-dropdown-portal .status-option.active { background:rgba(70,100,150,.075) !important; border-color:rgba(70,100,150,.18) !important; box-shadow:none !important; }
