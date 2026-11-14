@@ -11285,3 +11285,21 @@
   :root .movie-site.page-list .site-header .header-tools > * { flex: 1 1 0; min-width: 0; }
   :root .movie-site.page-home .site-header .header-tools button { justify-content: center; padding-inline: 9px; }
 }
+
+
+/* Stronger contrast for the Watch page intro and the universe timeline subtitle. */
+:root .watch-hub-v3 .wh3-top p {
+  color: #202631 !important;
+  font-weight: 600 !important;
+}
+:root[data-theme="dark"] .watch-hub-v3 .wh3-top p {
+  color: #e1e5ec !important;
+}
+:root .movie-site .site-header .brand small {
+  color: #202631 !important;
+  opacity: 1 !important;
+  font-weight: 750 !important;
+}
+:root[data-theme="dark"] .movie-site .site-header .brand small {
+  color: #e0e5ed !important;
+}
