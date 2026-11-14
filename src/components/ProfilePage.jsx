@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Play, Bookmark, RotateCcw, Clock, Check, X, Pencil, Trophy, LogIn, LogOut, Cloud, RefreshCw, Sun, Moon, Settings, Upload, Download, Clapperboard, Sparkles, LayoutGrid, Vibrate, ChevronDown, Maximize2, } from 'lucide-react';
+import { Play, Bookmark, RotateCcw, Clock, Check, X, Pencil, Trophy, LogIn, LogOut, Cloud, RefreshCw, Sun, Moon, Settings, Upload, Download, Clapperboard, Sparkles, LayoutGrid, Vibrate, ChevronDown, Maximize2, UserRound, } from 'lucide-react';
 import { getHapticsEnabled, setHapticsEnabled, hapticsSupported, hapticTap, hapticSuccess } from '../utils/haptics';
 
 const UI_VARIANT_KEY = 'ui-variant';
@@ -118,7 +118,7 @@ function ProfilePage({ pageHeader, setActiveTab, installApp, installAvailable, a
       <div className="profile-tab-content">
         {activeTab === 'insights' && (
           <div id="insights-panel" role="tabpanel" className="profile-panel insights-panel">
-            <AnalyticsPanel stats={stats} activeItems={activeItems} inProgressItems={inProgressItems} />
+            <AnalyticsPanel stats={stats} activeItems={activeItems} inProgressItems={inProgressItems} profileName={profileName} user={user} />
             {inProgressItems.some(i => !query || i.title.toLowerCase().includes(query.toLowerCase())) && <MovieRail title="In progress" items={inProgressItems.filter(i => !query || i.title.toLowerCase().includes(query.toLowerCase()))} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />}
             {watchedItems.some(i => !query || i.title.toLowerCase().includes(query.toLowerCase())) && <MovieRail title="Watched" items={watchedItems.filter(i => !query || i.title.toLowerCase().includes(query.toLowerCase()))} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />}
             {droppedItems.some(i => !query || i.title.toLowerCase().includes(query.toLowerCase())) && <MovieRail title="Dropped" items={droppedItems.filter(i => !query || i.title.toLowerCase().includes(query.toLowerCase()))} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />}
@@ -558,9 +558,17 @@ function SettingsPanel({ installApp, installAvailable, appInstalled, query = '',
   );
 }
 
-function AnalyticsPanel({ stats, activeItems, inProgressItems }) {
+function AnalyticsPanel({ stats, activeItems, inProgressItems, profileName = '', user }) {
+  const [savedAvatar] = useState(() => { try { return localStorage.getItem('incursion-profile-avatar') || ''; } catch { return ''; } });
+  const avatar = savedAvatar || user?.photoURL || '';
+  const name = (profileName || user?.displayName || user?.email?.split('@')[0] || 'Your profile').trim();
   return (
-    <section className="analytics-panel profile-analytics">
+    <section className={`analytics-panel profile-analytics ${avatar ? 'has-profile-art' : ''}`}>
+      {avatar && <div className="profile-stats-backdrop" aria-hidden="true"><img src={avatar} alt="" referrerPolicy="no-referrer" /></div>}
+      <div className="stats-profile-row">
+        <span className="stats-profile-avatar">{avatar ? <img src={avatar} alt="" referrerPolicy="no-referrer" /> : <UserRound size={34} strokeWidth={1.8} />}</span>
+        <strong>{name}</strong>
+      </div>
       <div className="analytics-header">
         <p className="eyebrow">Your Progress</p>
         <h2>{stats.percent}% complete</h2>
