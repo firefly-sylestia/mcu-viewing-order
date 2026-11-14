@@ -11256,3 +11256,14 @@
   outline: 0 !important;
   box-shadow: none !important;
 }
+
+
+/* Darken the Watch page Up Next spotlight in dark theme. */
+:root[data-theme="dark"] .watch-hub-v3 .wh3-resume {
+  background: linear-gradient(110deg, rgba(105, 31, 48, .24), rgba(24, 29, 39, .96) 72%) !important;
+  border-color: rgba(169, 183, 207, .14) !important;
+  color: #f0f2f6 !important;
+}
+:root[data-theme="dark"] .watch-hub-v3 .wh3-resume-copy h2 {
+  color: #f0f2f6 !important;
+}
