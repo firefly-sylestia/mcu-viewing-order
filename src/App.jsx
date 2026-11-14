@@ -2034,10 +2034,11 @@ function StatusSelect({ item, setStatus, compact = false }) {
     if (!trigger) return;
     const rect = trigger.getBoundingClientRect();
     const width = Math.min(280, window.innerWidth - 24);
-    const height = 152;
+    const height = 164;
     const left = Math.max(12, Math.min(rect.left + rect.width / 2 - width / 2, window.innerWidth - width - 12));
     const below = window.innerHeight - rect.bottom;
-    const top = below >= height + 12 || below >= rect.top ? rect.bottom + 8 : Math.max(12, rect.top - height - 8);
+    const preferredTop = below >= height + 12 ? rect.bottom + 8 : rect.top - height - 8;
+    const top = Math.max(12, Math.min(preferredTop, window.innerHeight - height - 12));
     setMenuRect({ left, top, width });
   }, []);
 
@@ -2069,7 +2070,7 @@ function StatusSelect({ item, setStatus, compact = false }) {
   }, [open, placeMenu]);
 
   const menu = open && menuRect ? createPortal(
-    <div ref={menuRef} className="status-dropdown status-dropdown-portal" style={{ left: menuRect.left, top: menuRect.top, width: menuRect.width }} role="listbox" aria-label={`Set status for ${item.title}`}>
+    <div ref={menuRef} className="status-dropdown status-dropdown-portal" style={{ left: menuRect.left, top: menuRect.top, width: menuRect.width, zIndex: 2147483000 }} role="listbox" aria-label={`Set status for ${item.title}`}>
       {STATUS.map(status => {
         const Icon = STATUS_META[status].icon;
         return <button key={status} className={`status-option ${status} ${item.userStatus === status ? 'active' : ''}`} role="option" aria-selected={item.userStatus === status} onClick={() => { if (status === 'watched') hapticSuccess(); else hapticSelect(); setStatus(item, status); setOpen(false); }}>
@@ -2213,7 +2214,6 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, on
   const guidance = getTitleGuidance(item);
   const [inlineTrailer, setInlineTrailer] = useState(null);
   const [isTrailerExpanded, setIsTrailerExpanded] = useState(false);
-  const [searchSheet, setSearchSheet] = useState(false);
   const grabStartRef = useRef(null);
   React.useEffect(() => {
     const finish = (event) => {
@@ -2251,32 +2251,6 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, on
   const closeTrailer = () => {
     setIsTrailerExpanded(false);
     setTimeout(() => setInlineTrailer(null), 400);
-  };
-
-  const [downloadEpisodes, setDownloadEpisodes] = useState([]);
-  const [downloadEpisode, setDownloadEpisode] = useState(item.epStart || 1);
-
-  useEffect(() => {
-    if (item.type !== 'series' || !item.tmdbId) return;
-    const season = item.season || 1;
-    fetch(apiUrl(`/api/tmdb/episodes?tmdbId=${item.tmdbId}&season=${season}`), { cache: 'force-cache' })
-      .then(response => response.ok ? response.json() : null)
-      .then(data => {
-        const available = (data?.episodes || []).filter(episode => !item.epStart || (episode.episode >= item.epStart && episode.episode <= (item.epEnd || Infinity)));
-        setDownloadEpisodes(available);
-        if (available.length) setDownloadEpisode(available[0].episode);
-      })
-      .catch(() => setDownloadEpisodes([]));
-  }, [item.tmdbId, item.type, item.season, item.epStart, item.epEnd]);
-
-  const handleDownloadClick = () => {
-    const url = buildDownloadUrl({
-      mediaType: item.type === 'series' ? 'tv' : 'movie',
-      tmdbId: item.tmdbId,
-      season: item.season || 1,
-      episode: item.type === 'series' ? downloadEpisode : undefined,
-    });
-    if (url) window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   const [snapping, setSnapping] = useState(false);
@@ -2580,7 +2554,7 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, on
           <p className="detail-description">{item.desc || `Follow ${item.title} in the complete ${item.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} viewing order.`}</p>
           <div className="detail-facts"><div><Calendar size={18} /><span>Release year</span><strong>{item.year}</strong></div><div><Timer size={18} /><span>Runtime</span><strong>{runtimeLabel(item.runtime, item.type)}</strong></div><div><Sparkles size={18} /><span>Format</span><strong>{item.type}</strong></div>{item.userStatus === 'watching' && item.watchedDuration > 30000 && <div><Clock size={18} /><span>Watched</span><strong>{watchTimeLabel(item)}</strong></div>}</div>
           <div className="detail-progress-actions"><StatusSelect item={item} setStatus={setStatus} /><button className={`detail-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={19} fill={item.bookmarked ? 'currentColor' : 'none'} /></button>
-</div><div className="detail-download-row">{item.type === 'series' && <EpisodeDropdown episodes={downloadEpisodes} selected={downloadEpisode} onSelect={setDownloadEpisode} season={item.season || 1} />}<button className="detail-download" onClick={handleDownloadClick} disabled={!item.tmdbId || (item.type === 'series' && !downloadEpisodes.length)} aria-label={`Download ${item.title}${item.type === 'series' ? ` episode ${downloadEpisode}` : ''}`}><Download size={18} /><span>Download</span></button><button className={`detail-snap${snapError ? ' snap-failed' : ''}`} onClick={snapCard} disabled={snapping} aria-label={`Snapshot ${item.title} as shareable card`}><Camera size={17} /><span>{snapping ? '…' : snapError || 'Snap'}</span></button></div>
+</div><div className="detail-download-row detail-utility-row"><button className={`detail-snap${snapError ? ' snap-failed' : ''}`} onClick={snapCard} disabled={snapping} aria-label={`Snapshot ${item.title} as shareable card`}><Camera size={17} /><span>{snapping ? '…' : snapError || 'Snap'}</span></button></div>
           {itemRoadmap && (
             <RoadmapBoard
               segments={itemRoadmap.segments}
@@ -2597,14 +2571,14 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, on
       {searchSheet && <SearchLinksDialog
         item={item}
         onClose={() => setSearchSheet(false)}
-        onMarkWatching={() => { setSearchSheet(false); onStartWatch(item, item.tmdbId, item.type === 'series' ? 'tv' : 'movie'); }}
+        onWatchNow={() => { setSearchSheet(false); onStartWatch(item, item.tmdbId, item.type === 'series' ? 'tv' : 'movie'); }}
       />}
     </article>
   </div>;
 }
 
 /* Watch Now hands off to the web instead of pretending to stream in place. */
-function SearchLinksDialog({ item, onClose, onMarkWatching }) {
+function SearchLinksDialog({ item, onClose, onWatchNow }) {
   const query = encodeURIComponent(`${item.title} ${item.year || ''}`.trim());
   const options = [
     { key: 'youtube', label: 'YouTube', note: 'Official trailers and clips', href: `https://www.youtube.com/results?search_query=${encodeURIComponent(`${item.title} official trailer`)}` },
@@ -2624,7 +2598,7 @@ function SearchLinksDialog({ item, onClose, onMarkWatching }) {
         </a>)}
       </div>
       <div className="search-sheet-actions">
-        <button className="search-primary" onClick={onMarkWatching}>Mark as watching</button>
+        <button className="search-primary" onClick={onWatchNow}><Play size={16} /> Watch now</button>
         <button className="search-secondary" onClick={onClose}>Close</button>
       </div>
     </div>

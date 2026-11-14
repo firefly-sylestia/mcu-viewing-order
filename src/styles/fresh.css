@@ -10798,3 +10798,12 @@
 :root[data-theme="light"] .status-dropdown-portal .status-option.active { background:rgba(70,100,150,.12) !important; border-color:rgba(70,100,150,.32) !important; }
 @keyframes status-pop-in { from { opacity:0; transform:translateY(5px) scale(.98); } to { opacity:1; transform:translateY(0) scale(1); } }
 @media (prefers-reduced-motion: reduce) { :root .status-dropdown.status-dropdown-portal { animation:none; } }
+
+
+/* Keep the detail status chooser above every detail-sheet action and control. */
+:root .status-dropdown.status-dropdown-portal {
+  z-index: 2147483000 !important;
+  pointer-events: auto !important;
+}
+:root .detail-progress-actions { position: relative; z-index: 2; }
+:root .detail-utility-row { display: flex; justify-content: flex-start; }
