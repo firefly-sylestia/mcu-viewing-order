@@ -46,7 +46,7 @@ const xmenPalette = ['#6a6a7a', '#828294', '#9a9aa8', '#b0b0ba', '#c4c4cc', '#d8
 const sonyPalette = ['#16305c', '#1b3f7a', '#1f4f96', '#245fb4', '#2c72cf', '#3b8ae6'];
 
 const NAV_ORDER = ['home', 'list', 'analytics', 'watch', 'profile'];
-// The watch page is parked for now: its tab and entry points are hidden, the code stays intact.
+// The dedicated watch experience is enabled.
 const WATCH_ENABLED = true;
 const NAV_TAB_META = {
   home: { label: 'Home', Icon: House },
@@ -3140,6 +3140,11 @@ const saveServerPref = (tmdbId, server) => {
         elapsedRef.current = ms; setElapsed(ms);
       }
       if (data.type === 'cinesrc:nextepisode' && data.internalNavigation === true) {
+        // The player has advanced without replacing its iframe. Record the
+        // episode that just finished, then mirror the new episode in the UI.
+        const completed = selectedEpisode;
+        const next = Array.from(new Set([...(watchedEpisodes || []), completed])).sort((x,y) => x-y);
+        updateActionRef.current(itemRef.current, { watchedEpisodes: next });
         const episode = Number(data.episode);
         if (Number.isInteger(episode) && episode > 0) setSelectedEpisode(episode);
       }
@@ -3154,7 +3159,7 @@ const saveServerPref = (tmdbId, server) => {
     };
     window.addEventListener('message', onPlayerMessage);
     return () => window.removeEventListener('message', onPlayerMessage);
-  }, [isSeries, selectedEpisode]);
+  }, [isSeries, selectedEpisode, watchedEpisodes]);
 
   useEffect(() => {
     if (isSeries && allEpisodesWatched && currentItem.userStatus === 'watching') {
