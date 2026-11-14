@@ -2215,7 +2215,31 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, on
   const [inlineTrailer, setInlineTrailer] = useState(null);
   const [isTrailerExpanded, setIsTrailerExpanded] = useState(false);
   const [searchSheet, setSearchSheet] = useState(false);
+  const [detailEpisodes, setDetailEpisodes] = useState([]);
+  const [episodesLoading, setEpisodesLoading] = useState(false);
   const grabStartRef = useRef(null);
+  useEffect(() => {
+    if (item.type !== 'series' || !item.tmdbId) {
+      setDetailEpisodes([]);
+      return undefined;
+    }
+    let cancelled = false;
+    setEpisodesLoading(true);
+    const season = item.season || 1;
+    fetch(apiUrl(`/api/tmdb/episodes?tmdbId=${item.tmdbId}&season=${season}`), { cache: 'force-cache' })
+      .then(response => response.ok ? response.json() : null)
+      .then(data => {
+        if (cancelled) return;
+        const available = (data?.episodes || []).filter(episode =>
+          (!item.epStart || episode.episode >= item.epStart) &&
+          (!item.epEnd || episode.episode <= item.epEnd)
+        );
+        setDetailEpisodes(available);
+      })
+      .catch(() => { if (!cancelled) setDetailEpisodes([]); })
+      .finally(() => { if (!cancelled) setEpisodesLoading(false); });
+    return () => { cancelled = true; };
+  }, [item.id, item.tmdbId, item.type, item.season, item.epStart, item.epEnd]);
   React.useEffect(() => {
     const finish = (event) => {
       const start = grabStartRef.current;
@@ -2554,7 +2578,26 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, on
           <div className="detail-chips"><RatingChips item={item} />{(item.genres || []).slice(0,3).map(g => <span key={g}>{g}</span>)}</div>
           <p className="detail-description">{item.desc || `Follow ${item.title} in the complete ${item.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} viewing order.`}</p>
           <div className="detail-facts"><div><Calendar size={18} /><span>Release year</span><strong>{item.year}</strong></div><div><Timer size={18} /><span>Runtime</span><strong>{runtimeLabel(item.runtime, item.type)}</strong></div><div><Sparkles size={18} /><span>Format</span><strong>{item.type}</strong></div>{item.userStatus === 'watching' && item.watchedDuration > 30000 && <div><Clock size={18} /><span>Watched</span><strong>{watchTimeLabel(item)}</strong></div>}</div>
-          <div className="detail-progress-actions"><StatusSelect item={item} setStatus={setStatus} /><button className={`detail-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={19} fill={item.bookmarked ? 'currentColor' : 'none'} /></button>
+          {item.type === 'series' && (
+             <section className="detail-episodes" aria-label="Episodes">
+               <div className="detail-episodes-heading">
+                 <div><span className="detail-section-eyebrow">Season {item.season || 1}</span><h3>Episodes</h3></div>
+                 <span>{episodesLoading ? 'Loading episodes…' : detailEpisodes.length ? `${detailEpisodes.length} episodes` : 'Episode list unavailable'}</span>
+               </div>
+               {detailEpisodes.length > 0 && (
+                 <div className="detail-episode-list">
+                   {detailEpisodes.map(episode => (
+                     <div className="detail-episode-item" key={episode.episode}>
+                       <span className="detail-episode-number">{String(episode.episode).padStart(2, '0')}</span>
+                       <span className="detail-episode-name">{episode.title || `Episode ${episode.episode}`}</span>
+                       {episode.runtime ? <span className="detail-episode-runtime">{episode.runtime} min</span> : null}
+                     </div>
+                   ))}
+                 </div>
+               )}
+             </section>
+           )}
+           <div className="detail-progress-actions"><StatusSelect item={item} setStatus={setStatus} /><button className={`detail-bookmark ${item.bookmarked ? 'saved' : ''}`} onClick={() => toggleBookmark(item)} aria-label={item.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={19} fill={item.bookmarked ? 'currentColor' : 'none'} /></button>
 </div><div className="detail-download-row detail-utility-row"><button className={`detail-snap${snapError ? ' snap-failed' : ''}`} onClick={snapCard} disabled={snapping} aria-label={`Snapshot ${item.title} as shareable card`}><Camera size={17} /><span>{snapping ? '…' : snapError || 'Snap'}</span></button></div>
           {itemRoadmap && (
             <RoadmapBoard

@@ -10807,3 +10807,17 @@
 }
 :root .detail-progress-actions { position: relative; z-index: 2; }
 :root .detail-utility-row { display: flex; justify-content: flex-start; }
+
+
+/* Detail-page series episode list: always visible, never a dropdown. */
+.detail-episodes { margin: 18px 0 20px; padding: 16px; border: 1px solid var(--glass-border, rgba(255,255,255,.12)); border-radius: 18px; background: var(--surface-soft, rgba(255,255,255,.045)); }
+.detail-episodes-heading { display:flex; align-items:flex-end; justify-content:space-between; gap:12px; margin-bottom:12px; }
+.detail-episodes-heading h3 { margin:3px 0 0; font-size:17px; font-weight:700; letter-spacing:-.025em; }
+.detail-section-eyebrow { font-size:10px; font-weight:700; letter-spacing:.11em; text-transform:uppercase; opacity:.62; }
+.detail-episodes-heading > span { font-size:11px; opacity:.62; white-space:nowrap; }
+.detail-episode-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; max-height:260px; overflow-y:auto; overscroll-behavior:contain; padding-right:2px; }
+.detail-episode-item { min-width:0; min-height:48px; display:flex; align-items:center; gap:10px; padding:9px 11px; border-radius:12px; background:rgba(127,137,153,.09); border:1px solid rgba(127,137,153,.10); }
+.detail-episode-number { flex:0 0 25px; font-size:12px; font-weight:800; font-variant-numeric:tabular-nums; opacity:.68; }
+.detail-episode-name { min-width:0; font-size:12px; line-height:1.35; font-weight:600; overflow-wrap:anywhere; }
+.detail-episode-runtime { margin-left:auto; flex:0 0 auto; font-size:10px; opacity:.55; }
+@media (max-width:520px) { .detail-episode-list { grid-template-columns:1fr; max-height:300px; } }
