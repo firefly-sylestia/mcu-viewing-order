@@ -221,6 +221,25 @@ export default function App() {
   const [profileTab, setProfileTab] = useState('insights');
   const [statsUniverses, setStatsUniverses] = useState(['marvel', 'sony', 'xmen', 'dc']);
   const [statsUniverseMenuOpen, setStatsUniverseMenuOpen] = useState(false);
+  const [quietBrowsingOn, setQuietBrowsingOn] = useState(() => {
+    try { return localStorage.getItem('quiet-browsing') === '1'; } catch { return false; }
+  });
+  useEffect(() => {
+    if (!quietBrowsingOn) return undefined;
+    const keepNavigationInTab = (event) => {
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const anchor = event.target?.closest?.('a[target="_blank"]');
+      if (!anchor || anchor.hasAttribute('download')) return;
+      let destination;
+      try { destination = new URL(anchor.href, window.location.href); } catch { return; }
+      if (!/^https?:$/.test(destination.protocol) || destination.origin === window.location.origin) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      window.location.assign(destination.href);
+    };
+    document.addEventListener('click', keepNavigationInTab, true);
+    return () => document.removeEventListener('click', keepNavigationInTab, true);
+  }, [quietBrowsingOn]);
   const [incursionAtmosphereOn, setIncursionAtmosphereOn] = useState(() => {
     try { return localStorage.getItem('incursion-atmosphere') === '1'; } catch { return false; }
   });
@@ -1488,7 +1507,7 @@ export default function App() {
 
       {section === 'list' && <ListSection items={activeItems} sortBy={sortBy} sortDirection={sortDirection} sortKey={`${sortBy}-${sortDirection}`} externalResults={externalSearchResults} externalLoading={externalSearchLoading} query="" setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} onPlayExternal={onPlayExternal} onWarning={showWarningToast} />}
       {section === 'analytics' && <><AnalyticsPanel stats={stats} large />{[['Watching','watching'],['Watched','watched'],['Dropped','dropped']].map(([label,status]) => { const items = analyticsItems.filter(item => item.userStatus === status); return items.length ? <MovieRail key={status} title={label} items={items} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} /> : null; })}</>}
-            {section === 'profile' && <ProfilePage pageHeader={<ProfileHeader universe={universe} stats={stats} profileName={profileName} watchingItem={profileWatchingItem} nextUp={profileNextUpItem} onSelectItem={selectItem} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} />} activeTab={profileTab} setActiveTab={(tab) => { hapticTap(); setProfileTab(tab); setQuery(''); }} installApp={installApp} installAvailable={!!installPromptEvent} appInstalled={appInstalled} stats={profileStats} activeItems={profileItems} universe="all" query={query} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} conflict={conflict} onResolveRemote={resolveUseRemote} onResolveLocal={resolveKeepLocal} syncToast={toast} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} incursionAtmosphereOn={incursionAtmosphereOn} setIncursionAtmosphereOn={setIncursionAtmosphereOn} liquidGlassNavOn={liquidGlassNavOn} setLiquidGlassNavOn={setLiquidGlassNavOn} liquidGlassNavConfig={liquidGlassNavConfig} setLiquidGlassNavConfig={setLiquidGlassNavConfig} />}
+            {section === 'profile' && <ProfilePage pageHeader={<ProfileHeader universe={universe} stats={stats} profileName={profileName} watchingItem={profileWatchingItem} nextUp={profileNextUpItem} onSelectItem={selectItem} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} />} activeTab={profileTab} setActiveTab={(tab) => { hapticTap(); setProfileTab(tab); setQuery(''); }} installApp={installApp} installAvailable={!!installPromptEvent} appInstalled={appInstalled} stats={profileStats} activeItems={profileItems} universe="all" query={query} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} conflict={conflict} onResolveRemote={resolveUseRemote} onResolveLocal={resolveKeepLocal} syncToast={toast} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} incursionAtmosphereOn={incursionAtmosphereOn} setIncursionAtmosphereOn={setIncursionAtmosphereOn} quietBrowsingOn={quietBrowsingOn} setQuietBrowsingOn={setQuietBrowsingOn} liquidGlassNavOn={liquidGlassNavOn} setLiquidGlassNavOn={setLiquidGlassNavOn} liquidGlassNavConfig={liquidGlassNavConfig} setLiquidGlassNavConfig={setLiquidGlassNavConfig} />}
       {WATCH_ENABLED && section === 'watch' && safeWatchItem && <WatchPage watchItem={safeWatchItem} activeItems={roadmapItems} onBack={() => { setWatchItem(null); window.history.replaceState(null, '', '#watch'); }} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={startWatchWithConfirm} updateAction={updateAction} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} />}
       {WATCH_ENABLED && section === 'watch' && !safeWatchItem && <WatchBrowse activeItems={activeItems} externalResults={externalSearchResults} externalLoading={externalSearchLoading} actions={actions} query={query} onStartWatch={startWatchWithConfirm} onPlayExternal={onPlayExternal} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} />}
       </div>

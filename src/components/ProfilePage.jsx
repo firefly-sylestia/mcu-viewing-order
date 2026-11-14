@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Play, Bookmark, RotateCcw, Clock, Check, X, Pencil, Trophy, LogIn, LogOut, Cloud, RefreshCw, Sun, Moon, Settings, Upload, Download, Clapperboard, Sparkles, LayoutGrid, Vibrate, ChevronDown, Maximize2, UserRound, } from 'lucide-react';
+import { Play, Bookmark, RotateCcw, Clock, Check, X, Pencil, Trophy, LogIn, LogOut, Cloud, RefreshCw, Sun, Moon, Settings, Upload, Download, Clapperboard, Sparkles, LayoutGrid, Vibrate, ChevronDown, Maximize2, UserRound, ShieldCheck, } from 'lucide-react';
 import { getHapticsEnabled, setHapticsEnabled, hapticsSupported, hapticTap, hapticSuccess } from '../utils/haptics';
 
-Profile variant helperfunction applyBrowserTheme(theme) {
+function applyBrowserTheme(theme) {
   const isDark = theme === 'dark';
   const color = isDark ? '#111318' : '#ffffff';
   document.documentElement.setAttribute('data-theme', theme);
@@ -54,7 +54,7 @@ const formatTimeAgo = (timestamp) => {
   return 'Synced ' + Math.floor(hours / 24) + 'd ago';
 };
 
-function ProfilePage({ pageHeader, setActiveTab, installApp, installAvailable, appInstalled, stats, activeItems, universe, activeTab = 'insights', query = '', setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, profileName, setProfileName, user, configured, onLogin, onLogout, lastSynced, syncing, onSync, conflict, onResolveRemote, onResolveLocal, syncToast, nativePlayer, setNativePlayer, incursionAtmosphereOn = false, setIncursionAtmosphereOn, liquidGlassNavOn = false, setLiquidGlassNavOn, liquidGlassNavConfig, setLiquidGlassNavConfig }) {
+function ProfilePage({ pageHeader, setActiveTab, installApp, installAvailable, appInstalled, stats, activeItems, universe, activeTab = 'insights', query = '', setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, profileName, setProfileName, user, configured, onLogin, onLogout, lastSynced, syncing, onSync, conflict, onResolveRemote, onResolveLocal, syncToast, nativePlayer, setNativePlayer, incursionAtmosphereOn = false, setIncursionAtmosphereOn, quietBrowsingOn = false, setQuietBrowsingOn, liquidGlassNavOn = false, setLiquidGlassNavOn, liquidGlassNavConfig, setLiquidGlassNavConfig }) {
   
   const savedItems = activeItems.filter(i => i.bookmarked);
   const inProgressItems = activeItems.filter(i => i.userStatus === 'watching');
@@ -118,7 +118,7 @@ function ProfilePage({ pageHeader, setActiveTab, installApp, installAvailable, a
 
         {activeTab === 'settings' && (
           <div id="settings-panel" role="tabpanel" className="profile-panel settings-panel">
-            <SettingsPanel installApp={installApp} installAvailable={installAvailable} appInstalled={appInstalled} query={query} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={onLogin} onLogout={onLogout} universe={universe} activeItems={activeItems} setStatus={setStatus} toggleBookmark={toggleBookmark} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} incursionAtmosphereOn={incursionAtmosphereOn} setIncursionAtmosphereOn={setIncursionAtmosphereOn} liquidGlassNavOn={liquidGlassNavOn} setLiquidGlassNavOn={setLiquidGlassNavOn} liquidGlassNavConfig={liquidGlassNavConfig} setLiquidGlassNavConfig={setLiquidGlassNavConfig} />
+            <SettingsPanel installApp={installApp} installAvailable={installAvailable} appInstalled={appInstalled} query={query} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={onLogin} onLogout={onLogout} universe={universe} activeItems={activeItems} setStatus={setStatus} toggleBookmark={toggleBookmark} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} incursionAtmosphereOn={incursionAtmosphereOn} setIncursionAtmosphereOn={setIncursionAtmosphereOn} quietBrowsingOn={quietBrowsingOn} setQuietBrowsingOn={setQuietBrowsingOn} liquidGlassNavOn={liquidGlassNavOn} setLiquidGlassNavOn={setLiquidGlassNavOn} liquidGlassNavConfig={liquidGlassNavConfig} setLiquidGlassNavConfig={setLiquidGlassNavConfig} />
           </div>
         )}
       </div>
@@ -239,7 +239,7 @@ export function ProfileHeader({ universe, stats, profileName, setProfileName, us
   );
 }
 
-function SettingsPanel({ installApp, installAvailable, appInstalled, query = '', profileName, setProfileName, user, configured, onLogin, onLogout, universe, activeItems, setStatus, toggleBookmark, nativePlayer, setNativePlayer, incursionAtmosphereOn = false, setIncursionAtmosphereOn, liquidGlassNavOn = false, setLiquidGlassNavOn, liquidGlassNavConfig = {}, setLiquidGlassNavConfig }) {
+function SettingsPanel({ installApp, installAvailable, appInstalled, query = '', profileName, setProfileName, user, configured, onLogin, onLogout, universe, activeItems, setStatus, toggleBookmark, nativePlayer, setNativePlayer, incursionAtmosphereOn = false, setIncursionAtmosphereOn, quietBrowsingOn = false, setQuietBrowsingOn, liquidGlassNavOn = false, setLiquidGlassNavOn, liquidGlassNavConfig = {}, setLiquidGlassNavConfig }) {
   const search = query.trim().toLowerCase();
   const showGroup = (terms) => !search || terms.includes(search);
   const { theme, setTheme } = useAppTheme();
@@ -431,6 +431,25 @@ function SettingsPanel({ installApp, installAvailable, appInstalled, query = '',
             </span>
           </button>
         </div>
+      </div>
+
+      <div className="settings-group" hidden={!showGroup('quiet browsing privacy popups tabs external links navigation security')}>
+        <h3 className="settings-group-title">Privacy & Navigation</h3>
+        <div className="settings-row">
+          <div className="settings-row-label">
+            <span className="settings-row-icon"><ShieldCheck size={18} /></span>
+            <div>
+              <strong>Quiet Browsing</strong>
+              <small>{quietBrowsingOn ? 'External links stay in this tab' : 'Allow links to open normally'}</small>
+            </div>
+          </div>
+          <button className="theme-toggle" type="button" role="switch" aria-checked={quietBrowsingOn}
+            onClick={() => { hapticTap(); setQuietBrowsingOn?.(value => { const next = !value; try { localStorage.setItem('quiet-browsing', next ? '1' : '0'); } catch {} return next; }); }}
+            aria-label={`Turn Quiet Browsing ${quietBrowsingOn ? 'off' : 'on'}`}>
+            <span className={`theme-toggle-track ${quietBrowsingOn ? 'dark' : 'light'}"><span className="theme-toggle-thumb"><ShieldCheck size={14} /></span></span>
+          </button>
+        </div>
+        <p className="settings-data-desc">When enabled, ordinary external links that request a new tab open in the current tab instead. Sign-in popups and embedded video players are left alone. This does not block every ad or tracker.</p>
       </div>
 
       {/* Installable app */}
