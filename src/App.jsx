@@ -2214,6 +2214,7 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, on
   const guidance = getTitleGuidance(item);
   const [inlineTrailer, setInlineTrailer] = useState(null);
   const [isTrailerExpanded, setIsTrailerExpanded] = useState(false);
+  const [searchSheet, setSearchSheet] = useState(false);
   const grabStartRef = useRef(null);
   React.useEffect(() => {
     const finish = (event) => {
