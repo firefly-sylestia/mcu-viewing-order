@@ -3248,7 +3248,7 @@ const saveServerPref = (tmdbId, server) => {
             }}>Switch back to embedded player</button>
           </div>
         ) : (
-          {playerUrl ? <iframe ref={iframeRef} key={iframeKey} src={playerUrl} title={`Watch ${item.title}`} frameBorder="0" allowFullScreen allow="autoplay; fullscreen; picture-in-picture; encrypted-media" loading="eager" onLoad={() => { clearTimeout(loadTimeoutRef.current); setToast(''); }} /> : <div className="watch-native-launch"><h2>Player unavailable</h2><p>This title has no TMDB ID yet.</p></div>}
+          playerUrl ? <iframe ref={iframeRef} key={iframeKey} src={playerUrl} title={`Watch ${item.title}`} frameBorder="0" allowFullScreen allow="autoplay; fullscreen; picture-in-picture; encrypted-media" loading="eager" onLoad={() => { clearTimeout(loadTimeoutRef.current); setToast(''); }} /> : <div className="watch-native-launch"><h2>Player unavailable</h2><p>This title has no TMDB ID yet.</p></div>
         )}
       </div>
       <div className="watch-progress-bar"><span style={{ width: `${progress}%` }} /></div>
