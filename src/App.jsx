@@ -2897,7 +2897,7 @@ function WatchBrowse({ activeItems, externalResults = [], externalLoading = fals
           <div className="wh3-watchlist">
             {upNext.map((item,index) => (
               <article className="wh3-watch-row" key={item.id}>
-                <span className="wh3-watch-index">{String((currentUpNextPage-1)*upNextPageSize+index+1).padStart(2,'0')}</span>
+                <span className="wh3-watch-index">{String((currentUpNextPage-1)*pageSize+index+1).padStart(2,'0')}</span>
                 <button className="wh3-watch-thumb" onClick={() => setSelected(item)} aria-label={`Details for ${item.title}`}><PosterArt item={item}/></button>
                 <div className="wh3-watch-info">
                   <button className="wh3-title-link" onClick={() => setSelected(item)}>{item.title}</button>
