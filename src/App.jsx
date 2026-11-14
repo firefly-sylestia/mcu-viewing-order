@@ -1317,7 +1317,9 @@ export default function App() {
 
   const universeName = universe === 'marvel' ? 'MCU' : universe === 'xmen' ? 'X-Men' : universe === 'sony' ? 'Sony' : 'DC';
   const universeAccent = universe === 'marvel' ? '#da1e37' : universe === 'xmen' ? '#a0a0ac' : universe === 'sony' ? '#2f6bd8' : '#2f80ed';
-  const selectedTitle = selected?.title || safeWatchItem?.item?.title || '';\n  const statsAvatar = (() => { try { return localStorage.getItem('incursion-profile-avatar') || user?.photoURL || ''; } catch { return user?.photoURL || ''; } })();\n  const statsDisplayName = (profileName || user?.displayName || user?.email?.split('@')[0] || 'Your profile').trim();
+  const selectedTitle = selected?.title || safeWatchItem?.item?.title || '';
+  const statsAvatar = (() => { try { return localStorage.getItem('incursion-profile-avatar') || user?.photoURL || ''; } catch { return user?.photoURL || ''; } })();
+  const statsDisplayName = (profileName || user?.displayName || user?.email?.split('@')[0] || 'Your profile').trim();
   const activeFilterCount = [genre !== 'All', rating > 0, ageRatingFilter !== 'All', typeFilter !== 'All'].filter(Boolean).length;
 
   if (window.location.pathname !== '/') return <NotFoundPage onHome={() => { window.location.hash = 'home'; window.history.pushState(null, '', '/#home'); window.location.reload(); }} />;
