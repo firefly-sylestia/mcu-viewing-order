@@ -153,7 +153,6 @@ function ProfilePage({ pageHeader, setActiveTab, installApp, installAvailable, a
 
 export function ProfileHeader({ universe, stats, profileName, setProfileName, user, onLogin, onLogout, watchingItem, nextUp, onSelectItem, syncing = false, lastSynced, onSync }) {
   const [confirmingLogout, setConfirmingLogout] = useState(false);
-  const [liquidGlassDialogOpen, setLiquidGlassDialogOpen] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState(profileName || user?.displayName || '');
   const [avatarDialogOpen, setAvatarDialogOpen] = useState(false);
@@ -286,6 +285,7 @@ function SettingsPanel({ installApp, installAvailable, appInstalled, query = '',
   const [editing, setEditing] = useState(false);
   const inputRef = useRef(null);
   const [confirmingLogout, setConfirmingLogout] = useState(false);
+  const [liquidGlassDialogOpen, setLiquidGlassDialogOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
