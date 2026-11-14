@@ -2991,13 +2991,15 @@ const saveServerPref = (tmdbId, server) => {
   const isSeries = currentItem.type === 'series' && currentItem.tmdbId;
   const [episodes, setEpisodes] = useState([]);
   const [selectedEpisode, setSelectedEpisode] = useState(currentItem.epStart || 1);
+  // Keep the iframe's URL episode separate: CineSrc can navigate episodes internally.
+  const [playerEpisode, setPlayerEpisode] = useState(currentItem.epStart || 1);
   const [episodeLoading, setEpisodeLoading] = useState(false);
   const watchedEpisodes = currentItem.watchedEpisodes || [];
   const loadTimeoutRef = useRef(null);
   const [iframeTimedOut, setIframeTimedOut] = useState(false);
   const [restartCounter, setRestartCounter] = useState(0);
   const iframeRef = useRef(null);
-  const iframeKey = `cinesrc-${isSeries ? `ep-${currentItem.tmdbId}-${currentItem.season || 1}-${selectedEpisode}` : currentItem.tmdbId || item.id}-r${restartCounter}`;
+  const iframeKey = `cinesrc-${isSeries ? `ep-${currentItem.tmdbId}-${currentItem.season || 1}-${playerEpisode}` : currentItem.tmdbId || item.id}-r${restartCounter}`;
 
   // Detect iframe load failures: start 10s timer on iframe key change, cancel on load
   useEffect(() => {
@@ -3024,7 +3026,7 @@ const saveServerPref = (tmdbId, server) => {
   const watchedInRange = watchedEpisodes.filter(episode => episode >= (currentItem.epStart || 1) && episode <= (currentItem.epEnd || Infinity));
   const allEpisodesWatched = episodeRangeTotal > 0 && watchedInRange.length >= episodeRangeTotal;
 
-  useEffect(() => { setSelectedEpisode(currentItem.epStart || 1); setContextExpanded(false); }, [currentItem.id, currentItem.epStart]);
+  useEffect(() => { const firstEpisode = currentItem.epStart || 1; setSelectedEpisode(firstEpisode); setPlayerEpisode(firstEpisode); setContextExpanded(false); }, [currentItem.id, currentItem.epStart]);
 
   useEffect(() => {
     if (!isSeries) { setEpisodes([]); return; }
@@ -3056,7 +3058,7 @@ const saveServerPref = (tmdbId, server) => {
     return currentItem.type === 'series'
       ? `https://cinesrc.st/embed/tv/${id}?s=${currentItem.season || 1}&e=${selectedEpisode}&${params.toString()}`
       : `https://cinesrc.st/embed/movie/${id}?${params.toString()}`;
-  }, [currentItem.tmdbId, currentItem.type, currentItem.season, currentItem.accent, tmdbId, selectedEpisode]);
+  }, [currentItem.tmdbId, currentItem.type, currentItem.season, currentItem.accent, tmdbId, playerEpisode]);
   const roadmapInfo = useMemo(() => getRoadmap(currentItem, activeItems), [activeItems, currentItem]);
 
   const currentOrder = currentItem.order || currentItem.id;
@@ -3269,7 +3271,7 @@ const saveServerPref = (tmdbId, server) => {
                 return <button
                   key={ep.episode}
                   className={`watch-episode-row ${isWatched ? 'watched' : ''} ${isSelected ? 'selected' : ''}`}
-                  onClick={() => { setSelectedEpisode(ep.episode); }}
+                  onClick={() => { setSelectedEpisode(ep.episode); setPlayerEpisode(ep.episode); }}
                 >
                   <span className="watch-ep-num">{String(ep.episode).padStart(2, '0')}</span>
                   <span className="watch-ep-title">{ep.title}</span>
