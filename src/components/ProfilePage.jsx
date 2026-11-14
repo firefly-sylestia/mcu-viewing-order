@@ -446,7 +446,7 @@ function SettingsPanel({ installApp, installAvailable, appInstalled, query = '',
           <button className="theme-toggle" type="button" role="switch" aria-checked={quietBrowsingOn}
             onClick={() => { hapticTap(); setQuietBrowsingOn?.(value => { const next = !value; try { localStorage.setItem('quiet-browsing', next ? '1' : '0'); } catch {} return next; }); }}
             aria-label={`Turn Quiet Browsing ${quietBrowsingOn ? 'off' : 'on'}`}>
-            <span className={`theme-toggle-track ${quietBrowsingOn ? 'dark' : 'light'}"><span className="theme-toggle-thumb"><ShieldCheck size={14} /></span></span>
+            <span className={`theme-toggle-track ${quietBrowsingOn ? 'dark' : 'light'}`}><span className="theme-toggle-thumb"><ShieldCheck size={14} /></span></span>
           </button>
         </div>
         <p className="settings-data-desc">When enabled, ordinary external links that request a new tab open in the current tab instead. Sign-in popups and embedded video players are left alone. This does not block every ad or tracker.</p>
