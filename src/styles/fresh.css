@@ -10339,3 +10339,53 @@
   :root .movie-site.page-analytics .site-header .header-top { min-height: 68px !important; }
   :root .movie-site.page-analytics .site-header .stats-page-avatar { width: 64px; height: 64px; flex-basis: 64px; }
 }
+
+
+/* Richer profile-header atmosphere: the uploaded portrait softly blooms into
+   a layered, colour-balanced gradient instead of reading as a flat blur. */
+:root[data-header-design="cinematic"] .movie-site.page-profile .profile-avatar-backdrop {
+  inset: -48px !important;
+  opacity: .88 !important;
+  filter: saturate(1.18);
+}
+:root[data-header-design="cinematic"] .movie-site.page-profile .profile-avatar-backdrop img {
+  filter: blur(38px) saturate(1.42) brightness(.94) !important;
+  transform: scale(1.2) !important;
+}
+:root[data-header-design="cinematic"] .movie-site.page-profile .profile-avatar-backdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 12% 8%, rgba(224, 52, 83, .38), transparent 48%),
+    radial-gradient(ellipse at 88% 4%, rgba(76, 112, 224, .34), transparent 50%),
+    radial-gradient(ellipse at 52% 100%, rgba(125, 77, 185, .20), transparent 58%),
+    linear-gradient(112deg, rgba(255,255,255,.12), rgba(255,255,255,0) 44%, rgba(20,24,38,.12));
+  mix-blend-mode: screen;
+}
+:root[data-theme="light"][data-header-design="cinematic"] .movie-site.page-profile .profile-avatar-backdrop {
+  opacity: .78 !important;
+}
+:root[data-theme="light"][data-header-design="cinematic"] .movie-site.page-profile .profile-avatar-backdrop::after {
+  background:
+    radial-gradient(ellipse at 12% 8%, rgba(220, 55, 86, .30), transparent 48%),
+    radial-gradient(ellipse at 88% 4%, rgba(74, 111, 220, .25), transparent 50%),
+    radial-gradient(ellipse at 52% 100%, rgba(134, 91, 190, .16), transparent 58%),
+    linear-gradient(112deg, rgba(255,255,255,.24), rgba(255,255,255,.04) 48%, rgba(255,255,255,.14));
+  mix-blend-mode: normal;
+}
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site.page-profile .profile-avatar-backdrop {
+  opacity: .86 !important;
+}
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site.page-profile .profile-avatar-backdrop img {
+  filter: blur(38px) saturate(1.42) brightness(.78) !important;
+}
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site.page-profile .profile-avatar-backdrop::after {
+  background:
+    radial-gradient(ellipse at 12% 8%, rgba(222, 48, 79, .32), transparent 48%),
+    radial-gradient(ellipse at 88% 4%, rgba(72, 105, 214, .30), transparent 50%),
+    radial-gradient(ellipse at 52% 100%, rgba(126, 76, 186, .22), transparent 58%),
+    linear-gradient(112deg, rgba(8,10,16,.12), rgba(8,10,16,.02) 48%, rgba(8,10,16,.24));
+  mix-blend-mode: normal;
+}
