@@ -11201,3 +11201,35 @@
   border-color: transparent !important;
   outline: 0 !important;
 }
+
+
+/* Final borderless override: remove the remaining header card layers.
+   Inner controls keep their own existing translucent blur surfaces. */
+:root[data-header-surface="borderless"] .movie-site .site-header,
+:root[data-header-surface="borderless"] .movie-site .site-header > .header-top,
+:root[data-header-surface="borderless"] .movie-site .site-header > .header-bar,
+:root[data-header-surface="borderless"] .movie-site .site-header .header-top,
+:root[data-header-surface="borderless"] .movie-site .site-header .header-bar {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+}
+:root[data-header-surface="borderless"] .movie-site .site-header > .header-top::before,
+:root[data-header-surface="borderless"] .movie-site .site-header > .header-top::after,
+:root[data-header-surface="borderless"] .movie-site .site-header > .header-bar::before,
+:root[data-header-surface="borderless"] .movie-site .site-header > .header-bar::after,
+:root[data-header-surface="borderless"] .movie-site .site-header .header-top::before,
+:root[data-header-surface="borderless"] .movie-site .site-header .header-top::after,
+:root[data-header-surface="borderless"] .movie-site .site-header .header-bar::before,
+:root[data-header-surface="borderless"] .movie-site .site-header .header-bar::after {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
