@@ -10911,3 +10911,65 @@
 :root .status-dropdown-portal .status-option-check { display:none !important; }
 :root .status-dropdown-portal .status-option.active { background:rgba(128,145,175,.10) !important; border-color:rgba(128,145,175,.20) !important; box-shadow:none !important; }
 :root[data-theme="light"] .status-dropdown-portal .status-option.active { background:rgba(70,100,150,.075) !important; border-color:rgba(70,100,150,.18) !important; box-shadow:none !important; }
+
+
+/* Watch Hub refresh: compact editorial dashboard, calmer surfaces and consistent cards. */
+:root .watch-browse { width:min(1120px,calc(100% - 28px)); padding:18px 0 110px; }
+:root .wb-hero { display:grid !important; grid-template-columns:minmax(0,1fr) 190px !important; align-items:center !important; gap:24px !important; min-height:0 !important; padding:clamp(20px,4vw,34px) !important; margin:0 0 30px !important; border:1px solid var(--line,rgba(128,138,155,.16)) !important; border-radius:24px !important; background:var(--surface,rgba(128,138,155,.055)) !important; box-shadow:none !important; overflow:hidden; }
+:root .wb-hero-bg { display:none !important; }
+:root .wb-hero-content { position:relative; z-index:1; max-width:680px; }
+:root .wb-hero-eyebrow { margin:0 0 10px !important; color:var(--brand-accent,#c52b43) !important; font-size:10px !important; font-weight:800 !important; letter-spacing:.13em !important; text-transform:uppercase; }
+:root .wb-hero h1 { margin:0 !important; font-size:clamp(25px,4.2vw,42px) !important; line-height:1.04 !important; letter-spacing:-.055em !important; font-weight:800 !important; }
+:root .wb-hero-desc { max-width:540px; margin:10px 0 18px !important; font-size:13px !important; line-height:1.55 !important; opacity:.72; }
+:root .wb-hero-actions { display:flex !important; justify-content:flex-start !important; gap:8px !important; margin:0 0 18px !important; }
+:root .wb-hero-cta { min-height:42px !important; padding:0 15px !important; border-radius:12px !important; box-shadow:none !important; }
+:root .wb-hero-cta-title { display:none !important; }
+:root .wb-hero-secondary { min-height:42px; padding:0 15px; border:1px solid var(--line,rgba(128,138,155,.18)); border-radius:12px; background:transparent; color:inherit; font-size:12px; font-weight:700; }
+:root .wb-hero-stats { display:flex !important; justify-content:flex-start !important; gap:22px !important; margin:0 !important; padding:0 !important; border:0 !important; background:transparent !important; box-shadow:none !important; }
+:root .wb-stat { display:flex; flex-direction:column; gap:2px; }
+:root .wb-stat-value { font-size:19px !important; font-weight:800 !important; letter-spacing:-.04em; }
+:root .wb-stat-label { font-size:10px !important; opacity:.6; }
+:root .wb-stat-divider { display:none !important; }
+:root .wb-hero-art { width:100% !important; max-width:164px !important; justify-self:end !important; opacity:.92; }
+:root .wb-hero-art img,:root .wb-hero-art .fallback-poster { border-radius:14px !important; box-shadow:0 12px 32px rgba(0,0,0,.16) !important; }
+:root .wb-section { margin:0 0 30px !important; }
+:root .wb-section-head { display:flex; align-items:center; gap:12px; margin:0 0 13px !important; }
+:root .wb-section-head h2 { margin:0 !important; font-size:19px !important; font-weight:780 !important; letter-spacing:-.035em !important; }
+:root .wb-section-count { margin-left:auto; font-size:10px !important; opacity:.58; }
+:root .wb-density-toggle { margin-left:8px; }
+:root .wb-grid { display:grid !important; grid-template-columns:repeat(4,minmax(0,1fr)) !important; gap:14px !important; }
+:root .wb-grid-2 { grid-template-columns:repeat(2,minmax(0,1fr)) !important; }
+:root .wb-grid-3 { grid-template-columns:repeat(3,minmax(0,1fr)) !important; }
+:root .wb-grid-4 { grid-template-columns:repeat(4,minmax(0,1fr)) !important; }
+:root .wb-card { min-width:0 !important; overflow:hidden !important; border:1px solid var(--line,rgba(128,138,155,.14)) !important; border-radius:16px !important; background:var(--surface,rgba(128,138,155,.045)) !important; box-shadow:none !important; }
+:root .wb-card-media { aspect-ratio:2/3 !important; border-radius:0 !important; }
+:root .wb-card-info { padding:10px 11px 4px !important; }
+:root .wb-card-title { display:block; width:100%; overflow:hidden; font-size:12px !important; font-weight:750 !important; text-overflow:ellipsis; white-space:nowrap; text-align:left; }
+:root .wb-card-meta { display:flex; align-items:center; justify-content:space-between; gap:6px; margin-top:5px !important; font-size:10px !important; opacity:.72; }
+:root .wb-card-actions { display:flex; gap:6px; padding:8px 10px 10px !important; }
+:root .wb-card-actions .wb-action-btn { min-height:32px !important; border-radius:9px !important; font-size:10px !important; box-shadow:none !important; }
+:root .wb-scroll { display:flex; gap:12px !important; overflow-x:auto; padding:2px 1px 10px; scroll-snap-type:x proximity; }
+:root .wb-scroll .wb-card { flex:0 0 174px; scroll-snap-align:start; }
+:root .wb-empty { padding:38px 18px !important; border:1px dashed var(--line,rgba(128,138,155,.22)); border-radius:18px; background:transparent !important; box-shadow:none !important; }
+:root[data-theme="light"] .wb-hero,:root[data-theme="light"] .wb-card { background:#fff !important; border-color:rgba(30,42,62,.10) !important; }
+:root[data-theme="dark"] .wb-hero,:root[data-theme="dark"] .wb-card { background:rgba(255,255,255,.035) !important; border-color:rgba(255,255,255,.09) !important; }
+@media(max-width:700px) {
+ :root .watch-browse { width:calc(100% - 22px); padding-top:10px; }
+ :root .wb-hero { grid-template-columns:minmax(0,1fr) 104px !important; gap:12px !important; padding:17px !important; border-radius:18px !important; }
+ :root .wb-hero-art { max-width:104px !important; }
+ :root .wb-hero h1 { font-size:25px !important; }
+ :root .wb-hero-desc { font-size:11px !important; margin:8px 0 13px !important; }
+ :root .wb-hero-stats { gap:14px !important; }
+ :root .wb-stat-value { font-size:16px !important; }
+ :root .wb-grid,:root .wb-grid-4,:root .wb-grid-3 { grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:10px !important; }
+ :root .wb-scroll .wb-card { flex-basis:145px; }
+ :root .wb-card-info { padding:8px 9px 3px !important; }
+ :root .wb-card-actions { padding:7px 8px 8px !important; }
+ :root .wb-section-head h2 { font-size:17px !important; }
+}
+@media(max-width:390px) {
+ :root .wb-hero { grid-template-columns:minmax(0,1fr) 82px !important; padding:14px !important; }
+ :root .wb-hero-art { max-width:82px !important; }
+ :root .wb-hero h1 { font-size:22px !important; }
+ :root .wb-hero-stats { gap:10px !important; }
+}
