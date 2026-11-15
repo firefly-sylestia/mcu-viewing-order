@@ -13114,3 +13114,88 @@
   transform: scale(.5) !important;
   transform-origin: top left !important;
 }
+
+
+/* Watch Together selection: portal is mounted under body, so scope these
+   dimensions to the portal itself rather than the route wrapper. */
+:root .wt-create-backdrop .wt-picker-list>button {
+  min-height: 74px;
+  height: 74px;
+  overflow: hidden;
+}
+:root .wt-create-backdrop .wt-picker-list>button img {
+  display: block !important;
+  width: 39px !important;
+  min-width: 39px !important;
+  max-width: 39px !important;
+  height: 56px !important;
+  min-height: 56px !important;
+  max-height: 56px !important;
+  flex: 0 0 39px !important;
+  object-fit: cover !important;
+}
+:root .wt-create-backdrop .wt-dialog-selected {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+:root .wt-create-backdrop .wt-dialog-selected img {
+  display: block !important;
+  width: 42px !important;
+  min-width: 42px !important;
+  max-width: 42px !important;
+  height: 62px !important;
+  min-height: 62px !important;
+  max-height: 62px !important;
+  flex: 0 0 42px !important;
+  object-fit: cover !important;
+  border-radius: 8px;
+}
+:root .wt-create-backdrop .wt-dialog-selected span { min-width: 0; overflow: hidden; }
+:root .wt-create-backdrop .wt-dialog-selected strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Light/dark mode-safe identity and invite pills in the room header. */
+:root .wt-page .wt-room-actions { display:flex; align-items:center; justify-content:flex-end; gap:8px; flex-wrap:wrap; }
+:root .wt-page .wt-room-actions .wt-copy {
+  min-height: 36px;
+  padding: 8px 13px;
+  border: 1px solid color-mix(in srgb,var(--fx-muted) 24%,transparent);
+  border-radius: 999px;
+  background: var(--fx-surface-3);
+  color: var(--fx-text);
+  white-space: nowrap;
+}
+:root .wt-page .wt-room-actions .wt-copy:hover { background: var(--fx-surface); }
+:root .wt-page .wt-room-actions .wt-end-room { color: var(--fx-danger, #c43d4d); }
+
+/* Persistent Watch Together room shortcut in the Watch Browser. */
+:root .wh3-room-resume {
+  display:flex;
+  align-items:center;
+  gap:14px;
+  margin:18px 0 24px;
+  padding:13px 16px;
+  border:1px solid color-mix(in srgb,var(--fx-accent) 24%,var(--fx-muted));
+  border-radius:18px;
+  background:linear-gradient(110deg,color-mix(in srgb,var(--fx-accent) 9%,var(--fx-surface-2)),var(--fx-surface-2));
+  box-shadow:var(--fx-shadow-sm);
+}
+:root .wh3-room-resume-art { width:46px;height:66px;flex:0 0 46px;overflow:hidden;display:grid;place-items:center;border-radius:9px;background:var(--fx-surface-3);color:var(--fx-accent); }
+:root .wh3-room-resume-art img { width:100%;height:100%;object-fit:cover; }
+:root .wh3-room-resume-copy { display:grid;gap:4px;min-width:0;flex:1; }
+:root .wh3-room-resume-copy .wh3-overline { color:var(--fx-accent);font-size:9px;letter-spacing:.12em;font-weight:850; }
+:root .wh3-room-resume-copy strong { color:var(--fx-text);font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+:root .wh3-room-resume-copy small { color:var(--fx-muted);font-size:11px; }
+:root .wh3-room-resume-action { display:flex;align-items:center;justify-content:center;gap:7px;flex:0 0 auto;padding:10px 15px;border:0;border-radius:999px;background:var(--fx-accent);color:#fff;font:inherit;font-size:11px;font-weight:850;cursor:pointer; }
+@media(max-width:560px) {
+  :root .wh3-room-resume { gap:10px;padding:11px;border-radius:15px; }
+  :root .wh3-room-resume-art { width:38px;height:56px;flex-basis:38px; }
+  :root .wh3-room-resume-copy .wh3-overline { font-size:8px; }
+  :root .wh3-room-resume-copy strong { font-size:12px; }
+  :root .wh3-room-resume-copy small { font-size:10px; }
+  :root .wh3-room-resume-action { padding:9px 11px;font-size:10px; }
+}

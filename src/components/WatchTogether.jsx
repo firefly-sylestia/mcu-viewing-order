@@ -5,6 +5,10 @@ import { supabasePublicRequest, supabaseDataRequest } from '../supabase';
 
 const RPC = '/rest/v1/rpc/';
 const HISTORY_KEY = 'mcu-watch-together-history-v1';
+const ACTIVE_ROOM_KEY = 'mcu-watch-together-active-room-v1';
+const saveActiveRoom = (code, identity, media) => {
+  try { localStorage.setItem(ACTIVE_ROOM_KEY, JSON.stringify({ code, identity: { token: identity.token, name: identity.name, avatar: identity.avatar, isGuest: Boolean(identity.isGuest) }, media, savedAt: new Date().toISOString() })); } catch {}
+};
 const randomHex = (bytes = 32) => {
   const data = new Uint8Array(bytes);
   crypto.getRandomValues(data);
@@ -179,6 +183,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       });
       setParticipant(result.participant);
       applyRoomSnapshot(result);
+      if (identity?.token) saveActiveRoom(code.trim().toUpperCase(), identity, result.room?.media || null);
       setOpen(true);
       setShowPlaybackNotice(true);
       const url = new URL(window.location.href);
@@ -204,6 +209,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       });
       setParticipant(result.participant);
       applyRoomSnapshot(result);
+      saveActiveRoom(code, guest, itemMedia);
       const url = new URL(window.location.href);
       url.hash = 'watch-together';
       url.searchParams.set('room', code);
@@ -222,9 +228,11 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     if (code && !roomRef.current) {
       onBeforeOpenRef.current?.();
       setOpen(true);
-      joinExisting(code);
+      let identity = guest;
+      try { const saved = JSON.parse(localStorage.getItem(ACTIVE_ROOM_KEY) || 'null'); if (saved?.code === code.trim().toUpperCase() && saved.identity?.token) identity = saved.identity; } catch {}
+      joinExisting(code, identity);
     }
-  }, [joinExisting]);
+  }, [joinExisting, guest]);
 
   const refreshRoom = useCallback(async () => {
     const activeRoom = roomRef.current;
@@ -379,6 +387,14 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     return()=>window.clearInterval(timer);
   },[room?.id,participant?.id,flushWatchHistory]);
 
+  const minimizeRoom = async () => {
+    await flushWatchHistory();
+    window.clearInterval(pollRef.current); window.clearInterval(playbackPollRef.current); window.clearInterval(heartbeatRef.current);
+    setRoom(null); setParticipant(null); setMembers([]); setMessages([]); setRequests([]); setPlayerReady(false); lastVersionRef.current = 0; setOpen(false); setSetupDialog(false);
+    const url = new URL(window.location.href); url.searchParams.delete('room'); window.history.replaceState({}, '', url.toString());
+    onClose?.();
+  };
+
   const leaveRoom = async () => {
     await flushWatchHistory();
     const r = roomRef.current, p = participantRef.current;
@@ -386,6 +402,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       if (p.is_host) await rpc('close_watch_room', { p_code: r.code, p_token: p.token }).catch(() => {});
       else await rpc('leave_watch_room', { p_code: r.code, p_token: p.token }).catch(() => {});
     }
+    try { const saved = JSON.parse(localStorage.getItem(ACTIVE_ROOM_KEY) || 'null'); if (saved?.code === r?.code) localStorage.removeItem(ACTIVE_ROOM_KEY); } catch {}
     window.clearInterval(pollRef.current); window.clearInterval(playbackPollRef.current); window.clearInterval(heartbeatRef.current);
     setRoom(null); setParticipant(null); setMembers([]); setMessages([]); setRequests([]); setPlayerReady(false); lastVersionRef.current = 0; setOpen(false); setSetupDialog(false); onClose?.();
     const url = new URL(window.location.href); url.searchParams.delete('room'); window.history.replaceState({}, '', url.toString());
@@ -471,7 +488,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     {open && <section className={`wt-page${room ? ' wt-room-active' : ''}`} aria-label="Watch together">
           <header className="wt-topbar">
             <div className="wt-brand"><span className="wt-brand-mark"><Radio size={18} /></span><div><small>MCU VIEWING ORDER · WATCH TOGETHER</small><strong>{room ? `ROOM ${room.code}` : 'Watch together'}</strong></div></div>
-            <button className="wt-close" onClick={() => room ? leaveRoom() : (setOpen(false), onClose?.())} aria-label="Back to watch page"><X size={19} /></button>
+            <button className="wt-close" onClick={() => room ? minimizeRoom() : (setOpen(false), onClose?.())} aria-label={room ? 'Return to Watch Browser and keep room active' : 'Back to watch page'}><X size={19} /></button>
           </header>
           {!room ? <div className="wt-entry wt-connect-page">
             <div className="wt-entry-art wt-connect-hero"><div><span>PRIVATE SCREENING ROOM</span><h2>Watch together.</h2><p>Enter a room code to join your friends, or create a new room and invite them with a private link.</p></div></div>
@@ -490,7 +507,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
             </div>
           </div> : <div className="wt-content">
             <div className="wt-main">
-              <div className="wt-room-title"><div><span>NOW SCREENING</span><h2>{room.media?.title || itemMedia.title}</h2><small>{members.length} {members.length === 1 ? 'viewer' : 'viewers'} · {participant.is_host ? 'Host' : (participant.role || 'viewer').replace(/^./, c => c.toUpperCase())}</small></div><div className="wt-room-actions">{guest.isGuest&&<button type="button" className="wt-copy" onClick={()=>setEditingGuestName(value=>!value)}><Pencil size={14}/> Name</button>}<button className="wt-copy" onClick={copyLink}>{copied ? <Check size={15}/> : <Copy size={15}/ >}{copied ? 'Copied' : 'Invite'}</button></div></div>
+              <div className="wt-room-title"><div><span>NOW SCREENING</span><h2>{room.media?.title || itemMedia.title}</h2><small>{members.length} {members.length === 1 ? 'viewer' : 'viewers'} · {participant.is_host ? 'Host' : (participant.role || 'viewer').replace(/^./, c => c.toUpperCase())}</small></div><div className="wt-room-actions">{guest.isGuest&&<button type="button" className="wt-copy" onClick={()=>setEditingGuestName(value=>!value)}><Pencil size={14}/> Name</button>}{participant.is_host&&<button type="button" className="wt-copy wt-end-room" onClick={leaveRoom}>End room</button>}<button className="wt-copy" onClick={copyLink}>{copied ? <Check size={15}/> : <Copy size={15}/ >}{copied ? 'Copied' : 'Invite'}</button></div></div>
               {guest.isGuest&&editingGuestName&&<form className="wt-guest-name-form wt-room-rename" onSubmit={event=>{event.preventDefault();updateGuestName(guestNameDraft);}}><input value={guestNameDraft} onChange={event=>setGuestNameDraft(event.target.value)} maxLength={32} aria-label="Guest name"/><button type="submit" disabled={busy||!guestNameDraft.trim()}>Save name</button></form>}
               {showPlaybackNotice && <div className="wt-playback-tip" role="status"><span><strong>Playback tip</strong> If autoplay is blocked, tap Play once. A reputable ad blocker can help reduce pop-ups and redirects.</span><button type="button" onClick={() => setShowPlaybackNotice(false)} aria-label="Dismiss playback tip"><X size={15}/></button></div>}
               <div className="wt-player"><iframe ref={iframeRef} src={sharedPlayerUrl} title={`Watch together: ${room.media?.title || itemMedia.title}`} allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowFullScreen /></div>

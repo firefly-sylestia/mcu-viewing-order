@@ -2882,7 +2882,15 @@ function ContinueWatching({ items, setSelected, setStatus, toggleBookmark, playT
 function WatchBrowse({ activeItems, externalResults = [], externalLoading = false, actions = {}, query = '', onQueryChange, onStartWatch, onPlayExternal, setSelected, setStatus, toggleBookmark, user, profileName, profileAvatar, onWatchTogether }) {
   const pageSize = 12;
   const [watchSearch, setWatchSearch] = useState(query);
+  const [savedWatchRoom, setSavedWatchRoom] = useState(() => { try { return JSON.parse(localStorage.getItem('mcu-watch-together-active-room-v1') || 'null'); } catch { return null; } });
   useEffect(() => { setWatchSearch(query); }, [query]);
+  const resumeSavedWatchRoom = () => {
+    if (!savedWatchRoom?.code) return;
+    const url = new URL(window.location.href);
+    url.searchParams.set('room', savedWatchRoom.code);
+    window.history.replaceState(null, '', url.toString());
+    onWatchTogether?.();
+  };
   const browseItems = activeItems.filter(item => {
     const term = watchSearch.trim().toLowerCase();
     return !term || [item.title, item.year, item.type, ...(item.genres || [])].some(value => String(value || '').toLowerCase().includes(term));
@@ -2956,6 +2964,14 @@ function WatchBrowse({ activeItems, externalResults = [], externalLoading = fals
         <div className="wh3-stat"><strong>{inProgress.length}</strong><span>In progress</span></div>
         <div className="wh3-stat"><strong>{allUpNext.length}</strong><span>To watch</span></div>
       </section>
+
+      {savedWatchRoom?.code && (
+        <section className="wh3-room-resume" aria-label="Your created Watch Together room">
+          <div className="wh3-room-resume-art">{savedWatchRoom.media?.poster ? <img src={savedWatchRoom.media.poster} alt="" /> : <Users size={22} />}</div>
+          <div className="wh3-room-resume-copy"><span className="wh3-overline">YOUR SCREENING ROOM · {savedWatchRoom.code}</span><strong>{savedWatchRoom.media?.title || 'Watch Together room'}</strong><small>Saved room · Pick up where your group left off</small></div>
+          <button type="button" className="wh3-room-resume-action" onClick={resumeSavedWatchRoom}><Play size={14} fill="currentColor"/> Continue</button>
+        </section>
+      )}
 
       {nextWatch && (
         <section className="wh3-resume">
