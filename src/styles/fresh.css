@@ -12318,3 +12318,59 @@
   color: #263448 !important;
   opacity: 1 !important;
 }
+
+
+/* Auth dialog: clear, compact email/privacy and recovery guidance. */
+.auth-email-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  margin: 18px 0 16px;
+  padding: 13px 14px;
+  border: 1px solid rgba(100,116,139,.22);
+  border-radius: 15px;
+  background: linear-gradient(135deg, rgba(255,255,255,.72), rgba(226,232,240,.38));
+  color: #263448;
+  text-align: left;
+}
+.auth-email-note-icon {
+  display: inline-flex;
+  flex: 0 0 21px;
+  width: 21px;
+  height: 21px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+  border: 1px solid rgba(71,85,105,.32);
+  border-radius: 50%;
+  color: #263448;
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1;
+}
+.auth-email-note strong {
+  display: block;
+  margin: 0 0 4px;
+  color: #1e293b;
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1.4;
+}
+.auth-email-note p {
+  margin: 0;
+  color: #3f4b5d;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.55;
+}
+:root[data-theme="dark"] .auth-email-note {
+  border-color: rgba(255,255,255,.13);
+  background: linear-gradient(135deg, rgba(255,255,255,.09), rgba(148,163,184,.045));
+  color: #e2e8f0;
+}
+:root[data-theme="dark"] .auth-email-note-icon {
+  border-color: rgba(226,232,240,.35);
+  color: #e2e8f0;
+}
+:root[data-theme="dark"] .auth-email-note strong { color: #f1f5f9; }
+:root[data-theme="dark"] .auth-email-note p { color: #cbd5e1; }

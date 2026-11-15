@@ -52,6 +52,10 @@ export default function AuthModal({ onClose, onLogin, onSignup, onResetPassword,
           <div className="auth-icon">{mode === 'signup' ? <UserPlus size={32} /> : mode === 'update' || mode === 'forgot' ? <KeyRound size={32} /> : <LogIn size={32} />}</div>
           <h2>{title}</h2><p>{description}</p>
         </div>
+        {(mode === 'login' || mode === 'signup') && <aside className="auth-email-note" role="note">
+          <span className="auth-email-note-icon" aria-hidden="true">i</span>
+          <div><strong>You don't have to use your personal email.</strong><p>You can use an alternate email address instead. If you use a fake or inaccessible address, remember it exactly: you won't be able to receive a password-reset link if you forget your password. Keep your password safe too.</p></div>
+        </aside>}
         <form onSubmit={submit} className="auth-form">
           {mode === 'signup' && <label><span>Display name</span><input type="text" value={displayName} onChange={(event) => setDisplayName(event.target.value)} placeholder="How should people see you?" required maxLength={32} autoComplete="nickname" /></label>}
           {mode !== 'update' && <label><span>Email</span><input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" required autoComplete="email" autoFocus /></label>}
