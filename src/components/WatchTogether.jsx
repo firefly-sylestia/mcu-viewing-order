@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronDown, ChevronUp, Copy, Check, Users, MessageCircle, Play, Pause, SkipBack, SkipForward, X, Link2, Radio, Crown, Send, LogOut, RefreshCw, Volume2, VolumeX, Clock3, ShieldCheck, Search, ChevronRight, Pencil, PanelRightClose, PanelRightOpen, Settings2, UserMinus, Lock, Unlock, QrCode, Theater, Wifi, WifiOff, ArrowRightLeft, Timer, Smile, Mic, MicOff, Headphones } from 'lucide-react';
+import { ChevronDown, ChevronUp, Copy, Check, Users, MessageCircle, Play, Pause, SkipBack, SkipForward, X, Link2, Radio, Crown, Send, LogOut, RefreshCw, Volume2, VolumeX, Clock3, ShieldCheck, Search, ChevronRight, Pencil, PanelRightClose, PanelRightOpen, ArrowLeft, Settings2, UserMinus, Lock, Unlock, QrCode, Theater, Wifi, WifiOff, ArrowRightLeft, Timer, Smile, Mic, MicOff, Headphones } from 'lucide-react';
 import { supabasePublicRequest, supabaseDataRequest } from '../supabase';
 
 const RPC = '/rest/v1/rpc/';
@@ -132,6 +132,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     return () => compact.removeEventListener?.('change', syncChatDefault);
   }, []);
   const [roomLink, setRoomLink] = useState('');
+  const restoreAttemptedRef = useRef(false);
   const [guestNameDraft, setGuestNameDraft] = useState('');
   const [editingGuestName, setEditingGuestName] = useState(false);
   const watchSecondsRef = useRef(0);
@@ -525,15 +526,18 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   }, [rpc, guest, itemMedia, applyRoomSnapshot, loadOwnedRooms]);
 
   useEffect(() => {
-    const sharePathCode = window.location.pathname.match(/^\/watch-room\/([A-Z0-9]{8})\/?$/i)?.[1];
-    const code = new URLSearchParams(window.location.search).get('room') || sharePathCode;
-    if (code && !roomRef.current) {
-      onBeforeOpenRef.current?.();
-      setOpen(true);
-      let identity = guest;
-      try { const saved = JSON.parse(localStorage.getItem(ACTIVE_ROOM_KEY) || 'null'); if (saved?.code === code.trim().toUpperCase() && saved.identity?.token) identity = saved.identity; } catch {}
-      joinExisting(code, identity);
-    }
+    if (restoreAttemptedRef.current || roomRef.current) return;
+    const pathCode = window.location.pathname.split('/').filter(Boolean);
+    const sharePathCode = pathCode[0] === 'watch-room' ? pathCode[1] : null;
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem(ACTIVE_ROOM_KEY) || 'null'); } catch {}
+    const code = new URLSearchParams(window.location.search).get('room') || sharePathCode || saved?.code;
+    if (!code) return;
+    restoreAttemptedRef.current = true;
+    onBeforeOpenRef.current?.();
+    setOpen(true);
+    const identity = saved?.code === code.trim().toUpperCase() && saved.identity?.token ? saved.identity : guest;
+    joinExisting(code, identity);
   }, [joinExisting, guest]);
 
   const refreshRoom = useCallback(async () => {
@@ -855,6 +859,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   if (launchOnly) return <button type="button" className="watch-together-launch" onClick={() => { onBeforeOpenRef.current?.(); onWatchTogether?.(); }}><Users size={16} /><span>Watch together</span></button>;
   return <>
     {(open || room) && <section className={`wt-page${room ? ' wt-room-active' : ''}${theatreMode ? ' wt-theatre-mode' : ''}${!open ? ' wt-minimized' : ''}`} aria-label="Watch together">
+          {!theatreMode && <button type="button" className="wt-page-back" onClick={minimizeRoom} aria-label="Go back"><ArrowLeft size={18}/><span>Back</span></button>}
           {!room ? <div className="wt-entry wt-connect-page">
             <div className="wt-entry-art wt-connect-hero"><div><span>PRIVATE SCREENING ROOM</span><h2>Watch together.</h2><p>Enter a room code to join your friends, or create a new room and invite them with a private link.</p></div></div>
             <div className="wt-connect-card">
