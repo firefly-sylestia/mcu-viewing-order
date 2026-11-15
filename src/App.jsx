@@ -542,6 +542,9 @@ export default function App() {
     const to = NAV_VISIBLE.indexOf(id);
     if (to !== -1 && from !== -1 && to !== from) setSectionDirection(to > from ? 1 : -1);
     setSection(id);
+    // Every primary-page change starts at the top instead of carrying over
+    // the previous page's scroll position.
+    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
     if (id === 'home') setWatchItem(null);
   };
   const handleNavClick = (id) => {
