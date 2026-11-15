@@ -13696,3 +13696,44 @@
   :root .wt-page.wt-theatre-mode .wt-room-tools {top:calc(6px + env(safe-area-inset-top));right:6px}
   :root .wt-page.wt-theatre-mode .wt-control-dock {bottom:calc(7px + env(safe-area-inset-bottom));width:calc(100vw - 14px);padding:5px}
 }
+
+
+/* Theatre mode must sit above the app chrome, not underneath it. */
+:root:has(.wt-page.wt-theatre-mode) .movie-site .bottom-nav,
+:root:has(.wt-page.wt-theatre-mode) .site-header,
+:root:has(.wt-page.wt-theatre-mode) .mobile-nav,
+:root:has(.wt-page.wt-theatre-mode) .liquid-glass-nav,
+:root:has(.wt-page.wt-theatre-mode) .wt-mini-player,
+:root:has(.wt-page.wt-theatre-mode) .app-bottom-nav,
+:root:has(.wt-page.wt-theatre-mode) .page-bottom-nav {
+  display:none!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
+:root:has(.wt-page.wt-theatre-mode) .wt-page.wt-theatre-mode {
+  position:fixed!important;
+  inset:0!important;
+  z-index:2147483000!important;
+  isolation:isolate!important;
+  width:100vw!important;
+  height:100vh!important;
+  height:100dvh!important;
+  min-height:100vh!important;
+  min-height:100dvh!important;
+  overflow:hidden!important;
+}
+:root:has(.wt-page.wt-theatre-mode) .wt-page.wt-theatre-mode .wt-content,
+:root:has(.wt-page.wt-theatre-mode) .wt-page.wt-theatre-mode .wt-main,
+:root:has(.wt-page.wt-theatre-mode) .wt-page.wt-theatre-mode .wt-player {
+  z-index:1!important;
+}
+:root .wt-page .wt-room-title>div:first-child>span {
+  display:block!important;
+  font-size:13px!important;
+  line-height:1.25!important;
+  letter-spacing:.16em!important;
+  font-weight:850!important;
+}
+@media(min-width:761px) {
+  :root .wt-page .wt-room-title>div:first-child>span {font-size:15px!important}
+}
