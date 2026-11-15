@@ -4,6 +4,35 @@ import { configured, supabaseDataRequest } from '../supabase';
 const TABLE = '/rest/v1/user_data';
 const encode = (value) => JSON.stringify(value ?? null);
 
+// Merge guest-device progress into the account snapshot without dropping either
+// side. For conflicting statuses, the most recently changed status wins; when
+// older records have no timestamp, the local guest status is retained.
+function mergeActions(localActions = {}, remoteActions = {}) {
+  const merged = { ...remoteActions };
+  Object.entries(localActions).forEach(([key, local]) => {
+    const remote = merged[key];
+    if (!remote || typeof remote !== 'object' || typeof local !== 'object') {
+      merged[key] = local ?? remote;
+      return;
+    }
+    const localTime = Date.parse(local.statusChangedAt || local.updatedAt || local.watchedDate || '') || 0;
+    const remoteTime = Date.parse(remote.statusChangedAt || remote.updatedAt || remote.watchedDate || '') || 0;
+    const localStatusIsNewerOrUnknown = !remote.status || !local.status || !remoteTime || !localTime || localTime >= remoteTime;
+    merged[key] = {
+      ...remote,
+      ...local,
+      ...(localStatusIsNewerOrUnknown
+        ? {}
+        : {
+            status: remote.status,
+            watchedDate: remote.watchedDate,
+            statusChangedAt: remote.statusChangedAt,
+          }),
+    };
+  });
+  return merged;
+}
+
 export function useCloudSync(user, actions, profileName, setActions, setProfileName, watchItem, setWatchItem) {
   const pushTimer = useRef(null);
   const pollTimer = useRef(null);
@@ -101,7 +130,29 @@ export function useCloudSync(user, actions, profileName, setActions, setProfileN
         if (!row) {
           markSynced(snapshot(), null);
           await pushToCloud({ silent: true });
-        } else applyRemote(row);
+        } else {
+          // Keep guest progress already present in localStorage and combine it
+          // with the account snapshot instead of replacing the guest state.
+          const local = snapshot();
+          const remoteData = row.data || {};
+          const remoteState = {
+            actions: remoteData.actions || {},
+            profileName: remoteData.profileName || '',
+            watchItem: remoteData.watchItem ?? null,
+          };
+          const merged = {
+            actions: mergeActions(local.actions, remoteState.actions),
+            profileName: local.profileName || remoteState.profileName,
+            watchItem: local.watchItem || remoteState.watchItem,
+          };
+          // Mark the remote snapshot as the baseline. The normal debounced
+          // sync then uploads the merged state with the existing concurrency
+          // check, preserving the account's data if another device changed it.
+          markSynced(remoteState, row.updated_at);
+          setActions(merged.actions);
+          setProfileName(merged.profileName);
+          setWatchItem(merged.watchItem);
+        }
       } catch (error) {
         if (!cancelled) setToast({ message: error.message || 'Cloud sync unavailable — changes remain on this device', type: 'error' });
       } finally { if (!cancelled) setSyncing(false); }
