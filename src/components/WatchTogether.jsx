@@ -71,7 +71,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const [guestNameOverride, setGuestNameOverride] = useState('');
   const guest = useMemo(() => { const identity=user?.id?makeAccountIdentity(user,profileName,profileAvatar):{...makeGuest(),isGuest:true}; if(!user?.id&&guestNameOverride){identity.name=guestNameOverride;identity.avatar=blobatar(guestNameOverride);} return identity; }, [user?.id,user?.displayName,user?.email,user?.user_metadata?.display_name,user?.user_metadata?.full_name,user?.user_metadata?.avatar_url,user?.user_metadata?.picture,profileName,profileAvatar,guestNameOverride]);
   const [open, setOpen] = useState(startOpen);
-  useEffect(() => { setOpen(Boolean(startOpen)); }, [startOpen]);
+  useEffect(() => { setOpen(Boolean(startOpen)); if (!startOpen) setTheatreMode(false); }, [startOpen]);
   const [showPlaybackNotice, setShowPlaybackNotice] = useState(false);
   const [hostPanelOpen, setHostPanelOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
@@ -750,6 +750,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     await flushWatchHistory();
     setOpen(false);
     setSetupDialog(false);
+    setTheatreMode(false);
     onClose?.();
   };
 

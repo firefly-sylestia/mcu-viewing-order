@@ -13867,3 +13867,35 @@
     margin:auto!important;padding-bottom:14px!important;
   }
 }
+
+
+/* Watch Together is a focused workspace: never show the global legal footer
+   behind its chat, setup sheets or full-screen theatre player. */
+:root .movie-site.page-watch-together > .site-footer {
+  display:none!important;
+}
+
+/* A theatre room can remain mounted for audio/playback continuity, but once
+   the user leaves the Watch page it must never sit above the new section.
+   This selector intentionally outranks every theatre-mode :has() rule. */
+:root:has(.wt-page.wt-minimized.wt-theatre-mode) .wt-page.wt-minimized.wt-theatre-mode,
+:root .wt-page.wt-minimized.wt-theatre-mode {
+  position:fixed!important;top:0!important;left:-10000px!important;
+  right:auto!important;bottom:auto!important;inset:auto auto auto -10000px!important;
+  width:1px!important;height:1px!important;min-width:1px!important;
+  min-height:1px!important;max-width:1px!important;max-height:1px!important;
+  margin:0!important;padding:0!important;overflow:hidden!important;
+  opacity:0!important;visibility:hidden!important;pointer-events:none!important;
+  z-index:-1!important;transform:none!important;clip-path:inset(50%)!important;
+  contain:strict!important;
+}
+:root .wt-page.wt-minimized.wt-theatre-mode .wt-content,
+:root .wt-page.wt-minimized.wt-theatre-mode .wt-main,
+:root .wt-page.wt-minimized.wt-theatre-mode .wt-player,
+:root .wt-page.wt-minimized.wt-theatre-mode .wt-player iframe {
+  position:absolute!important;top:0!important;left:0!important;
+  width:1px!important;height:1px!important;min-width:1px!important;
+  min-height:1px!important;max-width:1px!important;max-height:1px!important;
+  opacity:0!important;visibility:hidden!important;pointer-events:none!important;
+  transform:none!important;overflow:hidden!important;
+}
