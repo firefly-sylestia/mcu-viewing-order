@@ -13291,3 +13291,13 @@
     flex:0 0 auto;
   }
 }
+
+
+/* Compact playback mode controls and one-tap access to created rooms. */
+.wt-playback-actions{display:flex;align-items:center;gap:7px;flex-wrap:nowrap;width:max-content;max-width:100%;margin:7px 0;padding:5px 7px;border:1px solid color-mix(in srgb,var(--fx-muted) 18%,transparent);border-radius:999px;background:var(--fx-surface-2);}
+.wt-playback-actions span{flex:0 0 auto;min-width:0;padding:0 5px;color:var(--fx-muted);font-size:10px;font-weight:750;}
+.wt-playback-actions button{flex:0 0 auto;min-height:29px;padding:6px 11px;border:0;border-radius:999px;background:var(--fx-surface);color:var(--fx-text);font:inherit;font-size:10px;font-weight:800;white-space:nowrap;}
+.wt-playback-actions button:first-of-type{background:var(--fx-accent);color:#fff;}
+.wt-owned-open{display:inline-flex;align-items:center;justify-content:center;gap:4px;min-height:31px;padding:0 10px;flex:0 0 auto;border:0;border-radius:999px;background:var(--fx-accent);color:#fff;font:inherit;font-size:10px;font-weight:850;cursor:pointer;}
+.wt-owned-open:disabled{opacity:.55;cursor:wait;}
+@media(max-width:560px){.wt-playback-actions{gap:5px;padding:4px 5px}.wt-playback-actions button{min-height:28px;padding:5px 9px;font-size:9px}.wt-owned-open{padding:0 8px;font-size:9px}}
