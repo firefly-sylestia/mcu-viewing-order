@@ -13263,3 +13263,31 @@
 .wt-progress-pill b { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:10px; font-weight:750; }
 .wt-progress-pill i { flex:0 0 auto; font-size:9px; font-style:normal; color:var(--fx-accent); font-weight:850; }
 @media(max-width:760px){.wt-chat-toggle{display:none}.wt-user-progress{padding-bottom:7px}}
+
+
+/* Keep the desktop room chat stretched to the full cinema panel height. */
+@media (min-width: 761px) {
+  :root .page-watch-together .wt-content {
+    height:calc(100dvh - 82px);
+    min-height:0;
+    align-items:stretch;
+  }
+  :root .page-watch-together .wt-chat {
+    align-self:stretch;
+    height:auto;
+    min-height:0;
+    max-height:none;
+    overflow:hidden;
+  }
+  :root .page-watch-together .wt-chat-messages {
+    flex:1 1 0;
+    min-height:0;
+    max-height:none;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+  }
+  :root .page-watch-together .wt-chat-form,
+  :root .page-watch-together .wt-chat-foot {
+    flex:0 0 auto;
+  }
+}
