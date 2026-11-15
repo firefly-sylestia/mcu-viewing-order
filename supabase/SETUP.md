@@ -37,10 +37,9 @@ A few important distinctions:
 - Closing or leaving a screening room changes its status/presence. Closed/expired room rows are retained for seven days, then removed by the daily cleanup job when pg_cron is enabled. Participants, chat and requests are deleted with their room.
 - Watch Together history is stored independently, without a cascading room foreign key, so old-room cleanup does not erase watched-title and duration statistics.
 - Room creation and joining also run a cleanup pass, so expired records are removed opportunistically even without the scheduled extension.
-- Watch Together history is stored independently, without a cascading room foreign key, so old-room cleanup does not erase watched-title and duration statistics.
-- Room creation and joining also run a cleanup pass, so expired records are removed opportunistically even without the scheduled extension.
 
-**Never add destructive table or data cleanup to this master setup script.** If a future feature genuinely needs a destructive migration or retention cleanup, document it separately, explain exactly what it affects, and require an explicit manual decision.
+
+**The seven-day room-retention rule above is the only automatic data cleanup in this master setup.** Do not add any other deletion or destructive migration without documenting exactly what it affects and requiring an explicit manual decision.
 
 ## If setup fails
 
