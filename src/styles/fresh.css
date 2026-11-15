@@ -12802,3 +12802,57 @@
 .wt-page .wt-picker-list>button small,.wt-page .wt-picker-empty{color:var(--fx-muted)}
 .wt-page .wt-change-title{color:var(--fx-accent)}
 @media(max-width:760px){.wt-page{padding:12px}.wt-page .wt-content{grid-template-columns:1fr;border-radius:18px}.wt-page .wt-chat{min-height:320px;border-left:0;border-top:1px solid color-mix(in srgb,var(--fx-muted) 20%,transparent)}.wt-page .wt-chat-messages{min-height:180px;max-height:280px}.wt-page .wt-topbar{min-height:58px}.wt-page .wt-entry-art{grid-template-columns:86px 1fr}.wt-page .wt-entry-art img{width:86px}.wt-page .wt-request{flex-wrap:wrap}}
+
+
+/* Dedicated Watch Together route and streamlined room creation flow. */
+:root .page-watch-together .site-header,:root .page-watch-together .bottom-nav,:root .page-watch-together .liquid-glass-nav,:root .page-watch-together .mobile-nav{display:none!important}
+:root .page-watch-together .wt-page{position:relative;inset:auto;z-index:1;min-height:100dvh;width:100%;padding:clamp(16px,3vw,42px);overflow:visible;background:var(--fx-bg,var(--fx-surface));}
+:root .page-watch-together .wt-page:before{position:fixed}
+:root .page-watch-together .wt-topbar,:root .page-watch-together .wt-entry,:root .page-watch-together .wt-content{width:min(1320px,100%);max-width:1320px}
+:root .page-watch-together .wt-content{grid-template-columns:minmax(0,1fr) 350px;min-height:min(740px,calc(100dvh - 150px))}
+:root .page-watch-together .wt-main{padding:clamp(16px,2.5vw,30px)}
+:root .page-watch-together .wt-player{aspect-ratio:16/9;max-height:calc(100dvh - 340px)}
+:root .page-watch-together .wt-controls{transform:scale(.5);transform-origin:center;margin:-9px 0;}
+:root .page-watch-together .wt-connect-page{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,480px);align-items:center;gap:clamp(20px,5vw,72px);min-height:calc(100dvh - 125px);max-width:1120px}
+:root .page-watch-together .wt-connect-hero{display:block;padding:clamp(28px,5vw,64px);min-height:300px;border-radius:30px;background:radial-gradient(ellipse at 90% 0%,color-mix(in srgb,var(--fx-accent) 32%,transparent),transparent 58%),linear-gradient(135deg,color-mix(in srgb,var(--fx-accent) 15%,var(--fx-surface-2)),var(--fx-surface-2));}
+:root .page-watch-together .wt-connect-hero h2{font-size:clamp(38px,5vw,66px);letter-spacing:-.055em;max-width:520px}
+:root .page-watch-together .wt-connect-hero p{max-width:420px;font-size:15px}
+:root .page-watch-together .wt-connect-card{padding:clamp(20px,3vw,34px);border:1px solid color-mix(in srgb,var(--fx-muted) 20%,transparent);border-radius:25px;background:var(--fx-surface-2);box-shadow:var(--fx-shadow-md)}
+:root .page-watch-together .wt-code-form input{font-size:17px;font-weight:850;letter-spacing:.16em;text-align:center;text-transform:uppercase}
+:root .page-watch-together .wt-code-form button{display:flex;align-items:center;gap:8px;background:var(--fx-accent);color:white}
+:root .page-watch-together .wt-connect-card .wt-create{background:linear-gradient(110deg,var(--fx-accent),color-mix(in srgb,var(--fx-accent) 65%,#7764df));text-align:left}
+:root .page-watch-together .wt-connect-card .wt-create span{display:grid;gap:4px}
+:root .page-watch-together .wt-connect-card .wt-create small{font-size:10px;font-weight:550;opacity:.86}
+:root .page-watch-together .wt-create-backdrop{position:fixed;inset:0;z-index:10080;display:grid;place-items:center;padding:18px;background:rgba(5,9,17,.62);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+:root .page-watch-together .wt-create-dialog{width:min(560px,100%);max-height:min(84dvh,780px);overflow:auto;padding:clamp(18px,3vw,28px);border:1px solid color-mix(in srgb,var(--fx-muted) 22%,transparent);border-radius:25px;background:var(--fx-surface);color:var(--fx-text);box-shadow:0 28px 90px rgba(0,0,0,.32)}
+:root .page-watch-together .wt-create-dialog>header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px}
+:root .page-watch-together .wt-create-dialog>header span{font-size:9px;letter-spacing:.15em;font-weight:900;color:var(--fx-accent)}
+:root .page-watch-together .wt-create-dialog>header h2{margin:6px 0;font-size:26px;letter-spacing:-.04em;color:var(--fx-text)}
+:root .page-watch-together .wt-create-dialog>header p{margin:0;color:var(--fx-muted);font-size:12px}
+:root .page-watch-together .wt-create-dialog>header button{width:36px;height:36px;flex:0 0 auto;border:0;border-radius:50%;background:var(--fx-surface-2);color:var(--fx-text)}
+:root .page-watch-together .wt-create-dialog .wt-picker-list{max-height:340px}
+:root .page-watch-together .wt-create-dialog .wt-picker-list>button.selected{border-color:var(--fx-accent);background:color-mix(in srgb,var(--fx-accent) 10%,var(--fx-surface-2))}
+:root .page-watch-together .wt-dialog-selected{display:flex;align-items:center;gap:12px;margin:14px 0;padding:10px;border-radius:14px;background:var(--fx-surface-2)}
+:root .page-watch-together .wt-dialog-selected img{width:42px;height:62px;object-fit:cover;border-radius:8px}
+:root .page-watch-together .wt-dialog-selected span{display:grid;gap:4px}.wt-dialog-selected strong{color:var(--fx-text);font-size:12px}.wt-dialog-selected small{color:var(--fx-muted);font-size:10px}
+:root .page-watch-together .wt-create-dialog>.wt-create{margin-top:14px}
+:root .page-watch-together .wt-topbar .wt-close{background:var(--fx-surface-2);color:var(--fx-text)}
+@media(max-width:760px){
+ :root .page-watch-together .wt-page{padding:12px}
+ :root .page-watch-together .wt-connect-page{grid-template-columns:1fr;align-content:start;gap:14px;min-height:calc(100dvh - 80px);padding-top:16px}
+ :root .page-watch-together .wt-connect-hero{min-height:0;padding:24px;border-radius:22px}
+ :root .page-watch-together .wt-connect-hero h2{font-size:36px}
+ :root .page-watch-together .wt-connect-hero p{font-size:12px}
+ :root .page-watch-together .wt-connect-card{padding:18px;border-radius:20px}
+ :root .page-watch-together .wt-content{grid-template-columns:1fr;min-height:0}
+ :root .page-watch-together .wt-chat{min-height:340px;border-left:0;border-top:1px solid color-mix(in srgb,var(--fx-muted) 20%,transparent)}
+ :root .page-watch-together .wt-player{max-height:none}
+ :root .page-watch-together .wt-controls{transform:scale(.5);margin:-10px 0;}
+ :root .movie-site.page-profile .profile-header.profile-header-compact{grid-template-columns:58px minmax(0,1fr) 40px!important;grid-template-areas:"avatar identity auth" "next next next"!important;column-gap:12px!important;row-gap:14px!important;padding:16px!important;}
+ :root .movie-site.page-profile .profile-header .profile-avatar{grid-area:avatar!important;width:58px!important;height:58px!important;}
+ :root .movie-site.page-profile .profile-header .profile-info{grid-area:identity!important;min-width:0!important;gap:3px!important;}
+ :root .movie-site.page-profile .profile-header .profile-brand-kicker{font-size:9px!important;letter-spacing:.15em!important;}
+ :root .movie-site.page-profile .profile-header .profile-title{font-size:clamp(18px,5vw,23px)!important;line-height:1.1!important;white-space:normal!important;overflow-wrap:anywhere!important;}
+ :root .movie-site.page-profile .profile-header .profile-auth{grid-area:auth!important;justify-self:end!important;align-self:center!important;width:40px!important;min-width:40px!important;}
+ :root .movie-site.page-profile .profile-header .profile-next-up{grid-area:next!important;width:100%!important;max-width:none!important;}
+}

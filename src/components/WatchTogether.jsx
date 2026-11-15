@@ -45,12 +45,13 @@ const makeAccountIdentity = (user, profileName, profileAvatar) => {
 };
 
 
-export default function WatchTogether({ item, tmdbId, mediaType, season = 1, episode = 1, playerUrl, onEpisodeChange, onBeforeOpen, user, profileName, profileAvatar, selectableItems = [], requireMediaSelection = false }) {
+export default function WatchTogether({ item, tmdbId, mediaType, season = 1, episode = 1, playerUrl, onEpisodeChange, onBeforeOpen, onWatchTogether, onClose, startOpen = false, launchOnly = false, user, profileName, profileAvatar, selectableItems = [], requireMediaSelection = false }) {
   const guest = useMemo(() => user?.id ? makeAccountIdentity(user, profileName, profileAvatar) : { ...makeGuest(), isGuest: true }, [user?.id, user?.displayName, user?.email, user?.user_metadata?.display_name, user?.user_metadata?.full_name, user?.user_metadata?.avatar_url, user?.user_metadata?.picture, profileName, profileAvatar]);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(startOpen);
   const [showPlaybackNotice, setShowPlaybackNotice] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState(item || null);
   const [mediaQuery, setMediaQuery] = useState('');
+  const [setupDialog, setSetupDialog] = useState(false);
   const [room, setRoom] = useState(null);
   const [participant, setParticipant] = useState(null);
   const [members, setMembers] = useState([]);
@@ -151,8 +152,10 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       setOpen(true);
       setShowPlaybackNotice(true);
       const url = new URL(window.location.href);
+      url.hash = 'watch-together';
       url.searchParams.set('room', code.trim().toUpperCase());
       setRoomLink(url.toString());
+      window.history.replaceState(null, '', url.toString());
     } catch (e) { setError(e.message || 'Could not join this room.'); }
     finally { setBusy(false); }
   }, [rpc, guest, applyRoomSnapshot]);
@@ -172,9 +175,11 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       setParticipant(result.participant);
       applyRoomSnapshot(result);
       const url = new URL(window.location.href);
+      url.hash = 'watch-together';
       url.searchParams.set('room', code);
       const link = url.toString();
       setRoomLink(link);
+      window.history.replaceState(null, '', link);
       setOpen(true);
       setShowPlaybackNotice(true);
       try { await navigator.clipboard.writeText(link); setCopied(true); window.setTimeout(() => setCopied(false), 2200); } catch {}
@@ -210,7 +215,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   useEffect(() => {
     if (!room || !participant) return undefined;
     refreshRoom();
-    pollRef.current = window.setInterval(refreshRoom, 1800);
+    pollRef.current = window.setInterval(refreshRoom, 650);
     heartbeatRef.current = window.setInterval(() => {
       const r = roomRef.current, p = participantRef.current;
       if (r && p) rpc('watch_room_heartbeat', { p_code: r.code, p_token: p.token }).catch(() => {});
@@ -252,10 +257,11 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   };
   const sendPlayerCommand = useCallback((command, args = []) => {
     if (!canControl && !applyingRemoteRef.current && !['getCurrentTime','getDuration'].includes(command)) { setError('Request Operator access from the host to control playback.'); return; }
+    // Apply locally first; the RPC is only the shared state announcement.
     iframeRef.current?.contentWindow?.postMessage({ type: 'cinesrc:command', command, args }, 'https://cinesrc.st');
-    if (command === 'play') { setPaused(false); publishPlayback({ position: currentTimeRef.current, paused: false }); }
-    if (command === 'pause') { setPaused(true); publishPlayback({ position: currentTimeRef.current, paused: true }); }
-    if (command === 'seek') { const position = Math.max(0, Number(args[0]) || 0); setCurrentTime(position); publishPlayback({ position, paused: pausedRef.current }, true); }
+    if (command === 'play') { setPaused(false); pausedRef.current = false; publishPlayback({ position: currentTimeRef.current, paused: false }); }
+    if (command === 'pause') { setPaused(true); pausedRef.current = true; publishPlayback({ position: currentTimeRef.current, paused: true }); }
+    if (command === 'seek') { const position = Math.max(0, Number(args[0]) || 0); setCurrentTime(position); currentTimeRef.current = position; publishPlayback({ position, paused: pausedRef.current }, true); }
   }, [publishPlayback, canControl]);
 
   const sendChat = async (event) => {
@@ -287,7 +293,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       else await rpc('leave_watch_room', { p_code: r.code, p_token: p.token }).catch(() => {});
     }
     window.clearInterval(pollRef.current); window.clearInterval(heartbeatRef.current);
-    setRoom(null); setParticipant(null); setMembers([]); setMessages([]); setPlayerReady(false); lastVersionRef.current = 0; setOpen(false);
+    setRoom(null); setParticipant(null); setMembers([]); setMessages([]); setRequests([]); setPlayerReady(false); lastVersionRef.current = 0; setOpen(false); setSetupDialog(false); onClose?.();
     const url = new URL(window.location.href); url.searchParams.delete('room'); window.history.replaceState({}, '', url.toString());
   };
 
@@ -366,55 +372,65 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     window.setTimeout(() => { applyingRemoteRef.current = false; }, 1000);
   }, [playerReady, room?.id, sendPlayerCommand]);
 
+  if (launchOnly) return <button type="button" className="watch-together-launch" onClick={() => { onBeforeOpenRef.current?.(); onWatchTogether?.(); }}><Users size={16} /><span>Watch together</span></button>;
   return <>
-    <button type="button" className="watch-together-launch" onClick={() => { onBeforeOpenRef.current?.(); setOpen(true); setError(''); }}><Users size={16} /><span>Watch together</span></button>
     {open && <section className={`wt-page${room ? ' wt-room-active' : ''}`} aria-label="Watch together">
           <header className="wt-topbar">
             <div className="wt-brand"><span className="wt-brand-mark"><Radio size={18} /></span><div><small>MCU VIEWING ORDER · WATCH TOGETHER</small><strong>{room ? `ROOM ${room.code}` : 'Watch together'}</strong></div></div>
-            <button className="wt-close" onClick={() => room ? leaveRoom() : setOpen(false)} aria-label="Back to watch page"><X size={19} /></button>
+            <button className="wt-close" onClick={() => room ? leaveRoom() : (setOpen(false), onClose?.())} aria-label="Back to watch page"><X size={19} /></button>
           </header>
-          {!room ? <div className="wt-entry">
-            {requireMediaSelection && !selectedMedia ? <div className="wt-media-picker">
-              <div className="wt-picker-heading"><span>START A SCREENING</span><h2>Choose a movie or series</h2><p>Select a title from your watchlist or current search results.</p></div>
-              <label className="wt-picker-search"><Search size={16} /><input value={mediaQuery} onChange={event => setMediaQuery(event.target.value)} placeholder="Find a title…" /></label>
-              <div className="wt-picker-list">{filteredMediaItems.length ? filteredMediaItems.map((candidate,index) => <button type="button" key={`${candidate.tmdbId || candidate.id}-${index}`} onClick={() => { setSelectedMedia(candidate); setError(''); }}><img src={candidate.poster || guest.avatar} alt="" /><span><strong>{candidate.title}</strong><small>{candidate.year || '—'} · {candidate.type === 'series' || candidate.mediaType === 'tv' ? 'Series' : 'Movie'}</small></span><ChevronRight size={16} /></button>) : <p className="wt-picker-empty">No matching titles. Search for a title in Watch Browser first.</p>}</div>
-            </div> : <>
-              <div className="wt-entry-art"><img src={itemMedia.poster || guest.avatar} alt="" /><div><span>YOUR SCREENING ROOM</span><h2>{requireMediaSelection ? itemMedia.title : 'Good stories are better shared.'}</h2><p>{requireMediaSelection ? 'Your room will open with this title for everyone.' : 'Watch in sync, chat live, and invite anyone with one private link. No account required.'}</p></div></div>
-              {requireMediaSelection && <button type="button" className="wt-change-title" onClick={() => setSelectedMedia(null)}>Change selected title</button>}
-            <div className="wt-identity"><img src={guest.avatar} alt="" /><div><small>YOU'RE JOINING AS</small><strong>{guest.name}</strong><span>{guest.isGuest ? 'Guest · ready to watch' : 'Signed in · profile identity'}</span></div>{guest.isGuest && <button onClick={() => { localStorage.removeItem('mcu-watch-together-guest-v1'); window.location.reload(); }} title="Generate another guest name"><RefreshCw size={16} /></button>}</div>
-            <button className="wt-create" disabled={busy || (requireMediaSelection && !selectedMedia)} onClick={createRoom}>{busy ? 'Creating room…' : 'Create a screening room'}<Link2 size={17} /></button>
-            <div className="wt-or"><span />OR JOIN A FRIEND<span /></div>
-            <form className="wt-join-form" onSubmit={e => { e.preventDefault(); joinExisting(joinCode); }}><input value={joinCode} onChange={e => setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8))} placeholder="Enter 8-character room code" maxLength={8} autoComplete="off" /><button disabled={busy || joinCode.length !== 8}>{busy ? 'Joining…' : 'Join room'}</button></form>
-            {error && <p className="wt-error">{error}</p>}
-            <p className="wt-privacy"><ShieldCheck size={14} /> Private room links are hard to guess. Guests can join without signing in.</p>
-            </>}
+          {!room ? <div className="wt-entry wt-connect-page">
+            <div className="wt-entry-art wt-connect-hero"><div><span>PRIVATE SCREENING ROOM</span><h2>Watch together.</h2><p>Enter a room code to join your friends, or create a new room and invite them with a private link.</p></div></div>
+            <div className="wt-connect-card">
+              <div className="wt-picker-heading"><span>JOIN A SCREENING</span><h2>Have a room code?</h2><p>Enter the 8-character code shared by your host.</p></div>
+              <form className="wt-join-form wt-code-form" onSubmit={e => { e.preventDefault(); joinExisting(joinCode); }}>
+                <input value={joinCode} onChange={e => setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8))} placeholder="ROOM CODE" maxLength={8} autoComplete="off" aria-label="Room code" />
+                <button disabled={busy || joinCode.length !== 8}>{busy ? 'Joining…' : 'Join room'}<ChevronRight size={16}/></button>
+              </form>
+              <div className="wt-or"><span />OR<span /></div>
+              <button type="button" className="wt-create" onClick={() => { setSetupDialog(true); setSelectedMedia(item || null); setError(''); }}><span><strong>Create a new room</strong><small>Choose a movie or series for your screening</small></span><Link2 size={18}/></button>
+              <div className="wt-identity"><img src={guest.avatar} alt="" /><div><small>YOU'RE JOINING AS</small><strong>{guest.name}</strong><span>{guest.isGuest ? 'Guest · no account needed' : 'Signed in · profile identity'}</span></div>{guest.isGuest && <button onClick={() => { localStorage.removeItem('mcu-watch-together-guest-v1'); window.location.reload(); }} title="Generate another guest name"><RefreshCw size={16}/></button>}</div>
+              {error && <p className="wt-error">{error}</p>}
+              <p className="wt-privacy"><ShieldCheck size={14}/> Private room links are hard to guess. Guests can join without signing in.</p>
+            </div>
           </div> : <div className="wt-content">
             <div className="wt-main">
-              <div className="wt-room-title"><div><span>NOW SCREENING</span><h2>{room.media?.title || itemMedia.title}</h2><small>{members.length} {members.length === 1 ? 'viewer' : 'viewers'} · {participant.is_host ? 'Host' : (participant.role || 'viewer').replace(/^./, c => c.toUpperCase())}</small></div><button className="wt-copy" onClick={copyLink}>{copied ? <Check size={15} /> : <Copy size={15} />}{copied ? 'Copied' : 'Invite'}</button></div>
-              {showPlaybackNotice && <div className="wt-playback-tip" role="status"><span><strong>Playback tip</strong> If autoplay is blocked, tap Play once. A reputable ad blocker can help reduce pop-ups and redirects.</span><button type="button" onClick={() => setShowPlaybackNotice(false)} aria-label="Dismiss playback tip"><X size={15} /></button></div>}
+              <div className="wt-room-title"><div><span>NOW SCREENING</span><h2>{room.media?.title || itemMedia.title}</h2><small>{members.length} {members.length === 1 ? 'viewer' : 'viewers'} · {participant.is_host ? 'Host' : (participant.role || 'viewer').replace(/^./, c => c.toUpperCase())}</small></div><button className="wt-copy" onClick={copyLink}>{copied ? <Check size={15}/> : <Copy size={15}/ >}{copied ? 'Copied' : 'Invite'}</button></div>
+              {showPlaybackNotice && <div className="wt-playback-tip" role="status"><span><strong>Playback tip</strong> If autoplay is blocked, tap Play once. A reputable ad blocker can help reduce pop-ups and redirects.</span><button type="button" onClick={() => setShowPlaybackNotice(false)} aria-label="Dismiss playback tip"><X size={15}/></button></div>}
               <div className="wt-player"><iframe ref={iframeRef} src={sharedPlayerUrl} title={`Watch together: ${room.media?.title || itemMedia.title}`} allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowFullScreen /></div>
               {!canControl && <div className="wt-role-banner"><ShieldCheck size={16}/><span>You’re a Viewer. Request Operator access to control playback, or ask for individual skips.</span><button type="button" onClick={() => requestAccess('operator')} disabled={busy}>Request Operator</button></div>}
               <div className="wt-controls">
-                <button disabled={!canControl} onClick={() => sendPlayerCommand('seek', [Math.max(0, currentTimeRef.current - 10)])} aria-label="Back 10 seconds"><SkipBack size={17} /><small>10</small></button>
-                <button className="wt-play" disabled={!canControl} onClick={() => sendPlayerCommand(paused ? 'play' : 'pause')} aria-label={paused ? 'Play for everyone' : 'Pause for everyone'}>{paused ? <Play size={19} fill="currentColor" /> : <Pause size={19} fill="currentColor" />}</button>
-                <button disabled={!canControl} onClick={() => sendPlayerCommand('seek', [Math.min(duration || Infinity, currentTimeRef.current + 10)])} aria-label="Forward 10 seconds"><SkipForward size={17} /><small>10</small></button>
+                <button disabled={!canControl} onClick={() => sendPlayerCommand('seek', [Math.max(0, currentTimeRef.current - 10)])} aria-label="Back 10 seconds"><SkipBack size={17}/><small>10</small></button>
+                <button className="wt-play" disabled={!canControl} onClick={() => sendPlayerCommand(paused ? 'play' : 'pause')} aria-label={paused ? 'Play for everyone' : 'Pause for everyone'}>{paused ? <Play size={19} fill="currentColor"/> : <Pause size={19} fill="currentColor"/>}</button>
+                <button disabled={!canControl} onClick={() => sendPlayerCommand('seek', [Math.min(duration || Infinity, currentTimeRef.current + 10)])} aria-label="Forward 10 seconds"><SkipForward size={17}/><small>10</small></button>
                 <span className="wt-time">{timeText(currentTime)} / {timeText(duration)}</span>
-                <button className="wt-mute" disabled={!canControl} onClick={() => { sendPlayerCommand('setMuted', [!muted]); setMuted(!muted); }} aria-label={muted ? 'Unmute' : 'Mute'}>{muted ? <VolumeX size={17} /> : <Volume2 size={17} />}</button>
+                <button className="wt-mute" disabled={!canControl} onClick={() => { sendPlayerCommand('setMuted', [!muted]); setMuted(!muted); }} aria-label={muted ? 'Unmute' : 'Mute'}>{muted ? <VolumeX size={17}/> : <Volume2 size={17}/>}</button>
               </div>
-              <div className="wt-seek"><span style={{ width: `${progressPercent}%` }} /><input type="range" disabled={!canControl} min="0" max={Math.max(1, duration || 1)} step="1" value={Math.min(currentTime, duration || currentTime)} onChange={e => setCurrentTime(Number(e.target.value))} onPointerUp={e => { const time = Number(e.currentTarget.value); sendPlayerCommand('seek', [time]); publishPlayback({ position: time, paused: pausedRef.current }, true); }} onKeyUp={e => { if (e.key.startsWith('Arrow')) { const time = Number(e.currentTarget.value); sendPlayerCommand('seek', [time]); publishPlayback({ position: time, paused: pausedRef.current }, true); } }} aria-label="Seek shared playback" /></div>
-              {!canControl && <div className="wt-request-actions"><button onClick={() => requestAccess('skip_back')} disabled={busy}>Request −10 sec</button><button onClick={() => requestAccess('skip_forward')} disabled={busy}>Request +10 sec</button></div>}
-              <div className="wt-members">{members.map(member => <div className="wt-member" key={member.id}><span className="wt-member-avatar"><img src={member.avatar_url || blobatar(member.display_name)} alt="" /></span><span>{member.display_name}</span>{(member.role === 'host' || member.is_host) ? <Crown size={13} /> : member.role === 'operator' ? <ShieldCheck size={13} /> : null}</div>)}</div>
+              <div className="wt-seek"><span style={{width:`${progressPercent}%`}}/><input type="range" disabled={!canControl} min="0" max={Math.max(1,duration || 1)} step="1" value={Math.min(currentTime,duration || currentTime)} onChange={e=>setCurrentTime(Number(e.target.value))} onPointerUp={e=>{const time=Number(e.currentTarget.value);sendPlayerCommand('seek',[time]);publishPlayback({position:time,paused:pausedRef.current},true);}} onKeyUp={e=>{if(e.key.startsWith('Arrow')){const time=Number(e.currentTarget.value);sendPlayerCommand('seek',[time]);publishPlayback({position:time,paused:pausedRef.current},true);}}} aria-label="Seek shared playback"/></div>
+              {!canControl && <div className="wt-request-actions"><button onClick={()=>requestAccess('skip_back')} disabled={busy}>Request −10 sec</button><button onClick={()=>requestAccess('skip_forward')} disabled={busy}>Request +10 sec</button></div>}
+              <div className="wt-members">{members.map(member=><div className="wt-member" key={member.id}><span className="wt-member-avatar"><img src={member.avatar_url || blobatar(member.display_name)} alt=""/></span><span>{member.display_name}</span>{(member.role==='host'||member.is_host)?<Crown size={13}/>:member.role==='operator'?<ShieldCheck size={13}/>:null}</div>)}</div>
             </div>
             <aside className="wt-chat">
-              <div className="wt-chat-head"><div><MessageCircle size={17} /><strong>Room chat</strong></div><span>{members.length} online</span></div>
+              <div className="wt-chat-head"><div><MessageCircle size={17}/><strong>Room chat</strong></div><span>{members.length} online</span></div>
               <div className="wt-role-legend"><span><Crown size={12}/> Host</span><span><ShieldCheck size={12}/> Operator</span><span><Users size={12}/> Viewer</span></div>
-              {participant?.is_host && requests.length > 0 && <div className="wt-requests"><strong>Access requests <small>{requests.length}</small></strong>{requests.map(req => <div className="wt-request" key={req.id}><span><b>{req.display_name}</b><small>{({operator:'Operator access',moderator:'Moderator access',skip_forward:'Skip forward 10s',skip_back:'Skip back 10s',seek:'Seek request'})[req.request_type] || req.request_type}</small></span><button onClick={() => resolveRequest(req.id,true)} disabled={busy}>Allow</button><button onClick={() => resolveRequest(req.id,false)} disabled={busy}>Deny</button></div>)}</div>}
-              <div className="wt-chat-messages">{messages.map(message => <article className={message.participant_id === participant.id ? 'mine' : ''} key={message.id}><img src={message.avatar_url || blobatar(message.display_name)} alt="" /><div><div className="wt-message-meta"><b>{message.display_name}</b><time>{new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</time></div><p>{message.body}</p></div></article>)}</div>
-              <form className="wt-chat-form" onSubmit={sendChat}><input value={draft} onChange={e => setDraft(e.target.value.slice(0, 500))} placeholder="Say something…" maxLength={500} /><button disabled={!draft.trim() || busy} aria-label="Send message"><Send size={17} /></button></form>
+              {participant?.is_host && requests.length>0 && <div className="wt-requests"><strong>Access requests <small>{requests.length}</small></strong>{requests.map(req=><div className="wt-request" key={req.id}><span><b>{req.display_name}</b><small>{({operator:'Operator access',skip_forward:'Skip forward 10s',skip_back:'Skip back 10s',seek:'Seek request'})[req.request_type] || req.request_type}</small></span><button onClick={()=>resolveRequest(req.id,true)} disabled={busy}>Allow</button><button onClick={()=>resolveRequest(req.id,false)} disabled={busy}>Deny</button></div>)}</div>}
+              <div className="wt-chat-messages">{messages.map(message=><article className={message.participant_id===participant.id?'mine':''} key={message.id}><img src={message.avatar_url || blobatar(message.display_name)} alt=""/><div><div className="wt-message-meta"><b>{message.display_name}</b><time>{new Date(message.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</time></div><p>{message.body}</p></div></article>)}</div>
+              <form className="wt-chat-form" onSubmit={sendChat}><input value={draft} onChange={e=>setDraft(e.target.value.slice(0,500))} placeholder="Say something…" maxLength={500}/><button disabled={!draft.trim()||busy} aria-label="Send message"><Send size={17}/></button></form>
               {error && <p className="wt-error wt-chat-error">{error}</p>}
-              <div className="wt-chat-foot"><Clock3 size={13} /> Chat and room expire automatically after inactivity.</div>
+              <div className="wt-chat-foot"><Clock3 size={13}/> Chat and room expire automatically after inactivity.</div>
             </aside>
           </div>}
+          {setupDialog && <div className="wt-create-backdrop" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)setSetupDialog(false);}}>
+            <section className="wt-create-dialog" role="dialog" aria-modal="true" aria-label="Create a screening room">
+              <header><div><span>NEW SCREENING</span><h2>Choose your title</h2><p>Everyone joining this room will open this movie or series.</p></div><button type="button" onClick={()=>setSetupDialog(false)} aria-label="Close"><X size={18}/></button></header>
+              <label className="wt-picker-search"><Search size={16}/><input value={mediaQuery} onChange={event=>setMediaQuery(event.target.value)} placeholder="Search your titles…"/></label>
+              <div className="wt-picker-list">{filteredMediaItems.length?filteredMediaItems.map((candidate,index)=><button type="button" key={`${candidate.tmdbId || candidate.id}-${index}`} onClick={()=>{setSelectedMedia(candidate);setError('');}} className={selectedMedia?.tmdbId===candidate.tmdbId?'selected':''}><img src={candidate.poster || guest.avatar} alt=""/><span><strong>{candidate.title}</strong><small>{candidate.year || '—'} · {candidate.type==='series'||candidate.mediaType==='tv'?'Series':'Movie'}</small></span>{selectedMedia?.tmdbId===candidate.tmdbId?<Check size={17}/>:<ChevronRight size={16}/>}</button>):<p className="wt-picker-empty">No matching titles. Search for a title in Watch Browser first.</p>}</div>
+              {selectedMedia && <div className="wt-dialog-selected"><img src={selectedMedia.poster || guest.avatar} alt=""/><span><strong>{selectedMedia.title}</strong><small>{selectedMedia.year || '—'} · {selectedMedia.type==='series'||selectedMedia.mediaType==='tv'?'Series':'Movie'}</small></span></div>}
+              {error && <p className="wt-error">{error}</p>}
+              <button className="wt-create" disabled={busy || !selectedMedia || !Number(selectedMedia.tmdbId)} onClick={async()=>{await createRoom();setSetupDialog(false);}}>{busy?'Creating room…':'Create screening room'}<Link2 size={17}/></button>
+            </section>
+          </div>}
+
 
     </section>}
   </>;
