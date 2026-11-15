@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import LiquidGlass from 'liquid-glass-react';
 import { createPortal } from 'react-dom';
 import { Search, SlidersHorizontal, House, Bookmark, Play, UserRound, X, ArrowLeft, Star, BarChart3, Check, Clock, ListFilter, RotateCcw, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Calendar, Timer, Sparkles, LogOut, Cloud, Download, Camera, Info, ShieldAlert, Clapperboard, ArrowUpDown, ExternalLink } from 'lucide-react';
@@ -534,14 +534,25 @@ export default function App() {
     const target = NAV_VISIBLE[index];
     if (target) navigateSection(target);
   };
+  useLayoutEffect(() => {
+    const scroller = document.scrollingElement;
+    if (scroller) scroller.scrollTop = 0;
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [section]);
+
   const navigateSection = (id) => {
     const from = NAV_VISIBLE.indexOf(section);
     const to = NAV_VISIBLE.indexOf(id);
     if (to !== -1 && from !== -1 && to !== from) setSectionDirection(to > from ? 1 : -1);
     setSection(id);
-    // Every primary-page change starts at the top instead of carrying over
-    // the previous page's scroll position.
-    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Reset synchronously; smooth scrolling made page changes feel delayed.
+    if (typeof document !== 'undefined') {
+      const scroller = document.scrollingElement;
+      if (scroller) scroller.scrollTop = 0;
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }
     if (id === 'home') setWatchItem(null);
   };
   const handleNavClick = (id) => {
@@ -1571,7 +1582,7 @@ export default function App() {
       {section === 'analytics' && <><AnalyticsPanel stats={stats} large />{[['Watching','watching'],['Watched','watched'],['Dropped','dropped']].map(([label,status]) => { const items = analyticsItems.filter(item => item.userStatus === status); return items.length ? <MovieRail key={status} title={label} items={items} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} /> : null; })}</>}
             {section === 'profile' && <ProfilePage pageHeader={<ProfileHeader universe={universe} stats={stats} profileName={profileName} watchingItem={profileWatchingItem} nextUp={profileNextUpItem} onSelectItem={selectItem} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} />} activeTab={profileTab} setActiveTab={(tab) => { hapticTap(); setProfileTab(tab); setQuery(''); }} installApp={installApp} installAvailable={!!installPromptEvent} appInstalled={appInstalled} stats={profileStats} activeItems={profileItems} universe="all" query={query} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} conflict={conflict} onResolveRemote={resolveUseRemote} onResolveLocal={resolveKeepLocal} syncToast={toast} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} quietBrowsingOn={quietBrowsingOn} setQuietBrowsingOn={setQuietBrowsingOn} borderlessHeaderOn={borderlessHeaderOn} setBorderlessHeaderOn={setBorderlessHeaderOn} liquidGlassNavOn={liquidGlassNavOn} setLiquidGlassNavOn={setLiquidGlassNavOn} liquidGlassNavConfig={liquidGlassNavConfig} setLiquidGlassNavConfig={setLiquidGlassNavConfig} />}
       {WATCH_ENABLED && section === 'watch' && safeWatchItem && <WatchPage watchItem={safeWatchItem} activeItems={roadmapItems} onBack={() => { setWatchItem(null); window.history.replaceState(null, '', '#watch'); }} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={startWatchWithConfirm} updateAction={updateAction} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} />}
-      {WATCH_ENABLED && section === 'watch' && !safeWatchItem && <WatchBrowse activeItems={activeItems} externalResults={externalSearchResults} externalLoading={externalSearchLoading} actions={actions} query={query} onStartWatch={startWatchWithConfirm} onPlayExternal={onPlayExternal} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} />}
+      {WATCH_ENABLED && section === 'watch' && !safeWatchItem && <WatchBrowse activeItems={activeItems} externalResults={externalSearchResults} externalLoading={externalSearchLoading} actions={actions} query={query} onQueryChange={setQuery} onStartWatch={startWatchWithConfirm} onPlayExternal={onPlayExternal} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} />}
       </div>
 
       {warningToast && <div className="app-warning-toast" role="status"><ShieldAlert size={16} /><span>{warningToast}</span><button onClick={() => setWarningToast('')} aria-label="Dismiss warning"><X size={14} /></button></div>}
@@ -2865,12 +2876,18 @@ function ContinueWatching({ items, setSelected, setStatus, toggleBookmark, playT
   );
 }
 
-function WatchBrowse({ activeItems, externalResults = [], externalLoading = false, actions = {}, query = '', onStartWatch, onPlayExternal, setSelected, setStatus, toggleBookmark }) {
+function WatchBrowse({ activeItems, externalResults = [], externalLoading = false, actions = {}, query = '', onQueryChange, onStartWatch, onPlayExternal, setSelected, setStatus, toggleBookmark }) {
   const pageSize = 12;
+  const [watchSearch, setWatchSearch] = useState(query);
+  useEffect(() => { setWatchSearch(query); }, [query]);
+  const browseItems = activeItems.filter(item => {
+    const term = watchSearch.trim().toLowerCase();
+    return !term || [item.title, item.year, item.type, ...(item.genres || [])].some(value => String(value || '').toLowerCase().includes(term));
+  });
   const [upNextPage, setUpNextPage] = useState(1);
   const [upNextGridDensity, setUpNextGridDensity] = useState(4);
-  const inProgress = activeItems.filter(i => i.userStatus === 'watching');
-  const allUpNext = activeItems.filter(i => i.userStatus === 'unwatched');
+  const inProgress = browseItems.filter(i => i.userStatus === 'watching');
+  const allUpNext = browseItems.filter(i => i.userStatus === 'unwatched');
   const upNextPageCount = Math.max(1, Math.ceil(allUpNext.length / pageSize));
   const currentUpNextPage = Math.min(upNextPage, upNextPageCount);
   const upNext = allUpNext.slice((currentUpNextPage - 1) * pageSize, currentUpNextPage * pageSize);
@@ -2910,6 +2927,18 @@ function WatchBrowse({ activeItems, externalResults = [], externalLoading = fals
         </div>
         <div className="wh3-total"><Clapperboard size={17} /><span>{activeItems.length} titles</span></div>
       </header>
+
+      <div className="wh3-browser-search">
+        <Search size={17} aria-hidden="true" />
+        <input
+          type="search"
+          value={watchSearch}
+          onChange={event => { setWatchSearch(event.target.value); onQueryChange?.(event.target.value); setUpNextPage(1); }}
+          placeholder="Search movies and series…"
+          aria-label="Search watch browser"
+        />
+        {watchSearch && <button type="button" onClick={() => { setWatchSearch(''); onQueryChange?.(''); setUpNextPage(1); }} aria-label="Clear search"><X size={16} /></button>}
+      </div>
 
       <section className="wh3-overview" aria-label="Viewing progress">
         <div className="wh3-progress-copy">

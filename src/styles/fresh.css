@@ -11732,3 +11732,103 @@
   outline: 0 !important;
   box-shadow: none !important;
 }
+
+
+/* Universe selection: preserve the sliding motion, replace the tinted fill with
+   a neutral translucent gradient and a soft blurred glass edge. */
+:root[data-header-design="cinematic"] .movie-site .site-header .universe-tabs::before {
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.62), rgba(255,255,255,.24) 48%, rgba(222,231,245,.18)) !important;
+  border: 1px solid rgba(255,255,255,.42);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.68),
+    inset 0 -1px 0 rgba(135,150,174,.10),
+    0 5px 18px rgba(31,45,68,.09) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.35);
+  backdrop-filter: blur(18px) saturate(1.35);
+}
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site .site-header .universe-tabs::before {
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.18), rgba(210,222,241,.08) 52%, rgba(255,255,255,.035)) !important;
+  border-color: rgba(255,255,255,.16);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.2),
+    inset 0 -1px 0 rgba(0,0,0,.12),
+    0 5px 18px rgba(0,0,0,.2) !important;
+}
+:root[data-header-design="cinematic"] .movie-site .site-header .universe-tabs > button.active {
+  color: var(--fx-text, #202938) !important;
+  filter: none !important;
+}
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site .site-header .universe-tabs > button.active {
+  color: #f1f4f9 !important;
+}
+
+/* Insights uses multi-select, so each selected universe gets the same neutral
+   frosted treatment without changing its existing multi-select behaviour. */
+:root .movie-site.page-analytics .stats-universe-tabs button.active,
+:root .movie-site.page-analytics .stats-universe-tabs button[aria-pressed="true"] {
+  color: #202938 !important;
+  background: linear-gradient(135deg, rgba(255,255,255,.72), rgba(255,255,255,.30) 55%, rgba(222,231,245,.22)) !important;
+  border: 1px solid rgba(255,255,255,.48) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.72), 0 4px 14px rgba(31,45,68,.08) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(1.35) !important;
+  backdrop-filter: blur(16px) saturate(1.35) !important;
+}
+:root[data-theme="dark"] .movie-site.page-analytics .stats-universe-tabs button.active,
+:root[data-theme="dark"] .movie-site.page-analytics .stats-universe-tabs button[aria-pressed="true"] {
+  color: #f1f4f9 !important;
+  background: linear-gradient(135deg, rgba(255,255,255,.18), rgba(210,222,241,.08) 55%, rgba(255,255,255,.035)) !important;
+  border-color: rgba(255,255,255,.18) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 4px 14px rgba(0,0,0,.18) !important;
+}
+
+/* Watch browser search field. */
+:root .wh3-browser-search {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 48px;
+  margin: 0 0 22px;
+  padding: 0 15px;
+  border: 1px solid rgba(128,145,171,.16);
+  border-radius: 15px;
+  background: linear-gradient(115deg, rgba(255,255,255,.58), rgba(238,243,251,.28));
+  color: #778394;
+  -webkit-backdrop-filter: blur(18px) saturate(1.25);
+  backdrop-filter: blur(18px) saturate(1.25);
+}
+:root .wh3-browser-search input {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #202938;
+  font: inherit;
+  font-size: 12px;
+}
+:root .wh3-browser-search input::placeholder { color: #8994a3; }
+:root .wh3-browser-search button {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(128,145,171,.12);
+  color: #687487;
+}
+:root[data-theme="dark"] .wh3-browser-search {
+  border-color: rgba(169,183,207,.14);
+  background: linear-gradient(115deg, rgba(39,48,65,.55), rgba(24,31,44,.30));
+  color: #aab4c3;
+}
+:root[data-theme="dark"] .wh3-browser-search input { color: #eef2f8; }
+:root[data-theme="dark"] .wh3-browser-search input::placeholder { color: #8995a8; }
+:root[data-theme="dark"] .wh3-browser-search button { background: rgba(255,255,255,.08); color: #c1cbd9; }
+@media(max-width:700px) {
+  :root .wh3-browser-search { min-height: 44px; margin-bottom: 17px; border-radius: 13px; }
+}
