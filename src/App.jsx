@@ -610,6 +610,7 @@ export default function App() {
   const [warningToast, setWarningToast] = useState('');
   const { user, login, signup, logout: authLogout, resetPassword, updatePassword, configured, recovery } = useAuth();
   const { pushToCloud, pushBeforeLogout, lastSynced, syncing, conflict, resolveUseRemote, resolveKeepLocal, toast } = useCloudSync(user, actions, profileName, setActions, setProfileName, watchItem, setWatchItem, profileAvatar, setProfileAvatar);
+  useEffect(() => { try { if (profileAvatar) localStorage.setItem('incursion-profile-avatar', profileAvatar); else localStorage.removeItem('incursion-profile-avatar'); } catch {} }, [profileAvatar]);
   useEffect(() => { if (recovery) setAuthOpen(true); }, [recovery]);
   useEffect(() => { if (user?.displayName && !profileName) setProfileName(user.displayName); }, [user?.displayName, profileName]);
   const showWarningToast = useCallback((item) => {
