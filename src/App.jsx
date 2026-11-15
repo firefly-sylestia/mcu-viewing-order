@@ -2059,7 +2059,7 @@ function ListSection({ items, sortBy = 'order', sortDirection = 'asc', sortKey, 
     </article>)}</div>}
     {pageCount > 1 && <nav className="pagination" aria-label="Viewing list pages"><button onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} aria-label="Previous page"><ChevronLeft size={18} /></button>{Array.from({ length: pageCount }, (_, index) => index + 1).map(pageNumber => <button key={pageNumber} className={currentPage === pageNumber ? 'active' : ''} aria-current={currentPage === pageNumber ? 'page' : undefined} onClick={() => goToPage(pageNumber)}>{pageNumber}</button>)}<button onClick={() => goToPage(currentPage + 1)} disabled={currentPage === pageCount} aria-label="Next page"><ChevronRight size={18} /></button></nav>}
     
-    {externalResults.length > 0 && (
+    {watchSearchResults.length > 0 && (
       <div className="external-results">
         <div className="external-header">
           <h3>{items.length > 0 ? 'Also Found' : 'Search Results'}</h3>
@@ -2838,6 +2838,7 @@ function TrailerModal({ trailer, onClose }) {
 
 function ContinueWatching({ items, setSelected, setStatus, toggleBookmark, playTrailer, onResume }) {
   const handleResume = async (item) => {
+    if (item.id === 2401 || /endgame\s*\(?(?:theatrical\s*)?encore\)?/i.test(item.title || '')) { onStartWatch(item, 299534, 'movie'); return; }
     const params = new URLSearchParams({ title: item.title, year: String(item.year || '') });
     if (item.tmdbId) params.set('tmdbId', String(item.tmdbId));
     const res = await fetch(apiUrl(`/api/tmdb/poster?${params.toString()}`));
@@ -2882,8 +2883,34 @@ function ContinueWatching({ items, setSelected, setStatus, toggleBookmark, playT
 function WatchBrowse({ activeItems, externalResults = [], externalLoading = false, actions = {}, query = '', onQueryChange, onStartWatch, onPlayExternal, setSelected, setStatus, toggleBookmark, user, profileName, profileAvatar, onWatchTogether }) {
   const pageSize = 12;
   const [watchSearch, setWatchSearch] = useState(query);
+  const [watchTmdbResults, setWatchTmdbResults] = useState([]);
+  const [watchTmdbLoading, setWatchTmdbLoading] = useState(false);
   const [savedWatchRoom, setSavedWatchRoom] = useState(() => { try { return JSON.parse(localStorage.getItem('mcu-watch-together-active-room-v1') || 'null'); } catch { return null; } });
   useEffect(() => { setWatchSearch(query); }, [query]);
+  useEffect(() => {
+    const term=watchSearch.trim();
+    if(term.length<2){setWatchTmdbResults([]);setWatchTmdbLoading(false);return undefined;}
+    let cancelled=false;
+    const timer=setTimeout(async()=>{
+      setWatchTmdbLoading(true);
+      try{
+        const response=await fetch(apiUrl('/api/tmdb/search?q='+encodeURIComponent(term)));
+        if(!response.ok)throw new Error('TMDB search failed');
+        const data=await response.json();
+        if(!cancelled){
+          const known=new Set(activeItems.map(item=>Number(item.tmdbId)).filter(Boolean));
+          setWatchTmdbResults((data.results||[]).filter(result=>!known.has(Number(result.id))));
+        }
+      }catch{if(!cancelled)setWatchTmdbResults([]);}
+      finally{if(!cancelled)setWatchTmdbLoading(false);}
+    },300);
+    return()=>{cancelled=true;clearTimeout(timer);};
+  },[watchSearch,activeItems]);
+  const watchSearchResults=useMemo(()=>{
+    const seen=new Set();
+    return [...externalResults,...watchTmdbResults].filter(result=>{const key=result.type+':'+result.id;if(seen.has(key))return false;seen.add(key);return true;});
+  },[externalResults,watchTmdbResults]);
+
   const resumeSavedWatchRoom = () => {
     if (!savedWatchRoom?.code) return;
     const url = new URL(window.location.href);
@@ -3031,9 +3058,9 @@ function WatchBrowse({ activeItems, externalResults = [], externalLoading = fals
 
       {externalResults.length > 0 && (
         <section className="wh3-section">
-          <div className="wh3-section-title"><div><span className="wh3-overline">DISCOVER</span><h2>Search results</h2></div><span>{externalResults.length} found</span></div>
+          <div className="wh3-section-title"><div><span className="wh3-overline">DISCOVER</span><h2>Search results</h2></div><span>{watchSearchResults.length} found · TMDB</span></div>
           <div className="wh3-watchlist wh3-search-list">
-            {externalResults.map((result,index) => {
+            {watchSearchResults.map((result,index) => {
               const action=actions[`tmdb:${result.type}:${result.id}`]||{};
               const extItem={id:`tmdb-${result.type}-${result.id}`,external:true,title:result.title,type:result.type==='tv'?'series':'film',poster:result.poster,backdrop:result.backdrop,year:result.year,rating:result.rating,overview:result.overview,desc:result.overview,genres:result.genres||[],runtime:result.runtime||(result.type==='tv'?45:120),tmdbId:result.id,mediaType:result.type,universe:'tmdb',accent:'#4a5568',userStatus:action.status||'unwatched',bookmarked:Boolean(action.bookmarked),_raw:result};
               return <article className="wh3-watch-row" key={extItem.id}>
@@ -3047,8 +3074,8 @@ function WatchBrowse({ activeItems, externalResults = [], externalLoading = fals
         </section>
       )}
 
-      {inProgress.length===0 && allUpNext.length===0 && externalResults.length===0 && !externalLoading && <div className="wh3-empty"><Clapperboard size={26}/><h2>Your watchlist is waiting</h2><p>Search for a movie or series to add it here.</p></div>}
-      {externalLoading && <div className="wh3-loading"><span/>Finding titles…</div>}
+      {inProgress.length===0 && allUpNext.length===0 && watchSearchResults.length===0 && !watchTmdbLoading && !externalLoading && <div className="wh3-empty"><Clapperboard size={26}/><h2>Your watchlist is waiting</h2><p>Search for a movie or series to add it here.</p></div>}
+      {(externalLoading||watchTmdbLoading) && <div className="wh3-loading"><span/>Finding titles on TMDB…</div>}
       {query && <p className="wh3-query">Results for “{query}”</p>}
     </main>
   );

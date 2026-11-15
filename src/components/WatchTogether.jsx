@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Copy, Check, Users, MessageCircle, Play, Pause, SkipBack, SkipForward, X, Link2, Radio, Crown, Send, LogOut, RefreshCw, Volume2, VolumeX, Clock3, ShieldCheck, Search, ChevronRight, Pencil } from 'lucide-react';
+import { Copy, Check, Users, MessageCircle, Play, Pause, SkipBack, SkipForward, X, Link2, Radio, Crown, Send, LogOut, RefreshCw, Volume2, VolumeX, Clock3, ShieldCheck, Search, ChevronRight, Pencil, PanelRightClose, PanelRightOpen } from 'lucide-react';
 import { supabasePublicRequest, supabaseDataRequest } from '../supabase';
 
 const RPC = '/rest/v1/rpc/';
@@ -85,6 +85,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [muted, setMuted] = useState(false);
+  const [chatCollapsed, setChatCollapsed] = useState(false);
   const [roomLink, setRoomLink] = useState('');
   const [guestNameDraft, setGuestNameDraft] = useState('');
   const [editingGuestName, setEditingGuestName] = useState(false);
@@ -92,6 +93,8 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const localHistoryFlushRef = useRef(0);
   const remoteHistoryFlushRef = useRef(0);
   const iframeRef = useRef(null);
+  const pendingPlayerCommandsRef = useRef([]);
+  const durationRef = useRef(0);
   const pollRef = useRef(null);
   const playbackPollRef = useRef(null);
   const pollInFlightRef = useRef(false);
@@ -135,6 +138,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   useEffect(() => { currentTimeRef.current = currentTime; }, [currentTime]);
   useEffect(() => { pausedRef.current = paused; }, [paused]);
   useEffect(() => { playerReadyRef.current = playerReady; }, [playerReady]);
+  useEffect(() => { durationRef.current = duration; }, [duration]);
 
   const rpc = useCallback(async (name, args) => {
     const options = { method: 'POST', body: JSON.stringify(args) };
@@ -166,7 +170,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
           const frame = iframeRef.current;
           const send = (command, args = []) => frame?.contentWindow?.postMessage({ type: 'cinesrc:command', command, args }, 'https://cinesrc.st');
           if (!localPlaybackOverrideRef.current) {
-            if (Math.abs(previousTime - target) > 5) send('seek', [target]);
+            if (Math.abs(previousTime - target) > 1.25) send('seek', [target]);
             if (playback.paused) { send('pause'); setPaused(true); pausedRef.current = true; }
             else { send('play'); setPaused(false); pausedRef.current = false; }
           }
@@ -310,7 +314,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
           applyingRemoteRef.current = true;
           const frame = iframeRef.current;
           const send = (command, args = []) => frame?.contentWindow?.postMessage({ type: 'cinesrc:command', command, args }, 'https://cinesrc.st');
-          if (Math.abs(previousTime - target) > 5) send('seek', [target]);
+          if (Math.abs(previousTime - target) > 1.25) send('seek', [target]);
           send(playback.paused ? 'pause' : 'play');
           setTimeout(() => { applyingRemoteRef.current = false; }, 1800);
         }
@@ -327,7 +331,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     playbackPollRef.current = window.setInterval(refreshPlayback, 450);
     heartbeatRef.current = window.setInterval(() => {
       const r = roomRef.current, p = participantRef.current;
-      if (r && p) rpc('watch_room_heartbeat', { p_code: r.code, p_token: p.token }).catch(() => {});
+      if (r && p) rpc('watch_room_heartbeat', { p_code: r.code, p_token: p.token, p_position: currentTimeRef.current, p_duration: durationRef.current }).catch(() => {});
     }, 12000);
     return () => { window.clearInterval(pollRef.current); window.clearInterval(playbackPollRef.current); window.clearInterval(heartbeatRef.current); };
   }, [room?.id, participant?.id, refreshRoom, refreshPlayback, rpc]);
@@ -370,11 +374,21 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     catch (e) { setError(e.message || 'Could not update request.'); }
     finally { setBusy(false); }
   };
+  const postPlayerCommand = useCallback((command, args = []) => {
+    const message = { type: 'cinesrc:command', command, args };
+    if (!playerReadyRef.current || !iframeRef.current?.contentWindow) {
+      pendingPlayerCommandsRef.current = [...pendingPlayerCommandsRef.current, message].slice(-12);
+      return false;
+    }
+    iframeRef.current.contentWindow.postMessage(message, 'https://cinesrc.st');
+    return true;
+  }, []);
+
   const sendPlayerCommand = useCallback((command, args = []) => {
     if (!canControl && !applyingRemoteRef.current && !['getCurrentTime','getDuration'].includes(command)) {
       if (['play','pause','seek'].includes(command)) {
         setLocalPlaybackOverride(true); localPlaybackOverrideRef.current = true;
-        iframeRef.current?.contentWindow?.postMessage({ type: 'cinesrc:command', command, args }, 'https://cinesrc.st');
+        postPlayerCommand(command,args);
         if (command === 'play') { setPaused(false); pausedRef.current = false; }
         if (command === 'pause') { setPaused(true); pausedRef.current = true; }
         if (command === 'seek') { const position=Math.max(0,Number(args[0])||0);setCurrentTime(position);currentTimeRef.current=position; }
@@ -387,25 +401,25 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     if (command === 'play') { setPaused(false); pausedRef.current = false; publishPlayback({ position: currentTimeRef.current, paused: false }); }
     if (command === 'pause') { setPaused(true); pausedRef.current = true; publishPlayback({ position: currentTimeRef.current, paused: true }); }
     if (command === 'seek') { const position = Math.max(0, Number(args[0]) || 0); setCurrentTime(position); currentTimeRef.current = position; publishPlayback({ position, paused: pausedRef.current }, true); }
-  }, [publishPlayback, canControl]);
+  }, [publishPlayback, canControl, postPlayerCommand]);
 
   const syncToRoom = useCallback(() => {
     if (!room?.playback) return;
     setSavedLocalPosition(currentTimeRef.current); setSavedLocalPaused(pausedRef.current); setCanReturnLocal(true);
     const playback=room.playback;
     const target=Math.max(0,Number(playback.position)||0)+(playback.paused?0:Math.max(0,(Date.now()-Date.parse(playback.updated_at||room.updated_at||new Date().toISOString()))/1000));
-    applyingRemoteRef.current=true; iframeRef.current?.contentWindow?.postMessage({type:'cinesrc:command',command:'seek',args:[target]},'https://cinesrc.st');
-    iframeRef.current?.contentWindow?.postMessage({type:'cinesrc:command',command:playback.paused?'pause':'play',args:[]},'https://cinesrc.st');
+    applyingRemoteRef.current=true; postPlayerCommand('seek',[target]);
+    postPlayerCommand(playback.paused?'pause':'play',[]);
     setCurrentTime(target);currentTimeRef.current=target;setPaused(Boolean(playback.paused));pausedRef.current=Boolean(playback.paused);
-    setLocalPlaybackOverride(false);localPlaybackOverrideRef.current=false;window.setTimeout(()=>{applyingRemoteRef.current=false;},800);
-  }, [room]);
+    setLocalPlaybackOverride(false);localPlaybackOverrideRef.current=false;window.setTimeout(()=>{applyingRemoteRef.current=false;},2400);
+  }, [room, postPlayerCommand]);
   const returnToLocalPosition = useCallback(() => {
     if (savedLocalPosition == null) return;
-    applyingRemoteRef.current=true;iframeRef.current?.contentWindow?.postMessage({type:'cinesrc:command',command:'seek',args:[savedLocalPosition]},'https://cinesrc.st');
-    iframeRef.current?.contentWindow?.postMessage({type:'cinesrc:command',command:savedLocalPaused?'pause':'play',args:[]},'https://cinesrc.st');
+    applyingRemoteRef.current=true;postPlayerCommand('seek',[savedLocalPosition]);
+    postPlayerCommand(savedLocalPaused?'pause':'play',[]);
     setCurrentTime(savedLocalPosition);currentTimeRef.current=savedLocalPosition;setPaused(savedLocalPaused);pausedRef.current=savedLocalPaused;setLocalPlaybackOverride(true);localPlaybackOverrideRef.current=true;setCanReturnLocal(false);
-    window.setTimeout(()=>{applyingRemoteRef.current=false;},700);
-  }, [savedLocalPosition]);
+    window.setTimeout(()=>{applyingRemoteRef.current=false;},2400);
+  }, [savedLocalPosition, savedLocalPaused, postPlayerCommand]);
 
   const sendChat = async (event) => {
     event?.preventDefault();
@@ -491,6 +505,9 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       if (!data || typeof data !== 'object') return;
       if (data.type === 'cinesrc:ready') {
         setPlayerReady(true);
+        playerReadyRef.current = true;
+        const queued = pendingPlayerCommandsRef.current.splice(0);
+        queued.forEach(command => iframeRef.current?.contentWindow?.postMessage(command, 'https://cinesrc.st'));
         sendPlayerCommand('getCurrentTime');
         sendPlayerCommand('getDuration');
       }
@@ -611,21 +628,22 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                 <div className="wt-episode-row">{availableEpisodes.map(ep=><button type="button" key={ep.episode_number} disabled={!canControl} className={activeEpisode===Number(ep.episode_number)?"active":""} onClick={()=>changeRoomEpisode(activeSeason,ep.episode_number)}><b>EP {ep.episode_number}</b><span>{ep.name || "Episode "+ep.episode_number}</span></button>)}</div>
                 {!canControl && <small className="wt-episode-lock">Only the host or an operator can change the room episode.</small>}
               </section>}
+              <div className="wt-user-progress" aria-label="Participant playback progress">{members.map(member=>{const pct=Number(member.playback_duration)>0?Math.max(0,Math.min(100,Math.round(Number(member.playback_position||0)/Number(member.playback_duration)*100))):0;return <span className="wt-progress-pill" key={member.id}><img src={member.avatar_url||blobatar(member.display_name)} alt=""/><b>{member.display_name}</b><i>{Number(member.playback_duration)>0?pct+"%":timeText(member.playback_position||0)}</i></span>;})}</div>
               <div className="wt-player"><iframe ref={iframeRef} src={sharedPlayerUrl} title={`Watch together: ${room.media?.title || itemMedia.title}`} allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowFullScreen /></div>
               {!canControl && <div className="wt-role-banner"><ShieldCheck size={16}/><span>You’re a Viewer. Request Operator access to control playback, or ask for individual skips.</span><button type="button" onClick={() => requestAccess('operator')} disabled={busy}>Request Operator</button></div>}
               <div className="wt-controls">
-                <button disabled={!canControl && !room} onClick={() => sendPlayerCommand('seek', [Math.max(0, currentTimeRef.current - 10)])} aria-label="Back 10 seconds"><SkipBack size={17}/><small>10</small></button>
-                <button className="wt-play" disabled={!room} onClick={() => sendPlayerCommand(paused ? 'play' : 'pause')} aria-label={paused ? 'Play for everyone' : 'Pause for everyone'}>{paused ? <Play size={19} fill="currentColor"/> : <Pause size={19} fill="currentColor"/>}</button>
+                <button disabled={!room || !playerReady} onClick={() => sendPlayerCommand('seek', [Math.max(0, currentTimeRef.current - 10)])} aria-label="Back 10 seconds"><SkipBack size={17}/><small>10</small></button>
+                <button className="wt-play" disabled={!room || !playerReady} onClick={() => sendPlayerCommand(paused ? 'play' : 'pause')} aria-label={paused ? 'Play for everyone' : 'Pause for everyone'}>{paused ? <Play size={19} fill="currentColor"/> : <Pause size={19} fill="currentColor"/>}</button>
                 <button disabled={!canControl && !room} onClick={() => sendPlayerCommand('seek', [Math.min(duration || Infinity, currentTimeRef.current + 10)])} aria-label="Forward 10 seconds"><SkipForward size={17}/><small>10</small></button>
                 <span className="wt-time">{timeText(currentTime)} / {timeText(duration)}</span>
                 <button className="wt-mute" disabled={!canControl} onClick={() => { sendPlayerCommand('setMuted', [!muted]); setMuted(!muted); }} aria-label={muted ? 'Unmute' : 'Mute'}>{muted ? <VolumeX size={17}/> : <Volume2 size={17}/>}</button>
               </div>
-              <div className="wt-seek"><span style={{width:`${progressPercent}%`}}/><input type="range" disabled={!room} min="0" max={Math.max(1,duration || 1)} step="1" value={Math.min(currentTime,duration || currentTime)} onChange={e=>setCurrentTime(Number(e.target.value))} onPointerUp={e=>{const time=Number(e.currentTarget.value);sendPlayerCommand('seek',[time]);publishPlayback({position:time,paused:pausedRef.current},true);}} onKeyUp={e=>{if(e.key.startsWith('Arrow')){const time=Number(e.currentTarget.value);sendPlayerCommand('seek',[time]);publishPlayback({position:time,paused:pausedRef.current},true);}}} aria-label="Seek shared playback"/></div>
+              <div className="wt-seek"><span style={{width:`${progressPercent}%`}}/><input type="range" disabled={!room || !playerReady} min="0" max={Math.max(1,duration || 1)} step="1" value={Math.min(currentTime,duration || currentTime)} onChange={e=>setCurrentTime(Number(e.target.value))} onPointerUp={e=>{const time=Number(e.currentTarget.value);sendPlayerCommand('seek',[time]);}} onKeyUp={e=>{if(e.key.startsWith('Arrow')){const time=Number(e.currentTarget.value);sendPlayerCommand('seek',[time]);}}} aria-label="Seek shared playback"/></div>
               {!canControl && <div className="wt-request-actions"><button onClick={()=>requestAccess('skip_back')} disabled={busy}>Request −10 sec</button><button onClick={()=>requestAccess('skip_forward')} disabled={busy}>Request +10 sec</button></div>}
               <div className="wt-members">{members.map(member=><button type="button" className={"wt-member"+(participant?.is_host&&!member.is_host?" wt-member-manage":"")} key={member.id} onClick={()=>participant?.is_host&&!member.is_host&&grantOperator(member)} disabled={!participant?.is_host||member.is_host||member.role==="operator"||busy} title={member.is_host?"Room host":member.role==="operator"?"Already an operator":participant?.is_host?"Make this participant an operator":"Room participant"}><span className="wt-member-avatar"><img src={member.avatar_url||blobatar(member.display_name)} alt=""/></span><span>{member.display_name}</span>{(member.role==="host"||member.is_host)?<Crown size={13}/>:member.role==="operator"?<ShieldCheck size={13}/>:participant?.is_host?<span className="wt-promote-hint">+ Operator</span>:null}</button>)}</div>
             </div>
-            <aside className="wt-chat">
-              <div className="wt-chat-head"><div><MessageCircle size={17}/><strong>Room chat</strong></div><span>{members.length} online</span></div>
+            <aside className={"wt-chat"+(chatCollapsed?" is-collapsed":"")}>
+              <div className="wt-chat-head"><div><MessageCircle size={17}/><strong>Room chat</strong></div><span>{members.length} online</span><button type="button" className="wt-chat-toggle" onClick={()=>setChatCollapsed(value=>!value)} aria-label={chatCollapsed?"Expand room chat":"Collapse room chat"} title={chatCollapsed?"Expand chat":"Collapse chat"}>{chatCollapsed?<PanelRightOpen size={17}/>:<PanelRightClose size={17}/>}</button></div>
               <div className="wt-role-legend"><span><Crown size={12}/> Host</span><span><ShieldCheck size={12}/> Operator</span><span><Users size={12}/> Viewer</span></div>
               {participant?.is_host && requests.length>0 && <div className="wt-requests"><strong>Access requests <small>{requests.length}</small></strong>{requests.map(req=><div className="wt-request" key={req.id}><span><b>{req.display_name}</b><small>{({operator:'Operator access',skip_forward:'Skip forward 10s',skip_back:'Skip back 10s',seek:'Seek request'})[req.request_type] || req.request_type}</small></span><button onClick={()=>resolveRequest(req.id,true)} disabled={busy}>Allow</button><button onClick={()=>resolveRequest(req.id,false)} disabled={busy}>Deny</button></div>)}</div>}
               <div className="wt-chat-messages">{messages.map(message=><article className={message.participant_id===participant.id?'mine':''} key={message.id}><img src={message.avatar_url || blobatar(message.display_name)} alt=""/><div><div className="wt-message-meta"><b>{message.display_name}</b><time>{new Date(message.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</time></div><p>{message.body}</p></div></article>)}</div>

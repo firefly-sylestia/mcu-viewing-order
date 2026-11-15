@@ -13230,3 +13230,36 @@
 .wt-episode-picker button:disabled{opacity:.62}.wt-episode-lock{display:block;margin-top:8px;color:var(--fx-muted);font-size:10px}
 .wt-member-manage{border:1px solid color-mix(in srgb,var(--fx-accent) 24%,transparent);cursor:pointer;font:inherit}.wt-member-manage:disabled{cursor:default;opacity:.65}.wt-promote-hint{font-size:9px;color:var(--fx-accent);font-weight:850;white-space:nowrap}
 @media(max-width:620px){.wt-episode-picker{padding:11px;border-radius:14px}.wt-episode-row button{flex-basis:116px}}
+
+/* Watch Together desktop cinema layout: use the whole viewport and a compact chat drawer. */
+@media (min-width: 761px) {
+  :root .page-watch-together .wt-page { width:100%; min-height:100dvh; padding:12px 18px 18px; }
+  :root .page-watch-together .wt-topbar,
+  :root .page-watch-together .wt-content { width:100%; max-width:none; }
+  :root .page-watch-together .wt-topbar { margin:0 auto 10px; }
+  :root .page-watch-together .wt-content { grid-template-columns:minmax(0,1fr) 320px; gap:0; min-height:calc(100dvh - 82px); margin:0; border-radius:18px; }
+  :root .page-watch-together .wt-main { min-width:0; padding:14px 18px 18px; }
+  :root .page-watch-together .wt-player { width:100%; max-width:none; max-height:none; aspect-ratio:16/9; }
+  :root .page-watch-together .wt-player iframe { width:100%!important; height:100%!important; transform:none!important; }
+  :root .page-watch-together .wt-chat { min-width:0; min-height:0; height:100%; max-height:calc(100dvh - 82px); }
+  :root .page-watch-together .wt-chat.is-collapsed { width:58px; min-width:58px; overflow:hidden; }
+  :root .page-watch-together .wt-content:has(.wt-chat.is-collapsed) { grid-template-columns:minmax(0,1fr) 58px; }
+  :root .page-watch-together .wt-chat.is-collapsed .wt-chat-head { min-height:58px; padding:10px; justify-content:center; }
+  :root .page-watch-together .wt-chat.is-collapsed .wt-chat-head>div,
+  :root .page-watch-together .wt-chat.is-collapsed .wt-chat-head>span,
+  :root .page-watch-together .wt-chat.is-collapsed .wt-role-legend,
+  :root .page-watch-together .wt-chat.is-collapsed .wt-requests,
+  :root .page-watch-together .wt-chat.is-collapsed .wt-chat-messages,
+  :root .page-watch-together .wt-chat.is-collapsed .wt-chat-form,
+  :root .page-watch-together .wt-chat.is-collapsed .wt-chat-foot { display:none!important; }
+  :root .page-watch-together .wt-chat-toggle { display:grid; place-items:center; width:34px; height:34px; flex:0 0 34px; border:1px solid color-mix(in srgb,var(--fx-muted) 20%,transparent); border-radius:10px; background:var(--fx-surface-2); color:var(--fx-text); }
+}
+.wt-chat-head { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.wt-chat-toggle { display:grid; place-items:center; width:32px; height:32px; flex:0 0 32px; border:1px solid color-mix(in srgb,var(--fx-muted) 20%,transparent); border-radius:9px; background:var(--fx-surface-2); color:var(--fx-text); }
+.wt-user-progress { display:flex; align-items:center; gap:7px; width:100%; overflow-x:auto; padding:2px 1px 9px; scrollbar-width:none; }
+.wt-user-progress::-webkit-scrollbar { display:none; }
+.wt-progress-pill { display:inline-flex; align-items:center; gap:6px; flex:0 0 auto; min-height:29px; max-width:190px; padding:4px 9px 4px 5px; border:1px solid color-mix(in srgb,var(--fx-muted) 20%,transparent); border-radius:999px; background:var(--fx-surface-2); color:var(--fx-text); }
+.wt-progress-pill img { width:19px; height:19px; border-radius:50%; object-fit:cover; }
+.wt-progress-pill b { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:10px; font-weight:750; }
+.wt-progress-pill i { flex:0 0 auto; font-size:9px; font-style:normal; color:var(--fx-accent); font-weight:850; }
+@media(max-width:760px){.wt-chat-toggle{display:none}.wt-user-progress{padding-bottom:7px}}

@@ -90,6 +90,9 @@ create table if not exists public.watch_room_participants (
   user_id uuid references auth.users(id) on delete set null,
   joined_at timestamptz not null default now(),
   last_seen_at timestamptz not null default now(),
+  playback_position double precision not null default 0,
+  playback_duration double precision not null default 0,
+  playback_updated_at timestamptz not null default now(),
   unique(room_id, token_hash)
 );
 
@@ -111,6 +114,9 @@ $watch_room_host_fk$;
 
 alter table public.watch_room_participants add column if not exists role text not null default 'viewer';
 alter table public.watch_room_participants add column if not exists user_id uuid references auth.users(id) on delete set null;
+alter table public.watch_room_participants add column if not exists playback_position double precision not null default 0;
+alter table public.watch_room_participants add column if not exists playback_duration double precision not null default 0;
+alter table public.watch_room_participants add column if not exists playback_updated_at timestamptz not null default now();
 do $watch_role_constraint$ begin
   if not exists (select 1 from pg_constraint where conname='watch_room_participants_role_check' and conrelid='public.watch_room_participants'::regclass) then
     alter table public.watch_room_participants add constraint watch_room_participants_role_check check (role in ('host','operator','viewer'));
@@ -275,7 +281,7 @@ begin
   values (r.id, encode(sha256(convert_to(p_token,'UTF8')),'hex'), left(trim(p_name),32), left(coalesce(p_avatar,''),1000), auth.uid())
   on conflict(room_id,token_hash) do update set display_name=excluded.display_name, avatar_url=excluded.avatar_url, last_seen_at=now(), user_id=coalesce(public.watch_room_participants.user_id,excluded.user_id)
   returning * into p;
-  select coalesce(jsonb_agg(jsonb_build_object('id',id,'display_name',display_name,'avatar_url',avatar_url,'is_host',is_host,'role',role) order by joined_at),'[]'::jsonb)
+  select coalesce(jsonb_agg(jsonb_build_object('id',id,'display_name',display_name,'avatar_url',avatar_url,'is_host',is_host,'role',role,'playback_position',playback_position,'playback_duration',playback_duration,'playback_updated_at',playback_updated_at) order by joined_at),'[]'::jsonb)
   into parts from public.watch_room_participants where room_id=r.id and last_seen_at > now()-interval '45 seconds';
   select coalesce(jsonb_agg(to_jsonb(m) order by id),'[]'::jsonb) into msgs
   from (select id,participant_id,display_name,avatar_url,body,created_at from public.watch_room_messages where room_id=r.id order by id desc limit 60) m;
@@ -302,17 +308,21 @@ begin
   return jsonb_build_object('room',to_jsonb(r),'participant',jsonb_build_object('id',p.id,'display_name',p.display_name,'avatar_url',p.avatar_url,'is_host',p.is_host,'role',p.role),'participants',parts,'messages',msgs,'requests',reqs);
 end $$;
 
-create or replace function public.watch_room_heartbeat(p_code text,p_token text)
-returns boolean language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $$
+drop function if exists public.watch_room_heartbeat(text,text);
+create or replace function public.watch_room_heartbeat(p_code text,p_token text,p_position double precision default null,p_duration double precision default null)
+returns boolean language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $
 declare rid uuid;
 begin
   select id into rid from public.watch_rooms where code=upper(trim(p_code)) and closed_at is null and expires_at > now();
   if rid is null then return false; end if;
-  update public.watch_room_participants set last_seen_at=now()
+  update public.watch_room_participants set last_seen_at=now(),
+    playback_position=greatest(0,least(86400,coalesce(p_position,playback_position))),
+    playback_duration=greatest(0,least(86400,coalesce(p_duration,playback_duration))),
+    playback_updated_at=case when p_position is not null then now() else playback_updated_at end
   where room_id=rid and token_hash=encode(sha256(convert_to(p_token,'UTF8')),'hex');
   if found then update public.watch_rooms set expires_at=now()+interval '30 minutes' where id=rid; end if;
   return found;
-end $$;
+end $;
 
 
 create or replace function public.watch_room_playback_snapshot(p_code text,p_token text)
@@ -506,7 +516,7 @@ revoke all on function public.list_watch_rooms(text) from public;
 revoke all on function public.delete_watch_room(text,text) from public;
 revoke all on function public.join_watch_room(text,text,text,text) from public;
 revoke all on function public.watch_room_snapshot(text,text) from public;
-revoke all on function public.watch_room_heartbeat(text,text) from public;
+revoke all on function public.watch_room_heartbeat(text,text,double precision,double precision) from public;
 revoke all on function public.watch_room_playback_snapshot(text,text) from public;
 revoke all on function public.set_watch_room_playback(text,text,jsonb) from public;
 revoke all on function public.send_watch_room_message(text,text,text) from public;
@@ -525,7 +535,7 @@ grant execute on function public.list_watch_rooms(text) to anon, authenticated;
 grant execute on function public.delete_watch_room(text,text) to anon, authenticated;
 grant execute on function public.join_watch_room(text,text,text,text) to anon, authenticated;
 grant execute on function public.watch_room_snapshot(text,text) to anon, authenticated;
-grant execute on function public.watch_room_heartbeat(text,text) to anon, authenticated;
+grant execute on function public.watch_room_heartbeat(text,text,double precision,double precision) to anon, authenticated;
 grant execute on function public.watch_room_playback_snapshot(text,text) to anon, authenticated;
 grant execute on function public.set_watch_room_playback(text,text,jsonb) to anon, authenticated;
 grant execute on function public.send_watch_room_message(text,text,text) to anon, authenticated;
