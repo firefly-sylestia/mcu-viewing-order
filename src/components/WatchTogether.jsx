@@ -278,9 +278,10 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       pc.__queuedIce=[];
       pc.__localDescriptionSent=false;
       pc.onicecandidate=e=>{if(!e.candidate)return;const candidate=e.candidate.toJSON();if(!pc.__localDescriptionSent)pc.__queuedIce.push(candidate);else sendVoiceSignal(remoteId,{type:'ice',candidate});};
-      pc.ontrack=e=>{
+      pc.ontrack=async e=>{
         const stream=e.streams?.[0]||(e.track?new MediaStream([e.track]):null);
         if(!stream||!context)return;
+        if(context.state!=='running'){try{await context.resume();}catch{}}
         const old=voiceRemoteSourcesRef.current.get(remoteId);
         if(isHost&&old?.stream===stream)return;
         if(old){try{old.source.disconnect();}catch{}}
