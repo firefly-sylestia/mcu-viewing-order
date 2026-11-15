@@ -12812,7 +12812,7 @@
 :root .page-watch-together .wt-content{grid-template-columns:minmax(0,1fr) 350px;min-height:min(740px,calc(100dvh - 150px))}
 :root .page-watch-together .wt-main{padding:clamp(16px,2.5vw,30px)}
 :root .page-watch-together .wt-player{aspect-ratio:16/9;max-height:calc(100dvh - 340px)}
-:root .page-watch-together .wt-controls{transform:scale(.5);transform-origin:center;margin:-9px 0;}
+:root .page-watch-together .wt-controls{transform:none;transform-origin:center;margin:0;}
 :root .page-watch-together .wt-connect-page{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,480px);align-items:center;gap:clamp(20px,5vw,72px);min-height:calc(100dvh - 125px);max-width:1120px}
 :root .page-watch-together .wt-connect-hero{display:block;padding:clamp(28px,5vw,64px);min-height:300px;border-radius:30px;background:radial-gradient(ellipse at 90% 0%,color-mix(in srgb,var(--fx-accent) 32%,transparent),transparent 58%),linear-gradient(135deg,color-mix(in srgb,var(--fx-accent) 15%,var(--fx-surface-2)),var(--fx-surface-2));}
 :root .page-watch-together .wt-connect-hero h2{font-size:clamp(38px,5vw,66px);letter-spacing:-.055em;max-width:520px}
@@ -12847,7 +12847,7 @@
  :root .page-watch-together .wt-content{grid-template-columns:1fr;min-height:0}
  :root .page-watch-together .wt-chat{min-height:340px;border-left:0;border-top:1px solid color-mix(in srgb,var(--fx-muted) 20%,transparent)}
  :root .page-watch-together .wt-player{max-height:none}
- :root .page-watch-together .wt-controls{transform:scale(.5);margin:-10px 0;}
+:root .page-watch-together .wt-controls{transform:none;margin:0;}
  :root .movie-site.page-profile .profile-header.profile-header-compact{grid-template-columns:58px minmax(0,1fr) 40px!important;grid-template-areas:"avatar identity auth" "next next next"!important;column-gap:12px!important;row-gap:14px!important;padding:16px!important;}
  :root .movie-site.page-profile .profile-header .profile-avatar{grid-area:avatar!important;width:58px!important;height:58px!important;}
  :root .movie-site.page-profile .profile-header .profile-info{grid-area:identity!important;min-width:0!important;gap:3px!important;}
@@ -13096,4 +13096,21 @@
     min-height: 48px !important;
     margin-top: 12px !important;
   }
+}
+
+
+/* Keep Watch Together's own play/pause/skip controls at their normal size.
+   The streaming iframe is rendered at 2x and visually scaled to 50%, so its
+   in-player chrome is smaller without shrinking the shared control bar. */
+:root .page-watch-together .wt-player {
+  position: relative !important;
+  overflow: hidden !important;
+}
+:root .page-watch-together .wt-player iframe {
+  display: block !important;
+  width: 200% !important;
+  height: 200% !important;
+  max-width: none !important;
+  transform: scale(.5) !important;
+  transform-origin: top left !important;
 }
