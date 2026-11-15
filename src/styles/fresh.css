@@ -12153,3 +12153,70 @@
   color: #667386 !important;
   opacity: 1 !important;
 }
+
+
+/* Final light-mode legibility pass for the actual list and watch-browser
+   content classes. Secondary copy is deliberately dark slate, not pale grey. */
+:root[data-theme="light"] .movie-site.page-list .list-meta-line,
+:root[data-theme="light"] .movie-site.page-list .list-meta-line > span,
+:root[data-theme="light"] .movie-site.page-list .list-desc,
+:root[data-theme="light"] .movie-site.page-list .list-copy > span,
+:root[data-theme="light"] .movie-site.page-list .list-copy > p,
+:root[data-theme="light"] .movie-site.page-list .list-ratings-line .list-rating-na,
+:root[data-theme="light"] .movie-site.page-list .list-ratings-line .list-rating-loading,
+:root[data-theme="light"] .movie-site.page-list .list-title-line .phase-badge,
+:root[data-theme="light"] .movie-site.page-list .list-title-line > span:not(.list-state),
+:root[data-theme="light"] .movie-site.page-list .list-tags > span {
+  color: #344154 !important;
+}
+:root[data-theme="light"] .movie-site.page-list .list-desc {
+  color: #3f4b5d !important;
+}
+:root[data-theme="light"] .movie-site.page-list .list-index {
+  color: #344154 !important;
+}
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-top > div > p,
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-overline,
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-stat > span,
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-resume-copy > p,
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-watch-index,
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-watch-info > span,
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-section-title > span,
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-empty,
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-browser-search {
+  color: #344154 !important;
+}
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-browser-search {
+  border-color: rgba(52,65,84,.18) !important;
+  background: linear-gradient(115deg, rgba(255,255,255,.82), rgba(238,243,251,.58)) !important;
+}
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-browser-search input {
+  color: #172131 !important;
+  caret-color: #344154 !important;
+  background: transparent !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-browser-search input::placeholder {
+  color: #59677a !important;
+  opacity: 1 !important;
+}
+/* Neutral focus/selection treatment: no red accent wash around or inside search. */
+:root .movie-site .watch-hub-v3 .wh3-browser-search:focus-within {
+  border-color: rgba(100,116,139,.32) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(100,116,139,.10) !important;
+}
+:root .movie-site .watch-hub-v3 .wh3-browser-search input:focus,
+:root .movie-site .watch-hub-v3 .wh3-browser-search input:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+:root .movie-site .watch-hub-v3 .wh3-browser-search input::selection {
+  color: #172131 !important;
+  background: rgba(100,116,139,.22) !important;
+}
+:root .movie-site .watch-hub-v3 .wh3-browser-search button {
+  color: #465365 !important;
+  background: rgba(100,116,139,.12) !important;
+}
