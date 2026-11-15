@@ -64,6 +64,12 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const [canReturnLocal, setCanReturnLocal] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState(item || null);
   const [mediaQuery, setMediaQuery] = useState('');
+  const [tmdbMediaItems, setTmdbMediaItems] = useState([]);
+  const [tmdbSearchLoading, setTmdbSearchLoading] = useState(false);
+  const [availableSeasons, setAvailableSeasons] = useState([]);
+  const [availableEpisodes, setAvailableEpisodes] = useState([]);
+  const [seasonLoading, setSeasonLoading] = useState(false);
+  const [episodeLoading, setEpisodeLoading] = useState(false);
   const [setupDialog, setSetupDialog] = useState(false);
   const [room, setRoom] = useState(null);
   const [participant, setParticipant] = useState(null);
@@ -115,10 +121,13 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     episode: Number(selectedMedia?.epStart || selectedMedia?.episode || episode || 1),
     accent: selectedMedia?.accent || '#da1e37',
   }), [selectedMedia, tmdbId, mediaType, season, episode]);
-  const filteredMediaItems = useMemo(() => {
-    const term = mediaQuery.trim().toLowerCase();
-    return selectableItems.filter(candidate => Number(candidate.tmdbId) > 0 && (!term || `${candidate.title || ''} ${candidate.year || ''} ${candidate.type || ''}`.toLowerCase().includes(term))).slice(0, 36);
-  }, [selectableItems, mediaQuery]);
+  useEffect(() => { const term=mediaQuery.trim(); if(term.length<2){setTmdbMediaItems([]);setTmdbSearchLoading(false);return undefined;} let active=true;
+    const timer=window.setTimeout(async()=>{setTmdbSearchLoading(true);try{const response=await fetch('/api/tmdb/search?q='+encodeURIComponent(term));const data=await response.json();if(!response.ok)throw new Error(data.error||'TMDB search failed.');
+      if(active)setTmdbMediaItems((data.results||[]).map(result=>({id:'tmdb-'+result.type+'-'+result.id,tmdbId:result.id,title:result.title,type:result.type==='tv'?'series':'film',mediaType:result.type,poster:result.poster,year:result.year,accent:'#da1e37',overview:result.overview,rating:result.rating})));
+    }catch{if(active)setTmdbMediaItems([]);}finally{if(active)setTmdbSearchLoading(false);}},280);
+    return()=>{active=false;window.clearTimeout(timer);};
+  },[mediaQuery]);
+  const filteredMediaItems=useMemo(()=>{const term=mediaQuery.trim().toLowerCase(),seen=new Set();return [...selectableItems,...tmdbMediaItems].filter(candidate=>{const id=Number(candidate.tmdbId),key=(candidate.mediaType||candidate.type)+':'+id;if(!id||seen.has(key))return false;seen.add(key);return !term||(candidate.title+' '+(candidate.year||'')+' '+(candidate.type||'')).toLowerCase().includes(term);}).slice(0,36);},[selectableItems,tmdbMediaItems,mediaQuery]);
   useEffect(() => { roomRef.current = room; }, [room]);
   useEffect(() => { onBeforeOpenRef.current = onBeforeOpen; }, [onBeforeOpen]);
   useEffect(() => { onEpisodeChangeRef.current = onEpisodeChange; }, [onEpisodeChange]);
@@ -160,7 +169,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
             if (playback.paused) { send('pause'); setPaused(true); pausedRef.current = true; }
             else { send('play'); setPaused(false); pausedRef.current = false; }
           }
-          window.setTimeout(() => { applyingRemoteRef.current = false; }, 900);
+          window.setTimeout(() => { applyingRemoteRef.current = false; }, 2200);
         }
       }
     }
@@ -221,11 +230,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       if (identity?.token) saveActiveRoom(code.trim().toUpperCase(), identity, result.room?.media || null);
       setOpen(true);
       setShowPlaybackNotice(true);
-      const url = new URL(window.location.href);
-      url.hash = 'watch-together';
-      url.searchParams.set('room', code.trim().toUpperCase());
-      setRoomLink(url.toString());
-      window.history.replaceState(null, '', url.toString());
+      setRoomLink(window.location.origin + '/watch-room/' + code.trim().toUpperCase());
     } catch (e) { setError(e.message || 'Could not join this room.'); }
     finally { setBusy(false); }
   }, [rpc, guest, applyRoomSnapshot]);
@@ -246,12 +251,8 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       applyRoomSnapshot(result);
       saveActiveRoom(code, guest, itemMedia);
       await loadOwnedRooms();
-      const url = new URL(window.location.href);
-      url.hash = 'watch-together';
-      url.searchParams.set('room', code);
-      const link = url.toString();
+      const link = window.location.origin + '/watch-room/' + code;
       setRoomLink(link);
-      window.history.replaceState(null, '', link);
       setOpen(true);
       setShowPlaybackNotice(true);
       try { await navigator.clipboard.writeText(link); setCopied(true); window.setTimeout(() => setCopied(false), 2200); } catch {}
@@ -260,7 +261,8 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   }, [rpc, guest, itemMedia, applyRoomSnapshot, loadOwnedRooms]);
 
   useEffect(() => {
-    const code = new URLSearchParams(window.location.search).get('room');
+    const sharePathCode = window.location.pathname.match(/^\/watch-room\/([A-Z0-9]{8})\/?$/i)?.[1];
+    const code = new URLSearchParams(window.location.search).get('room') || sharePathCode;
     if (code && !roomRef.current) {
       onBeforeOpenRef.current?.();
       setOpen(true);
@@ -307,7 +309,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
           const send = (command, args = []) => frame?.contentWindow?.postMessage({ type: 'cinesrc:command', command, args }, 'https://cinesrc.st');
           if (Math.abs(currentTimeRef.current - target) > 5) send('seek', [target]);
           send(playback.paused ? 'pause' : 'play');
-          setTimeout(() => { applyingRemoteRef.current = false; }, 550);
+          setTimeout(() => { applyingRemoteRef.current = false; }, 1800);
         }
       }
     } catch (error) {
@@ -351,6 +353,12 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     try { await rpc('request_watch_room_access', { p_code: room.code, p_token: participant.token, p_request_type: type, p_payload: payload }); await refreshRoom(); }
     catch (e) { setError(e.message || 'Could not send request.'); }
     finally { setBusy(false); }
+  };
+  const grantOperator = async (member) => {
+    if (!room || !participant?.is_host || !member || member.is_host || member.role==='operator' || busy) return;
+    setBusy(true); setError('');
+    try { await rpc('grant_watch_room_operator',{p_code:room.code,p_token:participant.token,p_participant_id:member.id}); await refreshRoom(); }
+    catch(e){setError(e.message||'Could not grant Operator access.');} finally{setBusy(false);}
   };
   const resolveRequest = async (requestId, approve) => {
     if (!room || !participant || !participant.is_host || busy) return;
@@ -537,6 +545,14 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       : `https://cinesrc.st/embed/movie/${media.tmdbId}?${params.toString()}`;
   }, [room?.media, room?.playback?.season, room?.playback?.episode, playerUrl]);
 
+  const activeSeason=Number(room?.playback?.season||room?.media?.season||1), activeEpisode=Number(room?.playback?.episode||room?.media?.episode||1);
+  useEffect(()=>{if(!room?.media||room.media.mediaType!=='tv'){setAvailableSeasons([]);setAvailableEpisodes([]);return;}let active=true;setSeasonLoading(true);
+    fetch('/api/tmdb/seasons?tmdbId='+encodeURIComponent(room.media.tmdbId)).then(r=>r.json().then(data=>({r,data}))).then(({r,data})=>{if(!r.ok)throw new Error();if(active)setAvailableSeasons(data.seasons||[]);}).catch(()=>{if(active)setAvailableSeasons([]);}).finally(()=>{if(active)setSeasonLoading(false);});
+    return()=>{active=false;};},[room?.media?.tmdbId,room?.media?.mediaType]);
+  useEffect(()=>{if(!room?.media||room.media.mediaType!=='tv')return;let active=true;setEpisodeLoading(true);
+    fetch('/api/tmdb/episodes?tmdbId='+encodeURIComponent(room.media.tmdbId)+'&season='+activeSeason).then(r=>r.json().then(data=>({r,data}))).then(({r,data})=>{if(!r.ok)throw new Error();if(active)setAvailableEpisodes(data.episodes||[]);}).catch(()=>{if(active)setAvailableEpisodes([]);}).finally(()=>{if(active)setEpisodeLoading(false);});
+    return()=>{active=false;};},[room?.media?.tmdbId,room?.media?.mediaType,activeSeason]);
+  const changeRoomEpisode=(s,e)=>{if(!canControl||!room)return;s=Number(s);e=Number(e);setRoom(old=>old?{...old,playback:{...(old.playback||{}),season:s,episode:e,position:0,paused:false}}:old);setCurrentTime(0);currentTimeRef.current=0;setPaused(false);pausedRef.current=false;publishPlayback({season:s,episode:e,position:0,paused:false},true);};
   const [joinCode, setJoinCode] = useState('');
   const openJoin = () => { setOpen(true); setRoom(null); setParticipant(null); setError(''); };
   const progressPercent = duration ? Math.min(100, (currentTime / duration) * 100) : 0;
@@ -549,7 +565,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     sendPlayerCommand('seek', [target]);
     sendPlayerCommand(playback.paused ? 'pause' : 'play');
     setPaused(Boolean(playback.paused));
-    window.setTimeout(() => { applyingRemoteRef.current = false; }, 1000);
+    window.setTimeout(() => { applyingRemoteRef.current = false; }, 2200);
   }, [playerReady, room?.id, sendPlayerCommand]);
 
   if (launchOnly) return <button type="button" className="watch-together-launch" onClick={() => { onBeforeOpenRef.current?.(); onWatchTogether?.(); }}><Users size={16} /><span>Watch together</span></button>;
@@ -585,6 +601,13 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
               {showPlaybackNotice && <div className="wt-playback-tip" role="status"><span><strong>Playback tip</strong> If autoplay is blocked, tap Play once. A reputable ad blocker can help reduce pop-ups and redirects.</span><button type="button" onClick={() => setShowPlaybackNotice(false)} aria-label="Dismiss playback tip"><X size={15}/></button></div>}
               {room.playback?.paused && <div className="wt-paused-indicator"><Pause size={14}/><span><strong>Paused</strong> by {members.find(member=>member.id===room.playback?.actor)?.display_name || 'a room member'} · {timeText(room.playback?.position)}</span></div>}
               {(localPlaybackOverride || canReturnLocal) && <div className="wt-local-playback"><span>{localPlaybackOverride ? `You’re watching independently${paused ? ' · paused locally' : ''}. Your position won’t move with the room.` : 'You’re synced with the room. You can still return to your saved position.'}</span>{localPlaybackOverride&&<button type="button" onClick={syncToRoom}>Sync to room</button>}{canReturnLocal&&<button type="button" onClick={returnToLocalPosition}>Return to my position</button>}</div>}
+              {room.media?.mediaType === "tv" && <section className="wt-episode-picker" aria-label="Choose season and episode">
+                <div className="wt-episode-picker-head"><strong>SEASONS</strong><small>{seasonLoading ? "Loading seasons…" : availableSeasons.length + " available"}</small></div>
+                <div className="wt-season-row">{availableSeasons.map(s=><button type="button" key={s.season_number} disabled={!canControl} className={activeSeason===Number(s.season_number)?"active":""} onClick={()=>changeRoomEpisode(s.season_number,1)}>{s.season_number===0?"Specials":"S"+s.season_number}</button>)}</div>
+                <div className="wt-episode-picker-head wt-episode-heading"><strong>EPISODES</strong><small>{episodeLoading ? "Loading…" : availableEpisodes.length + " episodes"}</small></div>
+                <div className="wt-episode-row">{availableEpisodes.map(ep=><button type="button" key={ep.episode_number} disabled={!canControl} className={activeEpisode===Number(ep.episode_number)?"active":""} onClick={()=>changeRoomEpisode(activeSeason,ep.episode_number)}><b>EP {ep.episode_number}</b><span>{ep.name || "Episode "+ep.episode_number}</span></button>)}</div>
+                {!canControl && <small className="wt-episode-lock">Only the host or an operator can change the room episode.</small>}
+              </section>}
               <div className="wt-player"><iframe ref={iframeRef} src={sharedPlayerUrl} title={`Watch together: ${room.media?.title || itemMedia.title}`} allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowFullScreen /></div>
               {!canControl && <div className="wt-role-banner"><ShieldCheck size={16}/><span>You’re a Viewer. Request Operator access to control playback, or ask for individual skips.</span><button type="button" onClick={() => requestAccess('operator')} disabled={busy}>Request Operator</button></div>}
               <div className="wt-controls">
@@ -596,7 +619,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
               </div>
               <div className="wt-seek"><span style={{width:`${progressPercent}%`}}/><input type="range" disabled={!room} min="0" max={Math.max(1,duration || 1)} step="1" value={Math.min(currentTime,duration || currentTime)} onChange={e=>setCurrentTime(Number(e.target.value))} onPointerUp={e=>{const time=Number(e.currentTarget.value);sendPlayerCommand('seek',[time]);publishPlayback({position:time,paused:pausedRef.current},true);}} onKeyUp={e=>{if(e.key.startsWith('Arrow')){const time=Number(e.currentTarget.value);sendPlayerCommand('seek',[time]);publishPlayback({position:time,paused:pausedRef.current},true);}}} aria-label="Seek shared playback"/></div>
               {!canControl && <div className="wt-request-actions"><button onClick={()=>requestAccess('skip_back')} disabled={busy}>Request −10 sec</button><button onClick={()=>requestAccess('skip_forward')} disabled={busy}>Request +10 sec</button></div>}
-              <div className="wt-members">{members.map(member=><div className="wt-member" key={member.id}><span className="wt-member-avatar"><img src={member.avatar_url || blobatar(member.display_name)} alt=""/></span><span>{member.display_name}</span>{(member.role==='host'||member.is_host)?<Crown size={13}/>:member.role==='operator'?<ShieldCheck size={13}/>:null}</div>)}</div>
+              <div className="wt-members">{members.map(member=><button type="button" className={"wt-member"+(participant?.is_host&&!member.is_host?" wt-member-manage":"")} key={member.id} onClick={()=>participant?.is_host&&!member.is_host&&grantOperator(member)} disabled={!participant?.is_host||member.is_host||member.role==="operator"||busy} title={member.is_host?"Room host":member.role==="operator"?"Already an operator":participant?.is_host?"Make this participant an operator":"Room participant"}><span className="wt-member-avatar"><img src={member.avatar_url||blobatar(member.display_name)} alt=""/></span><span>{member.display_name}</span>{(member.role==="host"||member.is_host)?<Crown size={13}/>:member.role==="operator"?<ShieldCheck size={13}/>:participant?.is_host?<span className="wt-promote-hint">+ Operator</span>:null}</button>)}</div>
             </div>
             <aside className="wt-chat">
               <div className="wt-chat-head"><div><MessageCircle size={17}/><strong>Room chat</strong></div><span>{members.length} online</span></div>
@@ -611,8 +634,8 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
           {setupDialog && typeof document !== 'undefined' && createPortal(<div className="wt-create-backdrop" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)setSetupDialog(false);}}>
             <section className="wt-create-dialog" role="dialog" aria-modal="true" aria-label="Create a screening room">
               <header><div><span>NEW SCREENING</span><h2>Choose your title</h2><p>Everyone joining this room will open this movie or series.</p></div><button type="button" onClick={()=>setSetupDialog(false)} aria-label="Close"><X size={18}/></button></header>
-              <label className="wt-picker-search"><Search size={16}/><input value={mediaQuery} onChange={event=>setMediaQuery(event.target.value)} placeholder="Search your titles…"/></label>
-              <div className="wt-picker-list">{filteredMediaItems.length?filteredMediaItems.map((candidate,index)=><button type="button" key={`${candidate.tmdbId || candidate.id}-${index}`} onClick={()=>{setSelectedMedia(candidate);setError('');}} className={selectedMedia?.tmdbId===candidate.tmdbId?'selected':''}><img src={candidate.poster || guest.avatar} alt=""/><span><strong>{candidate.title}</strong><small>{candidate.year || '—'} · {candidate.type==='series'||candidate.mediaType==='tv'?'Series':'Movie'}</small></span>{selectedMedia?.tmdbId===candidate.tmdbId?<Check size={17}/>:<ChevronRight size={16}/>}</button>):<p className="wt-picker-empty">No matching titles. Search for a title in Watch Browser first.</p>}</div>
+              <label className="wt-picker-search"><Search size={16}/><input value={mediaQuery} onChange={event=>setMediaQuery(event.target.value)} placeholder="Search any movie or series…"/></label>
+              <div className="wt-picker-list">{tmdbSearchLoading && <p className="wt-picker-empty">Searching your library and TMDB…</p>}{filteredMediaItems.length?filteredMediaItems.map((candidate,index)=><button type="button" key={`${candidate.tmdbId || candidate.id}-${index}`} onClick={()=>{setSelectedMedia(candidate);setError('');}} className={selectedMedia?.tmdbId===candidate.tmdbId?'selected':''}><img src={candidate.poster || guest.avatar} alt=""/><span><strong>{candidate.title}</strong><small>{candidate.year || '—'} · {candidate.type==='series'||candidate.mediaType==='tv'?'Series':'Movie'}</small></span>{selectedMedia?.tmdbId===candidate.tmdbId?<Check size={17}/>:<ChevronRight size={16}/>}</button>):<p className="wt-picker-empty">No titles found. Try another title or spelling.</p>}</div>
               {selectedMedia && <div className="wt-dialog-selected"><img src={selectedMedia.poster || guest.avatar} alt=""/><span><strong>{selectedMedia.title}</strong><small>{selectedMedia.year || '—'} · {selectedMedia.type==='series'||selectedMedia.mediaType==='tv'?'Series':'Movie'}</small></span></div>}
               {error && <p className="wt-error">{error}</p>}
               <button className="wt-create" disabled={busy || !selectedMedia || !Number(selectedMedia.tmdbId)} onClick={async()=>{await createRoom();setSetupDialog(false);}}>{busy?'Creating room…':'Create screening room'}<Link2 size={17}/></button>

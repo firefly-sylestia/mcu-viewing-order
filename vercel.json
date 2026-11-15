@@ -27,5 +27,11 @@
         }
       ]
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/watch-room/:code",
+      "destination": "/api/watch-room-share?code=:code"
+    }
   ]
 }

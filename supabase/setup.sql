@@ -350,6 +350,31 @@ begin
   return jsonb_build_object('state_version',r.state_version,'playback',r.playback);
 end $$;
 
+
+create or replace function public.grant_watch_room_operator(p_code text,p_token text,p_participant_id uuid)
+returns jsonb language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $
+declare r public.watch_rooms; host public.watch_room_participants; target public.watch_room_participants;
+begin
+  select * into r from public.watch_rooms where code=upper(trim(p_code)) and closed_at is null and expires_at>now() for update;
+  if not found then raise exception 'Room not found or expired.'; end if;
+  select * into host from public.watch_room_participants where room_id=r.id and token_hash=encode(sha256(convert_to(p_token,'UTF8')),'hex');
+  if not found or host.role <> 'host' then raise exception 'Only the host can assign Operator access.'; end if;
+  select * into target from public.watch_room_participants where id=p_participant_id and room_id=r.id;
+  if not found then raise exception 'Participant is no longer in this room.'; end if;
+  if target.is_host then raise exception 'The host already has full control.'; end if;
+  update public.watch_room_participants set role='operator' where id=target.id;
+  update public.watch_room_participants set last_seen_at=now() where id=host.id;
+  return jsonb_build_object('participant_id',target.id,'role','operator');
+end $;
+
+create or replace function public.watch_room_preview(p_code text)
+returns jsonb language sql stable security definer set search_path = pg_catalog, public, pg_temp as $
+  select jsonb_build_object('code',r.code,'media',r.media,'playback',r.playback,
+    'viewer_count',(select count(*) from public.watch_room_participants p where p.room_id=r.id and p.last_seen_at>now()-interval '45 seconds'),
+    'is_active',r.closed_at is null and r.expires_at>now())
+  from public.watch_rooms r where r.code=upper(trim(p_code)) and r.closed_at is null and r.expires_at>now() limit 1;
+$;
+
 create or replace function public.send_watch_room_message(p_code text,p_token text,p_body text)
 returns jsonb language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $$
 declare r public.watch_rooms; p public.watch_room_participants; m public.watch_room_messages;
@@ -485,6 +510,8 @@ revoke all on function public.watch_room_heartbeat(text,text) from public;
 revoke all on function public.watch_room_playback_snapshot(text,text) from public;
 revoke all on function public.set_watch_room_playback(text,text,jsonb) from public;
 revoke all on function public.send_watch_room_message(text,text,text) from public;
+revoke all on function public.grant_watch_room_operator(text,text,uuid) from public;
+revoke all on function public.watch_room_preview(text) from public;
 revoke all on function public.leave_watch_room(text,text) from public;
 revoke all on function public.close_watch_room(text,text) from public;
 revoke all on function public.request_watch_room_access(text,text,text,jsonb) from public;
@@ -502,6 +529,8 @@ grant execute on function public.watch_room_heartbeat(text,text) to anon, authen
 grant execute on function public.watch_room_playback_snapshot(text,text) to anon, authenticated;
 grant execute on function public.set_watch_room_playback(text,text,jsonb) to anon, authenticated;
 grant execute on function public.send_watch_room_message(text,text,text) to anon, authenticated;
+grant execute on function public.grant_watch_room_operator(text,text,uuid) to anon, authenticated;
+grant execute on function public.watch_room_preview(text) to anon, authenticated;
 grant execute on function public.leave_watch_room(text,text) to anon, authenticated;
 grant execute on function public.close_watch_room(text,text) to anon, authenticated;
 grant execute on function public.request_watch_room_access(text,text,text,jsonb) to anon, authenticated;
