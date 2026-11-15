@@ -12232,3 +12232,89 @@
 :root[data-theme="light"] .movie-site.page-list .site-header .header-tools button svg {
   color: #263448 !important;
 }
+
+
+/* Definitive light-mode contrast pass: list result context + every secondary
+   label in the watch browser. Keep these selectors last to beat legacy rules. */
+:root[data-theme="light"] .movie-site.page-list .list-results-bar,
+:root[data-theme="light"] .movie-site.page-list .list-results-meta,
+:root[data-theme="light"] .movie-site.page-list .list-results-count,
+:root[data-theme="light"] .movie-site.page-list .list-results-count i,
+:root[data-theme="light"] .movie-site.page-list .list-results-count small,
+:root[data-theme="light"] .movie-site.page-list .list-sort-description,
+:root[data-theme="light"] .movie-site.page-list .list-page-indicator,
+:root[data-theme="light"] .movie-site.page-list .list-page-indicator strong,
+:root[data-theme="light"] .movie-site.page-list .list-page-indicator i,
+:root[data-theme="light"] .movie-site.page-list .list-view-toggle button,
+:root[data-theme="light"] .movie-site.page-list .site-header .header-tools .header-sort-btn,
+:root[data-theme="light"] .movie-site.page-list .site-header .header-tools .header-filter-btn {
+  color: #202b3b !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+}
+:root[data-theme="light"] .movie-site.page-list .list-results-count,
+:root[data-theme="light"] .movie-site.page-list .list-sort-description,
+:root[data-theme="light"] .movie-site.page-list .list-page-indicator {
+  font-weight: 650 !important;
+}
+:root[data-theme="light"] .movie-site.page-list .list-results-count small,
+:root[data-theme="light"] .movie-site.page-list .list-results-count i,
+:root[data-theme="light"] .movie-site.page-list .list-page-indicator i {
+  color: #344154 !important;
+  font-weight: 600 !important;
+}
+:root[data-theme="light"] .movie-site.page-list .list-page-control button {
+  color: #263448 !important;
+  opacity: 1 !important;
+}
+:root[data-theme="light"] .movie-site.page-list .list-page-control button:disabled {
+  color: #657286 !important;
+  opacity: .78 !important;
+}
+
+/* Watch browser: metadata, counts, progress captions, section counters,
+   resume details, empty states and pagination all use readable ink. */
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-total,
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-total span,
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-top p,
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-kicker,
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-overline,
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-progress-copy,
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-progress-copy strong,
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-progress-copy small,
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-stat span,
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-section-title > span,
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-resume-copy > p,
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-continue-info > span,
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-watch-index,
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-watch-info > span,
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-pagination,
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-empty,
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-browser-search,
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-browser-search svg {
+  color: #202b3b !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+}
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-overline,
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-kicker,
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-stat span,
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-section-title > span,
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-watch-index,
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-watch-info > span,
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-progress-copy small,
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-pagination {
+  font-weight: 650 !important;
+}
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-browser-search input {
+  color: #172131 !important;
+  opacity: 1 !important;
+}
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-browser-search input::placeholder {
+  color: #465365 !important;
+  opacity: 1 !important;
+}
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-browser-search button {
+  color: #263448 !important;
+  opacity: 1 !important;
+}
