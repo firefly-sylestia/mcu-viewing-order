@@ -109,3 +109,8 @@ export async function hydrateRecoverySession() {
   const user = await request('/auth/v1/user', {}, session.access_token);
   const next = { ...session, user }; saveSession(next); return next;
 }
+
+export async function supabasePublicRequest(path, options = {}) {
+  if (!configured) throw new Error('Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.');
+  return request(path, options);
+}

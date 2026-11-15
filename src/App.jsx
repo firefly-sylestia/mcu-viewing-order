@@ -13,6 +13,7 @@ import ProfilePage, { ProfileHeader } from './components/ProfilePage';
 import AuthModal from './components/AuthModal';
 import SeoHead from './components/SeoHead';
 import NotFoundPage from './components/NotFoundPage';
+import WatchTogether from './components/WatchTogether';
 import { useAuth } from './hooks/useAuth';
 import { useCloudSync } from './hooks/useCloudSync';
 import { getFromCache, setCache, clearExpiredCache } from './utils/mediaCache';
@@ -3260,7 +3261,7 @@ const saveServerPref = (tmdbId, server) => {
           <span>{universeShortName(currentItem.universe)} · #{String(currentItem.order || currentItem.id).padStart(2, '0')}</span>
           <h1>{currentItem.title}</h1>
         </div>
-        <span className="watch-v2-provider">CineSrc</span>
+        <div className="watch-v2-header-actions"><WatchTogether item={currentItem} tmdbId={currentItem.tmdbId || tmdbId} mediaType={mediaType} season={currentItem.season || 1} episode={selectedEpisode} playerUrl={playerUrl} onEpisodeChange={next => { setSelectedEpisode(next); setPlayerEpisode(next); }} /><span className="watch-v2-provider">CineSrc</span></div>
       </header>
 
       {toast && <div className="watch-v2-toast" role="status"><span>{toast}</span><button onClick={() => { setToast(''); setIframeTimedOut(false); }} aria-label="Dismiss"><X size={15} /></button></div>}
