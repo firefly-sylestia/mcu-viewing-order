@@ -14041,3 +14041,22 @@
   bottom:0!important;
   transform:none!important;
 }
+
+
+/* Watch Together: allow page scrolling to take over when chat reaches either edge. */
+@media(max-width:760px) {
+  :root .movie-site.page-watch-together .wt-chat-messages {
+    overscroll-behavior-y:auto!important;
+    -webkit-overflow-scrolling:touch!important;
+    touch-action:pan-y!important;
+  }
+  :root .movie-site.page-watch-together .wt-page {
+    overscroll-behavior-y:auto!important;
+    touch-action:pan-y!important;
+  }
+  :root .movie-site.page-watch-together .wt-chat,
+  :root .movie-site.page-watch-together .wt-content,
+  :root .movie-site.page-watch-together .wt-main {
+    overscroll-behavior-y:auto!important;
+  }
+}
