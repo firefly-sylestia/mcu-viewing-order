@@ -2,7 +2,7 @@
 
 This folder has **one canonical SQL file**: [setup.sql](./setup.sql).
 
-It contains the database setup for the website's existing account viewing-data sync **and** Watch Together (screening rooms, guest participants, room presence, chat, playback sync, host/operator/viewer roles, access/skip requests, and a lightweight fast playback-state poll). Keep using this same file when the project adds or updates database features. Do not run old feature-specific SQL files.
+It contains the database setup for the website's existing account viewing-data sync **and** Watch Together (screening rooms, guest participants, room presence, chat, playback sync, host/operator/viewer roles, access/skip requests, guest renaming, per-account Watch Together history, and fast playback-state polling). Keep using this same file when the project adds or updates database features. Do not run old feature-specific SQL files.
 
 ## First-time setup
 
@@ -35,7 +35,9 @@ A few important distinctions:
 - CREATE OR REPLACE FUNCTION updates function logic without removing table rows.
 - The script may replace named RLS policies and refresh grants so permissions stay aligned with the app. This changes access rules, not stored data.
 - Closing or leaving a screening room changes its status/presence; it does not erase the room's records.
-- No automatic expiry cleanup is enabled by this setup. Expired room records remain in the database until an administrator deliberately applies a separately reviewed retention policy.
+- Expired or closed room records are retained for seven days, then removed by the daily cleanup job when pg_cron is enabled. Participants, chat, and requests are deleted with their room.
+- Watch Together history is stored independently, without a cascading room foreign key, so old-room cleanup does not erase watched-title and duration statistics.
+- Room creation and joining also run a cleanup pass, so expired records are removed opportunistically even without the scheduled extension.
 
 **Never add destructive table or data cleanup to this master setup script.** If a future feature genuinely needs a destructive migration or retention cleanup, document it separately, explain exactly what it affects, and require an explicit manual decision.
 
@@ -48,7 +50,9 @@ A few important distinctions:
 
 ## Required external setup
 
-No extra Supabase extension, scheduled job, or separate database script is required for the current implementation. The website still needs its existing Supabase project URL and public/anon key configured in its deployment environment. Do not put a service-role key in browser code or public repository files.
+Enable **pg_cron** in Supabase Dashboard → Database → Extensions to run the daily room cleanup at 03:17 UTC. The master SQL file schedules or refreshes the job automatically when pg_cron is available. If you leave pg_cron disabled, cleanup runs when someone creates or joins a room, but not on a guaranteed daily schedule.
+
+The website still needs its existing Supabase project URL and public/anon key configured in its deployment environment. Do not put a service-role key in browser code or public repository files.
 
 ## Current database objects
 
@@ -56,7 +60,8 @@ No extra Supabase extension, scheduled job, or separate database script is requi
 - public.watch_rooms — screening room and media/playback state.
 - public.watch_room_participants — signed-in and guest room identities.
 - public.watch_room_messages — room chat.
-- public.create_watch_room, join_watch_room, watch_room_snapshot, watch_room_heartbeat, set_watch_room_playback, send_watch_room_message, leave_watch_room, and close_watch_room — the Watch Together RPC functions.
+- public.watch_together_history — per-account screening history, retained independently of room cleanup.
+- public.create_watch_room, join_watch_room, watch_room_snapshot, watch_room_heartbeat, set_watch_room_playback, send_watch_room_message, leave_watch_room, close_watch_room, rename_watch_room_participant, record_watch_together_history, get_watch_together_history, and cleanup_expired_watch_rooms — the Watch Together RPC functions.
 
 ## Watch Together room roles
 

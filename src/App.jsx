@@ -417,7 +417,7 @@ export default function App() {
   const setSortBy = value => setListPreference('sortBy', value);
   const setSortDirection = value => setListPreference('sortDirection', value);
   const setTypeFilter = value => setListPreference('typeFilter', value);
-  const [phaseFilters, setPhaseFilters] = useState(saved.phaseFilters || { marvel: saved.phaseFilter || 'All', sony: 'All', xmen: 'All', dc: 'All' });
+  const [phaseFilters, setPhaseFilters] = useState({ marvel: 'All', sony: 'All', xmen: 'All', dc: 'All' });
   const phaseFilter = phaseFilters[universe] ?? 'All';
   const setPhaseFilter = useCallback((value) => setPhaseFilters(current => ({ ...current, [universe]: value })), [universe]);
   const [phaseMenuOpen, setPhaseMenuOpen] = useState(false);
@@ -605,7 +605,7 @@ export default function App() {
   const [profileAvatar, setProfileAvatar] = useState(() => { try { return localStorage.getItem('incursion-profile-avatar') || ''; } catch { return ''; } });
   const [authOpen, setAuthOpen] = useState(false);
   const [watchConfirmSkipped, setWatchConfirmSkipped] = useState(() => localStorage.getItem('watch-confirm-skipped') === '1');
-  const [nativePlayer, setNativePlayer] = useState(() => localStorage.getItem('native-player') === '1');
+  const [nativePlayer, setNativePlayer] = useState(false);
   const [adBlockerDismissed, setAdBlockerDismissed] = useState(() => localStorage.getItem('adblocker-dismissed') === '1');
   const [watchConfirmItem, setWatchConfirmItem] = useState(null); // { item, tmdbId, mediaType, onConfirm }
   const [warningToast, setWarningToast] = useState('');
@@ -643,8 +643,8 @@ export default function App() {
   const allItems = useMemo(() => [...RAW.map(item => enhance(item, 'marvel')), ...DC_RAW.map(item => enhance(item, 'dc')), ...XMEN_RAW.map(item => enhance(item, 'xmen')), ...SONY_RAW.map(item => enhance(item, 'sony'))], []);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ universe, listPreferences, genre, rating, ageRatingFilter, sortBy, sortDirection, phaseFilters, phaseFilter, typeFilter, actions, section, watchItem, profileName }));
-  }, [universe, listPreferences, genre, rating, ageRatingFilter, sortBy, sortDirection, phaseFilters, phaseFilter, typeFilter, actions, section, watchItem, profileName]);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ universe, listPreferences, genre, rating, ageRatingFilter, sortBy, sortDirection, typeFilter, actions, section, watchItem, profileName }));
+  }, [universe, listPreferences, genre, rating, ageRatingFilter, sortBy, sortDirection, typeFilter, actions, section, watchItem, profileName]);
 
   const initialRender = useRef(true);
   useEffect(() => {
@@ -782,7 +782,7 @@ export default function App() {
       if (normalizedQuery && !item.title.toLowerCase().includes(normalizedQuery)) return false;
       if (genre !== 'All' && !item.genres.includes(genre) && item.type !== genreLower) return false;
       if (ageRatingFilter !== 'All' && (item.ageRating || (item.type === 'series' ? 'TV-14' : 'PG-13')) !== ageRatingFilter) return false;
-      if (phaseFilter !== 'All' && String(item.phase || '') !== String(phaseFilter)) return false;
+      if ((section === 'list' || section === 'watch') && phaseFilter !== 'All' && String(item.phase || '') !== String(phaseFilter)) return false;
       if (typeFilter !== 'All' && (typeFilter === 'Movies' ? item.type !== 'film' : item.type !== 'series')) return false;
       if (sortBy === 'doomsday-countdown' && !DOOMSDAY_COUNTDOWN_TITLES.has(item.title)) return false;
       if (sortBy === 'secret-wars-prep' && !SECRET_WARS_PREP_TITLES.has(item.title)) return false;
@@ -1465,7 +1465,7 @@ export default function App() {
     {['marvel','sony','xmen','dc'].map(key => <button key={key} data-universe={key} className={statsUniverses.includes(key) && statsUniverses.length !== 4 ? 'active' : ''} aria-label={key === 'xmen' ? 'X-Men' : key[0].toUpperCase()+key.slice(1)} title={key === 'xmen' ? 'X-Men' : key[0].toUpperCase()+key.slice(1)} aria-pressed={statsUniverses.includes(key) && statsUniverses.length !== 4} onClick={() => { hapticTap(); setStatsUniverses(current => current.length === 4 ? [key] : current.includes(key) ? (current.length > 1 ? current.filter(item => item !== key) : current) : [...current,key]); }}><span className="universe-logo" aria-hidden="true">{UNIVERSE_LOGOS[key]}</span></button>)}
   </div> : null}
   {section === 'profile' ? null : section === 'analytics' ? null : <>
-  <div className={`header-phase-menu ${section === 'home' ? 'home-hidden-phase' : ''}`}>
+  {(section === 'list' || section === 'watch') && <div className="header-phase-menu">
   <button ref={phaseButtonRef} className={`header-phase-btn ${phaseFilter !== 'All' ? 'active' : ''}`} onClick={() => { const rect = phaseButtonRef.current?.getBoundingClientRect(); if (rect) setPhaseMenuPosition({ top: rect.bottom + 7, left: rect.left }); setPhaseMenuOpen(open => !open); }} aria-expanded={phaseMenuOpen} aria-haspopup="listbox">
   <ListFilter size={14} /> <span>{phaseFilter === 'All' ? 'All phases' : (({ marvel: PHASES, sony: SONY_PHASES, xmen: XMEN_PHASES, dc: DC_PHASES })[universe]?.find(entry => String(entry.id) === String(phaseFilter))?.name || `Phase ${phaseFilter}`)}</span><ChevronDown size={13} />
   </button>
@@ -1483,7 +1483,7 @@ export default function App() {
     </div>,
     document.body
   )}
-  </div>
+  </div>}
   <button className={`header-sort-btn ${sortBy !== 'order' ? 'active' : ''}`} onClick={() => { hapticTap(); setFiltersOpen(false); setSortOpen(true); }} aria-haspopup="dialog" title={`Sorted by ${SORT_LABELS[sortBy]} ${sortDirection === 'asc' ? '↑' : '↓'} — tap to change`}>
     <ArrowUpDown size={15} />
     <span className="header-sort-label">{SORT_LABELS[sortBy]}</span>
@@ -1581,7 +1581,7 @@ export default function App() {
 
       {section === 'list' && <ListSection items={activeItems} sortBy={sortBy} sortDirection={sortDirection} sortKey={`${sortBy}-${sortDirection}`} externalResults={externalSearchResults} externalLoading={externalSearchLoading} query="" setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} onPlayExternal={onPlayExternal} onWarning={showWarningToast} />}
       {section === 'analytics' && <><AnalyticsPanel stats={stats} large />{[['Watching','watching'],['Watched','watched'],['Dropped','dropped']].map(([label,status]) => { const items = analyticsItems.filter(item => item.userStatus === status); return items.length ? <MovieRail key={status} title={label} items={items} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} /> : null; })}</>}
-            {section === 'profile' && <ProfilePage pageHeader={<ProfileHeader universe={universe} stats={stats} profileName={profileName} profileAvatar={profileAvatar} setProfileAvatar={setProfileAvatar} watchingItem={profileWatchingItem} nextUp={profileNextUpItem} onSelectItem={selectItem} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} />} activeTab={profileTab} setActiveTab={(tab) => { hapticTap(); setProfileTab(tab); setQuery(''); }} installApp={installApp} installAvailable={!!installPromptEvent} appInstalled={appInstalled} stats={profileStats} activeItems={profileItems} universe="all" query={query} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} conflict={conflict} onResolveRemote={resolveUseRemote} onResolveLocal={resolveKeepLocal} onResolveMerge={resolveMerge} syncToast={toast} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} quietBrowsingOn={quietBrowsingOn} setQuietBrowsingOn={setQuietBrowsingOn} borderlessHeaderOn={borderlessHeaderOn} setBorderlessHeaderOn={setBorderlessHeaderOn} liquidGlassNavOn={liquidGlassNavOn} setLiquidGlassNavOn={setLiquidGlassNavOn} liquidGlassNavConfig={liquidGlassNavConfig} setLiquidGlassNavConfig={setLiquidGlassNavConfig} />}
+            {section === 'profile' && <ProfilePage pageHeader={<ProfileHeader universe={universe} stats={stats} profileName={profileName} profileAvatar={profileAvatar} setProfileAvatar={setProfileAvatar} watchingItem={profileWatchingItem} nextUp={profileNextUpItem} onSelectItem={selectItem} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} />} activeTab={profileTab} setActiveTab={(tab) => { hapticTap(); setProfileTab(tab); setQuery(''); }} installApp={installApp} installAvailable={!!installPromptEvent} appInstalled={appInstalled} stats={profileStats} activeItems={profileItems} universe="all" query={query} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} conflict={conflict} onResolveRemote={resolveUseRemote} onResolveLocal={resolveKeepLocal} onResolveMerge={resolveMerge} syncToast={toast} quietBrowsingOn={quietBrowsingOn} setQuietBrowsingOn={setQuietBrowsingOn} borderlessHeaderOn={borderlessHeaderOn} setBorderlessHeaderOn={setBorderlessHeaderOn} liquidGlassNavOn={liquidGlassNavOn} setLiquidGlassNavOn={setLiquidGlassNavOn} liquidGlassNavConfig={liquidGlassNavConfig} setLiquidGlassNavConfig={setLiquidGlassNavConfig} />}
       {WATCH_ENABLED && section === 'watch' && safeWatchItem && <WatchPage watchItem={safeWatchItem} activeItems={roadmapItems} onBack={() => { setWatchItem(null); window.history.replaceState(null, '', '#watch'); }} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={startWatchWithConfirm} updateAction={updateAction} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} user={user} profileName={profileName} profileAvatar={profileAvatar} onWatchTogether={() => { try { sessionStorage.setItem('mcu-watch-together-return', window.location.hash || '#watch'); } catch {} navigateSection('watch-together'); }} />}
       {WATCH_ENABLED && section === 'watch-together' && <WatchTogether item={safeWatchItem?.item || null} selectableItems={[...activeItems, ...externalSearchResults.map(result => ({ id: `tmdb-${result.type}-${result.id}`, title: result.title, type: result.type === 'tv' ? 'series' : 'film', mediaType: result.type, tmdbId: result.id, poster: result.poster, year: result.year, accent: '#da1e37' }))]} requireMediaSelection={!safeWatchItem} user={user} profileName={profileName} profileAvatar={profileAvatar} startOpen onClose={() => { const target = (() => { try { return sessionStorage.getItem('mcu-watch-together-return') || '#watch'; } catch { return '#watch'; } })(); try { sessionStorage.removeItem('mcu-watch-together-return'); } catch {} window.history.pushState(null, '', target); setSection('watch'); if (target === '#watch') setWatchItem(null); }} />}
       {WATCH_ENABLED && section === 'watch' && !safeWatchItem && <WatchBrowse activeItems={activeItems} externalResults={externalSearchResults} externalLoading={externalSearchLoading} actions={actions} query={query} onQueryChange={setQuery} onStartWatch={startWatchWithConfirm} onPlayExternal={onPlayExternal} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} user={user} profileName={profileName} profileAvatar={profileAvatar} onWatchTogether={() => { try { sessionStorage.setItem('mcu-watch-together-return', window.location.hash || '#watch'); } catch {} navigateSection('watch-together'); }} />}

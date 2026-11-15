@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Copy, Check, Users, MessageCircle, Play, Pause, SkipBack, SkipForward, X, Link2, Radio, Crown, Send, LogOut, RefreshCw, Volume2, VolumeX, Clock3, ShieldCheck, Search, ChevronRight } from 'lucide-react';
-import { supabasePublicRequest } from '../supabase';
+import { supabasePublicRequest, supabaseDataRequest } from '../supabase';
 
 const RPC = '/rest/v1/rpc/';
+const HISTORY_KEY = 'mcu-watch-together-history-v1';
 const randomHex = (bytes = 32) => {
   const data = new Uint8Array(bytes);
   crypto.getRandomValues(data);
@@ -46,7 +47,8 @@ const makeAccountIdentity = (user, profileName, profileAvatar) => {
 
 
 export default function WatchTogether({ item, tmdbId, mediaType, season = 1, episode = 1, playerUrl, onEpisodeChange, onBeforeOpen, onWatchTogether, onClose, startOpen = false, launchOnly = false, user, profileName, profileAvatar, selectableItems = [], requireMediaSelection = false }) {
-  const guest = useMemo(() => user?.id ? makeAccountIdentity(user, profileName, profileAvatar) : { ...makeGuest(), isGuest: true }, [user?.id, user?.displayName, user?.email, user?.user_metadata?.display_name, user?.user_metadata?.full_name, user?.user_metadata?.avatar_url, user?.user_metadata?.picture, profileName, profileAvatar]);
+  const [guestNameOverride, setGuestNameOverride] = useState('');
+  const guest = useMemo(() => { const identity=user?.id?makeAccountIdentity(user,profileName,profileAvatar):{...makeGuest(),isGuest:true}; if(!user?.id&&guestNameOverride){identity.name=guestNameOverride;identity.avatar=blobatar(guestNameOverride);} return identity; }, [user?.id,user?.displayName,user?.email,user?.user_metadata?.display_name,user?.user_metadata?.full_name,user?.user_metadata?.avatar_url,user?.user_metadata?.picture,profileName,profileAvatar,guestNameOverride]);
   const [open, setOpen] = useState(startOpen);
   const [showPlaybackNotice, setShowPlaybackNotice] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState(item || null);
@@ -67,6 +69,11 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const [duration, setDuration] = useState(0);
   const [muted, setMuted] = useState(false);
   const [roomLink, setRoomLink] = useState('');
+  const [guestNameDraft, setGuestNameDraft] = useState('');
+  const [editingGuestName, setEditingGuestName] = useState(false);
+  const watchSecondsRef = useRef(0);
+  const localHistoryFlushRef = useRef(0);
+  const remoteHistoryFlushRef = useRef(0);
   const iframeRef = useRef(null);
   const pollRef = useRef(null);
   const playbackPollRef = useRef(null);
@@ -85,6 +92,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const pausedRef = useRef(true);
   const playerReadyRef = useRef(false);
   useEffect(() => { if (item) setSelectedMedia(item); }, [item]);
+  useEffect(() => { setGuestNameDraft(guest.name); }, [guest.name]);
   const itemMedia = useMemo(() => ({
     title: selectedMedia?.title || 'Untitled',
     poster: selectedMedia?.poster || '',
@@ -141,8 +149,26 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     }
   }, []);
 
+
+  const updateGuestName = useCallback(async (value) => {
+    if (!guest.isGuest) return;
+    const name=String(value||'').trim().replace(/\s+/g,' ').slice(0,32);
+    if(!name){setError('Choose a name between 1 and 32 characters.');return;}
+    setBusy(true);setError('');
+    try{
+      const avatar=blobatar(name);
+      if(roomRef.current&&participantRef.current) await rpc('rename_watch_room_participant',{p_code:roomRef.current.code,p_token:participantRef.current.token,p_name:name,p_avatar:avatar});
+      try{localStorage.setItem('mcu-watch-together-guest-v1',JSON.stringify({name,token:guest.token,avatar}));}catch{}
+      setGuestNameOverride(name);setGuestNameDraft(name);setEditingGuestName(false);
+      setParticipant(previous=>previous?{...previous,display_name:name,avatar_url:avatar}:previous);
+      setMembers(previous=>previous.map(member=>member.id===participantRef.current?.id?{...member,display_name:name,avatar_url:avatar}:member));
+      setMessages(previous=>previous.map(message=>message.participant_id===participantRef.current?.id?{...message,display_name:name,avatar_url:avatar}:message));
+    }catch(error){setError(error.message||'Could not update your guest name.');}
+    finally{setBusy(false);}
+  },[guest,rpc]);
+
   const joinExisting = useCallback(async (code, identity = guest) => {
-    setBusy(true); setError(''); lastVersionRef.current = 0;
+    setBusy(true); setError(''); lastVersionRef.current = 0; watchSecondsRef.current=0; localHistoryFlushRef.current=0; remoteHistoryFlushRef.current=0;
     try {
       const result = await rpc('join_watch_room', {
         p_code: code.trim().toUpperCase(),
@@ -165,7 +191,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
 
   const createRoom = useCallback(async () => {
     if (!itemMedia.tmdbId) { setError('This title does not have a TMDB ID, so a shared player cannot be created.'); return; }
-    setBusy(true); setError(''); lastVersionRef.current = 0;
+    setBusy(true); setError(''); lastVersionRef.current = 0; watchSecondsRef.current=0; localHistoryFlushRef.current=0; remoteHistoryFlushRef.current=0;
     try {
       const code = roomCode();
       const result = await rpc('create_watch_room', {
@@ -216,19 +242,6 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     } finally { pollInFlightRef.current = false; }
   }, [rpc, applyRoomSnapshot]);
 
-  useEffect(() => {
-    if (!room || !participant) return undefined;
-    refreshRoom();
-    refreshPlayback();
-    pollRef.current = window.setInterval(refreshRoom, 4200);
-    playbackPollRef.current = window.setInterval(refreshPlayback, 450);
-    heartbeatRef.current = window.setInterval(() => {
-      const r = roomRef.current, p = participantRef.current;
-      if (r && p) rpc('watch_room_heartbeat', { p_code: r.code, p_token: p.token }).catch(() => {});
-    }, 12000);
-    return () => { window.clearInterval(pollRef.current); window.clearInterval(playbackPollRef.current); window.clearInterval(heartbeatRef.current); };
-  }, [room?.id, participant?.id, refreshRoom, refreshPlayback, rpc]);
-
   const refreshPlayback = useCallback(async () => {
     const activeRoom = roomRef.current;
     const activeParticipant = participantRef.current;
@@ -256,6 +269,19 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       if (/expired|closed|not found|not a member/i.test(error.message || '')) setError('This room has ended or expired.');
     } finally { playbackPollInFlightRef.current = false; }
   }, [rpc]);
+  useEffect(() => {
+    if (!room || !participant) return undefined;
+    refreshRoom();
+    refreshPlayback();
+    pollRef.current = window.setInterval(refreshRoom, 4200);
+    playbackPollRef.current = window.setInterval(refreshPlayback, 450);
+    heartbeatRef.current = window.setInterval(() => {
+      const r = roomRef.current, p = participantRef.current;
+      if (r && p) rpc('watch_room_heartbeat', { p_code: r.code, p_token: p.token }).catch(() => {});
+    }, 12000);
+    return () => { window.clearInterval(pollRef.current); window.clearInterval(playbackPollRef.current); window.clearInterval(heartbeatRef.current); };
+  }, [room?.id, participant?.id, refreshRoom, refreshPlayback, rpc]);
+
   const publishPlayback = useCallback(async (next, force = false) => {
     const r = roomRef.current, p = participantRef.current;
     if (!r || !p || !['host','operator'].includes(p.role || (p.is_host ? 'host' : 'viewer')) || applyingRemoteRef.current) return;
@@ -319,7 +345,41 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     catch { setError('Copy was blocked by your browser. Copy the room link from the address bar.'); }
   };
 
+
+  const flushWatchHistory = useCallback(async () => {
+    const activeRoom=roomRef.current, activeParticipant=participantRef.current;
+    if(!activeRoom||!activeParticipant)return;
+    const total=watchSecondsRef.current, localDelta=total-localHistoryFlushRef.current;
+    if(localDelta>0){
+      localHistoryFlushRef.current=total;
+      try{
+        const rows=JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]');
+        const index=rows.findIndex(entry=>entry.room_code===activeRoom.code);
+        const old=index>=0?rows[index]:null;
+        const entry={room_code:activeRoom.code,title:activeRoom.media?.title||'Untitled screening',media:activeRoom.media||{},duration_seconds:Number(old?.duration_seconds||0)+localDelta,watched_at:old?.watched_at||new Date().toISOString(),last_watched_at:new Date().toISOString()};
+        if(index>=0)rows[index]=entry;else rows.unshift(entry);
+        localStorage.setItem(HISTORY_KEY,JSON.stringify(rows.slice(0,100)));
+      }catch{}
+    }
+    const remoteDelta=total-remoteHistoryFlushRef.current;
+    if(user?.id&&remoteDelta>0){
+      try{
+        await supabaseDataRequest(`${RPC}record_watch_together_history`,{method:'POST',body:JSON.stringify({p_code:activeRoom.code,p_token:activeParticipant.token,p_duration_seconds:remoteDelta})});
+        remoteHistoryFlushRef.current=total;
+      }catch{}
+    }
+  },[user?.id]);
+  useEffect(()=>{
+    if(!room||!participant)return undefined;
+    const timer=window.setInterval(()=>{
+      if(!pausedRef.current&&playerReadyRef.current)watchSecondsRef.current+=15;
+      if(watchSecondsRef.current-localHistoryFlushRef.current>=30||watchSecondsRef.current-remoteHistoryFlushRef.current>=30)flushWatchHistory();
+    },15000);
+    return()=>window.clearInterval(timer);
+  },[room?.id,participant?.id,flushWatchHistory]);
+
   const leaveRoom = async () => {
+    await flushWatchHistory();
     const r = roomRef.current, p = participantRef.current;
     if (r && p) {
       if (p.is_host) await rpc('close_watch_room', { p_code: r.code, p_token: p.token }).catch(() => {});
@@ -422,13 +482,15 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
               </form>
               <div className="wt-or"><span />OR<span /></div>
               <button type="button" className="wt-create" onClick={() => { setSetupDialog(true); setSelectedMedia(item || null); setError(''); }}><span><strong>Create a new room</strong><small>Choose a movie or series for your screening</small></span><Link2 size={18}/></button>
-              <div className="wt-identity"><img src={guest.avatar} alt="" /><div><small>YOU'RE JOINING AS</small><strong>{guest.name}</strong><span>{guest.isGuest ? 'Guest · no account needed' : 'Signed in · profile identity'}</span></div>{guest.isGuest && <button onClick={() => { localStorage.removeItem('mcu-watch-together-guest-v1'); window.location.reload(); }} title="Generate another guest name"><RefreshCw size={16}/></button>}</div>
+              <div className="wt-identity"><img src={guest.avatar} alt="" /><div><small>YOU'RE JOINING AS</small><strong>{guest.name}</strong><span>{guest.isGuest ? 'Guest · no account needed' : 'Signed in · profile identity'}</span></div>{guest.isGuest&&<button type="button" onClick={()=>setEditingGuestName(value=>!value)} title="Change guest name"><Pencil size={16}/></button>}</div>
+              {guest.isGuest&&editingGuestName&&<form className="wt-guest-name-form" onSubmit={event=>{event.preventDefault();updateGuestName(guestNameDraft);}}><input value={guestNameDraft} onChange={event=>setGuestNameDraft(event.target.value)} maxLength={32} placeholder="Choose a guest name" aria-label="Guest name"/><button type="submit" disabled={busy||!guestNameDraft.trim()}>Save name</button></form>}
               {error && <p className="wt-error">{error}</p>}
               <p className="wt-privacy"><ShieldCheck size={14}/> Private room links are hard to guess. Guests can join without signing in.</p>
             </div>
           </div> : <div className="wt-content">
             <div className="wt-main">
-              <div className="wt-room-title"><div><span>NOW SCREENING</span><h2>{room.media?.title || itemMedia.title}</h2><small>{members.length} {members.length === 1 ? 'viewer' : 'viewers'} · {participant.is_host ? 'Host' : (participant.role || 'viewer').replace(/^./, c => c.toUpperCase())}</small></div><button className="wt-copy" onClick={copyLink}>{copied ? <Check size={15}/> : <Copy size={15}/ >}{copied ? 'Copied' : 'Invite'}</button></div>
+              <div className="wt-room-title"><div><span>NOW SCREENING</span><h2>{room.media?.title || itemMedia.title}</h2><small>{members.length} {members.length === 1 ? 'viewer' : 'viewers'} · {participant.is_host ? 'Host' : (participant.role || 'viewer').replace(/^./, c => c.toUpperCase())}</small></div><div className="wt-room-actions">{guest.isGuest&&<button type="button" className="wt-copy" onClick={()=>setEditingGuestName(value=>!value)}><Pencil size={14}/> Name</button>}<button className="wt-copy" onClick={copyLink}>{copied ? <Check size={15}/> : <Copy size={15}/ >}{copied ? 'Copied' : 'Invite'}</button></div></div>
+              {guest.isGuest&&editingGuestName&&<form className="wt-guest-name-form wt-room-rename" onSubmit={event=>{event.preventDefault();updateGuestName(guestNameDraft);}}><input value={guestNameDraft} onChange={event=>setGuestNameDraft(event.target.value)} maxLength={32} aria-label="Guest name"/><button type="submit" disabled={busy||!guestNameDraft.trim()}>Save name</button></form>}
               {showPlaybackNotice && <div className="wt-playback-tip" role="status"><span><strong>Playback tip</strong> If autoplay is blocked, tap Play once. A reputable ad blocker can help reduce pop-ups and redirects.</span><button type="button" onClick={() => setShowPlaybackNotice(false)} aria-label="Dismiss playback tip"><X size={15}/></button></div>}
               <div className="wt-player"><iframe ref={iframeRef} src={sharedPlayerUrl} title={`Watch together: ${room.media?.title || itemMedia.title}`} allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowFullScreen /></div>
               {!canControl && <div className="wt-role-banner"><ShieldCheck size={16}/><span>You’re a Viewer. Request Operator access to control playback, or ask for individual skips.</span><button type="button" onClick={() => requestAccess('operator')} disabled={busy}>Request Operator</button></div>}

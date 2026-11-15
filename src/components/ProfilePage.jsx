@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Play, Bookmark, RotateCcw, Clock, Check, X, Pencil, Trophy, LogIn, LogOut, Cloud, RefreshCw, Sun, Moon, Settings, Upload, Download, Clapperboard, Sparkles, LayoutGrid, Vibrate, ChevronDown, Maximize2, UserRound, ShieldCheck, } from 'lucide-react';
 import { getHapticsEnabled, setHapticsEnabled, hapticsSupported, hapticTap, hapticSuccess } from '../utils/haptics';
+import { supabaseDataRequest } from '../supabase';
 
 function applyBrowserTheme(theme) {
   const isDark = theme === 'dark';
@@ -76,7 +77,7 @@ const formatTimeAgo = (timestamp) => {
   return 'Synced ' + Math.floor(hours / 24) + 'd ago';
 };
 
-function ProfilePage({ pageHeader, setActiveTab, installApp, installAvailable, appInstalled, stats, activeItems, universe, activeTab = 'insights', query = '', setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, profileName, setProfileName, user, configured, onLogin, onLogout, lastSynced, syncing, onSync, conflict, onResolveRemote, onResolveLocal, onResolveMerge, syncToast, nativePlayer, setNativePlayer, quietBrowsingOn = false, setQuietBrowsingOn, borderlessHeaderOn = false, setBorderlessHeaderOn, liquidGlassNavOn = false, setLiquidGlassNavOn, liquidGlassNavConfig, setLiquidGlassNavConfig }) {
+function ProfilePage({ pageHeader, setActiveTab, installApp, installAvailable, appInstalled, stats, activeItems, universe, activeTab = 'insights', query = '', setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, profileName, setProfileName, user, configured, onLogin, onLogout, lastSynced, syncing, onSync, conflict, onResolveRemote, onResolveLocal, onResolveMerge, syncToast, quietBrowsingOn = false, setQuietBrowsingOn, borderlessHeaderOn = false, setBorderlessHeaderOn, liquidGlassNavOn = false, setLiquidGlassNavOn, liquidGlassNavConfig, setLiquidGlassNavConfig }) {
   
   const savedItems = activeItems.filter(i => i.bookmarked);
   const inProgressItems = activeItems.filter(i => i.userStatus === 'watching');
@@ -117,6 +118,7 @@ function ProfilePage({ pageHeader, setActiveTab, installApp, installAvailable, a
         {activeTab === 'insights' && (
           <div id="insights-panel" role="tabpanel" className="profile-panel insights-panel">
             <AnalyticsPanel stats={stats} activeItems={activeItems} inProgressItems={inProgressItems} profileName={profileName} user={user} />
+            <WatchTogetherHistory user={user} />
             {inProgressItems.some(i => !query || i.title.toLowerCase().includes(query.toLowerCase())) && <MovieRail title="In progress" items={inProgressItems.filter(i => !query || i.title.toLowerCase().includes(query.toLowerCase()))} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />}
             {watchedItems.some(i => !query || i.title.toLowerCase().includes(query.toLowerCase())) && <MovieRail title="Watched" items={watchedItems.filter(i => !query || i.title.toLowerCase().includes(query.toLowerCase()))} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />}
             {droppedItems.some(i => !query || i.title.toLowerCase().includes(query.toLowerCase())) && <MovieRail title="Dropped" items={droppedItems.filter(i => !query || i.title.toLowerCase().includes(query.toLowerCase()))} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />}
@@ -141,7 +143,7 @@ function ProfilePage({ pageHeader, setActiveTab, installApp, installAvailable, a
 
         {activeTab === 'settings' && (
           <div id="settings-panel" role="tabpanel" className="profile-panel settings-panel">
-            <SettingsPanel installApp={installApp} installAvailable={installAvailable} appInstalled={appInstalled} query={query} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={onLogin} onLogout={onLogout} universe={universe} activeItems={activeItems} setStatus={setStatus} toggleBookmark={toggleBookmark} nativePlayer={nativePlayer} setNativePlayer={setNativePlayer} quietBrowsingOn={quietBrowsingOn} setQuietBrowsingOn={setQuietBrowsingOn} borderlessHeaderOn={borderlessHeaderOn} setBorderlessHeaderOn={setBorderlessHeaderOn} liquidGlassNavOn={liquidGlassNavOn} setLiquidGlassNavOn={setLiquidGlassNavOn} liquidGlassNavConfig={liquidGlassNavConfig} setLiquidGlassNavConfig={setLiquidGlassNavConfig} />
+            <SettingsPanel installApp={installApp} installAvailable={installAvailable} appInstalled={appInstalled} query={query} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={onLogin} onLogout={onLogout} universe={universe} activeItems={activeItems} setStatus={setStatus} toggleBookmark={toggleBookmark} quietBrowsingOn={quietBrowsingOn} setQuietBrowsingOn={setQuietBrowsingOn} borderlessHeaderOn={borderlessHeaderOn} setBorderlessHeaderOn={setBorderlessHeaderOn} liquidGlassNavOn={liquidGlassNavOn} setLiquidGlassNavOn={setLiquidGlassNavOn} liquidGlassNavConfig={liquidGlassNavConfig} setLiquidGlassNavConfig={setLiquidGlassNavConfig} />
           </div>
         )}
       </div>
@@ -234,6 +236,7 @@ export function ProfileHeader({ universe, stats, profileName, setProfileName, pr
                 <form className="avatar-name-edit" onSubmit={(event) => { event.preventDefault(); saveDisplayName(); }}>
                   <input autoFocus value={nameDraft} onChange={(event) => setNameDraft(event.target.value)} maxLength={30} aria-label="Display name" placeholder="Your name" />
                   <button type="submit" disabled={!nameDraft.trim()}>Save</button>
+                  <button type="button" className="avatar-name-clear" onClick={() => { setProfileName?.(''); setNameDraft(''); setEditingName(false); }}>Clear name</button>
                   <button type="button" className="avatar-name-cancel" onClick={() => { setNameDraft(displayName); setEditingName(false); }}>Cancel</button>
                 </form>
               ) : (
@@ -508,35 +511,6 @@ function SettingsPanel({ installApp, installAvailable, appInstalled, query = '',
         <p className="settings-data-desc">Offline mode keeps the app shell and previously loaded images available. Live search, account sync and streaming still require an internet connection.</p>
       </div>
 
-      {/* Player Mode */}
-      <div className="settings-group" hidden={!showGroup('playback player native embedded video')}>
-        <h3 className="settings-group-title">Playback</h3>
-        <div className="settings-row">
-          <div className="settings-row-label">
-            <span className="settings-row-icon"><Play size={18} /></span>
-            <div>
-              <strong>Native player</strong>
-              <small>{nativePlayer ? 'Opens in a new tab (bypasses iframe)' : 'Embedded player (default)'}</small>
-            </div>
-          </div>
-          <button
-            className="theme-toggle"
-            onClick={() => {
-              const next = !nativePlayer;
-              setNativePlayer(next);
-              localStorage.setItem('native-player', next ? '1' : '0');
-            }}
-            aria-label={`Switch to ${nativePlayer ? 'embedded' : 'native'} player`}
-          >
-            <span className={`theme-toggle-track ${nativePlayer ? 'dark' : 'light'}`}>
-              <span className="theme-toggle-thumb">
-                {nativePlayer ? <Play size={14} /> : <Play size={14} />}
-              </span>
-            </span>
-          </button>
-        </div>
-      </div>
-
       {/* Profile Name */}
       <div className="settings-group" hidden={!showGroup('profile name display edit')}>
         <h3 className="settings-group-title">Profile</h3>
@@ -562,9 +536,7 @@ function SettingsPanel({ installApp, installAvailable, appInstalled, query = '',
               />
             </div>
           ) : (
-            <button className="settings-edit-btn" onClick={() => { setDraft(profileName); setEditing(true); setTimeout(() => inputRef.current?.focus(), 0); }}>
-              Edit
-            </button>
+            <div className="settings-name-actions"><button className="settings-edit-btn" onClick={() => { setDraft(profileName); setEditing(true); setTimeout(() => inputRef.current?.focus(), 0); }}>Edit</button>{profileName && <button className="settings-edit-btn" onClick={() => { setProfileName(''); setDraft(''); setEditing(false); }}>Clear</button>}</div>
           )}
         </div>
       </div>
@@ -608,6 +580,43 @@ function SettingsPanel({ installApp, installAvailable, appInstalled, query = '',
       <DataSection universe={universe} activeItems={activeItems} profileName={profileName} setStatus={setStatus} toggleBookmark={toggleBookmark} query={query} />
     </div>
   );
+}
+
+
+function WatchTogetherHistory({ user }) {
+  const [entries, setEntries] = useState([]);
+  const [loading, setLoading] = useState(Boolean(user?.id));
+  useEffect(() => {
+    let alive = true;
+    let local = [];
+    try { local = JSON.parse(localStorage.getItem('mcu-watch-together-history-v1') || '[]'); } catch {}
+    setEntries(local);
+    if (!user?.id) { setLoading(false); return () => { alive = false; }; }
+    supabaseDataRequest('/rest/v1/rpc/get_watch_together_history', { method: 'POST', body: '{}' })
+      .then(rows => {
+        if (!alive) return;
+        const merged = new Map();
+        [...(Array.isArray(rows) ? rows : []), ...local].forEach(entry => {
+          const key = entry.room_code || entry.title;
+          const old = merged.get(key);
+          if (!old || Number(entry.duration_seconds || 0) > Number(old.duration_seconds || 0)) merged.set(key, entry);
+        });
+        setEntries([...merged.values()].sort((a,b) => new Date(b.last_watched_at || b.watched_at || 0) - new Date(a.last_watched_at || a.watched_at || 0)));
+      }).catch(() => { if (alive) setEntries(local); }).finally(() => { if (alive) setLoading(false); });
+    return () => { alive = false; };
+  }, [user?.id]);
+  const durationLabel = seconds => { const mins=Math.max(0,Math.floor(Number(seconds||0)/60)); return mins<60 ? `${mins} min` : `${Math.floor(mins/60)}h ${mins%60}m`; };
+  return <section className="wt-history-panel">
+    <div className="wt-history-heading"><div><p className="eyebrow">Shared screenings</p><h2>Watch Together history</h2></div><span>{entries.length} sessions</span></div>
+    {loading ? <p className="wt-history-empty">Loading your screenings…</p> : entries.length ? <div className="wt-history-list">{entries.slice(0,20).map((entry,index)=>{
+      const media=entry.media||{}, title=entry.title||media.title||'Untitled screening', date=entry.last_watched_at||entry.watched_at||entry.started_at;
+      return <article className="wt-history-item" key={entry.room_code||`${title}-${index}`}>
+        <div className="wt-history-poster">{media.poster?<img src={media.poster} alt="" loading="lazy"/>:<Clapperboard size={20}/>}</div>
+        <div className="wt-history-copy"><strong>{title}</strong><small>{media.mediaType==='tv'||media.type==='series'?'Series':'Movie'} · {date?new Date(date).toLocaleDateString():'Recently'}</small></div>
+        <span className="wt-history-duration"><Clock size={13}/>{durationLabel(entry.duration_seconds)}</span>
+      </article>;
+    })}</div> : <p className="wt-history-empty">Your shared screenings will appear here, with the title and time watched.</p>}
+  </section>;
 }
 
 function AnalyticsPanel({ stats, activeItems, inProgressItems }) {
