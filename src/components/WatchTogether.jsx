@@ -96,6 +96,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     if (version > lastVersionRef.current) {
       lastVersionRef.current = version;
       const playback = nextRoom.playback || {};
+      setPaused(Boolean(playback.paused));
       if (Number.isFinite(Number(playback.position))) {
         const target = Math.max(0, Number(playback.position) + (playback.paused ? 0 : Math.max(0, (Date.now() - Date.parse(playback.updated_at || nextRoom.updated_at || new Date().toISOString())) / 1000)));
         setCurrentTime(target);
@@ -209,7 +210,10 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
 
   const sendPlayerCommand = useCallback((command, args = []) => {
     iframeRef.current?.contentWindow?.postMessage({ type: 'cinesrc:command', command, args }, 'https://cinesrc.st');
-  }, []);
+    if (command === 'play') { setPaused(false); publishPlayback({ position: currentTimeRef.current, paused: false }); }
+    if (command === 'pause') { setPaused(true); publishPlayback({ position: currentTimeRef.current, paused: true }); }
+    if (command === 'seek') { const position = Math.max(0, Number(args[0]) || 0); setCurrentTime(position); publishPlayback({ position, paused: pausedRef.current }, true); }
+  }, [publishPlayback]);
 
   const sendChat = async (event) => {
     event?.preventDefault();
@@ -261,6 +265,8 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
         }
       }
       if (data.type === 'cinesrc:loadedmetadata' && Number.isFinite(Number(data.duration))) setDuration(Number(data.duration));
+      if (data.type === 'cinesrc:response' && data.command === 'getDuration' && Number.isFinite(Number(data.result))) setDuration(Number(data.result));
+      if (data.type === 'cinesrc:response' && data.command === 'getCurrentTime' && Number.isFinite(Number(data.result))) setCurrentTime(Number(data.result));
       if (data.type === 'cinesrc:play') {
         setPaused(false);
         if (!applyingRemoteRef.current) publishPlayback({ position: currentTimeRef.current, paused: false });
