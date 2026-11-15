@@ -12686,3 +12686,14 @@
     border-radius: 24px !important;
   }
 }
+
+
+/* Clear three-way conflict choices: cloud, local overwrite, or true merge. */
+.sync-conflict-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.sync-conflict-actions .sync-conflict-btn.merge {
+  color: #fff;
+  background: linear-gradient(135deg, #4268d8, #7157cb);
+  border-color: transparent;
+  box-shadow: 0 6px 18px rgba(77, 99, 205, .2);
+}
+.avatar-dialog-preview img { display: block; width: 100%; height: 100%; object-fit: cover; }

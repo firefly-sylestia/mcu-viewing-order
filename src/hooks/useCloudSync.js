@@ -197,7 +197,7 @@ export function useCloudSync(user, actions, profileName, setActions, setProfileN
     window.clearTimeout(pushTimer.current);
     pushTimer.current = window.setTimeout(() => pushToCloud(), 1800);
     return () => window.clearTimeout(pushTimer.current);
-  }, [actions, profileName, watchItem, user?.id, snapshot, pushToCloud]);
+  }, [actions, profileName, watchItem, profileAvatar, user?.id, snapshot, pushToCloud]);
 
   const resolveUseRemote = useCallback(() => {
     if (!conflict) return;
@@ -212,6 +212,41 @@ export function useCloudSync(user, actions, profileName, setActions, setProfileN
     if (saved) setConflict(null);
   }, [conflict, pushToCloud]);
 
+  const resolveMerge = useCallback(async () => {
+    if (!conflict || !user?.id) return;
+    const local = snapshot();
+    const merged = {
+      actions: mergeActions(local.actions, conflict.remoteActions || {}),
+      profileName: local.profileName || conflict.remoteProfile || '',
+      watchItem: local.watchItem || conflict.remoteWatchItem || null,
+      profileAvatar: local.profileAvatar || conflict.remoteProfileAvatar || '',
+    };
+    // Update the live ref before React state settles so the upload contains
+    // the merged snapshot, not the previous render's local state.
+    localStateRef.current = merged;
+    applyingRemote.current = true;
+    setActions(merged.actions);
+    setProfileName(merged.profileName);
+    setWatchItem(merged.watchItem);
+    setProfileAvatar(merged.profileAvatar);
+    try {
+      setSyncing(true);
+      const rows = await supabaseDataRequest(`${TABLE}?on_conflict=user_id`, {
+        method: 'POST',
+        headers: { Prefer: 'resolution=merge-duplicates,return=representation' },
+        body: JSON.stringify({ user_id: user.id, data: merged }),
+      });
+      markSynced(merged, rows?.[0]?.updated_at || new Date().toISOString());
+      setConflict(null);
+      setToast({ message: 'Your device and cloud progress have been merged.', type: 'success' });
+    } catch (error) {
+      setToast({ message: error.message || 'Could not merge your progress. Your local data is still here.', type: 'error' });
+    } finally {
+      setSyncing(false);
+      window.setTimeout(() => { applyingRemote.current = false; }, 0);
+    }
+  }, [conflict, user?.id, snapshot, setActions, setProfileName, setWatchItem, setProfileAvatar, markSynced]);
+
   const pushBeforeLogout = useCallback(async () => {
     if (!configured || !user?.id) return;
     window.clearTimeout(pushTimer.current);
@@ -224,5 +259,5 @@ export function useCloudSync(user, actions, profileName, setActions, setProfileN
     markSynced(current, rows?.[0]?.updated_at || new Date().toISOString());
   }, [user?.id, snapshot, markSynced]);
 
-  return { pushToCloud, pushBeforeLogout, lastSynced, syncing, conflict, resolveUseRemote, resolveKeepLocal, toast };
+  return { pushToCloud, pushBeforeLogout, lastSynced, syncing, conflict, resolveUseRemote, resolveKeepLocal, resolveMerge, toast };
 }

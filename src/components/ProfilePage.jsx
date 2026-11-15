@@ -22,6 +22,28 @@ function applyBrowserTheme(theme) {
   document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')?.setAttribute('content', isDark ? 'black-translucent' : 'default');
 }
 
+
+const getGuestIdentity = () => {
+  const key = 'mcu-watch-guest-identity-v1';
+  try {
+    const saved = JSON.parse(localStorage.getItem(key) || 'null');
+    if (saved?.name && saved?.avatar) return saved;
+    const first = ['Cosmic', 'Velvet', 'Starlit', 'Neon', 'Lunar', 'Hidden', 'Silver', 'Crimson', 'Quiet', 'Golden'];
+    const second = ['Ranger', 'Comet', 'Voyager', 'Fox', 'Phantom', 'Pilot', 'Wanderer', 'Nova', 'Sparrow', 'Orbit'];
+    const random = (max) => {
+      try { return crypto.getRandomValues(new Uint32Array(1))[0] % max; }
+      catch { return Math.floor(Math.random() * max); }
+    };
+    const name = `${first[random(first.length)]}${second[random(second.length)]}${String(100 + random(900))}`;
+    const identity = { name, avatar: `https://blobatar.dev/avatar/${encodeURIComponent(name)}?size=128&gen=2&background=squircle` };
+    localStorage.setItem(key, JSON.stringify(identity));
+    return identity;
+  } catch {
+    const name = 'StarlitVoyager';
+    return { name, avatar: `https://blobatar.dev/avatar/${name}?size=128&gen=2&background=squircle` };
+  }
+};
+
 function useAppTheme() {
   const [theme, setThemeState] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -54,7 +76,7 @@ const formatTimeAgo = (timestamp) => {
   return 'Synced ' + Math.floor(hours / 24) + 'd ago';
 };
 
-function ProfilePage({ pageHeader, setActiveTab, installApp, installAvailable, appInstalled, stats, activeItems, universe, activeTab = 'insights', query = '', setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, profileName, setProfileName, user, configured, onLogin, onLogout, lastSynced, syncing, onSync, conflict, onResolveRemote, onResolveLocal, syncToast, nativePlayer, setNativePlayer, quietBrowsingOn = false, setQuietBrowsingOn, borderlessHeaderOn = false, setBorderlessHeaderOn, liquidGlassNavOn = false, setLiquidGlassNavOn, liquidGlassNavConfig, setLiquidGlassNavConfig }) {
+function ProfilePage({ pageHeader, setActiveTab, installApp, installAvailable, appInstalled, stats, activeItems, universe, activeTab = 'insights', query = '', setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, profileName, setProfileName, user, configured, onLogin, onLogout, lastSynced, syncing, onSync, conflict, onResolveRemote, onResolveLocal, onResolveMerge, syncToast, nativePlayer, setNativePlayer, quietBrowsingOn = false, setQuietBrowsingOn, borderlessHeaderOn = false, setBorderlessHeaderOn, liquidGlassNavOn = false, setLiquidGlassNavOn, liquidGlassNavConfig, setLiquidGlassNavConfig }) {
   
   const savedItems = activeItems.filter(i => i.bookmarked);
   const inProgressItems = activeItems.filter(i => i.userStatus === 'watching');
@@ -80,11 +102,12 @@ function ProfilePage({ pageHeader, setActiveTab, installApp, installAvailable, a
           <div className="sync-conflict-icon">⚠️</div>
           <div className="sync-conflict-body">
             <strong>Sync Conflict</strong>
-            <p>Your data has changed on another device. Which version would you like to keep?</p>
+            <p>Changes exist on this device and in the cloud. Merge combines both histories and keeps the newer status when the same title conflicts.</p>
           </div>
           <div className="sync-conflict-actions">
             <button className="sync-conflict-btn primary" onClick={onResolveRemote}>Use Cloud</button>
-            <button className="sync-conflict-btn" onClick={onResolveLocal}>Keep Mine</button>
+            <button className="sync-conflict-btn" onClick={onResolveLocal}>Replace Cloud</button>
+            <button className="sync-conflict-btn merge" onClick={onResolveMerge}>Merge Both</button>
           </div>
         </div>
       )}
@@ -140,8 +163,10 @@ export function ProfileHeader({ universe, stats, profileName, setProfileName, pr
   }, [localAvatar, user?.photoURL]);
   useEffect(() => { if (profileAvatar !== undefined) setLocalAvatar(profileAvatar || ''); }, [profileAvatar]);
   const universeName = universe === 'all' ? 'Multiverse' : universe === 'marvel' ? 'MCU' : universe === 'xmen' ? 'X-Men' : universe === 'sony' ? 'Sony' : 'DC';
-  const displayName = (profileName || user?.displayName || user?.email?.split('@')[0] || `${universeName} Viewer`).trim();
+  const guestIdentity = getGuestIdentity();
+  const displayName = (profileName || user?.displayName || user?.email?.split('@')[0] || guestIdentity.name).trim();
   const avatarInitial = (displayName[0] || universeName[0]).toUpperCase();
+  const generatedAvatar = `https://blobatar.dev/avatar/${encodeURIComponent(displayName)}?size=256&gen=2&background=squircle`;
 
   const handleAvatar = (event) => {
     const file = event.target.files?.[0];
@@ -152,13 +177,19 @@ export function ProfileHeader({ universe, stats, profileName, setProfileName, pr
       const image = new Image();
       image.onload = () => {
         const canvas = document.createElement('canvas');
-        const scale = Math.min(1, 384 / Math.max(image.width, image.height));
+        const scale = Math.min(1, 256 / Math.max(image.width, image.height));
         canvas.width = Math.max(1, Math.round(image.width * scale));
         canvas.height = Math.max(1, Math.round(image.height * scale));
-        canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
-        const data = canvas.toDataURL('image/jpeg', 0.82);
+        const context = canvas.getContext('2d', { alpha: false });
+        if (!context) { window.alert('This image could not be processed. Try another photo.'); return; }
+        context.fillStyle = '#ffffff';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        let data = canvas.toDataURL('image/webp', 0.72);
+        if (!data.startsWith('data:image/webp')) data = canvas.toDataURL('image/jpeg', 0.68);
+        // A 256px WebP avatar is typically a fraction of the original upload.
         try { localStorage.setItem('incursion-profile-avatar', data); setLocalAvatar(data); setProfileAvatar?.(data); }
-        catch { window.alert('This image is too large for local browser storage. Try a smaller photo.'); }
+        catch { window.alert('The compressed photo is still too large for browser storage. Try a smaller image.'); }
       };
       image.src = reader.result;
     };
@@ -186,7 +217,7 @@ export function ProfileHeader({ universe, stats, profileName, setProfileName, pr
         profilePageTarget
       )}
       <button type="button" className="profile-avatar profile-avatar-edit" onClick={() => setAvatarDialogOpen(true)} aria-label="View profile picture" title="Profile picture">
-        {localAvatar || user?.photoURL ? <img src={localAvatar || user.photoURL} alt="" referrerPolicy="no-referrer" /> : <span className="avatar-initials">{avatarInitial}</span>}
+        {localAvatar || user?.photoURL ? <img src={localAvatar || user.photoURL} alt="" referrerPolicy="no-referrer" /> : <img src={generatedAvatar} alt="" loading="lazy" />}
       </button>
       <input ref={avatarInput} className="profile-avatar-input" type="file" accept="image/*" onChange={handleAvatar} />
       {avatarDialogOpen && typeof document !== 'undefined' && createPortal((
@@ -196,7 +227,7 @@ export function ProfileHeader({ universe, stats, profileName, setProfileName, pr
             <div className="avatar-dialog-preview">
               {localAvatar || user?.photoURL
                 ? <img src={localAvatar || user.photoURL} alt="Profile" referrerPolicy="no-referrer" />
-                : <span className="avatar-dialog-initial">{avatarInitial}</span>}
+                : <img src={generatedAvatar} alt="Generated profile avatar" />}
             </div>
             <div className="avatar-dialog-copy">
               {editingName ? (
