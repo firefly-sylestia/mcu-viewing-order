@@ -1600,7 +1600,7 @@ export default function App() {
       {installHelpOpen && <InstallHelpDialog onClose={() => setInstallHelpOpen(false)} />}
       {authOpen && <AuthModal onClose={() => setAuthOpen(false)} onLogin={login} onSignup={signup} onResetPassword={resetPassword} onUpdatePassword={updatePassword} configured={configured} recovery={recovery} />}
       {watchConfirmItem && <WatchConfirmDialog item={watchConfirmItem.item} onConfirm={confirmWatch} onDismiss={(skipFuture) => dismissWatchConfirm(skipFuture)} />}
-      <Footer />
+      <Footer watchPage={section === 'watch-together'} />
     </main>
   </>
   );
@@ -3565,10 +3565,10 @@ function AdBlockerDialog({ onDismiss }) {
 }
 
 /* ── Footer ──────────────────────────────────────────────────────────────────── */
-function Footer() {
+function Footer({ watchPage = false }) {
   const [open, setOpen] = useState(false);
   return (
-    <footer className={`site-footer${open ? ' footer-expanded' : ''}`}>
+    <footer className={`site-footer${open ? ' footer-expanded' : ''}${watchPage ? ' wt-screening-footer' : ''}`}>
       <div className="footer-bottom">
         <span>&copy; {new Date().getFullYear()} Cinematic Viewing Order. All rights reserved.</span>
         <span>Not affiliated with Marvel, DC, Disney, Warner Bros., or any film studio.</span>

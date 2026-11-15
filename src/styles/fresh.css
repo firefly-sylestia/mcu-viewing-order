@@ -13869,11 +13869,6 @@
 }
 
 
-/* Watch Together is a focused workspace: never show the global legal footer
-   behind its chat, setup sheets or full-screen theatre player. */
-:root .movie-site.page-watch-together > .site-footer {
-  display:none!important;
-}
 
 /* A theatre room can remain mounted for audio/playback continuity, but once
    the user leaves the Watch page it must never sit above the new section.
@@ -13933,13 +13928,43 @@
   display:contents!important;
 }
 
-/* The legal footer is omitted on the screening route, but the page continues
-   naturally with a large, empty stretch of its own background. */
-:root .movie-site.page-watch-together::after {
-  content:"";
-  display:block!important;
-  width:100%!important;
-  height:clamp(220px,28vh,300px)!important;
-  background:transparent!important;
-  pointer-events:none!important;
+
+
+/* Watch Together ends in a real, full-width dark footer rather than a blank
+   spacer. It sits after both the create/join screen and the active room page. */
+:root .movie-site.page-watch-together > .site-footer.wt-screening-footer {
+  display:block!important;position:relative!important;isolation:isolate!important;
+  width:100vw!important;max-width:none!important;box-sizing:border-box!important;
+  margin:34px 0 0 calc(50% - 50vw)!important;
+  padding:30px max(20px, calc((100vw - 1160px) / 2)) calc(112px + env(safe-area-inset-bottom))!important;
+  min-height:190px!important;overflow:visible!important;
+  background:#08090d!important;color:#aeb4c0!important;
+  border-top:1px solid rgba(255,255,255,.09)!important;
+}
+:root .movie-site.page-watch-together > .site-footer.wt-screening-footer .footer-bottom {
+  display:flex!important;align-items:center!important;justify-content:space-between!important;
+  flex-wrap:wrap!important;gap:14px 24px!important;max-width:1160px!important;margin:0 auto!important;
+  color:#aeb4c0!important;
+}
+:root .movie-site.page-watch-together > .site-footer.wt-screening-footer .footer-bottom span {
+  color:#aeb4c0!important;line-height:1.6!important;
+}
+:root .movie-site.page-watch-together > .site-footer.wt-screening-footer .footer-info-btn {
+  flex:0 0 36px!important;width:36px!important;height:36px!important;
+  border:1px solid rgba(255,255,255,.14)!important;background:#171a21!important;color:#f1f3f7!important;
+}
+:root .movie-site.page-watch-together > .site-footer.wt-screening-footer .footer-content {
+  max-width:1160px!important;margin:24px auto 0!important;color:#c0c5cf!important;
+}
+:root .movie-site.page-watch-together > .site-footer.wt-screening-footer .footer-content h4 {color:#f2f4f8!important;}
+:root .movie-site.page-watch-together > .site-footer.wt-screening-footer .footer-content p {color:#aeb4c0!important;}
+@media(max-width:760px) {
+  :root .movie-site.page-watch-together > .site-footer.wt-screening-footer {
+    margin-top:22px!important;min-height:210px!important;
+    padding:26px 18px calc(112px + env(safe-area-inset-bottom))!important;
+  }
+  :root .movie-site.page-watch-together > .site-footer.wt-screening-footer .footer-bottom {
+    align-items:flex-start!important;justify-content:flex-start!important;padding:0!important;
+  }
+  :root .movie-site.page-watch-together > .site-footer.wt-screening-footer .footer-info-btn {margin-left:auto!important;}
 }
