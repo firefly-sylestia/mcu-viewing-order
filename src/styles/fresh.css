@@ -11832,3 +11832,74 @@
 @media(max-width:700px) {
   :root .wh3-browser-search { min-height: 44px; margin-bottom: 17px; border-radius: 13px; }
 }
+
+
+/* LIST PAGE — titles are editorial rows, never individual cards. */
+:root .movie-site.page-list .list-row,
+:root .movie-site.page-list .list-row:not(:hover),
+:root .movie-site.page-list .list-card-grid .movie-card,
+:root .movie-site.page-list .list-grid .movie-card {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: 0 !important;
+  outline: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+:root .movie-site.page-list .list-row:hover,
+:root .movie-site.page-list .list-card-grid .movie-card:hover,
+:root .movie-site.page-list .list-grid .movie-card:hover {
+  background: transparent !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+:root .movie-site.page-list .list-row::after,
+:root .movie-site.page-list .list-row::before {
+  box-shadow: none !important;
+}
+
+/* Continue the top artwork atmosphere farther down the page with a second,
+   overlapping blur bloom. It fades in gently, holds softly, then dissolves. */
+:root[data-top-atmosphere="on"] .movie-site::after {
+  content: "" !important;
+  position: absolute !important;
+  z-index: 0 !important;
+  pointer-events: none !important;
+  top: min(390px, 48vh) !important;
+  left: -42px !important;
+  right: -42px !important;
+  height: min(760px, 88vh) !important;
+  background:
+    radial-gradient(ellipse at 18% 18%, rgba(93,124,255,.075), transparent 54%),
+    radial-gradient(ellipse at 78% 28%, rgba(218,30,55,.065), transparent 56%),
+    var(--top-atmosphere-art, none) center 38% / cover no-repeat !important;
+  filter: blur(38px) saturate(112%) !important;
+  opacity: .42 !important;
+  transform: translateZ(0) scale(1.06) !important;
+  transform-origin: top center !important;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,.42) 13%, #000 34%, rgba(0,0,0,.72) 62%, transparent 100%) !important;
+  mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,.42) 13%, #000 34%, rgba(0,0,0,.72) 62%, transparent 100%) !important;
+}
+:root[data-theme="dark"][data-top-atmosphere="on"] .movie-site::after {
+  background:
+    radial-gradient(ellipse at 18% 18%, rgba(93,124,255,.055), transparent 54%),
+    radial-gradient(ellipse at 78% 28%, rgba(218,30,55,.045), transparent 56%),
+    var(--top-atmosphere-art, none) center 38% / cover no-repeat !important;
+  opacity: .30 !important;
+}
+:root[data-top-atmosphere="off"] .movie-site::after {
+  content: none !important;
+}
+@media (max-width: 760px) {
+  :root[data-top-atmosphere="on"] .movie-site::after {
+    top: min(330px, 42vh) !important;
+    left: -48px !important;
+    right: -48px !important;
+    height: min(650px, 82vh) !important;
+    filter: blur(34px) saturate(110%) !important;
+    opacity: .34 !important;
+  }
+}
