@@ -202,12 +202,12 @@ begin
   -- A creator keeps only one live room. Remove all inactive/closed rooms
   -- belonging to this identity before creating a fresh room ID.
   delete from public.watch_rooms wr
-  where wr.owner_token_hash=encode(sha256(convert_to(p_token,'UTF8')),'hex')
+  where (wr.owner_token_hash=encode(sha256(convert_to(p_token,'UTF8')),'hex') or (auth.uid() is not null and wr.owner_user_id=auth.uid()))
     and (wr.closed_at is not null or wr.expires_at <= now() or not exists (
       select 1 from public.watch_room_participants wp
       where wp.room_id=wr.id and wp.last_seen_at > now()-interval '45 seconds'
     ));
-  if exists (select 1 from public.watch_rooms wr where wr.owner_token_hash=encode(sha256(convert_to(p_token,'UTF8')),'hex') and wr.closed_at is null and wr.expires_at>now()) then
+  if exists (select 1 from public.watch_rooms wr where (wr.owner_token_hash=encode(sha256(convert_to(p_token,'UTF8')),'hex') or (auth.uid() is not null and wr.owner_user_id=auth.uid())) and wr.closed_at is null and wr.expires_at>now()) then
     raise exception 'You already have an active screening room. End or delete it before creating another.';
   end if;
   insert into public.watch_rooms(code, media, playback, owner_user_id, owner_token_hash, expires_at)
@@ -237,7 +237,7 @@ begin
     'viewer_count',(select count(*) from public.watch_room_participants wp where wp.room_id=wr.id and wp.last_seen_at>now()-interval '45 seconds')
   ) order by wr.created_at desc),'[]'::jsonb) into result
   from public.watch_rooms wr
-  where wr.owner_token_hash=encode(sha256(convert_to(p_token,'UTF8')),'hex')
+  where (wr.owner_token_hash=encode(sha256(convert_to(p_token,'UTF8')),'hex') or (auth.uid() is not null and wr.owner_user_id=auth.uid()))
     and wr.closed_at is null and wr.expires_at>now();
   return result;
 end $;
@@ -247,7 +247,7 @@ returns boolean language plpgsql security definer set search_path = pg_catalog, 
 declare removed integer;
 begin
   delete from public.watch_rooms wr where wr.code=upper(trim(p_code))
-    and wr.owner_token_hash=encode(sha256(convert_to(p_token,'UTF8')),'hex');
+    and (wr.owner_token_hash=encode(sha256(convert_to(p_token,'UTF8')),'hex') or (auth.uid() is not null and wr.owner_user_id=auth.uid()));
   get diagnostics removed = row_count;
   if removed=0 then raise exception 'Room not found or you are not its creator.'; end if;
   return true;

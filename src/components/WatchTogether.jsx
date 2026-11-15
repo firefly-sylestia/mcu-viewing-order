@@ -128,8 +128,10 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   useEffect(() => { playerReadyRef.current = playerReady; }, [playerReady]);
 
   const rpc = useCallback(async (name, args) => {
-    return supabasePublicRequest(`${RPC}${name}`, { method: 'POST', body: JSON.stringify(args) });
-  }, []);
+    const options = { method: 'POST', body: JSON.stringify(args) };
+    if (user?.id) return supabaseDataRequest(`${RPC}${name}`, options);
+    return supabasePublicRequest(`${RPC}${name}`, options);
+  }, [user?.id]);
 
   const applyRoomSnapshot = useCallback((snapshot) => {
     if (!snapshot?.room) return;
