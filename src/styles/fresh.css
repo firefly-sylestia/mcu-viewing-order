@@ -13803,3 +13803,67 @@
 /* The room stays mounted off-screen while browsing; no floating mini-player. */
 :root .wt-page.wt-minimized {visibility:hidden!important}
 :root .wt-page.wt-minimized * {pointer-events:none!important}
+
+
+/* Final mobile correction: keep the room player truly off-canvas, not picture-in-picture. */
+:root .wt-page.wt-minimized {
+  position:fixed!important;inset:0 auto auto 0!important;
+  width:100vw!important;height:100dvh!important;min-height:100dvh!important;
+  margin:0!important;padding:0!important;z-index:-1!important;
+  transform:translate3d(-200vw,0,0)!important;
+  visibility:hidden!important;opacity:0!important;pointer-events:none!important;
+  overflow:hidden!important;contain:layout paint style!important;
+}
+:root .wt-page.wt-minimized .wt-player,
+:root .wt-page.wt-minimized .wt-player iframe {
+  visibility:hidden!important;pointer-events:none!important;
+}
+:root .wt-create-backdrop {
+  position:fixed!important;inset:0!important;z-index:2147482500!important;
+  display:flex!important;justify-content:center!important;align-items:center!important;
+  box-sizing:border-box!important;overflow-y:auto!important;
+  padding:16px!important;
+}
+:root .wt-create-backdrop .wt-create-dialog {
+  box-sizing:border-box!important;max-height:calc(100dvh - 32px)!important;
+  margin:auto!important;overflow-x:hidden!important;overflow-y:auto!important;
+  padding-bottom:18px!important;
+}
+@media(max-width:760px) {
+  :root .movie-site.page-watch-together .wt-page {
+    padding:calc(10px + env(safe-area-inset-top)) 12px calc(88px + env(safe-area-inset-bottom))!important;
+  }
+  :root .movie-site.page-watch-together .wt-content,
+  :root .movie-site.page-watch-together .wt-main {
+    padding-bottom:0!important;margin-bottom:0!important;
+  }
+  :root .movie-site.page-watch-together .wt-chat {
+    margin:0 0 12px!important;
+    padding:0 0 8px!important;
+    gap:0!important;
+  }
+  :root .movie-site.page-watch-together .wt-chat-messages {
+    margin:0 0 8px!important;
+    max-height:36dvh!important;min-height:110px!important;
+  }
+  :root .movie-site.page-watch-together .wt-chat-form {
+    position:static!important;inset:auto!important;
+    margin:0 10px 8px!important;padding:7px!important;
+    z-index:auto!important;
+  }
+  :root .movie-site.page-watch-together .wt-chat-foot {
+    position:static!important;inset:auto!important;
+    margin:0 10px!important;padding:5px 2px 8px!important;
+    line-height:1.35!important;
+  }
+  :root .movie-site.page-watch-together .wt-chat-error {margin:0 10px 8px!important}
+  :root .wt-create-backdrop {
+    padding:calc(12px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom))!important;
+    align-items:center!important;
+  }
+  :root .wt-create-backdrop .wt-create-dialog {
+    width:min(100%,520px)!important;
+    max-height:calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom))!important;
+    margin:auto!important;padding-bottom:14px!important;
+  }
+}
