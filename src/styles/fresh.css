@@ -14075,3 +14075,37 @@
   transform:scale(.5)!important;
   transform-origin:top left!important;
 }
+
+
+/* Watch Together QR code: show the invite in a focused in-app dialog. */
+.wt-qr-backdrop{position:fixed;inset:0;z-index:2147483600;display:grid;place-items:center;padding:20px;background:rgba(5,8,15,.72);-webkit-backdrop-filter:blur(22px) saturate(1.2);backdrop-filter:blur(22px) saturate(1.2)}
+.wt-qr-dialog{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px;width:min(390px,100%);padding:30px 24px 24px;border:1px solid color-mix(in srgb,var(--fx-muted) 18%,transparent);border-radius:26px;background:var(--fx-surface, #fff);color:var(--fx-text,#171923);box-shadow:0 28px 100px rgba(0,0,0,.38);text-align:center}
+.wt-qr-close{position:absolute;top:12px;right:12px;display:grid;place-items:center;width:38px;height:38px;border:0;border-radius:50%;background:var(--fx-surface-3,rgba(128,136,154,.14));color:var(--fx-text);cursor:pointer}
+.wt-qr-kicker{margin-top:8px;color:var(--fx-muted);font-size:10px;font-weight:850;letter-spacing:.16em}
+.wt-qr-dialog h2{margin:2px 0 0;font-size:22px;letter-spacing:-.035em}
+.wt-qr-dialog p{margin:0 0 8px;color:var(--fx-muted);font-size:12px;line-height:1.5}
+.wt-qr-image{display:grid;place-items:center;width:min(70vw,260px);aspect-ratio:1;padding:12px;border-radius:20px;background:#fff;box-shadow:0 8px 30px rgba(0,0,0,.12)}
+.wt-qr-image img{display:block;width:100%;height:100%;object-fit:contain}
+.wt-qr-code{display:grid;gap:3px;margin-top:5px}
+.wt-qr-code span{color:var(--fx-muted);font-size:9px;font-weight:800;letter-spacing:.14em}
+.wt-qr-code strong{font-size:20px;letter-spacing:.16em;font-variant-numeric:tabular-nums}
+.wt-qr-copy{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:44px;margin-top:5px;border:0;border-radius:13px;background:var(--fx-accent);color:#fff;font:inherit;font-size:12px;font-weight:800;cursor:pointer}
+
+/* Full-screen profile photo: keep the portrait dominant and all actions readable,
+   reachable and anchored below it on small screens. */
+:root .avatar-dialog-backdrop:has(.avatar-dialog-fullscreen){z-index:2147483601!important;padding:0!important;overflow-y:auto!important}
+:root .avatar-dialog-fullscreen{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:clamp(12px,2.5vh,22px)!important;padding:calc(env(safe-area-inset-top) + 72px) 18px calc(env(safe-area-inset-bottom) + 22px)!important;overflow-y:auto!important;overscroll-behavior:contain!important}
+:root .avatar-dialog-fullscreen .avatar-dialog-preview{width:min(76vw,58dvh,620px)!important;height:min(76vw,58dvh,620px)!important;max-width:calc(100vw - 36px)!important;max-height:58dvh!important;flex:0 1 auto!important;margin:0!important;border-radius:24px!important;overflow:hidden!important}
+:root .avatar-dialog-fullscreen .avatar-dialog-copy{width:min(100%,420px)!important;gap:5px!important;color:#fff!important;text-shadow:none!important}
+:root .avatar-dialog-fullscreen .avatar-dialog-copy strong{color:#fff!important;font-size:17px!important}
+:root .avatar-dialog-fullscreen .avatar-dialog-copy span{color:rgba(255,255,255,.72)!important;font-size:12px!important}
+:root .avatar-dialog-fullscreen .avatar-dialog-actions{display:flex!important;align-items:center!important;justify-content:center!important;flex-wrap:wrap!important;gap:10px!important;width:min(100%,420px)!important}
+:root .avatar-dialog-fullscreen .avatar-dialog-actions button{min-height:44px!important;padding:0 16px!important;border:1px solid rgba(255,255,255,.18)!important;border-radius:999px!important;background:rgba(255,255,255,.14)!important;color:#fff!important;font-size:12px!important;font-weight:750!important;box-shadow:0 5px 20px rgba(0,0,0,.16)!important}
+:root .avatar-dialog-fullscreen .avatar-dialog-actions button svg{color:currentColor!important;flex:0 0 auto!important}
+:root .avatar-dialog-fullscreen .avatar-dialog-close{position:fixed!important;top:calc(env(safe-area-inset-top) + 14px)!important;right:16px!important;z-index:20!important;width:44px!important;height:44px!important;border:1px solid rgba(255,255,255,.2)!important;background:rgba(255,255,255,.16)!important;color:#fff!important;box-shadow:0 5px 20px rgba(0,0,0,.18)!important}
+@media(max-width:620px){
+ :root .avatar-dialog-fullscreen{justify-content:center!important;gap:14px!important;padding-left:16px!important;padding-right:16px!important}
+ :root .avatar-dialog-fullscreen .avatar-dialog-preview{width:min(84vw,54dvh)!important;height:min(84vw,54dvh)!important;max-height:54dvh!important;border-radius:21px!important}
+ :root .avatar-dialog-fullscreen .avatar-dialog-actions{gap:8px!important}
+ :root .avatar-dialog-fullscreen .avatar-dialog-actions button{min-height:42px!important;padding:0 13px!important}
+}
