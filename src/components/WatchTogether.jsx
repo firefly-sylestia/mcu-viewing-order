@@ -114,7 +114,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   }, []);
 
   const joinExisting = useCallback(async (code, identity = guest) => {
-    setBusy(true); setError('');
+    setBusy(true); setError(''); lastVersionRef.current = 0;
     try {
       const result = await rpc('join_watch_room', {
         p_code: code.trim().toUpperCase(),
@@ -134,7 +134,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
 
   const createRoom = useCallback(async () => {
     if (!itemMedia.tmdbId) { setError('This title does not have a TMDB ID, so a shared player cannot be created.'); return; }
-    setBusy(true); setError('');
+    setBusy(true); setError(''); lastVersionRef.current = 0;
     try {
       const code = roomCode();
       const result = await rpc('create_watch_room', {
@@ -241,7 +241,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     const r = roomRef.current, p = participantRef.current;
     if (r && p) await rpc('leave_watch_room', { p_code: r.code, p_token: p.token }).catch(() => {});
     window.clearInterval(pollRef.current); window.clearInterval(heartbeatRef.current);
-    setRoom(null); setParticipant(null); setMembers([]); setMessages([]); setPlayerReady(false); setOpen(false);
+    setRoom(null); setParticipant(null); setMembers([]); setMessages([]); setPlayerReady(false); lastVersionRef.current = 0; setOpen(false);
     const url = new URL(window.location.href); url.searchParams.delete('room'); window.history.replaceState({}, '', url.toString());
   };
 
@@ -306,6 +306,17 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const [joinCode, setJoinCode] = useState('');
   const openJoin = () => { setOpen(true); setRoom(null); setParticipant(null); setError(''); };
   const progressPercent = duration ? Math.min(100, (currentTime / duration) * 100) : 0;
+  useEffect(() => { setPlayerReady(false); }, [sharedPlayerUrl]);
+  useEffect(() => {
+    if (!playerReady || !room?.playback) return;
+    const playback = room.playback;
+    const target = Math.max(0, Number(playback.position) || 0);
+    applyingRemoteRef.current = true;
+    sendPlayerCommand('seek', [target]);
+    sendPlayerCommand(playback.paused ? 'pause' : 'play');
+    setPaused(Boolean(playback.paused));
+    window.setTimeout(() => { applyingRemoteRef.current = false; }, 1000);
+  }, [playerReady, room?.id, sendPlayerCommand]);
 
   return <>
     <button type="button" className="watch-together-launch" onClick={() => { setOpen(true); setError(''); }}><Users size={16} /><span>Watch together</span></button>
@@ -327,7 +338,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
           </div> : <div className="wt-content">
             <div className="wt-main">
               <div className="wt-room-title"><div><span>NOW SCREENING</span><h2>{room.media?.title || itemMedia.title}</h2><small>{members.length} {members.length === 1 ? 'viewer' : 'viewers'} · {participant.is_host ? 'You are hosting' : 'Hosted by another viewer'}</small></div><button className="wt-copy" onClick={copyLink}>{copied ? <Check size={15} /> : <Copy size={15} />}{copied ? 'Copied' : 'Invite'}</button></div>
-              <div className="wt-player"><iframe ref={iframeRef} src={sharedPlayerUrl} title={`Watch together: ${room.media?.title || itemMedia.title}`} allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowFullScreen onLoad={() => setPlayerReady(true)} /></div>
+              <div className="wt-player"><iframe ref={iframeRef} src={sharedPlayerUrl} title={`Watch together: ${room.media?.title || itemMedia.title}`} allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowFullScreen /></div>
               <div className="wt-controls">
                 <button onClick={() => sendPlayerCommand('seek', [Math.max(0, currentTimeRef.current - 10)])} aria-label="Back 10 seconds"><SkipBack size={17} /><small>10</small></button>
                 <button className="wt-play" onClick={() => sendPlayerCommand(paused ? 'play' : 'pause')} aria-label={paused ? 'Play for everyone' : 'Pause for everyone'}>{paused ? <Play size={19} fill="currentColor" /> : <Pause size={19} fill="currentColor" />}</button>
