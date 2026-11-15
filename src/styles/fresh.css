@@ -12823,19 +12823,19 @@
 :root .page-watch-together .wt-connect-card .wt-create{background:linear-gradient(110deg,var(--fx-accent),color-mix(in srgb,var(--fx-accent) 65%,#7764df));text-align:left}
 :root .page-watch-together .wt-connect-card .wt-create span{display:grid;gap:4px}
 :root .page-watch-together .wt-connect-card .wt-create small{font-size:10px;font-weight:550;opacity:.86}
-:root .page-watch-together .wt-create-backdrop{position:fixed;inset:0;z-index:10080;display:grid;place-items:center;padding:18px;background:rgba(5,9,17,.62);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
-:root .page-watch-together .wt-create-dialog{width:min(560px,100%);max-height:min(84dvh,780px);overflow:auto;padding:clamp(18px,3vw,28px);border:1px solid color-mix(in srgb,var(--fx-muted) 22%,transparent);border-radius:25px;background:var(--fx-surface);color:var(--fx-text);box-shadow:0 28px 90px rgba(0,0,0,.32)}
-:root .page-watch-together .wt-create-dialog>header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px}
-:root .page-watch-together .wt-create-dialog>header span{font-size:9px;letter-spacing:.15em;font-weight:900;color:var(--fx-accent)}
-:root .page-watch-together .wt-create-dialog>header h2{margin:6px 0;font-size:26px;letter-spacing:-.04em;color:var(--fx-text)}
-:root .page-watch-together .wt-create-dialog>header p{margin:0;color:var(--fx-muted);font-size:12px}
-:root .page-watch-together .wt-create-dialog>header button{width:36px;height:36px;flex:0 0 auto;border:0;border-radius:50%;background:var(--fx-surface-2);color:var(--fx-text)}
-:root .page-watch-together .wt-create-dialog .wt-picker-list{max-height:340px}
-:root .page-watch-together .wt-create-dialog .wt-picker-list>button.selected{border-color:var(--fx-accent);background:color-mix(in srgb,var(--fx-accent) 10%,var(--fx-surface-2))}
+:root .wt-create-backdrop{position:fixed;inset:0;z-index:10080;display:grid;place-items:center;padding:18px;background:rgba(5,9,17,.62);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+:root .wt-create-backdrop .wt-create-dialog{width:min(560px,100%);max-height:min(84dvh,780px);overflow:auto;padding:clamp(18px,3vw,28px);border:1px solid color-mix(in srgb,var(--fx-muted) 22%,transparent);border-radius:25px;background:var(--fx-surface);color:var(--fx-text);box-shadow:0 28px 90px rgba(0,0,0,.32)}
+:root .wt-create-backdrop .wt-create-dialog>header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px}
+:root .wt-create-backdrop .wt-create-dialog>header span{font-size:9px;letter-spacing:.15em;font-weight:900;color:var(--fx-accent)}
+:root .wt-create-backdrop .wt-create-dialog>header h2{margin:6px 0;font-size:26px;letter-spacing:-.04em;color:var(--fx-text)}
+:root .wt-create-backdrop .wt-create-dialog>header p{margin:0;color:var(--fx-muted);font-size:12px}
+:root .wt-create-backdrop .wt-create-dialog>header button{width:36px;height:36px;flex:0 0 auto;border:0;border-radius:50%;background:var(--fx-surface-2);color:var(--fx-text)}
+:root .wt-create-backdrop .wt-create-dialog .wt-picker-list{max-height:340px}
+:root .wt-create-backdrop .wt-create-dialog .wt-picker-list>button.selected{border-color:var(--fx-accent);background:color-mix(in srgb,var(--fx-accent) 10%,var(--fx-surface-2))}
 :root .page-watch-together .wt-dialog-selected{display:flex;align-items:center;gap:12px;margin:14px 0;padding:10px;border-radius:14px;background:var(--fx-surface-2)}
 :root .page-watch-together .wt-dialog-selected img{width:42px;height:62px;object-fit:cover;border-radius:8px}
 :root .page-watch-together .wt-dialog-selected span{display:grid;gap:4px}.wt-dialog-selected strong{color:var(--fx-text);font-size:12px}.wt-dialog-selected small{color:var(--fx-muted);font-size:10px}
-:root .page-watch-together .wt-create-dialog>.wt-create{margin-top:14px}
+:root .wt-create-backdrop .wt-create-dialog>.wt-create{margin-top:14px}
 :root .page-watch-together .wt-topbar .wt-close{background:var(--fx-surface-2);color:var(--fx-text)}
 @media(max-width:760px){
  :root .page-watch-together .wt-page{padding:12px}
@@ -12894,3 +12894,206 @@
 .wt-history-duration{display:flex;align-items:center;gap:5px;color:var(--fx-accent);font-size:11px;font-weight:800;white-space:nowrap;}
 .wt-history-empty{margin:0;padding:16px 4px;color:var(--fx-muted);font-size:12px;}
 @media(max-width:620px){.wt-create-dialog{padding:16px!important;border-radius:18px!important;}.wt-history-panel{padding:15px;}.wt-history-item{gap:9px;}.wt-history-duration{font-size:10px;}.wt-guest-name-form{flex-wrap:wrap;}.wt-guest-name-form button{flex:0 0 auto;}}
+
+
+/* Mobile profile identity: the portrait has a fixed 64px column, never the
+   old 76px portrait inside a 58px grid track. Keep name and controls separate. */
+@media (max-width: 620px) {
+  :root .movie-site.page-profile .profile-header.profile-header-compact {
+    display: grid !important;
+    grid-template-columns: 64px minmax(0, 1fr) 40px !important;
+    grid-template-areas: "avatar identity auth" "next next next" !important;
+    align-items: center !important;
+    column-gap: 12px !important;
+    row-gap: 14px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    padding: 14px !important;
+  }
+  :root .movie-site.page-profile .profile-header.profile-header-compact .profile-avatar {
+    grid-area: avatar !important;
+    display: flex !important;
+    position: relative !important;
+    flex: 0 0 64px !important;
+    width: 64px !important;
+    min-width: 64px !important;
+    max-width: 64px !important;
+    height: 64px !important;
+    min-height: 64px !important;
+    max-height: 64px !important;
+    margin: 0 !important;
+    border-radius: 19px !important;
+  }
+  :root .movie-site.page-profile .profile-header.profile-header-compact .profile-info {
+    grid-area: identity !important;
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+  :root .movie-site.page-profile .profile-header.profile-header-compact .profile-title {
+    max-width: 100% !important;
+    overflow: hidden !important;
+    font-size: clamp(18px, 5.5vw, 24px) !important;
+    line-height: 1.12 !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+  }
+  :root .movie-site.page-profile .profile-header.profile-header-compact .profile-auth {
+    grid-area: auth !important;
+    width: 40px !important;
+    min-width: 40px !important;
+    max-width: 40px !important;
+    margin: 0 !important;
+    justify-self: end !important;
+  }
+}
+
+/* Watch Together is viewport-aligned. Avoid content-box overflow inside the
+   padded movie-site shell, which made the entire experience drift sideways. */
+:root .movie-site.page-watch-together {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  overflow-x: clip !important;
+}
+:root .movie-site.page-watch-together .wt-page {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  margin: 0 auto !important;
+  padding: clamp(12px, 2.5vw, 28px) !important;
+  overflow-x: clip !important;
+}
+:root .movie-site.page-watch-together .wt-topbar,
+:root .movie-site.page-watch-together .wt-entry,
+:root .movie-site.page-watch-together .wt-content {
+  box-sizing: border-box !important;
+  min-width: 0 !important;
+}
+:root .movie-site.page-watch-together .wt-connect-page {
+  width: min(1120px, 100%) !important;
+  margin-inline: auto !important;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 480px) !important;
+}
+:root .movie-site.page-watch-together .wt-connect-card {
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+.wt-create-backdrop {
+  width: 100vw !important;
+  max-width: 100vw !important;
+  box-sizing: border-box !important;
+}
+@media (max-width: 760px) {
+  :root .movie-site.page-watch-together .wt-page {
+    padding: max(12px, env(safe-area-inset-top)) 14px max(18px, env(safe-area-inset-bottom)) !important;
+  }
+  :root .movie-site.page-watch-together .wt-connect-page {
+    display: grid !important;
+    width: 100% !important;
+    max-width: 560px !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    align-content: start !important;
+    justify-items: stretch !important;
+    gap: 14px !important;
+    min-height: 0 !important;
+    margin: 0 auto !important;
+    padding-top: 12px !important;
+  }
+  :root .movie-site.page-watch-together .wt-connect-hero {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    box-sizing: border-box !important;
+    padding: 20px !important;
+    border-radius: 19px !important;
+  }
+  :root .movie-site.page-watch-together .wt-connect-hero h2 {
+    margin: 5px 0 7px !important;
+    font-size: clamp(29px, 8vw, 36px) !important;
+  }
+  :root .movie-site.page-watch-together .wt-connect-hero p {
+    max-width: 34em !important;
+    font-size: 12px !important;
+  }
+  :root .movie-site.page-watch-together .wt-connect-card {
+    width: 100% !important;
+    padding: 16px !important;
+    border-radius: 19px !important;
+  }
+  :root .movie-site.page-watch-together .wt-code-form {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    width: 100% !important;
+  }
+  :root .movie-site.page-watch-together .wt-code-form input {
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    padding: 13px 8px !important;
+    font-size: 15px !important;
+    letter-spacing: .11em !important;
+  }
+  :root .movie-site.page-watch-together .wt-code-form button {
+    padding: 0 12px !important;
+    white-space: nowrap !important;
+  }
+  .wt-create-backdrop {
+    position: fixed !important;
+    inset: 0 !important;
+    display: flex !important;
+    align-items: stretch !important;
+    justify-content: stretch !important;
+    padding: max(0px, env(safe-area-inset-top)) 0 max(0px, env(safe-area-inset-bottom)) !important;
+    background: var(--fx-bg, var(--fx-surface)) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  .wt-create-backdrop .wt-create-dialog {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    padding: 22px 16px max(18px, env(safe-area-inset-bottom)) !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: var(--fx-bg, var(--fx-surface)) !important;
+  }
+  .wt-create-backdrop .wt-create-dialog > header {
+    flex: 0 0 auto !important;
+    margin-bottom: 10px !important;
+  }
+  .wt-create-backdrop .wt-create-dialog > header h2 {
+    font-size: 24px !important;
+  }
+  .wt-create-backdrop .wt-create-dialog .wt-picker-search {
+    flex: 0 0 auto !important;
+    margin: 10px 0 !important;
+  }
+  .wt-create-backdrop .wt-create-dialog .wt-picker-list {
+    flex: 1 1 auto !important;
+    min-height: 100px !important;
+    max-height: none !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain !important;
+  }
+  .wt-create-backdrop .wt-create-dialog > .wt-create {
+    flex: 0 0 auto !important;
+    min-height: 48px !important;
+    margin-top: 12px !important;
+  }
+}

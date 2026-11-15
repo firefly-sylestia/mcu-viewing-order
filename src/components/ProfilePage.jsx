@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Play, Bookmark, RotateCcw, Clock, Check, X, Pencil, Trophy, LogIn, LogOut, Cloud, RefreshCw, Sun, Moon, Settings, Upload, Download, Clapperboard, Sparkles, LayoutGrid, Vibrate, ChevronDown, Maximize2, UserRound, ShieldCheck, } from 'lucide-react';
+import { Play, Bookmark, RotateCcw, Clock, Check, X, Edit3 as PencilIcon, Trophy, LogIn, LogOut, Cloud, RefreshCw, Sun, Moon, Settings, Upload, Download, Clapperboard, Sparkles, LayoutGrid, Vibrate, ChevronDown, Maximize2, UserRound, ShieldCheck, } from 'lucide-react';
 import { getHapticsEnabled, setHapticsEnabled, hapticsSupported, hapticTap, hapticSuccess } from '../utils/haptics';
 import { supabaseDataRequest } from '../supabase';
 
@@ -242,13 +242,13 @@ export function ProfileHeader({ universe, stats, profileName, setProfileName, pr
                   <button type="button" className="avatar-name-cancel" onClick={() => { setNameDraft(displayName); setEditingName(false); }}>Cancel</button>
                 </form>
               ) : (
-                <><strong>{displayName}</strong><button type="button" className="avatar-name-edit-trigger" onClick={() => { setNameDraft(displayName); setEditingName(true); }}><Pencil size={13} /> Edit name</button></>
+                <><strong>{displayName}</strong><button type="button" className="avatar-name-edit-trigger" onClick={() => { setNameDraft(displayName); setEditingName(true); }}><PencilIcon size={13} /> Edit name</button></>
               )}
               <span>{localAvatar ? (user ? 'Synced with your account' : 'Saved on this device') : user?.photoURL ? 'Account profile picture' : 'Choose a photo for your profile'}</span>
             </div>
             <div className="avatar-dialog-actions">
               <div className="avatar-photo-actions">
-                <button type="button" onClick={() => avatarInput.current?.click()}><Pencil size={16} /><span>{localAvatar || user?.photoURL ? 'Edit photo' : 'Add photo'}</span></button>
+                <button type="button" onClick={() => avatarInput.current?.click()}><PencilIcon size={16} /><span>{localAvatar || user?.photoURL ? 'Edit photo' : 'Add photo'}</span></button>
                 {localAvatar && <button type="button" className="avatar-dialog-remove" onClick={clearAvatar} aria-label="Remove profile picture" title="Remove profile picture"><X size={17} /></button>}
               </div>
               {(localAvatar || user?.photoURL) && <button type="button" onClick={() => setAvatarFullscreen(value => !value)}><Maximize2 size={16} /><span>{avatarFullscreen ? 'Fit preview' : 'Full screen'}</span></button>}
@@ -519,7 +519,7 @@ function SettingsPanel({ installApp, installAvailable, appInstalled, query = '',
         <h3 className="settings-group-title">Profile</h3>
         <div className="settings-row">
           <div className="settings-row-label">
-            <span className="settings-row-icon"><Pencil size={18} /></span>
+            <span className="settings-row-icon"><PencilIcon size={18} /></span>
             <div>
               <strong>Display name</strong>
               <small>{profileName || 'Not set'}</small>
