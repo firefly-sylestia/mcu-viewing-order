@@ -12724,3 +12724,27 @@
 .wt-adblock-tip svg{flex:0 0 auto;color:#aebdff;margin-top:1px}
 .wt-adblock-tip strong{color:#f1f3fb}
 .wt-playback-notice>button{width:100%;padding:13px 16px;border:0;border-radius:13px;background:linear-gradient(110deg,#536fe0,#805ed4);color:white;font:inherit;font-size:13px;font-weight:850;cursor:pointer}
+
+
+/* Watch Together: title selection from the Watch Browser and a quiet inline playback hint. */
+:root .wh3-top-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+:root .wt-media-picker{padding:8px 0 2px}
+:root .wt-picker-heading>span{font-size:9px;font-weight:850;letter-spacing:.15em;color:#a9b5d6}
+:root .wt-picker-heading h2{margin:7px 0 5px;font-size:clamp(22px,4vw,29px);letter-spacing:-.04em}
+:root .wt-picker-heading p{margin:0;color:#9da8bb;font-size:12px;line-height:1.5}
+:root .wt-picker-search{display:flex;align-items:center;gap:9px;margin:18px 0 10px;padding:0 13px;border:1px solid rgba(255,255,255,.12);border-radius:13px;background:#191e29;color:#aeb9cf}
+:root .wt-picker-search input{width:100%;min-width:0;padding:13px 0;border:0;outline:0;background:transparent;color:#fff;font:inherit;font-size:13px}
+:root .wt-picker-list{display:grid;gap:6px;max-height:300px;overflow:auto;padding-right:3px}
+:root .wt-picker-list>button{display:flex;align-items:center;gap:11px;width:100%;padding:8px 10px;border:1px solid rgba(255,255,255,.07);border-radius:13px;background:rgba(255,255,255,.035);color:#f4f6fb;text-align:left;cursor:pointer}
+:root .wt-picker-list>button:hover{background:rgba(255,255,255,.09)}
+:root .wt-picker-list>button img{width:39px;height:56px;object-fit:cover;border-radius:7px;background:#252b39}
+:root .wt-picker-list>button span{display:grid;gap:4px;min-width:0;flex:1}
+:root .wt-picker-list>button strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+:root .wt-picker-list>button small{color:#9da8bb;font-size:10px}
+:root .wt-picker-list>button>svg{color:#9eadd1}
+:root .wt-picker-empty{padding:14px;color:#aab4c6;font-size:12px;text-align:center}
+:root .wt-change-title{display:block;margin:10px 0 0 auto;padding:6px 0;border:0;background:transparent;color:#b8c4e6;font:inherit;font-size:11px;font-weight:750;cursor:pointer}
+:root .wt-playback-tip{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 10px;padding:10px 12px;border:1px solid rgba(132,151,220,.18);border-radius:12px;background:rgba(105,125,190,.10);color:#bac5db;font-size:11px;line-height:1.45}
+:root .wt-playback-tip strong{margin-right:6px;color:#eef2ff}
+:root .wt-playback-tip button{display:grid;place-items:center;flex:0 0 auto;width:27px;height:27px;border:0;border-radius:8px;background:rgba(255,255,255,.08);color:#dce4f8;cursor:pointer}
+@media(max-width:760px){:root .wh3-top-actions{gap:6px}:root .wh3-top-actions .watch-together-launch{padding:9px 11px;font-size:11px}}

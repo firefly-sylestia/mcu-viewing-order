@@ -46,10 +46,12 @@ const makeAccountIdentity = (user, profileName, profileAvatar) => {
 };
 
 
-export default function WatchTogether({ item, tmdbId, mediaType, season = 1, episode = 1, playerUrl, onEpisodeChange, onBeforeOpen, user, profileName, profileAvatar }) {
+export default function WatchTogether({ item, tmdbId, mediaType, season = 1, episode = 1, playerUrl, onEpisodeChange, onBeforeOpen, user, profileName, profileAvatar, selectableItems = [], requireMediaSelection = false }) {
   const guest = useMemo(() => user?.id ? makeAccountIdentity(user, profileName, profileAvatar) : { ...makeGuest(), isGuest: true }, [user?.id, user?.displayName, user?.email, user?.user_metadata?.display_name, user?.user_metadata?.full_name, user?.user_metadata?.avatar_url, user?.user_metadata?.picture, profileName, profileAvatar]);
   const [open, setOpen] = useState(false);
   const [showPlaybackNotice, setShowPlaybackNotice] = useState(false);
+  const [selectedMedia, setSelectedMedia] = useState(item || null);
+  const [mediaQuery, setMediaQuery] = useState('');
   const [room, setRoom] = useState(null);
   const [participant, setParticipant] = useState(null);
   const [members, setMembers] = useState([]);
@@ -78,15 +80,20 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const currentTimeRef = useRef(0);
   const pausedRef = useRef(true);
   const playerReadyRef = useRef(false);
+  useEffect(() => { if (item) setSelectedMedia(item); }, [item]);
   const itemMedia = useMemo(() => ({
-    title: item?.title || 'Untitled',
-    poster: item?.poster || '',
-    tmdbId: Number(tmdbId || item?.tmdbId || 0),
-    mediaType: mediaType || (item?.type === 'series' ? 'tv' : 'movie'),
-    season: Number(season || 1),
-    episode: Number(episode || 1),
-    accent: item?.accent || '#da1e37',
-  }), [item?.title, item?.poster, item?.tmdbId, item?.type, item?.accent, tmdbId, mediaType, season, episode]);
+    title: selectedMedia?.title || 'Untitled',
+    poster: selectedMedia?.poster || '',
+    tmdbId: Number(tmdbId || selectedMedia?.tmdbId || 0),
+    mediaType: mediaType || selectedMedia?.mediaType || (selectedMedia?.type === 'series' ? 'tv' : 'movie'),
+    season: Number(selectedMedia?.season || season || 1),
+    episode: Number(selectedMedia?.epStart || selectedMedia?.episode || episode || 1),
+    accent: selectedMedia?.accent || '#da1e37',
+  }), [selectedMedia, tmdbId, mediaType, season, episode]);
+  const filteredMediaItems = useMemo(() => {
+    const term = mediaQuery.trim().toLowerCase();
+    return selectableItems.filter(candidate => Number(candidate.tmdbId || candidate.id) > 0 && (!term || `${candidate.title || ''} ${candidate.year || ''} ${candidate.type || ''}`.toLowerCase().includes(term))).slice(0, 36);
+  }, [selectableItems, mediaQuery]);
   useEffect(() => { roomRef.current = room; }, [room]);
   useEffect(() => { onBeforeOpenRef.current = onBeforeOpen; }, [onBeforeOpen]);
   useEffect(() => { onEpisodeChangeRef.current = onEpisodeChange; }, [onEpisodeChange]);
@@ -351,16 +358,24 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
             <button className="wt-close" onClick={() => room ? leaveRoom() : setOpen(false)} aria-label="Close"><X size={19} /></button>
           </header>
           {!room ? <div className="wt-entry">
-            <div className="wt-entry-art"><img src={itemMedia.poster || guest.avatar} alt="" /><div><span>YOUR SCREENING ROOM</span><h2>Good stories are better shared.</h2><p>Watch in sync, chat live, and invite anyone with one private link. No account required.</p></div></div>
+            {requireMediaSelection && !selectedMedia ? <div className="wt-media-picker">
+              <div className="wt-picker-heading"><span>START A SCREENING</span><h2>Choose a movie or series</h2><p>Select a title from your watchlist or current search results.</p></div>
+              <label className="wt-picker-search"><Search size={16} /><input value={mediaQuery} onChange={event => setMediaQuery(event.target.value)} placeholder="Find a title…" /></label>
+              <div className="wt-picker-list">{filteredMediaItems.length ? filteredMediaItems.map((candidate,index) => <button type="button" key={`${candidate.tmdbId || candidate.id}-${index}`} onClick={() => { setSelectedMedia(candidate); setError(''); }}><img src={candidate.poster || guest.avatar} alt="" /><span><strong>{candidate.title}</strong><small>{candidate.year || '—'} · {candidate.type === 'series' || candidate.mediaType === 'tv' ? 'Series' : 'Movie'}</small></span><ChevronRight size={16} /></button>) : <p className="wt-picker-empty">No matching titles. Search for a title in Watch Browser first.</p>}</div>
+            </div> : <>
+              <div className="wt-entry-art"><img src={itemMedia.poster || guest.avatar} alt="" /><div><span>YOUR SCREENING ROOM</span><h2>{requireMediaSelection ? itemMedia.title : 'Good stories are better shared.'}</h2><p>{requireMediaSelection ? 'Your room will open with this title for everyone.' : 'Watch in sync, chat live, and invite anyone with one private link. No account required.'}</p></div></div>
+              {requireMediaSelection && <button type="button" className="wt-change-title" onClick={() => setSelectedMedia(null)}>Change selected title</button>}
             <div className="wt-identity"><img src={guest.avatar} alt="" /><div><small>YOU'RE JOINING AS</small><strong>{guest.name}</strong><span>{guest.isGuest ? 'Guest · ready to watch' : 'Signed in · profile identity'}</span></div>{guest.isGuest && <button onClick={() => { localStorage.removeItem('mcu-watch-together-guest-v1'); window.location.reload(); }} title="Generate another guest name"><RefreshCw size={16} /></button>}</div>
-            <button className="wt-create" disabled={busy} onClick={createRoom}>{busy ? 'Creating room…' : 'Create a screening room'}<Link2 size={17} /></button>
+            <button className="wt-create" disabled={busy || (requireMediaSelection && !selectedMedia)} onClick={createRoom}>{busy ? 'Creating room…' : 'Create a screening room'}<Link2 size={17} /></button>
             <div className="wt-or"><span />OR JOIN A FRIEND<span /></div>
             <form className="wt-join-form" onSubmit={e => { e.preventDefault(); joinExisting(joinCode); }}><input value={joinCode} onChange={e => setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8))} placeholder="Enter 8-character room code" maxLength={8} autoComplete="off" /><button disabled={busy || joinCode.length !== 8}>{busy ? 'Joining…' : 'Join room'}</button></form>
             {error && <p className="wt-error">{error}</p>}
             <p className="wt-privacy"><ShieldCheck size={14} /> Private room links are hard to guess. Guests can join without signing in.</p>
+            </>}
           </div> : <div className="wt-content">
             <div className="wt-main">
               <div className="wt-room-title"><div><span>NOW SCREENING</span><h2>{room.media?.title || itemMedia.title}</h2><small>{members.length} {members.length === 1 ? 'viewer' : 'viewers'} · {participant.is_host ? 'You are hosting' : 'Hosted by another viewer'}</small></div><button className="wt-copy" onClick={copyLink}>{copied ? <Check size={15} /> : <Copy size={15} />}{copied ? 'Copied' : 'Invite'}</button></div>
+              {showPlaybackNotice && <div className="wt-playback-tip" role="status"><span><strong>Playback tip</strong> If autoplay is blocked, tap Play once. A reputable ad blocker can help reduce pop-ups and redirects.</span><button type="button" onClick={() => setShowPlaybackNotice(false)} aria-label="Dismiss playback tip"><X size={15} /></button></div>}
               <div className="wt-player"><iframe ref={iframeRef} src={sharedPlayerUrl} title={`Watch together: ${room.media?.title || itemMedia.title}`} allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowFullScreen /></div>
               <div className="wt-controls">
                 <button onClick={() => sendPlayerCommand('seek', [Math.max(0, currentTimeRef.current - 10)])} aria-label="Back 10 seconds"><SkipBack size={17} /><small>10</small></button>
@@ -380,16 +395,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
               <div className="wt-chat-foot"><Clock3 size={13} /> Chat and room expire automatically after inactivity.</div>
             </aside>
           </div>}
-          {room && showPlaybackNotice && <div className="wt-notice-backdrop" role="presentation">
-            <section className="wt-playback-notice" role="dialog" aria-modal="true" aria-labelledby="wt-playback-notice-title">
-              <span className="wt-notice-icon"><Play size={20} fill="currentColor" /></span>
-              <span className="wt-notice-kicker">ONE QUICK STEP</span>
-              <h2 id="wt-playback-notice-title">Tap Play once to get started</h2>
-              <p>Your browser may block autoplay. Once the player is ready, tap its Play button or the shared Play control once to allow playback for this session.</p>
-              <div className="wt-adblock-tip"><ShieldCheck size={17} /><span><strong>Always use an ad blocker.</strong> It helps reduce intrusive ads, pop-ups and redirects while browsing. Never install unfamiliar extensions.</span></div>
-              <button type="button" onClick={() => setShowPlaybackNotice(false)}>Got it, let's watch</button>
-            </section>
-          </div>}
+
         </section>
       </div>, document.body
     )}
