@@ -323,7 +323,7 @@ begin
     playback_duration=greatest(0,least(86400,coalesce(p_duration,playback_duration))),
     playback_updated_at=case when p_position is not null then now() else playback_updated_at end
   where room_id=rid and token_hash=encode(sha256(convert_to(p_token,'UTF8')),'hex');
-  if found then update public.watch_rooms set expires_at=now()+interval '30 minutes' where id=rid; end if;
+  if found then update public.watch_rooms set expires_at=now()+make_interval(mins=>coalesce((settings->>'expiry_minutes')::integer,30)) where id=rid; end if;
   return found;
 end $$;
 
@@ -357,7 +357,7 @@ begin
     'actor', p.id
   );
   update public.watch_rooms set playback=next_state,state_version=state_version+1,updated_at=now(),
-    expires_at=now()+interval '30 minutes'
+    expires_at=now()+make_interval(mins=>coalesce((r.settings->>'expiry_minutes')::integer,30))
   where id=r.id returning * into r;
   update public.watch_room_participants set last_seen_at=now() where id=p.id;
   return jsonb_build_object('state_version',r.state_version,'playback',r.playback);
@@ -590,7 +590,7 @@ begin
   'guests_can_change_episode',case when p_settings ? 'guests_can_change_episode' then (p_settings->>'guests_can_change_episode')::boolean else null end,
   'expiry_minutes',case when p_settings ? 'expiry_minutes' then greatest(30,least(1440,(p_settings->>'expiry_minutes')::integer)) else null end
  ));
- update public.watch_rooms set settings=s,expires_at=greatest(expires_at,now()+make_interval(mins=>coalesce((s->>'expiry_minutes')::integer,30))) where id=r.id returning * into r;
+ update public.watch_rooms set settings=s,expires_at=now()+make_interval(mins=>coalesce((s->>'expiry_minutes')::integer,30)) where id=r.id returning * into r;
  return r.settings;
 end $$;
 
@@ -628,3 +628,21 @@ revoke all on function public.remove_watch_room_participant(text,text,uuid) from
 grant execute on function public.update_watch_room_settings(text,text,jsonb) to anon,authenticated;
 grant execute on function public.transfer_watch_room_host(text,text,uuid) to anon,authenticated;
 grant execute on function public.remove_watch_room_participant(text,text,uuid) to anon,authenticated;
+
+create or replace function public.change_watch_room_episode(p_code text,p_token text,p_season integer,p_episode integer)
+returns jsonb language plpgsql security definer set search_path=pg_catalog,public,pg_temp as $$
+declare r public.watch_rooms; p public.watch_room_participants; next_state jsonb;
+begin
+ select * into r from public.watch_rooms where code=upper(trim(p_code)) and closed_at is null and expires_at>now() for update;
+ if not found then raise exception 'Room not found or expired.'; end if;
+ select * into p from public.watch_room_participants where room_id=r.id and token_hash=encode(sha256(convert_to(p_token,'UTF8')),'hex');
+ if not found then raise exception 'You are not a member of this room.'; end if;
+ if p.role not in ('host','operator') and coalesce((r.settings->>'guests_can_change_episode')::boolean,false)=false then raise exception 'The host has disabled guest episode changes.'; end if;
+ if coalesce(r.media->>'mediaType','')<>'tv' then raise exception 'This room is not screening a series.'; end if;
+ next_state:=jsonb_build_object('position',0,'paused',false,'season',greatest(1,least(99,p_season)),'episode',greatest(1,least(999,p_episode)),'updated_at',now(),'actor',p.id);
+ update public.watch_rooms set playback=next_state,state_version=state_version+1,updated_at=now(),
+ expires_at=now()+make_interval(mins=>coalesce((r.settings->>'expiry_minutes')::integer,30)) where id=r.id returning * into r;
+ return jsonb_build_object('playback',r.playback,'state_version',r.state_version);
+end $$;
+revoke all on function public.change_watch_room_episode(text,text,integer,integer) from public;
+grant execute on function public.change_watch_room_episode(text,text,integer,integer) to anon,authenticated;

@@ -59,7 +59,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const [hostPanelOpen, setHostPanelOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
   const [theatreMode, setTheatreMode] = useState(false);
-  const [networkState, setNetworkState] = useState(navigator.onLine ? 'online' : 'offline');
+  const [networkState, setNetworkState] = useState(typeof navigator !== 'undefined' && navigator.onLine ? 'online' : 'offline');
   const [networkLatency, setNetworkLatency] = useState(null);
   const [pendingEpisode, setPendingEpisode] = useState(null);
   const [ownedRooms, setOwnedRooms] = useState([]);
@@ -146,13 +146,14 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   useEffect(() => { playerReadyRef.current = playerReady; }, [playerReady]);
   useEffect(() => { durationRef.current = duration; }, [duration]);
   useEffect(() => { const online=()=>setNetworkState('online'),offline=()=>setNetworkState('offline'); window.addEventListener('online',online);window.addEventListener('offline',offline);return()=>{window.removeEventListener('online',online);window.removeEventListener('offline',offline);}; }, []);
-  useEffect(() => { if(!room||!participant)return;let active=true;const ping=async()=>{if(!navigator.onLine){setNetworkState('offline');return;}const start=performance.now();try{await rpc('watch_room_playback_snapshot',{p_code:room.code,p_token:participant.token});if(active){setNetworkLatency(Math.round(performance.now()-start));setNetworkState('online');}}catch{if(active)setNetworkState('reconnecting');}};ping();const timer=window.setInterval(ping,15000);return()=>{active=false;window.clearInterval(timer);};},[room?.id,participant?.id,rpc]);
 
   const rpc = useCallback(async (name, args) => {
     const options = { method: 'POST', body: JSON.stringify(args) };
     if (user?.id) return supabaseDataRequest(`${RPC}${name}`, options);
     return supabasePublicRequest(`${RPC}${name}`, options);
   }, [user?.id]);
+
+  useEffect(() => { if(!room||!participant)return;let active=true;const ping=async()=>{if(!navigator.onLine){setNetworkState('offline');return;}const start=performance.now();try{await rpc('watch_room_playback_snapshot',{p_code:room.code,p_token:participant.token});if(active){setNetworkLatency(Math.round(performance.now()-start));setNetworkState('online');}}catch{if(active)setNetworkState('reconnecting');}};ping();const timer=window.setInterval(ping,15000);return()=>{active=false;window.clearInterval(timer);};},[room?.id,participant?.id,rpc]);
 
   const applyRoomSnapshot = useCallback((snapshot) => {
     if (!snapshot?.room) return;
@@ -586,7 +587,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   useEffect(()=>{if(!room?.media||room.media.mediaType!=='tv')return;let active=true;setEpisodeLoading(true);
     fetch('/api/tmdb/episodes?tmdbId='+encodeURIComponent(room.media.tmdbId)+'&season='+activeSeason).then(r=>r.json().then(data=>({r,data}))).then(({r,data})=>{if(!r.ok)throw new Error();if(active)setAvailableEpisodes(data.episodes||[]);}).catch(()=>{if(active)setAvailableEpisodes([]);}).finally(()=>{if(active)setEpisodeLoading(false);});
     return()=>{active=false;};},[room?.media?.tmdbId,room?.media?.mediaType,activeSeason]);
-  const changeRoomEpisode=(s,e)=>{if(!canControl||!room)return;s=Number(s);e=Number(e);setRoom(old=>old?{...old,playback:{...(old.playback||{}),season:s,episode:e,position:0,paused:false}}:old);setCurrentTime(0);currentTimeRef.current=0;setPaused(false);pausedRef.current=false;publishPlayback({season:s,episode:e,position:0,paused:false},true);};
+  const changeRoomEpisode=async(s,e)=>{if((!canControl&&!room?.settings?.guests_can_change_episode)||!room)return;s=Number(s);e=Number(e);if(!canControl){try{await rpc('change_watch_room_episode',{p_code:room.code,p_token:participant.token,p_season:s,p_episode:e});await refreshRoom();}catch(err){setError(err.message||'Episode change was blocked.');}return;}setRoom(old=>old?{...old,playback:{...(old.playback||{}),season:s,episode:e,position:0,paused:false}}:old);setCurrentTime(0);currentTimeRef.current=0;setPaused(false);pausedRef.current=false;publishPlayback({season:s,episode:e,position:0,paused:false},true);};
   const [joinCode, setJoinCode] = useState('');
   const openJoin = () => { setOpen(true); setRoom(null); setParticipant(null); setError(''); };
   const progressPercent = duration ? Math.min(100, (currentTime / duration) * 100) : 0;
@@ -639,10 +640,10 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
               {(localPlaybackOverride || canReturnLocal) && <div className="wt-local-playback wt-playback-actions"><span>{localPlaybackOverride ? 'Independent playback' : 'Room playback'}</span>{localPlaybackOverride&&<button type="button" onClick={syncToRoom} disabled={!playerReady} title="Sync your player with the room">Sync with room</button>}{canReturnLocal&&<button type="button" onClick={returnToLocalPosition} disabled={!playerReady} title="Return to your saved playback position">Return to my spot</button>}</div>}
               {room.media?.mediaType === "tv" && <section className="wt-episode-picker" aria-label="Choose season and episode">
                 <div className="wt-episode-picker-head"><strong>SEASONS</strong><small>{seasonLoading ? "Loading seasons…" : availableSeasons.length + " available"}</small></div>
-                <div className="wt-season-row">{availableSeasons.map(s=><button type="button" key={s.season_number} disabled={!canControl} className={activeSeason===Number(s.season_number)?"active":""} onClick={()=>changeRoomEpisode(s.season_number,1)}>{s.season_number===0?"Specials":"S"+s.season_number}</button>)}</div>
+                <div className="wt-season-row">{availableSeasons.map(s=><button type="button" key={s.season_number} disabled={!canControl&&!room.settings?.guests_can_change_episode} className={activeSeason===Number(s.season_number)?"active":""} onClick={()=>changeRoomEpisode(s.season_number,1)}>{s.season_number===0?"Specials":"S"+s.season_number}</button>)}</div>
                 <div className="wt-episode-picker-head wt-episode-heading"><strong>EPISODES</strong><small>{episodeLoading ? "Loading…" : availableEpisodes.length + " episodes"}</small></div>
-                <div className="wt-episode-row">{availableEpisodes.map(ep=><button type="button" key={ep.episode_number} disabled={!canControl} className={activeEpisode===Number(ep.episode_number)?"active":""} onClick={()=>changeRoomEpisode(activeSeason,ep.episode_number)}><b>EP {ep.episode_number}</b><span>{ep.name || "Episode "+ep.episode_number}</span></button>)}</div>
-                {!canControl && <small className="wt-episode-lock">Only the host or an operator can change the room episode.</small>}
+                <div className="wt-episode-row">{availableEpisodes.map(ep=><button type="button" key={ep.episode_number} disabled={!canControl&&!room.settings?.guests_can_change_episode} className={activeEpisode===Number(ep.episode_number)?"active":""} onClick={()=>changeRoomEpisode(activeSeason,ep.episode_number)}><b>EP {ep.episode_number}</b><span>{ep.name || "Episode "+ep.episode_number}</span></button>)}</div>
+                {!canControl && !room.settings?.guests_can_change_episode && <small className="wt-episode-lock">Only the host or an operator can change the room episode.</small>}
               </section>}
               <div className="wt-user-progress" aria-label="Participant playback progress">{members.map(member=>{const pct=Number(member.playback_duration)>0?Math.max(0,Math.min(100,Math.round(Number(member.playback_position||0)/Number(member.playback_duration)*100))):0;return <span className="wt-progress-pill" key={member.id}><img src={member.avatar_url||blobatar(member.display_name)} alt=""/><b>{member.display_name}</b><i>{Number(member.playback_duration)>0?pct+"%":timeText(member.playback_position||0)}</i></span>;})}</div>
               {pendingEpisode && <div className="wt-episode-transition"><div><strong>Next episode is ready</strong><span>Everyone can move to S{pendingEpisode.season} · E{pendingEpisode.episode}. Viewers who are behind can finish first.</span></div><button type="button" onClick={()=>setPendingEpisode(null)}>Finish current</button><button type="button" onClick={()=>{const next=pendingEpisode;setPendingEpisode(null);onEpisodeChangeRef.current?.(next.episode);setRoom(old=>old?{...old,playback:{...(old.playback||{}),position:0,paused:false,season:next.season,episode:next.episode}}:old);publishPlayback({position:0,paused:false,season:next.season,episode:next.episode},true);}}>Go now</button></div>}
