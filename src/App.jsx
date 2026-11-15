@@ -3078,6 +3078,9 @@ const saveServerPref = (tmdbId, server) => {
   const currentItem = activeItems.find(i => i.id === item.id) || item;
   const isSeries = currentItem.type === 'series' && currentItem.tmdbId;
   const [episodes, setEpisodes] = useState([]);
+  const [availableSeasons, setAvailableSeasons] = useState([]);
+  const [seasonsLoading, setSeasonsLoading] = useState(false);
+  const [selectedSeason, setSelectedSeason] = useState(currentItem.season || 1);
   const [selectedEpisode, setSelectedEpisode] = useState(currentItem.epStart || 1);
   // Keep the iframe's URL episode separate: CineSrc can navigate episodes internally.
   const [playerEpisode, setPlayerEpisode] = useState(currentItem.epStart || 1);
@@ -3087,7 +3090,7 @@ const saveServerPref = (tmdbId, server) => {
   const [iframeTimedOut, setIframeTimedOut] = useState(false);
   const [restartCounter, setRestartCounter] = useState(0);
   const iframeRef = useRef(null);
-  const iframeKey = `cinesrc-${isSeries ? `ep-${currentItem.tmdbId}-${currentItem.season || 1}-${playerEpisode}` : currentItem.tmdbId || item.id}-r${restartCounter}`;
+  const iframeKey = `cinesrc-${isSeries ? `ep-${currentItem.tmdbId}-${selectedSeason}-${playerEpisode}` : currentItem.tmdbId || item.id}-r${restartCounter}`;
 
   // Detect iframe load failures: start 10s timer on iframe key change, cancel on load
   useEffect(() => {
@@ -3114,19 +3117,32 @@ const saveServerPref = (tmdbId, server) => {
   const watchedInRange = watchedEpisodes.filter(episode => episode >= (currentItem.epStart || 1) && episode <= (currentItem.epEnd || Infinity));
   const allEpisodesWatched = episodeRangeTotal > 0 && watchedInRange.length >= episodeRangeTotal;
 
-  useEffect(() => { const firstEpisode = currentItem.epStart || 1; setSelectedEpisode(firstEpisode); setPlayerEpisode(firstEpisode); setContextExpanded(false); }, [currentItem.id, currentItem.epStart]);
+  useEffect(() => { const firstEpisode = currentItem.epStart || 1; setSelectedSeason(currentItem.season || 1); setSelectedEpisode(firstEpisode); setPlayerEpisode(firstEpisode); setContextExpanded(false); }, [currentItem.id, currentItem.epStart, currentItem.season]);
+
+  useEffect(() => {
+    if (!isSeries) { setAvailableSeasons([]); setEpisodes([]); return; }
+    let cancelled = false;
+    setSeasonsLoading(true);
+    fetch(apiUrl(`/api/tmdb/seasons?tmdbId=${currentItem.tmdbId}`), { cache: 'force-cache' })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (!cancelled) setAvailableSeasons(Array.isArray(data?.seasons) ? data.seasons : []); })
+      .catch(() => { if (!cancelled) setAvailableSeasons([]); })
+      .finally(() => { if (!cancelled) setSeasonsLoading(false); });
+    return () => { cancelled = true; };
+  }, [currentItem.tmdbId, isSeries]);
 
   useEffect(() => {
     if (!isSeries) { setEpisodes([]); return; }
     setEpisodeLoading(true);
     let cancelled = false;
-    const season = currentItem.season || 1;
+    const season = selectedSeason;
     fetch(apiUrl(`/api/tmdb/episodes?tmdbId=${currentItem.tmdbId}&season=${season}`), { cache: 'force-cache' })
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (cancelled) return;
         if (data?.episodes) {
-          const filtered = currentItem.epStart
+          const isOriginalRoadmapSeason = season === Number(currentItem.season || 1);
+          const filtered = isOriginalRoadmapSeason && currentItem.epStart
             ? data.episodes.filter(ep => ep.episode >= (currentItem.epStart || 1) && ep.episode <= (currentItem.epEnd || 999))
             : data.episodes;
           setEpisodes(filtered);
@@ -3136,7 +3152,7 @@ const saveServerPref = (tmdbId, server) => {
       })
       .catch(() => { if (!cancelled) setEpisodeLoading(false); });
     return () => { cancelled = true; };
-  }, [currentItem.tmdbId, currentItem.season, currentItem.epStart, currentItem.epEnd, isSeries]);
+  }, [currentItem.tmdbId, selectedSeason, currentItem.season, currentItem.epStart, currentItem.epEnd, isSeries]);
 
   const initProgressRef = useRef(Math.floor((currentItem.watchedDuration || 0) / 1000));
   const playerUrl = useMemo(() => {
@@ -3144,9 +3160,9 @@ const saveServerPref = (tmdbId, server) => {
     if (!id) return '';
     const params = new URLSearchParams({ autoplay: 'true', controls: 'true', back: 'close', autonext: 'true', color: (currentItem.accent || '#e50914') });
     return currentItem.type === 'series'
-      ? `https://cinesrc.st/embed/tv/${id}?s=${currentItem.season || 1}&e=${selectedEpisode}&${params.toString()}`
+      ? `https://cinesrc.st/embed/tv/${id}?s=${selectedSeason}&e=${selectedEpisode}&${params.toString()}`
       : `https://cinesrc.st/embed/movie/${id}?${params.toString()}`;
-  }, [currentItem.tmdbId, currentItem.type, currentItem.season, currentItem.accent, tmdbId, playerEpisode]);
+  }, [currentItem.tmdbId, currentItem.type, selectedSeason, currentItem.accent, tmdbId, playerEpisode]);
   const roadmapInfo = useMemo(() => getRoadmap(currentItem, activeItems), [activeItems, currentItem]);
 
   const currentOrder = currentItem.order || currentItem.id;
@@ -3282,10 +3298,27 @@ const saveServerPref = (tmdbId, server) => {
           <span>{universeShortName(currentItem.universe)} · #{String(currentItem.order || currentItem.id).padStart(2, '0')}</span>
           <h1>{currentItem.title}</h1>
         </div>
-        <div className="watch-v2-header-actions"><WatchTogether item={currentItem} tmdbId={currentItem.tmdbId || tmdbId} mediaType={mediaType} season={currentItem.season || 1} episode={selectedEpisode} playerUrl={playerUrl} onEpisodeChange={next => { setSelectedEpisode(next); setPlayerEpisode(next); }} onBeforeOpen={() => iframeRef.current?.contentWindow?.postMessage({ type: 'cinesrc:command', command: 'pause', args: [] }, 'https://cinesrc.st')} launchOnly onWatchTogether={onWatchTogether} user={user} profileName={profileName} profileAvatar={profileAvatar} /><span className="watch-v2-provider">CineSrc</span></div>
+        <div className="watch-v2-header-actions"><WatchTogether item={{ ...currentItem, season: selectedSeason }} tmdbId={currentItem.tmdbId || tmdbId} mediaType={mediaType} season={selectedSeason} episode={selectedEpisode} playerUrl={playerUrl} onEpisodeChange={next => { setSelectedEpisode(next); setPlayerEpisode(next); }} onBeforeOpen={() => iframeRef.current?.contentWindow?.postMessage({ type: 'cinesrc:command', command: 'pause', args: [] }, 'https://cinesrc.st')} launchOnly onWatchTogether={onWatchTogether} user={user} profileName={profileName} profileAvatar={profileAvatar} /><span className="watch-v2-provider">CineSrc</span></div>
       </header>
 
       {toast && <div className="watch-v2-toast" role="status"><span>{toast}</span><button onClick={() => { setToast(''); setIframeTimedOut(false); }} aria-label="Dismiss"><X size={15} /></button></div>}
+
+      {isSeries && availableSeasons.length > 0 && (
+        <div className="watch-v2-season-switcher" aria-label="Choose season">
+          <div className="watch-v2-season-heading"><span>SEASONS</span><small>{seasonsLoading ? 'Loading seasons…' : `${availableSeasons.length} available`}</small></div>
+          <div className="watch-v2-season-row" role="tablist" aria-label="Available seasons">
+            {availableSeasons.map(season => (
+              <button key={season.season_number} type="button" role="tab" aria-selected={selectedSeason === season.season_number} className={selectedSeason === season.season_number ? 'active' : ''} onClick={() => {
+                if (selectedSeason === season.season_number) return;
+                setSelectedSeason(season.season_number);
+                setSelectedEpisode(1);
+                setPlayerEpisode(1);
+                setToast('');
+              }}>{season.season_number === 0 ? 'Specials' : `S${season.season_number}`}</button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="watch-v2-player-wrap">
         <div className="watch-v2-player">
@@ -3330,7 +3363,7 @@ const saveServerPref = (tmdbId, server) => {
       {isSeries && (
         <section className="watch-v2-episodes">
           <div className="watch-v2-section-head">
-            <div><span>SEASON {currentItem.season || 1}</span><h2>Episodes</h2></div>
+            <div><span>SEASON {selectedSeason}</span><h2>Episodes</h2></div>
             <small>{episodeLoading ? 'Loading…' : `${watchedInRange.length}/${episodeRangeTotal} watched`}</small>
           </div>
           {episodes.length > 0 ? <div className="watch-v2-episode-list">
