@@ -12374,3 +12374,10 @@
 }
 :root[data-theme="dark"] .auth-email-note strong { color: #f1f5f9; }
 :root[data-theme="dark"] .auth-email-note p { color: #cbd5e1; }
+
+/* Hero carousel: keep the third visible poster fully opaque. */
+:root .movie-site .top-carousel .smooth-stack .stack-poster.poster-2,
+:root .movie-site .top-carousel .smooth-stack .stack-poster.poster-2:hover,
+:root .movie-site .top-carousel .smooth-stack .stack-poster.poster-2:active {
+  opacity: 1 !important;
+}
