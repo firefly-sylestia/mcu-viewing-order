@@ -114,6 +114,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     const nextMessages = snapshot.messages || [];
     setMessages(nextMessages);
     setRequests(snapshot.requests || []);
+    if (snapshot.participant) setParticipant(previous => previous ? { ...previous, ...snapshot.participant, token: previous.token } : previous);
     if (nextMessages.length) lastMessageIdRef.current = Math.max(lastMessageIdRef.current, ...nextMessages.map(m => Number(m.id) || 0));
     const version = Number(nextRoom.state_version || 0);
     if (version > lastVersionRef.current) {
@@ -219,7 +220,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
 
   const publishPlayback = useCallback(async (next, force = false) => {
     const r = roomRef.current, p = participantRef.current;
-    if (!r || !p || applyingRemoteRef.current) return;
+    if (!r || !p || !['host','operator'].includes(p.role || (p.is_host ? 'host' : 'viewer')) || applyingRemoteRef.current) return;
     const payload = {
       position: Math.max(0, Number(next.position ?? currentTimeRef.current) || 0),
       paused: next.paused ?? pausedRef.current,
@@ -394,15 +395,15 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
               <div className="wt-player"><iframe ref={iframeRef} src={sharedPlayerUrl} title={`Watch together: ${room.media?.title || itemMedia.title}`} allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowFullScreen /></div>
               {!canControl && <div className="wt-role-banner"><ShieldCheck size={16}/><span>You’re a Viewer. Request Operator access to control playback, or ask for individual skips.</span><button type="button" onClick={() => requestAccess('operator')} disabled={busy}>Request Operator</button></div>}
               <div className="wt-controls">
-                <button disabled={!canControl} onClick={() => sendPlayerCommand('seek', [Math.max(0, currentTimeRef.current - 10)]) aria-label="Back 10 seconds"><SkipBack size={17} /><small>10</small></button>
-                <button className="wt-play" disabled={!canControl} onClick={() => sendPlayerCommand(paused ? 'play' : 'pause') aria-label={paused ? 'Play for everyone' : 'Pause for everyone'}>{paused ? <Play size={19} fill="currentColor" /> : <Pause size={19} fill="currentColor" />}</button>
-                <button disabled={!canControl} onClick={() => sendPlayerCommand('seek', [Math.min(duration || Infinity, currentTimeRef.current + 10)]) aria-label="Forward 10 seconds"><SkipForward size={17} /><small>10</small></button>
+                <button disabled={!canControl} onClick={() => sendPlayerCommand('seek', [Math.max(0, currentTimeRef.current - 10)])} aria-label="Back 10 seconds"><SkipBack size={17} /><small>10</small></button>
+                <button className="wt-play" disabled={!canControl} onClick={() => sendPlayerCommand(paused ? 'play' : 'pause')} aria-label={paused ? 'Play for everyone' : 'Pause for everyone'}>{paused ? <Play size={19} fill="currentColor" /> : <Pause size={19} fill="currentColor" />}</button>
+                <button disabled={!canControl} onClick={() => sendPlayerCommand('seek', [Math.min(duration || Infinity, currentTimeRef.current + 10)])} aria-label="Forward 10 seconds"><SkipForward size={17} /><small>10</small></button>
                 <span className="wt-time">{timeText(currentTime)} / {timeText(duration)}</span>
                 <button className="wt-mute" disabled={!canControl} onClick={() => { sendPlayerCommand('setMuted', [!muted]); setMuted(!muted); }} aria-label={muted ? 'Unmute' : 'Mute'}>{muted ? <VolumeX size={17} /> : <Volume2 size={17} />}</button>
               </div>
               <div className="wt-seek"><span style={{ width: `${progressPercent}%` }} /><input type="range" disabled={!canControl} min="0" max={Math.max(1, duration || 1)} step="1" value={Math.min(currentTime, duration || currentTime)} onChange={e => setCurrentTime(Number(e.target.value))} onPointerUp={e => { const time = Number(e.currentTarget.value); sendPlayerCommand('seek', [time]); publishPlayback({ position: time, paused: pausedRef.current }, true); }} onKeyUp={e => { if (e.key.startsWith('Arrow')) { const time = Number(e.currentTarget.value); sendPlayerCommand('seek', [time]); publishPlayback({ position: time, paused: pausedRef.current }, true); } }} aria-label="Seek shared playback" /></div>
-              {!canControl && <div className="wt-request-actions"><button onClick={() => requestAccess('skip_back')} disabled={busy}>Request −10 sec</button><button onClick={() => requestAccess('skip_forward')} disabled={busy}>Request +10 sec</button><button onClick={() => requestAccess('moderator')} disabled={busy}>Request Moderator</button></div>}
-              <div className="wt-members">{members.map(member => <div className="wt-member" key={member.id}><span className="wt-member-avatar"><img src={member.avatar_url || blobatar(member.display_name)} alt="" /></span><span>{member.display_name}</span>{member.is_host && <Crown size={13} />}</div>)}</div>
+              {!canControl && <div className="wt-request-actions"><button onClick={() => requestAccess('skip_back')} disabled={busy}>Request −10 sec</button><button onClick={() => requestAccess('skip_forward')} disabled={busy}>Request +10 sec</button></div>}
+              <div className="wt-members">{members.map(member => <div className="wt-member" key={member.id}><span className="wt-member-avatar"><img src={member.avatar_url || blobatar(member.display_name)} alt="" /></span><span>{member.display_name}</span>{(member.role === 'host' || member.is_host) ? <Crown size={13} /> : member.role === 'operator' ? <ShieldCheck size={13} /> : null}</div>)}</div>
             </div>
             <aside className="wt-chat">
               <div className="wt-chat-head"><div><MessageCircle size={17} /><strong>Room chat</strong></div><span>{members.length} online</span></div>

@@ -81,7 +81,7 @@ create table if not exists public.watch_room_participants (
   display_name text not null check (char_length(display_name) between 1 and 32),
   avatar_url text not null default '',
   is_host boolean not null default false,
-  role text not null default 'viewer' check (role in ('host','operator','moderator','viewer')),
+  role text not null default 'viewer' check (role in ('host','operator','viewer')),
   joined_at timestamptz not null default now(),
   last_seen_at timestamptz not null default now(),
   unique(room_id, token_hash)
@@ -104,6 +104,11 @@ end
 $watch_room_host_fk$;
 
 alter table public.watch_room_participants add column if not exists role text not null default 'viewer';
+do $watch_role_constraint$ begin
+  if not exists (select 1 from pg_constraint where conname='watch_room_participants_role_check' and conrelid='public.watch_room_participants'::regclass) then
+    alter table public.watch_room_participants add constraint watch_room_participants_role_check check (role in ('host','operator','viewer'));
+  end if;
+end $watch_role_constraint$;
 update public.watch_room_participants set role='host' where is_host and role <> 'host';
 
 create table if not exists public.watch_room_requests (
@@ -209,7 +214,7 @@ begin
   from (select id,participant_id,display_name,avatar_url,body,created_at from public.watch_room_messages where room_id=r.id order by id desc limit 60) m;
   select coalesce(jsonb_agg(jsonb_build_object('id',q.id,'participant_id',q.participant_id,'display_name',q.display_name,'request_type',q.request_type,'payload',q.payload,'created_at',q.created_at) order by q.id desc),'[]'::jsonb) into reqs
   from (select wrq.*,wp.display_name from public.watch_room_requests wrq join public.watch_room_participants wp on wp.id=wrq.participant_id where wrq.room_id=r.id and wrq.status='pending' order by wrq.id desc limit 20) q;
-  return jsonb_build_object('room',to_jsonb(r),'participants',parts,'messages',msgs,'requests',reqs);
+  return jsonb_build_object('room',to_jsonb(r),'participant',jsonb_build_object('id',p.id,'display_name',p.display_name,'avatar_url',p.avatar_url,'is_host',p.is_host,'role',p.role),'participants',parts,'messages',msgs,'requests',reqs);
 end $$;
 
 create or replace function public.watch_room_heartbeat(p_code text,p_token text)
@@ -319,8 +324,6 @@ begin
   if p_approve then
     if q.request_type='operator' then
       update public.watch_room_participants set role='operator' where id=q.participant_id;
-    elsif q.request_type='moderator' then
-      update public.watch_room_participants set role='moderator' where id=q.participant_id;
     else
       pos := greatest(0,least(86400,coalesce((r.playback->>'position')::double precision,0) +
         case q.request_type when 'skip_forward' then 10 when 'skip_back' then -10 when 'seek' then coalesce((q.payload->>'position')::double precision,0) else 0 end));
