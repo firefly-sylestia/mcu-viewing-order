@@ -240,8 +240,6 @@ export default function App() {
     document.documentElement.setAttribute('data-header-design', headerDesign);
     try { localStorage.setItem('incursion-header-design', headerDesign); } catch {}
   }, [headerDesign]);
-  // Briefly simplify GPU-heavy layers when the browser restores this page.
-  // Mobile browsers can show compositor tile artifacts after an app/tab switch.
   useEffect(() => {
     let recoveryTimer = null;
     const root = document.documentElement;
