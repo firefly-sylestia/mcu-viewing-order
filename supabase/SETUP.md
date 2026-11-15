@@ -27,15 +27,16 @@ You do not need to work out which individual migration to run. Always use the la
 
 ## Data-safety guarantees
 
-The setup file is intentionally additive and repeatable. It does **not** contain DROP TABLE, TRUNCATE, or data-deleting cleanup statements. It does not delete existing account data, rooms, participants, or chat messages.
+The setup file is intentionally additive and repeatable. It does **not** contain DROP TABLE or TRUNCATE statements, and it does not delete account viewing data or Watch Together history. It includes a defined retention policy: closed or expired screening rooms are deleted after seven days, together with their participants, chat and requests. History is stored separately and retained.
 
 A few important distinctions:
 
 - CREATE TABLE IF NOT EXISTS preserves existing table contents.
 - CREATE OR REPLACE FUNCTION updates function logic without removing table rows.
 - The script may replace named RLS policies and refresh grants so permissions stay aligned with the app. This changes access rules, not stored data.
-- Closing or leaving a screening room changes its status/presence; it does not erase the room's records.
-- Expired or closed room records are retained for seven days, then removed by the daily cleanup job when pg_cron is enabled. Participants, chat, and requests are deleted with their room.
+- Closing or leaving a screening room changes its status/presence. Closed/expired room rows are retained for seven days, then removed by the daily cleanup job when pg_cron is enabled. Participants, chat and requests are deleted with their room.
+- Watch Together history is stored independently, without a cascading room foreign key, so old-room cleanup does not erase watched-title and duration statistics.
+- Room creation and joining also run a cleanup pass, so expired records are removed opportunistically even without the scheduled extension.
 - Watch Together history is stored independently, without a cascading room foreign key, so old-room cleanup does not erase watched-title and duration statistics.
 - Room creation and joining also run a cleanup pass, so expired records are removed opportunistically even without the scheduled extension.
 
