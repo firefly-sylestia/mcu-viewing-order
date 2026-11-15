@@ -12381,3 +12381,91 @@
 :root .movie-site .top-carousel .smooth-stack .stack-poster.poster-2:active {
   opacity: 1 !important;
 }
+
+
+/* Profile portrait atmosphere and expanded photo viewer refinements. */
+:root[data-header-surface="borderless"] .movie-site.page-profile .profile-avatar-backdrop {
+  display: block !important;
+  content: "" !important;
+  position: absolute !important;
+  inset: -30px !important;
+  z-index: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+:root[data-header-surface="borderless"] .movie-site.page-profile .profile-header.profile-header-compact {
+  position: relative !important;
+  isolation: isolate !important;
+  overflow: hidden !important;
+}
+:root[data-header-design="cinematic"] .movie-site.page-profile .profile-avatar-backdrop {
+  display: block !important;
+}
+:root[data-header-design="cinematic"] .movie-site.page-profile .profile-avatar-backdrop img {
+  filter: blur(27px) saturate(1.22) brightness(.98) !important;
+  transform: scale(1.16) !important;
+}
+:root[data-theme="dark"][data-header-design="cinematic"] .movie-site.page-profile .profile-avatar-backdrop img {
+  filter: blur(27px) saturate(1.22) brightness(.78) !important;
+}
+
+/* A subtle gradient-fade glass surface that picks up the portrait colours. */
+.avatar-dialog {
+  background:
+    radial-gradient(ellipse at 14% 0%, rgba(255,255,255,.38), transparent 56%),
+    radial-gradient(ellipse at 100% 100%, rgba(115,139,184,.13), transparent 58%),
+    linear-gradient(145deg, rgba(255,255,255,.82), rgba(235,240,249,.66) 58%, rgba(222,230,243,.58)) !important;
+  border: 1px solid rgba(255,255,255,.46) !important;
+  -webkit-backdrop-filter: blur(34px) saturate(1.48) !important;
+  backdrop-filter: blur(34px) saturate(1.48) !important;
+}
+:root[data-theme="dark"] .avatar-dialog {
+  background:
+    radial-gradient(ellipse at 12% 0%, rgba(255,255,255,.13), transparent 56%),
+    radial-gradient(ellipse at 100% 100%, rgba(94,116,166,.15), transparent 58%),
+    linear-gradient(145deg, rgba(34,39,51,.88), rgba(23,28,39,.82) 58%, rgba(18,23,33,.88)) !important;
+  border-color: rgba(255,255,255,.13) !important;
+  box-shadow: 0 28px 100px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.14) !important;
+}
+
+/* Full-screen means a genuinely expanded rounded-square portrait, not a
+   slightly enlarged circular thumbnail. */
+.avatar-dialog-fullscreen {
+  width: min(92vw, 700px) !important;
+  min-height: min(90vh, 900px) !important;
+  padding: clamp(18px, 4vw, 34px) !important;
+  justify-content: center !important;
+  gap: 20px !important;
+}
+.avatar-dialog-fullscreen .avatar-dialog-preview {
+  width: min(78vw, 540px) !important;
+  height: min(78vw, 540px) !important;
+  max-width: min(68vh, 540px) !important;
+  max-height: min(68vh, 540px) !important;
+  aspect-ratio: 1 / 1 !important;
+  border-radius: 28px !important;
+  margin-top: 10px !important;
+  box-shadow: 0 20px 58px rgba(0,0,0,.22), 0 0 0 1px rgba(255,255,255,.24) !important;
+}
+.avatar-dialog-fullscreen .avatar-dialog-preview img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border-radius: inherit !important;
+}
+@media (max-width: 620px) {
+  .avatar-dialog-fullscreen {
+    width: min(94vw, 620px) !important;
+    min-height: min(88vh, 820px) !important;
+  }
+  .avatar-dialog-fullscreen .avatar-dialog-preview {
+    width: min(82vw, 500px) !important;
+    height: min(82vw, 500px) !important;
+    max-width: min(66vh, 500px) !important;
+    max-height: min(66vh, 500px) !important;
+    border-radius: 24px !important;
+  }
+}
