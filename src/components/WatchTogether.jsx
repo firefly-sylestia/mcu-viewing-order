@@ -500,7 +500,10 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
         if (!applyingRemoteRef.current && canControl) publishPlayback({ position: currentTimeRef.current, paused: true });
         else if (!canControl && !applyingRemoteRef.current) { setLocalPlaybackOverride(true); localPlaybackOverrideRef.current=true; }
       }
-      if (data.type === 'cinesrc:seeked' && !applyingRemoteRef.current && canControl) publishPlayback({ position: Number(data.currentTime) || currentTimeRef.current, paused: pausedRef.current }, true);
+      if (data.type === 'cinesrc:seeked' && !applyingRemoteRef.current) {
+        if (canControl) publishPlayback({ position: Number(data.currentTime) || currentTimeRef.current, paused: pausedRef.current }, true);
+        else { setLocalPlaybackOverride(true); localPlaybackOverrideRef.current=true; }
+      }
       if (data.type === 'cinesrc:nextepisode') {
         const next = Number(data.episode);
         if (Number.isInteger(next) && next > 0) {
