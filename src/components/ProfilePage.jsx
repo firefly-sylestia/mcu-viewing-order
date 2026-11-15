@@ -24,7 +24,7 @@ function applyBrowserTheme(theme) {
 }
 
 
-const getGuestIdentity = () => {
+export const getGuestIdentity = () => {
   const key = 'mcu-watch-guest-identity-v1';
   try {
     const saved = JSON.parse(localStorage.getItem(key) || 'null');
