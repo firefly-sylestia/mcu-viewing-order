@@ -12711,3 +12711,16 @@
 
 .watch-v2-header-actions{display:flex;align-items:center;gap:10px;flex-shrink:0}
 @media(max-width:620px){.watch-v2-header-actions{gap:6px}.watch-together-launch{padding:9px 11px;font-size:11px}.watch-v2-provider{display:none}}
+
+
+/* Watch Together first-play and safe-browsing notice. */
+.wt-notice-backdrop{position:absolute;inset:0;z-index:12;display:grid;place-items:center;padding:20px;border-radius:inherit;background:rgba(4,7,13,.76);-webkit-backdrop-filter:blur(22px) saturate(1.2);backdrop-filter:blur(22px) saturate(1.2)}
+.wt-playback-notice{width:min(440px,100%);padding:28px;border:1px solid rgba(255,255,255,.13);border-radius:24px;background:linear-gradient(145deg,#20283a,#121722);color:#f5f7fc;box-shadow:0 24px 80px rgba(0,0,0,.48);text-align:left}
+.wt-notice-icon{width:44px;height:44px;display:grid;place-items:center;margin-bottom:18px;border-radius:15px;background:linear-gradient(145deg,#6079e8,#8864d8);color:white}
+.wt-notice-kicker{font-size:9px;font-weight:900;letter-spacing:.16em;color:#aab8e8}
+.wt-playback-notice h2{margin:8px 0 9px;font-size:clamp(22px,4vw,28px);line-height:1.08;letter-spacing:-.04em}
+.wt-playback-notice>p{margin:0;color:#b8c1d2;font-size:13px;line-height:1.6}
+.wt-adblock-tip{display:flex;align-items:flex-start;gap:10px;margin:18px 0;padding:13px;border:1px solid rgba(150,168,230,.16);border-radius:14px;background:rgba(130,150,220,.09);color:#bfc9dc;font-size:11px;line-height:1.55}
+.wt-adblock-tip svg{flex:0 0 auto;color:#aebdff;margin-top:1px}
+.wt-adblock-tip strong{color:#f1f3fb}
+.wt-playback-notice>button{width:100%;padding:13px 16px;border:0;border-radius:13px;background:linear-gradient(110deg,#536fe0,#805ed4);color:white;font:inherit;font-size:13px;font-weight:850;cursor:pointer}
