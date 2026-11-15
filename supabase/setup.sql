@@ -73,11 +73,13 @@ create table if not exists public.watch_rooms (
   expires_at timestamptz not null default now() + interval '8 hours',
   closed_at timestamptz,
   owner_user_id uuid references auth.users(id) on delete set null,
-  owner_token_hash text
+  owner_token_hash text,
+  settings jsonb not null default '{"locked":false,"chat_enabled":true,"reactions_enabled":true,"guests_can_change_episode":false,"expiry_minutes":30}'::jsonb
 );
 
 alter table public.watch_rooms add column if not exists owner_user_id uuid references auth.users(id) on delete set null;
 alter table public.watch_rooms add column if not exists owner_token_hash text;
+alter table public.watch_rooms add column if not exists settings jsonb not null default '{"locked":false,"chat_enabled":true,"reactions_enabled":true,"guests_can_change_episode":false,"expiry_minutes":30}'::jsonb;
 
 create table if not exists public.watch_room_participants (
   id uuid primary key default gen_random_uuid(),
@@ -274,6 +276,7 @@ begin
   if length(p_token) < 32 then raise exception 'Invalid guest token.'; end if;
   select * into r from public.watch_rooms where code=upper(trim(p_code)) and closed_at is null and expires_at > now();
   if not found then raise exception 'Room not found or expired.'; end if;
+  if coalesce((r.settings->>'locked')::boolean,false) and not exists(select 1 from public.watch_room_participants where room_id=r.id and token_hash=encode(sha256(convert_to(p_token,'UTF8')),'hex')) then raise exception 'This room is locked by the host.'; end if;
   if (select count(*) from public.watch_room_participants where room_id=r.id and last_seen_at > now()-interval '45 seconds') >= 12
      and not exists (select 1 from public.watch_room_participants where room_id=r.id and token_hash=encode(sha256(convert_to(p_token,'UTF8')),'hex'))
   then raise exception 'This room is full (12 viewers maximum).'; end if;
@@ -393,6 +396,7 @@ begin
   if not found then raise exception 'Room not found or expired.'; end if;
   select * into p from public.watch_room_participants where room_id=r.id and token_hash=encode(sha256(convert_to(p_token,'UTF8')),'hex');
   if not found then raise exception 'You are not a member of this room.'; end if;
+  if coalesce((r.settings->>'chat_enabled')::boolean,true)=false then raise exception 'The host has disabled room chat.'; end if;
   if length(trim(coalesce(p_body,''))) not between 1 and 500 then raise exception 'Messages must be 1–500 characters.'; end if;
   if (select count(*) from public.watch_room_messages where participant_id=p.id and created_at > now()-interval '10 seconds') >= 5 then raise exception 'Please slow down before sending another message.'; end if;
   insert into public.watch_room_messages(room_id,participant_id,display_name,avatar_url,body)
@@ -568,3 +572,59 @@ begin
   end if;
 end
 $watch_room_cleanup_schedule$;
+
+
+-- Host controls: room permissions, ownership transfer, participant removal and expiry.
+create or replace function public.update_watch_room_settings(p_code text,p_token text,p_settings jsonb)
+returns jsonb language plpgsql security definer set search_path=pg_catalog,public,pg_temp as $$
+declare r public.watch_rooms; p public.watch_room_participants; s jsonb;
+begin
+ select * into r from public.watch_rooms where code=upper(trim(p_code)) and closed_at is null and expires_at>now() for update;
+ if not found then raise exception 'Room not found or expired.'; end if;
+ select * into p from public.watch_room_participants where room_id=r.id and token_hash=encode(sha256(convert_to(p_token,'UTF8')),'hex');
+ if not found or p.role<>'host' then raise exception 'Only the host can change room settings.'; end if;
+ s := r.settings || jsonb_strip_nulls(jsonb_build_object(
+  'locked',case when p_settings ? 'locked' then (p_settings->>'locked')::boolean else null end,
+  'chat_enabled',case when p_settings ? 'chat_enabled' then (p_settings->>'chat_enabled')::boolean else null end,
+  'reactions_enabled',case when p_settings ? 'reactions_enabled' then (p_settings->>'reactions_enabled')::boolean else null end,
+  'guests_can_change_episode',case when p_settings ? 'guests_can_change_episode' then (p_settings->>'guests_can_change_episode')::boolean else null end,
+  'expiry_minutes',case when p_settings ? 'expiry_minutes' then greatest(30,least(1440,(p_settings->>'expiry_minutes')::integer)) else null end
+ ));
+ update public.watch_rooms set settings=s,expires_at=greatest(expires_at,now()+make_interval(mins=>coalesce((s->>'expiry_minutes')::integer,30))) where id=r.id returning * into r;
+ return r.settings;
+end $$;
+
+create or replace function public.transfer_watch_room_host(p_code text,p_token text,p_participant_id uuid)
+returns jsonb language plpgsql security definer set search_path=pg_catalog,public,pg_temp as $$
+declare r public.watch_rooms; old_host public.watch_room_participants; target public.watch_room_participants;
+begin
+ select * into r from public.watch_rooms where code=upper(trim(p_code)) and closed_at is null and expires_at>now() for update;
+ if not found then raise exception 'Room not found or expired.'; end if;
+ select * into old_host from public.watch_room_participants where room_id=r.id and token_hash=encode(sha256(convert_to(p_token,'UTF8')),'hex');
+ if not found or old_host.role<>'host' then raise exception 'Only the current host can transfer ownership.'; end if;
+ select * into target from public.watch_room_participants where id=p_participant_id and room_id=r.id and last_seen_at>now()-interval '45 seconds';
+ if not found then raise exception 'That participant is no longer in the room.'; end if;
+ update public.watch_room_participants set role='viewer',is_host=false where id=old_host.id;
+ update public.watch_room_participants set role='host',is_host=true where id=target.id;
+ update public.watch_rooms set host_participant_id=target.id,owner_token_hash=target.token_hash,owner_user_id=target.user_id where id=r.id;
+ return jsonb_build_object('host_id',target.id);
+end $$;
+
+create or replace function public.remove_watch_room_participant(p_code text,p_token text,p_participant_id uuid)
+returns boolean language plpgsql security definer set search_path=pg_catalog,public,pg_temp as $$
+declare r public.watch_rooms; host public.watch_room_participants;
+begin
+ select * into r from public.watch_rooms where code=upper(trim(p_code)) and closed_at is null and expires_at>now() for update;
+ if not found then raise exception 'Room not found or expired.'; end if;
+ select * into host from public.watch_room_participants where room_id=r.id and token_hash=encode(sha256(convert_to(p_token,'UTF8')),'hex');
+ if not found or host.role<>'host' then raise exception 'Only the host can remove participants.'; end if;
+ delete from public.watch_room_participants where id=p_participant_id and room_id=r.id and is_host=false;
+ return found;
+end $$;
+
+revoke all on function public.update_watch_room_settings(text,text,jsonb) from public;
+revoke all on function public.transfer_watch_room_host(text,text,uuid) from public;
+revoke all on function public.remove_watch_room_participant(text,text,uuid) from public;
+grant execute on function public.update_watch_room_settings(text,text,jsonb) to anon,authenticated;
+grant execute on function public.transfer_watch_room_host(text,text,uuid) to anon,authenticated;
+grant execute on function public.remove_watch_room_participant(text,text,uuid) to anon,authenticated;
