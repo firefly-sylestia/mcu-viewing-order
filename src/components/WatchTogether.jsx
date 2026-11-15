@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Copy, Check, Users, MessageCircle, Play, Pause, SkipBack, SkipForward, X, Link2, Radio, Crown, Send, LogOut, RefreshCw, Volume2, VolumeX, Clock3, ShieldCheck } from 'lucide-react';
+import { Copy, Check, Users, MessageCircle, Play, Pause, SkipBack, SkipForward, X, Link2, Radio, Crown, Send, LogOut, RefreshCw, Volume2, VolumeX, Clock3, ShieldCheck, Search, ChevronRight } from 'lucide-react';
 import { supabasePublicRequest } from '../supabase';
 
 const RPC = '/rest/v1/rpc/';
@@ -92,7 +92,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   }), [selectedMedia, tmdbId, mediaType, season, episode]);
   const filteredMediaItems = useMemo(() => {
     const term = mediaQuery.trim().toLowerCase();
-    return selectableItems.filter(candidate => Number(candidate.tmdbId || candidate.id) > 0 && (!term || `${candidate.title || ''} ${candidate.year || ''} ${candidate.type || ''}`.toLowerCase().includes(term))).slice(0, 36);
+    return selectableItems.filter(candidate => Number(candidate.tmdbId) > 0 && (!term || `${candidate.title || ''} ${candidate.year || ''} ${candidate.type || ''}`.toLowerCase().includes(term))).slice(0, 36);
   }, [selectableItems, mediaQuery]);
   useEffect(() => { roomRef.current = room; }, [room]);
   useEffect(() => { onBeforeOpenRef.current = onBeforeOpen; }, [onBeforeOpen]);
