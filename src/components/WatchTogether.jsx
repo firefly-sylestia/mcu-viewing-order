@@ -161,6 +161,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       lastVersionRef.current = version;
       const playback = nextRoom.playback || {};
       const previousTime = currentTimeRef.current;
+      const previousPaused = pausedRef.current;
       if (!localPlaybackOverrideRef.current) { setPaused(Boolean(playback.paused)); pausedRef.current=Boolean(playback.paused); }
       if (Number.isFinite(Number(playback.position))) {
         const target = Math.max(0, Number(playback.position) + (playback.paused ? 0 : Math.max(0, (Date.now() - Date.parse(playback.updated_at || nextRoom.updated_at || new Date().toISOString())) / 1000)));
@@ -172,8 +173,8 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
           const send = (command, args = []) => frame?.contentWindow?.postMessage({ type: 'cinesrc:command', command, args }, 'https://cinesrc.st');
           if (!localPlaybackOverrideRef.current) {
             if (operatorSkip) send('seek', [target]);
-            if (playback.paused) { send('pause'); setPaused(true); pausedRef.current = true; }
-            else { send('play'); setPaused(false); pausedRef.current = false; }
+            if (previousPaused !== Boolean(playback.paused)) send(playback.paused ? 'pause' : 'play');
+            setPaused(Boolean(playback.paused)); pausedRef.current = Boolean(playback.paused);
           }
           window.setTimeout(() => { applyingRemoteRef.current = false; }, 900);
         }
@@ -308,6 +309,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
         setRoom(previous => previous ? { ...previous, state_version: version, playback } : previous);
         if (!localPlaybackOverrideRef.current) { setPaused(Boolean(playback.paused)); pausedRef.current=Boolean(playback.paused); }
         const previousTime = currentTimeRef.current;
+        const previousPaused = pausedRef.current;
         const target = Math.max(0, Number(playback.position) + (playback.paused ? 0 : Math.max(0, (Date.now() - Date.parse(playback.updated_at || state.updated_at || new Date().toISOString())) / 1000)));
         if (!localPlaybackOverrideRef.current) { setCurrentTime(target); currentTimeRef.current=target; }
         if (playback.actor !== activeParticipant.id && playerReadyRef.current && !applyingRemoteRef.current && !localPlaybackOverrideRef.current) {
@@ -316,7 +318,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
           const frame = iframeRef.current;
           const send = (command, args = []) => frame?.contentWindow?.postMessage({ type: 'cinesrc:command', command, args }, 'https://cinesrc.st');
           if (operatorSkip) send('seek', [target]);
-          send(playback.paused ? 'pause' : 'play');
+          if (previousPaused !== Boolean(playback.paused)) send(playback.paused ? 'pause' : 'play');
           setTimeout(() => { applyingRemoteRef.current = false; }, 900);
         }
       }
