@@ -14013,3 +14013,31 @@
     margin-top:0!important;border-radius:26px 26px 0 0!important;
   }
 }
+
+
+/* Theatre mode is a true viewport layer: remove the document footer from
+   layout and prevent the page behind the player from scrolling. */
+:root:has(.wt-page.wt-theatre-mode),
+:root:has(.wt-page.wt-theatre-mode) body {
+  overflow:hidden!important;
+  overscroll-behavior:none!important;
+}
+:root:has(.wt-page.wt-theatre-mode) .movie-site > .site-footer,
+:root:has(.wt-page.wt-theatre-mode) .wt-screening-footer {
+  display:none!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
+:root:has(.wt-page.wt-theatre-mode) .wt-persistent-layer[data-active="true"] {
+  position:static!important;
+  height:0!important;
+  min-height:0!important;
+  overflow:visible!important;
+}
+:root:has(.wt-page.wt-theatre-mode) .wt-page.wt-theatre-mode {
+  top:0!important;
+  left:0!important;
+  right:0!important;
+  bottom:0!important;
+  transform:none!important;
+}
