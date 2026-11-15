@@ -12805,7 +12805,7 @@
 
 
 /* Dedicated Watch Together route and streamlined room creation flow. */
-:root .page-watch-together .site-header,:root .page-watch-together .bottom-nav,:root .page-watch-together .liquid-glass-nav,:root .page-watch-together .mobile-nav{display:none!important}
+:root .page-watch-together .site-header{display:none!important}
 :root .page-watch-together .wt-page{position:relative;inset:auto;z-index:1;min-height:100dvh;width:100%;padding:clamp(16px,3vw,42px);overflow:visible;background:var(--fx-bg,var(--fx-surface));}
 :root .page-watch-together .wt-page:before{position:fixed}
 :root .page-watch-together .wt-topbar,:root .page-watch-together .wt-entry,:root .page-watch-together .wt-content{width:min(1320px,100%);max-width:1320px}
@@ -13657,4 +13657,42 @@
   :root .page-watch-together .wt-control-panel .wt-controls .wt-play {width:38px!important;height:38px!important;flex-basis:38px!important}
   :root .page-watch-together .wt-control-panel .wt-time {font-size:8px!important}
   :root .page-watch-together .wt-chat {border-radius:13px!important}
+}
+
+
+/* Watch Together route continuity, theatre view and compact member status. */
+:root .wt-mini-player {position:fixed;z-index:1200;left:50%;bottom:calc(82px + env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;align-items:center;gap:10px;width:min(420px,calc(100vw - 28px));min-width:0;padding:9px 13px 9px 9px;border:1px solid color-mix(in srgb,var(--fx-muted) 22%,transparent);border-radius:16px;background:color-mix(in srgb,var(--fx-surface) 88%,transparent);color:var(--fx-text);box-shadow:0 12px 36px rgba(0,0,0,.2);-webkit-backdrop-filter:blur(22px) saturate(1.35);backdrop-filter:blur(22px) saturate(1.35);cursor:pointer;text-align:left}
+:root .wt-mini-player-art {width:38px;height:38px;flex:0 0 38px;display:grid;place-items:center;overflow:hidden;border-radius:10px;background:var(--fx-surface-3);color:var(--fx-muted)}
+:root .wt-mini-player-art img {width:100%;height:100%;object-fit:cover}
+:root .wt-mini-player>span:nth-child(2) {display:grid;gap:3px;min-width:0;flex:1}
+:root .wt-mini-player b {overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:800}
+:root .wt-mini-player small {font-size:9px;color:var(--fx-muted)}
+:root .wt-mini-player>svg {flex:0 0 auto;color:var(--fx-accent)}
+:root .wt-page.wt-minimized {position:fixed!important;left:-200vw!important;top:0!important;width:100vw!important;height:100dvh!important;min-height:100dvh!important;max-width:none!important;padding:0!important;margin:0!important;opacity:0!important;pointer-events:none!important;z-index:-1!important;overflow:hidden!important}
+:root .wt-page .wt-progress-pill {min-width:0;max-width:100%}
+:root .wt-page .wt-progress-paused {flex:0 0 auto;color:var(--fx-accent);margin-left:1px}
+:root .wt-page .wt-role-banner {min-width:0;max-width:100%;box-sizing:border-box}
+:root .wt-page .wt-role-banner span {min-width:0;overflow-wrap:anywhere}
+:root .wt-page .wt-role-banner button {flex:0 1 auto;min-width:0;max-width:100%;box-sizing:border-box;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:relative}
+:root .wt-page .wt-promote-hint {display:inline-flex;align-items:center;justify-content:center;min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:0 1 auto;box-sizing:border-box}
+:root .wt-page.wt-theatre-mode {position:fixed!important;inset:0!important;z-index:20000!important;width:100vw!important;height:100dvh!important;min-height:100dvh!important;max-width:none!important;padding:0!important;margin:0!important;overflow:hidden!important;background:#050609!important;color:#fff!important}
+:root .wt-page.wt-theatre-mode:before {display:none!important}
+:root .wt-page.wt-theatre-mode .wt-content {display:block!important;width:100%!important;max-width:none!important;height:100dvh!important;min-height:100dvh!important;margin:0!important}
+:root .wt-page.wt-theatre-mode .wt-main {position:relative!important;display:flex!important;flex-direction:column!important;width:100%!important;height:100dvh!important;min-height:100dvh!important;padding:0!important;margin:0!important}
+:root .wt-page.wt-theatre-mode .wt-room-title,:root .wt-page.wt-theatre-mode .wt-playback-tip,:root .wt-page.wt-theatre-mode .wt-user-progress,:root .wt-page.wt-theatre-mode .wt-episode-picker,:root .wt-page.wt-theatre-mode .wt-members,:root .wt-page.wt-theatre-mode .wt-role-banner,:root .wt-page.wt-theatre-mode .wt-chat {display:none!important}
+:root .wt-page.wt-theatre-mode .wt-room-tools {position:absolute!important;z-index:5;top:calc(10px + env(safe-area-inset-top));right:12px;width:auto!important;padding:5px!important;border:1px solid rgba(255,255,255,.18)!important;border-radius:999px!important;background:rgba(10,12,18,.58)!important;-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
+:root .wt-page.wt-theatre-mode .wt-network,:root .wt-page.wt-theatre-mode .wt-voice-error {display:none!important}
+:root .wt-page.wt-theatre-mode .wt-room-tool-actions button {color:#fff!important;background:rgba(255,255,255,.12)!important}
+:root .wt-page.wt-theatre-mode .wt-player {position:relative!important;flex:1 1 auto!important;width:100%!important;height:100dvh!important;max-height:none!important;min-height:0!important;aspect-ratio:auto!important;border-radius:0!important;box-shadow:none!important}
+:root .wt-page.wt-theatre-mode .wt-player iframe {width:100%!important;height:100%!important;transform:none!important}
+:root .wt-page.wt-theatre-mode .wt-control-dock {position:absolute!important;z-index:6;left:50%;bottom:calc(12px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(680px,calc(100vw - 24px));margin:0!important;padding:7px;border:1px solid rgba(255,255,255,.16);border-radius:16px;background:rgba(10,12,18,.64);-webkit-backdrop-filter:blur(22px);backdrop-filter:blur(22px)}
+:root .wt-page.wt-theatre-mode .wt-control-toggle {min-height:36px!important;border:0!important;background:transparent!important;color:#fff!important}
+:root .wt-page.wt-theatre-mode .wt-control-toggle small,:root .wt-page.wt-theatre-mode .wt-control-toggle>svg {color:rgba(255,255,255,.7)!important}
+:root .wt-page.wt-theatre-mode .wt-control-panel {background:rgba(255,255,255,.07)!important;border-color:rgba(255,255,255,.12)!important}
+:root .wt-page.wt-theatre-mode .wt-control-panel .wt-controls button {background:rgba(255,255,255,.14)!important;color:#fff!important}
+:root .wt-page.wt-theatre-mode .wt-control-panel .wt-controls .wt-play {background:var(--fx-accent)!important;color:#fff!important}
+@media(max-width:760px) {
+  :root .wt-mini-player {bottom:calc(76px + env(safe-area-inset-bottom));width:calc(100vw - 22px);padding:8px 11px 8px 8px}
+  :root .wt-page.wt-theatre-mode .wt-room-tools {top:calc(6px + env(safe-area-inset-top));right:6px}
+  :root .wt-page.wt-theatre-mode .wt-control-dock {bottom:calc(7px + env(safe-area-inset-bottom));width:calc(100vw - 14px);padding:5px}
 }

@@ -67,10 +67,11 @@ const makeAccountIdentity = (user, profileName, profileAvatar) => {
 };
 
 
-export default function WatchTogether({ item, tmdbId, mediaType, season = 1, episode = 1, playerUrl, onEpisodeChange, onBeforeOpen, onWatchTogether, onClose, startOpen = false, launchOnly = false, user, profileName, profileAvatar, selectableItems = [], requireMediaSelection = false }) {
+export default function WatchTogether({ item, tmdbId, mediaType, season = 1, episode = 1, playerUrl, onEpisodeChange, onBeforeOpen, onWatchTogether, onReturn, onClose, startOpen = false, launchOnly = false, user, profileName, profileAvatar, selectableItems = [], requireMediaSelection = false }) {
   const [guestNameOverride, setGuestNameOverride] = useState('');
   const guest = useMemo(() => { const identity=user?.id?makeAccountIdentity(user,profileName,profileAvatar):{...makeGuest(),isGuest:true}; if(!user?.id&&guestNameOverride){identity.name=guestNameOverride;identity.avatar=blobatar(guestNameOverride);} return identity; }, [user?.id,user?.displayName,user?.email,user?.user_metadata?.display_name,user?.user_metadata?.full_name,user?.user_metadata?.avatar_url,user?.user_metadata?.picture,profileName,profileAvatar,guestNameOverride]);
   const [open, setOpen] = useState(startOpen);
+  useEffect(() => { setOpen(Boolean(startOpen)); }, [startOpen]);
   const [showPlaybackNotice, setShowPlaybackNotice] = useState(false);
   const [hostPanelOpen, setHostPanelOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
@@ -742,9 +743,8 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
 
   const minimizeRoom = async () => {
     await flushWatchHistory();
-    window.clearInterval(pollRef.current); window.clearInterval(playbackPollRef.current); window.clearInterval(heartbeatRef.current);
-    setVoiceEnabled(false);setVoiceMuted(false);setRoom(null); setParticipant(null); setMembers([]); setMessages([]); setRequests([]); setPlayerReady(false); lastVersionRef.current = 0; setLocalPlaybackOverride(false);localPlaybackOverrideRef.current=false;setCanReturnLocal(false);setOpen(false); setSetupDialog(false);
-    const url = new URL(window.location.href); url.searchParams.delete('room'); window.history.replaceState({}, '', url.toString());
+    setOpen(false);
+    setSetupDialog(false);
     onClose?.();
   };
 
@@ -854,11 +854,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
 
   if (launchOnly) return <button type="button" className="watch-together-launch" onClick={() => { onBeforeOpenRef.current?.(); onWatchTogether?.(); }}><Users size={16} /><span>Watch together</span></button>;
   return <>
-    {open && <section className={`wt-page${room ? ' wt-room-active' : ''}${theatreMode ? ' wt-theatre-mode' : ''}`} aria-label="Watch together">
-          <header className="wt-topbar">
-            <div className="wt-brand"><span className="wt-brand-mark"><Radio size={18} /></span><div><small>MCU VIEWING ORDER · WATCH TOGETHER</small><strong>{room ? `ROOM ${room.code}` : 'Watch together'}</strong></div></div>
-            <button className="wt-close" onClick={() => room ? minimizeRoom() : (setOpen(false), onClose?.())} aria-label={room ? 'Return to Watch Browser and keep room active' : 'Back to watch page'}><X size={19} /></button>
-          </header>
+    {(open || room) && <section className={`wt-page${room ? ' wt-room-active' : ''}${theatreMode ? ' wt-theatre-mode' : ''}${!open ? ' wt-minimized' : ''}`} aria-label="Watch together">
           {!room ? <div className="wt-entry wt-connect-page">
             <div className="wt-entry-art wt-connect-hero"><div><span>PRIVATE SCREENING ROOM</span><h2>Watch together.</h2><p>Enter a room code to join your friends, or create a new room and invite them with a private link.</p></div></div>
             <div className="wt-connect-card">
@@ -884,7 +880,6 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
               {guest.isGuest&&editingGuestName&&<form className="wt-guest-name-form wt-room-rename" onSubmit={event=>{event.preventDefault();updateGuestName(guestNameDraft);}}><input value={guestNameDraft} onChange={event=>setGuestNameDraft(event.target.value)} maxLength={32} aria-label="Guest name"/><button type="submit" disabled={busy||!guestNameDraft.trim()}>Save name</button></form>}
               {showPlaybackNotice && <div className="wt-playback-tip" role="status"><span><strong>Playback tip</strong> If autoplay is blocked, tap Play once. A reputable ad blocker can help reduce pop-ups and redirects.</span><button type="button" onClick={() => setShowPlaybackNotice(false)} aria-label="Dismiss playback tip"><X size={15}/></button></div>}
               <div className="wt-room-tools" aria-label="Room tools"><span className={`wt-network ${networkState}`} title={networkState==='online'?'Room connection is active':networkState==='offline'?'You are offline':'Trying to reconnect'}><i/><span>{networkState==='online'?'Connected':networkState==='offline'?'Offline':'Reconnecting'}</span>{networkLatency!=null&&networkState==='online'&&<small>{networkLatency} ms</small>}</span>{voiceError&&<span className="wt-voice-error" role="status">{voiceError}</span>}<div className="wt-room-tool-actions"><button type="button" onClick={()=>refreshRoom()} title="Reconnect to room" aria-label="Reconnect to room"><RefreshCw size={16}/></button><button type="button" onClick={copyTimestamp} title="Copy current timestamp" aria-label="Copy current timestamp"><Clock3 size={16}/></button><button type="button" onClick={()=>setTheatreMode(v=>!v)} title={theatreMode?'Exit theatre mode':'Theatre mode'} aria-label={theatreMode?'Exit theatre mode':'Theatre mode'}><Theater size={16}/></button><button type="button" onClick={()=>window.open(`https://quickchart.io/qr?size=220&text=${encodeURIComponent(roomLink)}`,'_blank','noopener,noreferrer')} title="Open room QR code" aria-label="Open room QR code"><QrCode size={16}/></button></div></div>
-              {room.playback?.paused && <div className="wt-paused-indicator"><Pause size={14}/><span><strong>Paused</strong> by {members.find(member=>member.id===room.playback?.actor)?.display_name || 'a room member'} · {timeText(room.playback?.position)}</span></div>}
               {(localPlaybackOverride || canReturnLocal) && <div className="wt-local-playback wt-playback-actions"><span>{localPlaybackOverride ? 'Independent playback' : 'Room playback'}</span>{localPlaybackOverride&&<button type="button" onClick={syncToRoom} disabled={!playerReady} title="Sync your player with the room">Sync with room</button>}{canReturnLocal&&<button type="button" onClick={returnToLocalPosition} disabled={!playerReady} title="Return to your saved playback position">Return to my spot</button>}</div>}
               {room.media?.mediaType === "tv" && <section className="wt-episode-picker" aria-label="Choose season and episode">
                 <div className="wt-episode-picker-head"><strong>SEASONS</strong><small>{seasonLoading ? "Loading seasons…" : availableSeasons.length + " available"}</small></div>
@@ -893,7 +888,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                 <div className="wt-episode-row">{availableEpisodes.map(ep=><button type="button" key={ep.episode_number} disabled={!canControl&&!room.settings?.guests_can_change_episode} className={activeEpisode===Number(ep.episode_number)?"active":""} onClick={()=>changeRoomEpisode(activeSeason,ep.episode_number)}><b>EP {ep.episode_number}</b><span>{ep.name || "Episode "+ep.episode_number}</span></button>)}</div>
                 {!canControl && !room.settings?.guests_can_change_episode && <small className="wt-episode-lock">Only the host or an operator can change the room episode.</small>}
               </section>}
-              <div className="wt-user-progress" aria-label="Participant playback progress">{members.map(member=>{const pct=Number(member.playback_duration)>0?Math.max(0,Math.min(100,Math.round(Number(member.playback_position||0)/Number(member.playback_duration)*100))):0;return <span className="wt-progress-pill" key={member.id}><img src={member.avatar_url||blobatar(member.display_name)} alt=""/><b>{member.display_name}</b><i>{Number(member.playback_duration)>0?pct+"%":timeText(member.playback_position||0)}</i></span>;})}</div>
+              <div className="wt-user-progress" aria-label="Participant playback progress">{members.map(member=>{const pct=Number(member.playback_duration)>0?Math.max(0,Math.min(100,Math.round(Number(member.playback_position||0)/Number(member.playback_duration)*100))):0;const pausedHere=Boolean(room.playback?.paused&&room.playback?.actor===member.id);return <span className="wt-progress-pill" key={member.id}><img src={member.avatar_url||blobatar(member.display_name)} alt=""/><b>{member.display_name}</b><i>{Number(member.playback_duration)>0?pct+"%":timeText(member.playback_position||0)}</i>{pausedHere&&<Pause className="wt-progress-paused" size={11} aria-label="Paused here"/>}</span>;})}</div>
               {pendingEpisode && <div className="wt-episode-transition"><div><strong>Next episode is ready</strong><span>Everyone can move to S{pendingEpisode.season} · E{pendingEpisode.episode}. Viewers who are behind can finish first.</span></div><button type="button" onClick={()=>setPendingEpisode(null)}>Finish current</button><button type="button" onClick={()=>{const next=pendingEpisode;setPendingEpisode(null);onEpisodeChangeRef.current?.(next.episode);setRoom(old=>old?{...old,playback:{...(old.playback||{}),position:0,paused:false,season:next.season,episode:next.episode}}:old);publishPlayback({position:0,paused:false,season:next.season,episode:next.episode},true);}}>Go now</button></div>}
               <div className="wt-player"><iframe ref={iframeRef} src={sharedPlayerUrl} title={`Watch together: ${room.media?.title || itemMedia.title}`} allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowFullScreen /></div>
               {!canControl && <div className="wt-role-banner"><ShieldCheck size={16}/><span>You’re a Viewer. Request Operator access to control playback, or ask for individual skips.</span><button type="button" onClick={() => requestAccess('operator')} disabled={busy}>Request Operator</button></div>}
@@ -942,5 +937,6 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
 
 
     </section>}
+    {room && !open && <button type="button" className="wt-mini-player" onClick={() => { setOpen(true); onReturn?.(); }} aria-label={`Return to ${room.media?.title || 'Watch Together'}`}><span className="wt-mini-player-art">{room.media?.poster ? <img src={room.media.poster} alt=""/> : <Radio size={16}/>}</span><span><b>{room.media?.title || 'Watch Together'}</b><small>{paused ? 'Paused' : 'Playing'} · Return to player</small></span><Play size={17} fill="currentColor"/></button>}
   </>;
 }
