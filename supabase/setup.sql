@@ -71,8 +71,13 @@ create table if not exists public.watch_rooms (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   expires_at timestamptz not null default now() + interval '8 hours',
-  closed_at timestamptz
+  closed_at timestamptz,
+  owner_user_id uuid references auth.users(id) on delete set null,
+  owner_token_hash text
 );
+
+alter table public.watch_rooms add column if not exists owner_user_id uuid references auth.users(id) on delete set null;
+alter table public.watch_rooms add column if not exists owner_token_hash text;
 
 create table if not exists public.watch_room_participants (
   id uuid primary key default gen_random_uuid(),
@@ -147,6 +152,8 @@ create table if not exists public.watch_room_messages (
 );
 
 create index if not exists watch_rooms_expiry_idx on public.watch_rooms(expires_at);
+create index if not exists watch_rooms_owner_idx on public.watch_rooms(owner_user_id, created_at desc);
+create index if not exists watch_rooms_owner_token_idx on public.watch_rooms(owner_token_hash, created_at desc);
 create index if not exists watch_room_participants_presence_idx on public.watch_room_participants(room_id, last_seen_at desc);
 create index if not exists watch_room_messages_room_idx on public.watch_room_messages(room_id, id desc);
 create index if not exists watch_together_history_user_idx on public.watch_together_history(user_id,last_watched_at desc);
@@ -170,7 +177,7 @@ create or replace function public.cleanup_expired_watch_rooms()
 returns bigint language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $$
 declare removed bigint;
 begin
-  delete from public.watch_rooms where coalesce(closed_at,expires_at) < now()-interval '7 days';
+  delete from public.watch_rooms where closed_at is not null or expires_at <= now();
   get diagnostics removed = row_count;
   return removed;
 end $$;
@@ -186,9 +193,19 @@ begin
   if coalesce(length(trim(p_name)),0) not between 1 and 32 then raise exception 'Display name must be 1–32 characters.'; end if;
   if coalesce((p_media->>'tmdbId')::bigint,0) <= 0 then raise exception 'This title cannot be screened because its TMDB ID is missing.'; end if;
   if (length(p_media::text) > 12000) then raise exception 'Room media details are too large.'; end if;
-  if (select count(*) from public.watch_rooms wr join public.watch_room_participants hp on hp.id=wr.host_participant_id where hp.token_hash=encode(sha256(convert_to(p_token,'UTF8')),'hex') and wr.closed_at is null and wr.expires_at > now()) >= 2 then raise exception 'You already have two active screening rooms.'; end if;
-  insert into public.watch_rooms(code, media, playback)
-  values (p_code, p_media, jsonb_build_object('position',0,'paused',true,'season',greatest(1,coalesce((p_media->>'season')::integer,1)),'episode',greatest(1,coalesce((p_media->>'episode')::integer,1)),'updated_at',now()))
+  -- A creator keeps only one live room. Remove all inactive/closed rooms
+  -- belonging to this identity before creating a fresh room ID.
+  delete from public.watch_rooms wr
+  where wr.owner_token_hash=encode(sha256(convert_to(p_token,'UTF8')),'hex')
+    and (wr.closed_at is not null or wr.expires_at <= now() or not exists (
+      select 1 from public.watch_room_participants wp
+      where wp.room_id=wr.id and wp.last_seen_at > now()-interval '45 seconds'
+    ));
+  if exists (select 1 from public.watch_rooms wr where wr.owner_token_hash=encode(sha256(convert_to(p_token,'UTF8')),'hex') and wr.closed_at is null and wr.expires_at>now()) then
+    raise exception 'You already have an active screening room. End or delete it before creating another.';
+  end if;
+  insert into public.watch_rooms(code, media, playback, owner_user_id, owner_token_hash, expires_at)
+  values (p_code, p_media, jsonb_build_object('position',0,'paused',true,'season',greatest(1,coalesce((p_media->>'season')::integer,1)),'episode',greatest(1,coalesce((p_media->>'episode')::integer,1)),'updated_at',now()), auth.uid(), encode(sha256(convert_to(p_token,'UTF8')),'hex'), now()+interval '30 minutes')
   returning * into r;
   insert into public.watch_room_participants(room_id, token_hash, display_name, avatar_url, is_host, role, user_id)
   values (r.id, encode(sha256(convert_to(p_token,'UTF8')),'hex'), trim(p_name), left(coalesce(p_avatar,''),1000), true, 'host', auth.uid())
@@ -201,6 +218,34 @@ begin
     'messages', '[]'::jsonb
   );
 end $$;
+
+create or replace function public.list_watch_rooms(p_token text)
+returns jsonb language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $
+declare result jsonb;
+begin
+  perform public.cleanup_expired_watch_rooms();
+  if length(coalesce(p_token,'')) < 32 then raise exception 'Invalid room credentials.'; end if;
+  select coalesce(jsonb_agg(jsonb_build_object(
+    'id',wr.id,'code',wr.code,'media',wr.media,'created_at',wr.created_at,'updated_at',wr.updated_at,'expires_at',wr.expires_at,
+    'is_active',exists(select 1 from public.watch_room_participants wp where wp.room_id=wr.id and wp.last_seen_at>now()-interval '45 seconds'),
+    'viewer_count',(select count(*) from public.watch_room_participants wp where wp.room_id=wr.id and wp.last_seen_at>now()-interval '45 seconds')
+  ) order by wr.created_at desc),'[]'::jsonb) into result
+  from public.watch_rooms wr
+  where wr.owner_token_hash=encode(sha256(convert_to(p_token,'UTF8')),'hex')
+    and wr.closed_at is null and wr.expires_at>now();
+  return result;
+end $;
+
+create or replace function public.delete_watch_room(p_code text,p_token text)
+returns boolean language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $
+declare removed integer;
+begin
+  delete from public.watch_rooms wr where wr.code=upper(trim(p_code))
+    and wr.owner_token_hash=encode(sha256(convert_to(p_token,'UTF8')),'hex');
+  get diagnostics removed = row_count;
+  if removed=0 then raise exception 'Room not found or you are not its creator.'; end if;
+  return true;
+end $;
 
 create or replace function public.join_watch_room(
   p_code text, p_token text, p_name text, p_avatar text
@@ -254,7 +299,7 @@ begin
   if rid is null then return false; end if;
   update public.watch_room_participants set last_seen_at=now()
   where room_id=rid and token_hash=encode(sha256(convert_to(p_token,'UTF8')),'hex');
-  if found then update public.watch_rooms set expires_at=greatest(expires_at,now()+interval '2 hours') where id=rid; end if;
+  if found then update public.watch_rooms set expires_at=now()+interval '30 minutes' where id=rid; end if;
   return found;
 end $$;
 
@@ -288,7 +333,7 @@ begin
     'actor', p.id
   );
   update public.watch_rooms set playback=next_state,state_version=state_version+1,updated_at=now(),
-    expires_at=greatest(expires_at,now()+interval '2 hours')
+    expires_at=now()+interval '30 minutes'
   where id=r.id returning * into r;
   update public.watch_room_participants set last_seen_at=now() where id=p.id;
   return jsonb_build_object('state_version',r.state_version,'playback',r.playback);
@@ -318,6 +363,7 @@ begin
   if rid is null then return false; end if;
   update public.watch_room_participants set last_seen_at=now()-interval '2 minutes'
   where room_id=rid and token_hash=encode(sha256(convert_to(p_token,'UTF8')),'hex');
+  if found then update public.watch_rooms set expires_at=now()-interval '1 second' where id=rid and host_participant_id=(select id from public.watch_room_participants where room_id=rid and token_hash=encode(sha256(convert_to(p_token,'UTF8')),'hex')); end if;
   return found;
 end $$;
 
@@ -328,7 +374,7 @@ begin
   select r.id into rid from public.watch_rooms r join public.watch_room_participants p on p.id=r.host_participant_id
   where r.code=upper(trim(p_code)) and p.token_hash=encode(sha256(convert_to(p_token,'UTF8')),'hex');
   if rid is null then raise exception 'Only the host can close this room.'; end if;
-  update public.watch_rooms set closed_at=now(),expires_at=now() where id=rid;
+  delete from public.watch_rooms where id=rid;
   return true;
 end $$;
 
@@ -420,6 +466,8 @@ $$;
 
 revoke all on function public.cleanup_expired_watch_rooms() from public, anon, authenticated;
 revoke all on function public.create_watch_room(text,text,text,text,jsonb) from public;
+revoke all on function public.list_watch_rooms(text) from public;
+revoke all on function public.delete_watch_room(text,text) from public;
 revoke all on function public.join_watch_room(text,text,text,text) from public;
 revoke all on function public.watch_room_snapshot(text,text) from public;
 revoke all on function public.watch_room_heartbeat(text,text) from public;
@@ -435,6 +483,8 @@ revoke all on function public.record_watch_together_history(text,text,integer) f
 revoke all on function public.get_watch_together_history() from public;
 
 grant execute on function public.create_watch_room(text,text,text,text,jsonb) to anon, authenticated;
+grant execute on function public.list_watch_rooms(text) to anon, authenticated;
+grant execute on function public.delete_watch_room(text,text) to anon, authenticated;
 grant execute on function public.join_watch_room(text,text,text,text) to anon, authenticated;
 grant execute on function public.watch_room_snapshot(text,text) to anon, authenticated;
 grant execute on function public.watch_room_heartbeat(text,text) to anon, authenticated;
@@ -449,9 +499,9 @@ grant execute on function public.rename_watch_room_participant(text,text,text,te
 grant execute on function public.record_watch_together_history(text,text,integer) to authenticated;
 grant execute on function public.get_watch_together_history() to authenticated;
 
--- Closed/expired rooms older than seven days are deleted by the cleanup job.
--- Their participants, chat and requests cascade with the room. The separate
--- watch_together_history table has no room foreign key and is retained.
+-- Inactive rooms expire 30 minutes after their last heartbeat. Cleanup hard-deletes
+-- expired/closed rooms and cascades participants, chat and requests. Watch history
+-- is separate and intentionally retained.
 
 -- Schedule daily cleanup when pg_cron is enabled. History is stored separately.
 do $watch_room_cleanup_schedule$
@@ -464,7 +514,7 @@ begin
       execute 'select cron.unschedule($1)' into unscheduled using existing_job;
     end if;
     execute 'select cron.schedule($1,$2,$3)' into existing_job
-      using 'cleanup-expired-watch-rooms','17 3 * * *','select public.cleanup_expired_watch_rooms();';
+      using 'cleanup-expired-watch-rooms','*/5 * * * *','select public.cleanup_expired_watch_rooms();';
   end if;
 end
 $watch_room_cleanup_schedule$;

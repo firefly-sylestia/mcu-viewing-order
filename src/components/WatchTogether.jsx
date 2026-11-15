@@ -56,6 +56,11 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const guest = useMemo(() => { const identity=user?.id?makeAccountIdentity(user,profileName,profileAvatar):{...makeGuest(),isGuest:true}; if(!user?.id&&guestNameOverride){identity.name=guestNameOverride;identity.avatar=blobatar(guestNameOverride);} return identity; }, [user?.id,user?.displayName,user?.email,user?.user_metadata?.display_name,user?.user_metadata?.full_name,user?.user_metadata?.avatar_url,user?.user_metadata?.picture,profileName,profileAvatar,guestNameOverride]);
   const [open, setOpen] = useState(startOpen);
   const [showPlaybackNotice, setShowPlaybackNotice] = useState(false);
+  const [ownedRooms, setOwnedRooms] = useState([]);
+  const [roomsLoading, setRoomsLoading] = useState(false);
+  const [localPlaybackOverride, setLocalPlaybackOverride] = useState(false);
+  const [savedLocalPosition, setSavedLocalPosition] = useState(null);
+  const [canReturnLocal, setCanReturnLocal] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState(item || null);
   const [mediaQuery, setMediaQuery] = useState('');
   const [setupDialog, setSetupDialog] = useState(false);
@@ -96,6 +101,8 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const currentTimeRef = useRef(0);
   const pausedRef = useRef(true);
   const playerReadyRef = useRef(false);
+  const localPlaybackOverrideRef = useRef(false);
+  useEffect(() => { localPlaybackOverrideRef.current = localPlaybackOverride; }, [localPlaybackOverride]);
   useEffect(() => { if (item) setSelectedMedia(item); }, [item]);
   useEffect(() => { setGuestNameDraft(guest.name); }, [guest.name]);
   const itemMedia = useMemo(() => ({
@@ -145,9 +152,11 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
           applyingRemoteRef.current = true;
           const frame = iframeRef.current;
           const send = (command, args = []) => frame?.contentWindow?.postMessage({ type: 'cinesrc:command', command, args }, 'https://cinesrc.st');
-          if (Math.abs(currentTimeRef.current - target) > 2.25) send('seek', [target]);
-          if (playback.paused) { send('pause'); setPaused(true); }
-          else { send('play'); setPaused(false); }
+          if (!localPlaybackOverrideRef.current) {
+            if (Math.abs(currentTimeRef.current - target) > 5) send('seek', [target]);
+            if (playback.paused) { send('pause'); setPaused(true); pausedRef.current = true; }
+            else { send('play'); setPaused(false); pausedRef.current = false; }
+          }
           window.setTimeout(() => { applyingRemoteRef.current = false; }, 900);
         }
       }
@@ -171,6 +180,24 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     }catch(error){setError(error.message||'Could not update your guest name.');}
     finally{setBusy(false);}
   },[guest,rpc]);
+
+  const loadOwnedRooms = useCallback(async () => {
+    if (!guest?.token) return;
+    setRoomsLoading(true);
+    try { const rows = await rpc('list_watch_rooms', { p_token: guest.token }); setOwnedRooms(Array.isArray(rows) ? rows : []); }
+    catch (e) { setError(e.message || 'Could not load your screening rooms.'); }
+    finally { setRoomsLoading(false); }
+  }, [guest?.token, rpc]);
+
+  const deleteOwnedRoom = useCallback(async (code) => {
+    if (!code || busy) return;
+    setBusy(true); setError('');
+    try { await rpc('delete_watch_room', { p_code: code, p_token: guest.token }); setOwnedRooms(rows => rows.filter(row => row.code !== code)); }
+    catch (e) { setError(e.message || 'Could not delete this room.'); }
+    finally { setBusy(false); }
+  }, [busy, guest?.token, rpc]);
+
+  useEffect(() => { if (open && !room) loadOwnedRooms(); }, [open, room?.id, loadOwnedRooms]);
 
   const joinExisting = useCallback(async (code, identity = guest) => {
     setBusy(true); setError(''); lastVersionRef.current = 0; watchSecondsRef.current=0; localHistoryFlushRef.current=0; remoteHistoryFlushRef.current=0;
@@ -210,6 +237,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       setParticipant(result.participant);
       applyRoomSnapshot(result);
       saveActiveRoom(code, guest, itemMedia);
+      await loadOwnedRooms();
       const url = new URL(window.location.href);
       url.hash = 'watch-together';
       url.searchParams.set('room', code);
@@ -221,7 +249,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       try { await navigator.clipboard.writeText(link); setCopied(true); window.setTimeout(() => setCopied(false), 2200); } catch {}
     } catch (e) { setError(e.message || 'Could not create the room.'); }
     finally { setBusy(false); }
-  }, [rpc, guest, itemMedia, applyRoomSnapshot]);
+  }, [rpc, guest, itemMedia, applyRoomSnapshot, loadOwnedRooms]);
 
   useEffect(() => {
     const code = new URLSearchParams(window.location.search).get('room');
@@ -265,11 +293,11 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
         setPaused(Boolean(playback.paused));
         const target = Math.max(0, Number(playback.position) + (playback.paused ? 0 : Math.max(0, (Date.now() - Date.parse(playback.updated_at || state.updated_at || new Date().toISOString())) / 1000)));
         setCurrentTime(target);
-        if (playback.actor !== activeParticipant.id && playerReadyRef.current && !applyingRemoteRef.current) {
+        if (playback.actor !== activeParticipant.id && playerReadyRef.current && !applyingRemoteRef.current && !localPlaybackOverrideRef.current) {
           applyingRemoteRef.current = true;
           const frame = iframeRef.current;
           const send = (command, args = []) => frame?.contentWindow?.postMessage({ type: 'cinesrc:command', command, args }, 'https://cinesrc.st');
-          if (Math.abs(currentTimeRef.current - target) > 1.25) send('seek', [target]);
+          if (Math.abs(currentTimeRef.current - target) > 5) send('seek', [target]);
           send(playback.paused ? 'pause' : 'play');
           setTimeout(() => { applyingRemoteRef.current = false; }, 550);
         }
@@ -324,13 +352,40 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     finally { setBusy(false); }
   };
   const sendPlayerCommand = useCallback((command, args = []) => {
-    if (!canControl && !applyingRemoteRef.current && !['getCurrentTime','getDuration'].includes(command)) { setError('Request Operator access from the host to control playback.'); return; }
+    if (!canControl && !applyingRemoteRef.current && !['getCurrentTime','getDuration'].includes(command)) {
+      if (['play','pause','seek'].includes(command)) {
+        setLocalPlaybackOverride(true); localPlaybackOverrideRef.current = true;
+        iframeRef.current?.contentWindow?.postMessage({ type: 'cinesrc:command', command, args }, 'https://cinesrc.st');
+        if (command === 'play') { setPaused(false); pausedRef.current = false; }
+        if (command === 'pause') { setPaused(true); pausedRef.current = true; }
+        if (command === 'seek') { const position=Math.max(0,Number(args[0])||0);setCurrentTime(position);currentTimeRef.current=position; }
+        return;
+      }
+      setError('Request Operator access from the host to control shared playback.'); return;
+    }
     // Apply locally first; the RPC is only the shared state announcement.
     iframeRef.current?.contentWindow?.postMessage({ type: 'cinesrc:command', command, args }, 'https://cinesrc.st');
     if (command === 'play') { setPaused(false); pausedRef.current = false; publishPlayback({ position: currentTimeRef.current, paused: false }); }
     if (command === 'pause') { setPaused(true); pausedRef.current = true; publishPlayback({ position: currentTimeRef.current, paused: true }); }
     if (command === 'seek') { const position = Math.max(0, Number(args[0]) || 0); setCurrentTime(position); currentTimeRef.current = position; publishPlayback({ position, paused: pausedRef.current }, true); }
   }, [publishPlayback, canControl]);
+
+  const syncToRoom = useCallback(() => {
+    if (!room?.playback) return;
+    setSavedLocalPosition(currentTimeRef.current); setCanReturnLocal(true);
+    const playback=room.playback;
+    const target=Math.max(0,Number(playback.position)||0)+(playback.paused?0:Math.max(0,(Date.now()-Date.parse(playback.updated_at||room.updated_at||new Date().toISOString()))/1000));
+    applyingRemoteRef.current=true; iframeRef.current?.contentWindow?.postMessage({type:'cinesrc:command',command:'seek',args:[target]},'https://cinesrc.st');
+    iframeRef.current?.contentWindow?.postMessage({type:'cinesrc:command',command:playback.paused?'pause':'play',args:[]},'https://cinesrc.st');
+    setCurrentTime(target);currentTimeRef.current=target;setPaused(Boolean(playback.paused));pausedRef.current=Boolean(playback.paused);
+    setLocalPlaybackOverride(false);localPlaybackOverrideRef.current=false;window.setTimeout(()=>{applyingRemoteRef.current=false;},800);
+  }, [room]);
+  const returnToLocalPosition = useCallback(() => {
+    if (savedLocalPosition == null) return;
+    applyingRemoteRef.current=true;iframeRef.current?.contentWindow?.postMessage({type:'cinesrc:command',command:'seek',args:[savedLocalPosition]},'https://cinesrc.st');
+    setCurrentTime(savedLocalPosition);currentTimeRef.current=savedLocalPosition;setLocalPlaybackOverride(true);localPlaybackOverrideRef.current=true;setCanReturnLocal(false);
+    window.setTimeout(()=>{applyingRemoteRef.current=false;},700);
+  }, [savedLocalPosition]);
 
   const sendChat = async (event) => {
     event?.preventDefault();
@@ -390,7 +445,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const minimizeRoom = async () => {
     await flushWatchHistory();
     window.clearInterval(pollRef.current); window.clearInterval(playbackPollRef.current); window.clearInterval(heartbeatRef.current);
-    setRoom(null); setParticipant(null); setMembers([]); setMessages([]); setRequests([]); setPlayerReady(false); lastVersionRef.current = 0; setOpen(false); setSetupDialog(false);
+    setRoom(null); setParticipant(null); setMembers([]); setMessages([]); setRequests([]); setPlayerReady(false); lastVersionRef.current = 0; setLocalPlaybackOverride(false);localPlaybackOverrideRef.current=false;setCanReturnLocal(false);setOpen(false); setSetupDialog(false);
     const url = new URL(window.location.href); url.searchParams.delete('room'); window.history.replaceState({}, '', url.toString());
     onClose?.();
   };
@@ -404,7 +459,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     }
     try { const saved = JSON.parse(localStorage.getItem(ACTIVE_ROOM_KEY) || 'null'); if (saved?.code === r?.code) localStorage.removeItem(ACTIVE_ROOM_KEY); } catch {}
     window.clearInterval(pollRef.current); window.clearInterval(playbackPollRef.current); window.clearInterval(heartbeatRef.current);
-    setRoom(null); setParticipant(null); setMembers([]); setMessages([]); setRequests([]); setPlayerReady(false); lastVersionRef.current = 0; setOpen(false); setSetupDialog(false); onClose?.();
+    setRoom(null); setParticipant(null); setMembers([]); setMessages([]); setRequests([]); setPlayerReady(false); lastVersionRef.current = 0; setLocalPlaybackOverride(false);localPlaybackOverrideRef.current=false;setCanReturnLocal(false);setOpen(false);setSetupDialog(false); onClose?.();
     const url = new URL(window.location.href); url.searchParams.delete('room'); window.history.replaceState({}, '', url.toString());
   };
 
@@ -431,14 +486,15 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       if (data.type === 'cinesrc:response' && data.command === 'getDuration' && Number.isFinite(Number(data.result))) setDuration(Number(data.result));
       if (data.type === 'cinesrc:response' && data.command === 'getCurrentTime' && Number.isFinite(Number(data.result))) setCurrentTime(Number(data.result));
       if (data.type === 'cinesrc:play') {
-        setPaused(false);
-        if (!applyingRemoteRef.current) publishPlayback({ position: currentTimeRef.current, paused: false });
+        setPaused(false); pausedRef.current=false;
+        if (!applyingRemoteRef.current && canControl) publishPlayback({ position: currentTimeRef.current, paused: false });
       }
       if (data.type === 'cinesrc:pause') {
-        setPaused(true);
-        if (!applyingRemoteRef.current) publishPlayback({ position: currentTimeRef.current, paused: true });
+        setPaused(true); pausedRef.current=true;
+        if (!applyingRemoteRef.current && canControl) publishPlayback({ position: currentTimeRef.current, paused: true });
+        else if (!canControl && !applyingRemoteRef.current) { setLocalPlaybackOverride(true); localPlaybackOverrideRef.current=true; }
       }
-      if (data.type === 'cinesrc:seeked' && !applyingRemoteRef.current) publishPlayback({ position: Number(data.currentTime) || currentTimeRef.current, paused: pausedRef.current }, true);
+      if (data.type === 'cinesrc:seeked' && !applyingRemoteRef.current && canControl) publishPlayback({ position: Number(data.currentTime) || currentTimeRef.current, paused: pausedRef.current }, true);
       if (data.type === 'cinesrc:nextepisode') {
         const next = Number(data.episode);
         if (Number.isInteger(next) && next > 0) {
@@ -473,7 +529,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const progressPercent = duration ? Math.min(100, (currentTime / duration) * 100) : 0;
   useEffect(() => { setPlayerReady(false); }, [sharedPlayerUrl]);
   useEffect(() => {
-    if (!playerReady || !room?.playback) return;
+    if (!playerReady || !room?.playback || localPlaybackOverrideRef.current) return;
     const playback = room.playback;
     const target = Math.max(0, Number(playback.position) || 0);
     applyingRemoteRef.current = true;
@@ -504,18 +560,24 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
               {guest.isGuest&&editingGuestName&&<form className="wt-guest-name-form" onSubmit={event=>{event.preventDefault();updateGuestName(guestNameDraft);}}><input value={guestNameDraft} onChange={event=>setGuestNameDraft(event.target.value)} maxLength={32} placeholder="Choose a guest name" aria-label="Guest name"/><button type="submit" disabled={busy||!guestNameDraft.trim()}>Save name</button></form>}
               {error && <p className="wt-error">{error}</p>}
               <p className="wt-privacy"><ShieldCheck size={14}/> Private room links are hard to guess. Guests can join without signing in.</p>
+              <section className="wt-owned-rooms">
+                <header><div><small>ROOM MANAGEMENT</small><strong>Your created rooms</strong></div><button type="button" onClick={loadOwnedRooms} disabled={roomsLoading} aria-label="Refresh rooms"><RefreshCw size={14}/></button></header>
+                {roomsLoading ? <p className="wt-owned-empty">Loading your rooms…</p> : ownedRooms.length ? <div className="wt-owned-list">{ownedRooms.map(saved=><article className="wt-owned-room" key={saved.id}><div className="wt-owned-poster">{saved.media?.poster?<img src={saved.media.poster} alt=""/>:<Radio size={17}/>}</div><div className="wt-owned-copy"><strong>{saved.media?.title || 'Screening room'}</strong><small>{saved.code} · {saved.is_active ? `${saved.viewer_count || 0} online` : 'Inactive'}</small><small>{saved.is_active ? 'Active now' : `Auto-delete in ${Math.max(0,Math.ceil((Date.parse(saved.expires_at)-Date.now())/60000))} min`}</small></div><button type="button" className="wt-owned-delete" onClick={()=>deleteOwnedRoom(saved.code)} disabled={busy} aria-label={`Delete room ${saved.code}`}><X size={16}/></button></article>)}</div> : <p className="wt-owned-empty">No rooms created with this identity yet.</p>}
+              </section>
             </div>
           </div> : <div className="wt-content">
             <div className="wt-main">
               <div className="wt-room-title"><div><span>NOW SCREENING</span><h2>{room.media?.title || itemMedia.title}</h2><small>{members.length} {members.length === 1 ? 'viewer' : 'viewers'} · {participant.is_host ? 'Host' : (participant.role || 'viewer').replace(/^./, c => c.toUpperCase())}</small></div><div className="wt-room-actions">{guest.isGuest&&<button type="button" className="wt-copy" onClick={()=>setEditingGuestName(value=>!value)}><Pencil size={14}/> Name</button>}{participant.is_host&&<button type="button" className="wt-copy wt-end-room" onClick={leaveRoom}>End room</button>}<button className="wt-copy" onClick={copyLink}>{copied ? <Check size={15}/> : <Copy size={15}/ >}{copied ? 'Copied' : 'Invite'}</button></div></div>
               {guest.isGuest&&editingGuestName&&<form className="wt-guest-name-form wt-room-rename" onSubmit={event=>{event.preventDefault();updateGuestName(guestNameDraft);}}><input value={guestNameDraft} onChange={event=>setGuestNameDraft(event.target.value)} maxLength={32} aria-label="Guest name"/><button type="submit" disabled={busy||!guestNameDraft.trim()}>Save name</button></form>}
               {showPlaybackNotice && <div className="wt-playback-tip" role="status"><span><strong>Playback tip</strong> If autoplay is blocked, tap Play once. A reputable ad blocker can help reduce pop-ups and redirects.</span><button type="button" onClick={() => setShowPlaybackNotice(false)} aria-label="Dismiss playback tip"><X size={15}/></button></div>}
+              {room.playback?.paused && <div className="wt-paused-indicator"><Pause size={14}/><span><strong>Paused</strong> by {members.find(member=>member.id===room.playback?.actor)?.display_name || 'a room member'} · {timeText(room.playback?.position)}</span></div>}
+              {localPlaybackOverride && <div className="wt-local-playback"><span>You’re watching independently{paused ? ' · paused locally' : ''}. Your position won’t move with the room.</span><button type="button" onClick={syncToRoom}>Sync to room</button>{canReturnLocal&&<button type="button" onClick={returnToLocalPosition}>Return to my position</button>}</div>}
               <div className="wt-player"><iframe ref={iframeRef} src={sharedPlayerUrl} title={`Watch together: ${room.media?.title || itemMedia.title}`} allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowFullScreen /></div>
               {!canControl && <div className="wt-role-banner"><ShieldCheck size={16}/><span>You’re a Viewer. Request Operator access to control playback, or ask for individual skips.</span><button type="button" onClick={() => requestAccess('operator')} disabled={busy}>Request Operator</button></div>}
               <div className="wt-controls">
-                <button disabled={!canControl} onClick={() => sendPlayerCommand('seek', [Math.max(0, currentTimeRef.current - 10)])} aria-label="Back 10 seconds"><SkipBack size={17}/><small>10</small></button>
-                <button className="wt-play" disabled={!canControl} onClick={() => sendPlayerCommand(paused ? 'play' : 'pause')} aria-label={paused ? 'Play for everyone' : 'Pause for everyone'}>{paused ? <Play size={19} fill="currentColor"/> : <Pause size={19} fill="currentColor"/>}</button>
-                <button disabled={!canControl} onClick={() => sendPlayerCommand('seek', [Math.min(duration || Infinity, currentTimeRef.current + 10)])} aria-label="Forward 10 seconds"><SkipForward size={17}/><small>10</small></button>
+                <button disabled={!canControl && !room} onClick={() => sendPlayerCommand('seek', [Math.max(0, currentTimeRef.current - 10)])} aria-label="Back 10 seconds"><SkipBack size={17}/><small>10</small></button>
+                <button className="wt-play" disabled={!room} onClick={() => sendPlayerCommand(paused ? 'play' : 'pause')} aria-label={paused ? 'Play for everyone' : 'Pause for everyone'}>{paused ? <Play size={19} fill="currentColor"/> : <Pause size={19} fill="currentColor"/>}</button>
+                <button disabled={!canControl && !room} onClick={() => sendPlayerCommand('seek', [Math.min(duration || Infinity, currentTimeRef.current + 10)])} aria-label="Forward 10 seconds"><SkipForward size={17}/><small>10</small></button>
                 <span className="wt-time">{timeText(currentTime)} / {timeText(duration)}</span>
                 <button className="wt-mute" disabled={!canControl} onClick={() => { sendPlayerCommand('setMuted', [!muted]); setMuted(!muted); }} aria-label={muted ? 'Unmute' : 'Mute'}>{muted ? <VolumeX size={17}/> : <Volume2 size={17}/>}</button>
               </div>
