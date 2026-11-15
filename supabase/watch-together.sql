@@ -61,7 +61,7 @@ revoke all on sequence public.watch_room_messages_id_seq from anon, authenticate
 create or replace function public.create_watch_room(
   p_code text, p_token text, p_name text, p_avatar text, p_media jsonb
 ) returns jsonb
-language plpgsql security definer set search_path = public, pg_temp as $$
+language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $$
 declare r public.watch_rooms; p public.watch_room_participants;
 begin
   if p_code !~ '^[A-HJ-NP-Z2-9]{8}$' or length(p_token) < 32 then raise exception 'Invalid room credentials.'; end if;
@@ -88,13 +88,15 @@ end $$;
 create or replace function public.join_watch_room(
   p_code text, p_token text, p_name text, p_avatar text
 ) returns jsonb
-language plpgsql security definer set search_path = public, pg_temp as $$
+language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $$
 declare r public.watch_rooms; p public.watch_room_participants; parts jsonb; msgs jsonb;
 begin
   if length(p_token) < 32 then raise exception 'Invalid guest token.'; end if;
   select * into r from public.watch_rooms where code=upper(trim(p_code)) and closed_at is null and expires_at > now();
   if not found then raise exception 'Room not found or expired.'; end if;
-  if (select count(*) from public.watch_room_participants where room_id=r.id and last_seen_at > now()-interval '45 seconds') >= 12 then raise exception 'This room is full (12 viewers maximum).'; end if;
+  if (select count(*) from public.watch_room_participants where room_id=r.id and last_seen_at > now()-interval '45 seconds') >= 12
+     and not exists (select 1 from public.watch_room_participants where room_id=r.id and token_hash=encode(sha256(convert_to(p_token,'UTF8')),'hex'))
+  then raise exception 'This room is full (12 viewers maximum).'; end if;
   insert into public.watch_room_participants(room_id, token_hash, display_name, avatar_url)
   values (r.id, encode(sha256(convert_to(p_token,'UTF8')),'hex'), left(trim(p_name),32), left(coalesce(p_avatar,''),1000))
   on conflict(room_id,token_hash) do update set display_name=excluded.display_name, avatar_url=excluded.avatar_url, last_seen_at=now()
@@ -107,7 +109,7 @@ begin
 end $$;
 
 create or replace function public.watch_room_snapshot(p_code text, p_token text)
-returns jsonb language plpgsql security definer set search_path = public, pg_temp as $$
+returns jsonb language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $$
 declare r public.watch_rooms; p public.watch_room_participants; parts jsonb; msgs jsonb;
 begin
   select * into r from public.watch_rooms where code=upper(trim(p_code)) and closed_at is null and expires_at > now();
@@ -123,7 +125,7 @@ begin
 end $$;
 
 create or replace function public.watch_room_heartbeat(p_code text,p_token text)
-returns boolean language plpgsql security definer set search_path = public, pg_temp as $$
+returns boolean language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $$
 declare rid uuid;
 begin
   select id into rid from public.watch_rooms where code=upper(trim(p_code)) and closed_at is null and expires_at > now();
@@ -135,7 +137,7 @@ begin
 end $$;
 
 create or replace function public.set_watch_room_playback(p_code text,p_token text,p_playback jsonb)
-returns jsonb language plpgsql security definer set search_path = public, pg_temp as $$
+returns jsonb language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $$
 declare r public.watch_rooms; p public.watch_room_participants; next_state jsonb;
 begin
   select * into r from public.watch_rooms where code=upper(trim(p_code)) and closed_at is null and expires_at > now() for update;
@@ -158,7 +160,7 @@ begin
 end $$;
 
 create or replace function public.send_watch_room_message(p_code text,p_token text,p_body text)
-returns jsonb language plpgsql security definer set search_path = public, pg_temp as $$
+returns jsonb language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $$
 declare r public.watch_rooms; p public.watch_room_participants; m public.watch_room_messages;
 begin
   select * into r from public.watch_rooms where code=upper(trim(p_code)) and closed_at is null and expires_at > now();
@@ -174,7 +176,7 @@ begin
 end $$;
 
 create or replace function public.leave_watch_room(p_code text,p_token text)
-returns boolean language plpgsql security definer set search_path = public, pg_temp as $$
+returns boolean language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $$
 declare rid uuid;
 begin
   select id into rid from public.watch_rooms where code=upper(trim(p_code));
@@ -185,7 +187,7 @@ begin
 end $$;
 
 create or replace function public.close_watch_room(p_code text,p_token text)
-returns boolean language plpgsql security definer set search_path = public, pg_temp as $$
+returns boolean language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $$
 declare rid uuid;
 begin
   select r.id into rid from public.watch_rooms r join public.watch_room_participants p on p.id=r.host_participant_id
