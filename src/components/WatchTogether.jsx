@@ -254,7 +254,10 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
 
   const leaveRoom = async () => {
     const r = roomRef.current, p = participantRef.current;
-    if (r && p) await rpc('leave_watch_room', { p_code: r.code, p_token: p.token }).catch(() => {});
+    if (r && p) {
+      if (p.is_host) await rpc('close_watch_room', { p_code: r.code, p_token: p.token }).catch(() => {});
+      else await rpc('leave_watch_room', { p_code: r.code, p_token: p.token }).catch(() => {});
+    }
     window.clearInterval(pollRef.current); window.clearInterval(heartbeatRef.current);
     setRoom(null); setParticipant(null); setMembers([]); setMessages([]); setPlayerReady(false); lastVersionRef.current = 0; setOpen(false);
     const url = new URL(window.location.href); url.searchParams.delete('room'); window.history.replaceState({}, '', url.toString());
