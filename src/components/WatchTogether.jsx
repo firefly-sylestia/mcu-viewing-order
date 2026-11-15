@@ -69,6 +69,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const [roomLink, setRoomLink] = useState('');
   const iframeRef = useRef(null);
   const pollRef = useRef(null);
+  const pollInFlightRef = useRef(false);
   const heartbeatRef = useRef(null);
   const lastVersionRef = useRef(0);
   const applyingRemoteRef = useRef(false);
@@ -199,7 +200,8 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const refreshRoom = useCallback(async () => {
     const activeRoom = roomRef.current;
     const activeParticipant = participantRef.current;
-    if (!activeRoom?.code || !activeParticipant?.token) return;
+    if (!activeRoom?.code || !activeParticipant?.token || pollInFlightRef.current) return;
+    pollInFlightRef.current = true;
     try {
       const result = await rpc('watch_room_snapshot', { p_code: activeRoom.code, p_token: activeParticipant.token });
       applyRoomSnapshot(result);
@@ -209,7 +211,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
         window.clearInterval(pollRef.current);
         window.clearInterval(heartbeatRef.current);
       }
-    }
+    } finally { pollInFlightRef.current = false; }
   }, [rpc, applyRoomSnapshot]);
 
   useEffect(() => {

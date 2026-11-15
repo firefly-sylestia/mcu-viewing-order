@@ -2878,7 +2878,7 @@ function ContinueWatching({ items, setSelected, setStatus, toggleBookmark, playT
   );
 }
 
-function WatchBrowse({ activeItems, externalResults = [], externalLoading = false, actions = {}, query = '', onQueryChange, onStartWatch, onPlayExternal, setSelected, setStatus, toggleBookmark, user, profileName, profileAvatar }) {
+function WatchBrowse({ activeItems, externalResults = [], externalLoading = false, actions = {}, query = '', onQueryChange, onStartWatch, onPlayExternal, setSelected, setStatus, toggleBookmark, user, profileName, profileAvatar, onWatchTogether }) {
   const pageSize = 12;
   const [watchSearch, setWatchSearch] = useState(query);
   useEffect(() => { setWatchSearch(query); }, [query]);
@@ -2928,7 +2928,7 @@ function WatchBrowse({ activeItems, externalResults = [], externalLoading = fals
           <p>Your films and series, ready when you are.</p>
         </div>
         <div className="wh3-top-actions">
-          <WatchTogether item={null} selectableItems={[...activeItems, ...externalResults.map(result => ({ id: `tmdb-${result.type}-${result.id}`, title: result.title, type: result.type === 'tv' ? 'series' : 'film', mediaType: result.type, tmdbId: result.id, poster: result.poster, year: result.year, accent: '#da1e37' }))]} requireMediaSelection user={user} profileName={profileName} profileAvatar={profileAvatar} />
+          <WatchTogether launchOnly onWatchTogether={onWatchTogether} item={null} user={user} profileName={profileName} profileAvatar={profileAvatar} />
           <div className="wh3-total"><Clapperboard size={17} /><span>{activeItems.length} titles</span></div>
         </div>
       </header>
@@ -3039,7 +3039,7 @@ function WatchBrowse({ activeItems, externalResults = [], externalLoading = fals
 
 /* ── Server preference cache (per-title, persisted to localStorage) ──────────── */
 
-function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, onStartWatch, updateAction, nativePlayer, setNativePlayer, user, profileName, profileAvatar }) {
+function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, onStartWatch, updateAction, nativePlayer, setNativePlayer, user, profileName, profileAvatar, onWatchTogether }) {
   const { item, tmdbId, mediaType } = watchItem;
 const readServerCache = () => {
   try { return JSON.parse(localStorage.getItem('server-prefs') || '{}'); } catch { return {}; }
@@ -3265,7 +3265,7 @@ const saveServerPref = (tmdbId, server) => {
           <span>{universeShortName(currentItem.universe)} · #{String(currentItem.order || currentItem.id).padStart(2, '0')}</span>
           <h1>{currentItem.title}</h1>
         </div>
-        <div className="watch-v2-header-actions"><WatchTogether item={currentItem} tmdbId={currentItem.tmdbId || tmdbId} mediaType={mediaType} season={currentItem.season || 1} episode={selectedEpisode} playerUrl={playerUrl} onEpisodeChange={next => { setSelectedEpisode(next); setPlayerEpisode(next); }} onBeforeOpen={() => iframeRef.current?.contentWindow?.postMessage({ type: 'cinesrc:command', command: 'pause', args: [] }, 'https://cinesrc.st')} user={user} profileName={profileName} profileAvatar={profileAvatar} /><span className="watch-v2-provider">CineSrc</span></div>
+        <div className="watch-v2-header-actions"><WatchTogether item={currentItem} tmdbId={currentItem.tmdbId || tmdbId} mediaType={mediaType} season={currentItem.season || 1} episode={selectedEpisode} playerUrl={playerUrl} onEpisodeChange={next => { setSelectedEpisode(next); setPlayerEpisode(next); }} onBeforeOpen={() => iframeRef.current?.contentWindow?.postMessage({ type: 'cinesrc:command', command: 'pause', args: [] }, 'https://cinesrc.st')} launchOnly onWatchTogether={onWatchTogether} user={user} profileName={profileName} profileAvatar={profileAvatar} /><span className="watch-v2-provider">CineSrc</span></div>
       </header>
 
       {toast && <div className="watch-v2-toast" role="status"><span>{toast}</span><button onClick={() => { setToast(''); setIframeTimedOut(false); }} aria-label="Dismiss"><X size={15} /></button></div>}
