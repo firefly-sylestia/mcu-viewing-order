@@ -13968,3 +13968,20 @@
   }
   :root .movie-site.page-watch-together > .site-footer.wt-screening-footer .footer-info-btn {margin-left:auto!important;}
 }
+
+/* Keep the Watch Together content well clear of the footer.
+   The clearance belongs after the room/create screen, not inside the footer. */
+:root .movie-site.page-watch-together .wt-page:not(.wt-minimized):not(.wt-theatre-mode) {
+  margin-bottom:clamp(150px,18vh,220px)!important;
+}
+:root .movie-site.page-watch-together > .site-footer.wt-screening-footer {
+  margin-top:0!important;
+}
+@media(max-width:760px) {
+  :root .movie-site.page-watch-together .wt-page:not(.wt-minimized):not(.wt-theatre-mode) {
+    margin-bottom:calc(clamp(240px,34vh,360px) + env(safe-area-inset-bottom))!important;
+  }
+  :root .movie-site.page-watch-together > .site-footer.wt-screening-footer {
+    margin-top:0!important;
+  }
+}
