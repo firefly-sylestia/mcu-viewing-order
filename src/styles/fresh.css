@@ -14060,3 +14060,18 @@
     overscroll-behavior-y:auto!important;
   }
 }
+
+
+/* Theatre mode: render the embedded player's own controls at half visual scale
+   while keeping the iframe's scaled viewport filling the theatre player. */
+:root:has(.wt-page.wt-theatre-mode) .wt-page.wt-theatre-mode .wt-player {
+  overflow:hidden!important;
+}
+:root:has(.wt-page.wt-theatre-mode) .wt-page.wt-theatre-mode .wt-player iframe {
+  display:block!important;
+  width:200%!important;
+  height:200%!important;
+  max-width:none!important;
+  transform:scale(.5)!important;
+  transform-origin:top left!important;
+}
