@@ -11267,3 +11267,136 @@
 :root[data-theme="dark"] .watch-hub-v3 .wh3-resume-copy h2 {
   color: #f0f2f6 !important;
 }
+
+
+/* Watch list refresh: individual editorial rows instead of a plain divider list. */
+:root .watch-hub-v3 .wh3-watchlist {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 9px !important;
+  border: 0 !important;
+}
+:root .watch-hub-v3 .wh3-watch-row {
+  position: relative;
+  isolation: isolate;
+  grid-template-columns: 34px 50px minmax(0,1fr) auto !important;
+  gap: 13px !important;
+  min-height: 88px !important;
+  padding: 10px 12px !important;
+  overflow: hidden;
+  border: 1px solid rgba(128, 145, 171, .16) !important;
+  border-radius: 15px !important;
+  background: linear-gradient(112deg, rgba(255,255,255,.78), rgba(245,247,252,.56) 58%, rgba(255,255,255,.42)) !important;
+  box-shadow: 0 5px 18px rgba(36, 48, 69, .045) !important;
+  transition: border-color .2s ease, transform .2s ease, box-shadow .2s ease;
+}
+:root .watch-hub-v3 .wh3-watch-row::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 2px;
+  background: linear-gradient(180deg, rgba(190,45,70,.55), rgba(190,45,70,.04));
+  pointer-events: none;
+}
+:root .watch-hub-v3 .wh3-watch-index {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  justify-self: center;
+  border: 1px solid rgba(133, 148, 170, .16);
+  border-radius: 9px;
+  background: rgba(255,255,255,.56);
+  color: #647084 !important;
+  font-size: 10px;
+  font-weight: 800;
+}
+:root .watch-hub-v3 .wh3-watch-thumb {
+  width: 50px !important;
+  height: 70px !important;
+  border-radius: 8px !important;
+  box-shadow: 0 3px 10px rgba(16,22,34,.16);
+}
+:root .watch-hub-v3 .wh3-watch-info {
+  gap: 7px !important;
+}
+:root .watch-hub-v3 .wh3-watch-info .wh3-title-link {
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  letter-spacing: -.025em;
+}
+:root .watch-hub-v3 .wh3-watch-info > span {
+  color: #687487 !important;
+  font-size: 10px !important;
+  font-weight: 550;
+}
+:root .watch-hub-v3 .wh3-watch-now {
+  min-width: 78px !important;
+  height: 34px !important;
+  border: 1px solid rgba(180,35,57,.17) !important;
+  border-radius: 10px !important;
+  background: rgba(180,35,57,.065) !important;
+  color: #ad293f !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+}
+:root .watch-hub-v3 .wh3-watch-now:active {
+  transform: scale(.97);
+}
+:root[data-theme="light"] .watch-hub-v3 .wh3-resume {
+  background:
+    radial-gradient(ellipse at 8% 0%, rgba(214, 93, 117, .16), transparent 48%),
+    linear-gradient(115deg, rgba(255,255,255,.62), rgba(239,244,253,.42) 52%, rgba(255,255,255,.30)) !important;
+  border-color: rgba(143, 158, 184, .22) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(155%) !important;
+  backdrop-filter: blur(22px) saturate(155%) !important;
+  box-shadow: 0 10px 28px rgba(49, 61, 82, .055), inset 0 1px 0 rgba(255,255,255,.62) !important;
+}
+:root[data-theme="light"] .watch-hub-v3 .wh3-resume-copy h2 {
+  color: #202938 !important;
+}
+:root[data-theme="dark"] .watch-hub-v3 .wh3-watch-row {
+  border-color: rgba(169,183,207,.13) !important;
+  background: linear-gradient(112deg, rgba(31,38,52,.82), rgba(24,30,42,.68) 58%, rgba(29,35,48,.58)) !important;
+  box-shadow: 0 6px 18px rgba(0,0,0,.12) !important;
+}
+:root[data-theme="dark"] .watch-hub-v3 .wh3-watch-index {
+  border-color: rgba(169,183,207,.13);
+  background: rgba(255,255,255,.045);
+  color: #aeb9ca !important;
+}
+:root[data-theme="dark"] .watch-hub-v3 .wh3-watch-info > span {
+  color: #aeb9ca !important;
+}
+:root[data-theme="dark"] .watch-hub-v3 .wh3-watch-now {
+  background: rgba(190,48,72,.13) !important;
+  border-color: rgba(220,105,126,.20) !important;
+  color: #f08b9d !important;
+}
+@media (max-width: 700px) {
+  :root .watch-hub-v3 .wh3-watch-row {
+    grid-template-columns: 28px 44px minmax(0,1fr) auto !important;
+    gap: 9px !important;
+    min-height: 78px !important;
+    padding: 8px 9px !important;
+    border-radius: 13px !important;
+  }
+  :root .watch-hub-v3 .wh3-watch-thumb {
+    width: 44px !important;
+    height: 62px !important;
+  }
+  :root .watch-hub-v3 .wh3-watch-index {
+    width: 25px;
+    height: 25px;
+    font-size: 9px;
+  }
+  :root .watch-hub-v3 .wh3-watch-now {
+    min-width: 34px !important;
+    width: 34px !important;
+    height: 34px !important;
+    padding: 0 !important;
+  }
+  :root .watch-hub-v3 .wh3-watch-now span {
+    display: none;
+  }
+}
