@@ -418,6 +418,7 @@ returns jsonb language sql stable security definer set search_path = pg_catalog,
         where user_id=auth.uid() order by last_watched_at desc limit 50) h;
 $$;
 
+revoke all on function public.cleanup_expired_watch_rooms() from public, anon, authenticated;
 revoke all on function public.create_watch_room(text,text,text,text,jsonb) from public;
 revoke all on function public.join_watch_room(text,text,text,text) from public;
 revoke all on function public.watch_room_snapshot(text,text) from public;

@@ -613,7 +613,7 @@ export default function App() {
   const { pushToCloud, pushBeforeLogout, lastSynced, syncing, conflict, resolveUseRemote, resolveKeepLocal, resolveMerge, toast } = useCloudSync(user, actions, profileName, setActions, setProfileName, watchItem, setWatchItem, profileAvatar, setProfileAvatar);
   useEffect(() => { try { if (profileAvatar) localStorage.setItem('incursion-profile-avatar', profileAvatar); else localStorage.removeItem('incursion-profile-avatar'); } catch {} }, [profileAvatar]);
   useEffect(() => { if (recovery) setAuthOpen(true); }, [recovery]);
-  useEffect(() => { if (user?.displayName && !profileName) setProfileName(user.displayName); }, [user?.displayName, profileName]);
+  useEffect(() => { if (user?.displayName && !profileName) { try { if (localStorage.getItem(`incursion-profile-name-cleared:${user.id || 'local'}`) === '1') return; } catch {} setProfileName(user.displayName); } }, [user?.id, user?.displayName, profileName]);
   const showWarningToast = useCallback((item) => {
   const guidance = getTitleGuidance(item);
   if (!guidance) return;

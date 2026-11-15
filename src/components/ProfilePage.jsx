@@ -154,7 +154,9 @@ function ProfilePage({ pageHeader, setActiveTab, installApp, installAvailable, a
 export function ProfileHeader({ universe, stats, profileName, setProfileName, profileAvatar = '', setProfileAvatar, user, onLogin, onLogout, watchingItem, nextUp, onSelectItem, syncing = false, lastSynced, onSync }) {
   const [confirmingLogout, setConfirmingLogout] = useState(false);
   const [editingName, setEditingName] = useState(false);
+  const [nameCleared, setNameCleared] = useState(() => { try { return localStorage.getItem(`incursion-profile-name-cleared:${user?.id || 'local'}`) === '1'; } catch { return false; } });
   const [nameDraft, setNameDraft] = useState(profileName || user?.displayName || '');
+  useEffect(() => { try { setNameCleared(localStorage.getItem(`incursion-profile-name-cleared:${user?.id || 'local'}`) === '1'); } catch { setNameCleared(false); } }, [user?.id]);
   const [avatarDialogOpen, setAvatarDialogOpen] = useState(false);
   const [avatarFullscreen, setAvatarFullscreen] = useState(false);
   const [localAvatar, setLocalAvatar] = useState(() => profileAvatar || (() => { try { return localStorage.getItem('incursion-profile-avatar') || ''; } catch { return ''; } })());
@@ -166,7 +168,7 @@ export function ProfileHeader({ universe, stats, profileName, setProfileName, pr
   useEffect(() => { if (profileAvatar !== undefined) setLocalAvatar(profileAvatar || ''); }, [profileAvatar]);
   const universeName = universe === 'all' ? 'Multiverse' : universe === 'marvel' ? 'MCU' : universe === 'xmen' ? 'X-Men' : universe === 'sony' ? 'Sony' : 'DC';
   const guestIdentity = getGuestIdentity();
-  const displayName = (profileName || user?.displayName || user?.email?.split('@')[0] || guestIdentity.name).trim();
+  const displayName = (profileName || (!nameCleared ? user?.displayName : '') || user?.email?.split('@')[0] || guestIdentity.name).trim();
   const avatarInitial = (displayName[0] || universeName[0]).toUpperCase();
   const generatedAvatar = `https://blobatar.dev/avatar/${encodeURIComponent(displayName)}?size=256&gen=2&background=squircle`;
 
@@ -207,7 +209,7 @@ export function ProfileHeader({ universe, stats, profileName, setProfileName, pr
 
   const saveDisplayName = () => {
     const nextName = nameDraft.trim().slice(0, 30);
-    if (nextName) setProfileName?.(nextName);
+    if (nextName) { setProfileName?.(nextName); try { localStorage.removeItem(`incursion-profile-name-cleared:${user?.id || 'local'}`); } catch {} setNameCleared(false); }
     setNameDraft(nextName || displayName);
     setEditingName(false);
   };
@@ -236,7 +238,7 @@ export function ProfileHeader({ universe, stats, profileName, setProfileName, pr
                 <form className="avatar-name-edit" onSubmit={(event) => { event.preventDefault(); saveDisplayName(); }}>
                   <input autoFocus value={nameDraft} onChange={(event) => setNameDraft(event.target.value)} maxLength={30} aria-label="Display name" placeholder="Your name" />
                   <button type="submit" disabled={!nameDraft.trim()}>Save</button>
-                  <button type="button" className="avatar-name-clear" onClick={() => { setProfileName?.(''); setNameDraft(''); setEditingName(false); }}>Clear name</button>
+                  <button type="button" className="avatar-name-clear" onClick={() => { setProfileName?.(''); try { localStorage.setItem(`incursion-profile-name-cleared:${user?.id || 'local'}`,'1'); } catch {} setNameCleared(true); setNameDraft(''); setEditingName(false); }}>Clear name</button>
                   <button type="button" className="avatar-name-cancel" onClick={() => { setNameDraft(displayName); setEditingName(false); }}>Cancel</button>
                 </form>
               ) : (
@@ -319,6 +321,7 @@ function SettingsPanel({ installApp, installAvailable, appInstalled, query = '',
     const trimmed = draft.trim();
     if (trimmed) {
       setProfileName(trimmed);
+      try { localStorage.removeItem(`incursion-profile-name-cleared:${user?.id || 'local'}`); } catch {}
       setDraft(trimmed);
     }
     setEditing(false);
@@ -536,7 +539,7 @@ function SettingsPanel({ installApp, installAvailable, appInstalled, query = '',
               />
             </div>
           ) : (
-            <div className="settings-name-actions"><button className="settings-edit-btn" onClick={() => { setDraft(profileName); setEditing(true); setTimeout(() => inputRef.current?.focus(), 0); }}>Edit</button>{profileName && <button className="settings-edit-btn" onClick={() => { setProfileName(''); setDraft(''); setEditing(false); }}>Clear</button>}</div>
+            <div className="settings-name-actions"><button className="settings-edit-btn" onClick={() => { setDraft(profileName); setEditing(true); setTimeout(() => inputRef.current?.focus(), 0); }}>Edit</button>{profileName && <button className="settings-edit-btn" onClick={() => { setProfileName(''); try { localStorage.setItem(`incursion-profile-name-cleared:${user?.id || 'local'}`,'1'); } catch {} setDraft(''); setEditing(false); }}>Clear</button>}</div>
           )}
         </div>
       </div>
