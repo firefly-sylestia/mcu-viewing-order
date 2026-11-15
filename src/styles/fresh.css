@@ -12192,3 +12192,43 @@
   color: #465365 !important;
   background: rgba(100,116,139,.12) !important;
 }
+
+
+/* Mobile light-theme contrast: the atmospheric page background is intentionally
+   colourful, so supporting text must use near-ink rather than mid-grey. */
+:root[data-theme="light"] .movie-site.page-list .list-meta-line,
+:root[data-theme="light"] .movie-site.page-list .list-meta-line > span,
+:root[data-theme="light"] .movie-site.page-list .list-desc,
+:root[data-theme="light"] .movie-site.page-list .list-tags > span,
+:root[data-theme="light"] .movie-site.page-list .phase-badge,
+:root[data-theme="light"] .movie-site.page-list .list-index,
+:root[data-theme="light"] .movie-site.page-list .list-ratings-line .list-rating-na,
+:root[data-theme="light"] .movie-site.page-list .list-ratings-line .list-rating-loading {
+  color: #202b3b !important;
+  font-weight: 600 !important;
+}
+:root[data-theme="light"] .movie-site.page-list .list-desc {
+  color: #293649 !important;
+  font-weight: 500 !important;
+}
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-top > div > p,
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-overline,
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-stat > span,
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-stat strong,
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-resume-copy > p,
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-watch-index,
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-watch-info > span,
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-section-title > span,
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-empty {
+  color: #202b3b !important;
+  font-weight: 600 !important;
+}
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-top > div > p,
+:root[data-theme="light"] .movie-site .watch-hub-v3 .wh3-resume-copy > p {
+  color: #293649 !important;
+  font-weight: 500 !important;
+}
+:root[data-theme="light"] .movie-site.page-list .site-header .header-tools button,
+:root[data-theme="light"] .movie-site.page-list .site-header .header-tools button svg {
+  color: #263448 !important;
+}
