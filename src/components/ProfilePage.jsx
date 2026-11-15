@@ -133,7 +133,11 @@ export function ProfileHeader({ universe, stats, profileName, setProfileName, us
   const [avatarDialogOpen, setAvatarDialogOpen] = useState(false);
   const [avatarFullscreen, setAvatarFullscreen] = useState(false);
   const [localAvatar, setLocalAvatar] = useState(() => { try { return localStorage.getItem('incursion-profile-avatar') || ''; } catch { return ''; } });
+  const [profilePageTarget, setProfilePageTarget] = useState(null);
   const avatarInput = useRef(null);
+  useEffect(() => {
+    setProfilePageTarget(document.querySelector('.movie-site.page-profile .profile-page'));
+  }, [localAvatar, user?.photoURL]);
   const universeName = universe === 'all' ? 'Multiverse' : universe === 'marvel' ? 'MCU' : universe === 'xmen' ? 'X-Men' : universe === 'sony' ? 'Sony' : 'DC';
   const displayName = (profileName || user?.displayName || user?.email?.split('@')[0] || `${universeName} Viewer`).trim();
   const avatarInitial = (displayName[0] || universeName[0]).toUpperCase();
@@ -175,7 +179,10 @@ export function ProfileHeader({ universe, stats, profileName, setProfileName, us
 
   return (
     <div className={`profile-header profile-header-compact ${confirmingLogout ? "logout-confirming" : ""}`}>
-      {(localAvatar || user?.photoURL) && <div className="profile-avatar-backdrop" aria-hidden="true"><img src={localAvatar || user.photoURL} alt="" /></div>}
+      {(localAvatar || user?.photoURL) && profilePageTarget && createPortal(
+        <div className="profile-page-avatar-backdrop" aria-hidden="true"><img src={localAvatar || user.photoURL} alt="" /></div>,
+        profilePageTarget
+      )}
       <button type="button" className="profile-avatar profile-avatar-edit" onClick={() => setAvatarDialogOpen(true)} aria-label="View profile picture" title="Profile picture">
         {localAvatar || user?.photoURL ? <img src={localAvatar || user.photoURL} alt="" referrerPolicy="no-referrer" /> : <span className="avatar-initials">{avatarInitial}</span>}
       </button>

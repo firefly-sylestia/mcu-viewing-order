@@ -12469,3 +12469,80 @@
     border-radius: 24px !important;
   }
 }
+
+
+/* Keep the profile identity header completely clean and borderless. The
+   portrait atmosphere belongs to the profile page, not this header panel. */
+:root .movie-site.page-profile .profile-header.profile-header-compact {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  overflow: visible !important;
+}
+:root .movie-site.page-profile .profile-header.profile-header-compact::before,
+:root .movie-site.page-profile .profile-header.profile-header-compact::after,
+:root .movie-site.page-profile .profile-header.profile-header-compact .profile-avatar-backdrop {
+  display: none !important;
+  content: none !important;
+  background: none !important;
+  box-shadow: none !important;
+}
+
+/* The uploaded portrait now blooms behind the profile page itself, spanning
+   its content while leaving every control and card above the atmosphere. */
+:root .movie-site.page-profile .profile-page {
+  position: relative !important;
+  isolation: isolate !important;
+}
+:root .movie-site.page-profile .profile-page > .profile-page-avatar-backdrop {
+  position: absolute !important;
+  inset: -24px -48px 0 !important;
+  z-index: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+  border-radius: 34px !important;
+  opacity: .34 !important;
+  filter: saturate(1.12) !important;
+}
+:root .movie-site.page-profile .profile-page-avatar-backdrop img {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center 28% !important;
+  filter: blur(48px) saturate(1.28) brightness(1.02) !important;
+  transform: scale(1.16) !important;
+}
+:root .movie-site.page-profile .profile-page-avatar-backdrop::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  pointer-events: none !important;
+  background:
+    radial-gradient(ellipse at 14% 8%, rgba(255,255,255,.28), transparent 48%),
+    radial-gradient(ellipse at 86% 88%, rgba(40,55,85,.14), transparent 58%),
+    linear-gradient(180deg, rgba(255,255,255,.12), transparent 52%, var(--page-bg, #fff) 100%) !important;
+}
+:root[data-theme="dark"] .movie-site.page-profile .profile-page-avatar-backdrop {
+  opacity: .38 !important;
+}
+:root[data-theme="dark"] .movie-site.page-profile .profile-page-avatar-backdrop img {
+  filter: blur(48px) saturate(1.24) brightness(.62) !important;
+}
+:root[data-theme="dark"] .movie-site.page-profile .profile-page-avatar-backdrop::after {
+  background:
+    radial-gradient(ellipse at 14% 8%, rgba(255,255,255,.08), transparent 48%),
+    radial-gradient(ellipse at 86% 88%, rgba(0,0,0,.22), transparent 58%),
+    linear-gradient(180deg, rgba(14,18,27,.12), transparent 52%, #111318 100%) !important;
+}
+:root .movie-site.page-profile .profile-page > :not(.profile-page-avatar-backdrop) {
+  position: relative;
+  z-index: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root .movie-site.page-profile .profile-page-avatar-backdrop img { transform: none !important; }
+}
