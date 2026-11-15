@@ -13582,3 +13582,79 @@
   :root .wt-create-backdrop .wt-host-people button {flex:1 1 auto!important}
   :root .wt-create-backdrop .wt-host-danger {margin:14px 14px 16px!important}
 }
+
+
+/* Watch Together: open page layout, quiet player-first hierarchy and tucked-away controls. */
+:root .page-watch-together .wt-content {
+  margin-top:18px!important;
+  border:0!important;
+  border-radius:0!important;
+  overflow:visible!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  gap:clamp(22px,3vw,42px)!important;
+}
+:root .page-watch-together .wt-main {
+  padding:clamp(8px,1vw,14px) 0 24px!important;
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+}
+:root .page-watch-together .wt-chat {
+  border:1px solid color-mix(in srgb,var(--fx-muted) 18%,transparent)!important;
+  border-radius:18px!important;
+  background:color-mix(in srgb,var(--fx-surface) 76%,transparent)!important;
+}
+:root .page-watch-together .wt-room-title {margin-bottom:12px!important;align-items:center!important}
+:root .page-watch-together .wt-room-actions {gap:7px!important;flex-wrap:wrap!important}
+:root .page-watch-together .wt-room-actions .wt-copy {
+  min-height:34px!important;padding:0 11px!important;border-radius:999px!important;
+  background:color-mix(in srgb,var(--fx-surface-2) 72%,transparent)!important;
+  border:1px solid color-mix(in srgb,var(--fx-muted) 18%,transparent)!important;
+  color:var(--fx-text)!important;
+}
+:root .page-watch-together .wt-player {border-radius:14px!important;box-shadow:0 12px 34px rgba(0,0,0,.12)!important}
+:root .page-watch-together .wt-control-dock {margin:10px 0 4px!important}
+:root .page-watch-together .wt-control-toggle {
+  width:100%;min-height:43px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 13px;border:1px solid color-mix(in srgb,var(--fx-muted) 19%,transparent);
+  border-radius:13px;background:color-mix(in srgb,var(--fx-surface-2) 72%,transparent);
+  color:var(--fx-text);cursor:pointer;
+}
+:root .page-watch-together .wt-control-toggle>span {display:flex;align-items:center;gap:9px;min-width:0}
+:root .page-watch-together .wt-control-toggle b {font-size:11px;font-weight:780}
+:root .page-watch-together .wt-control-toggle small {margin-left:5px;color:var(--fx-muted);font-size:10px;font-variant-numeric:tabular-nums}
+:root .page-watch-together .wt-control-toggle>svg {color:var(--fx-muted)}
+:root .page-watch-together .wt-control-panel {
+  margin-top:7px;padding:7px 12px 10px;border:1px solid color-mix(in srgb,var(--fx-muted) 15%,transparent);
+  border-radius:14px;background:color-mix(in srgb,var(--fx-surface-2) 58%,transparent);
+}
+:root .page-watch-together .wt-control-panel .wt-controls {padding:3px 0 6px!important;min-height:48px}
+:root .page-watch-together .wt-control-panel .wt-controls button {background:var(--fx-surface-3)!important;color:var(--fx-text)!important}
+:root .page-watch-together .wt-control-panel .wt-controls .wt-play {background:var(--fx-accent)!important;color:#fff!important}
+:root .page-watch-together .wt-control-panel .wt-seek {margin:0 2px 2px!important}
+:root .page-watch-together .wt-control-panel .wt-seek:before {background:color-mix(in srgb,var(--fx-muted) 25%,transparent)!important}
+:root .page-watch-together .wt-control-panel .wt-seek>span {background:var(--fx-accent)!important}
+:root .page-watch-together .wt-control-panel .wt-seek input {accent-color:var(--fx-accent)!important}
+:root .page-watch-together .wt-control-panel .wt-request-actions {margin:8px 0 0!important;padding:0!important;background:transparent!important;border:0!important}
+:root .page-watch-together .wt-control-panel .wt-request-actions button {background:var(--fx-surface-3)!important;color:var(--fx-text)!important}
+:root .page-watch-together .wt-room-tools {background:transparent!important;border:0!important;padding:2px 0!important}
+:root .page-watch-together .wt-members {margin-top:10px!important}
+@media(max-width:760px) {
+  :root .page-watch-together .wt-content {margin-top:8px!important;gap:12px!important}
+  :root .page-watch-together .wt-main {padding:4px 0 14px!important}
+  :root .page-watch-together .wt-room-title {gap:6px!important}
+  :root .page-watch-together .wt-room-title>div:first-child {flex:1 1 100%!important}
+  :root .page-watch-together .wt-room-actions {width:100%!important;overflow-x:auto!important;flex-wrap:nowrap!important}
+  :root .page-watch-together .wt-room-actions .wt-copy {min-height:30px!important;padding:0 9px!important;font-size:9px!important}
+  :root .page-watch-together .wt-player {border-radius:11px!important;box-shadow:none!important}
+  :root .page-watch-together .wt-control-toggle {min-height:38px!important;padding:0 10px!important;border-radius:11px!important}
+  :root .page-watch-together .wt-control-toggle b {font-size:10px!important}
+  :root .page-watch-together .wt-control-toggle small {font-size:9px!important}
+  :root .page-watch-together .wt-control-panel {padding:5px 8px 8px!important}
+  :root .page-watch-together .wt-control-panel .wt-controls {min-height:42px!important;gap:clamp(4px,2vw,9px)!important}
+  :root .page-watch-together .wt-control-panel .wt-controls button {width:31px!important;height:31px!important;flex-basis:31px!important}
+  :root .page-watch-together .wt-control-panel .wt-controls .wt-play {width:38px!important;height:38px!important;flex-basis:38px!important}
+  :root .page-watch-together .wt-control-panel .wt-time {font-size:8px!important}
+  :root .page-watch-together .wt-chat {border-radius:13px!important}
+}
