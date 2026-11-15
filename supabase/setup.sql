@@ -79,11 +79,6 @@ create table if not exists public.watch_rooms (
 alter table public.watch_rooms add column if not exists owner_user_id uuid references auth.users(id) on delete set null;
 alter table public.watch_rooms add column if not exists owner_token_hash text;
 
--- Preserve discoverability/deletion for rooms created before owner tracking existed.
-update public.watch_rooms wr set owner_token_hash=wp.token_hash, owner_user_id=coalesce(wr.owner_user_id,wp.user_id)
-from public.watch_room_participants wp
-where wp.id=wr.host_participant_id and wr.owner_token_hash is null;
-
 create table if not exists public.watch_room_participants (
   id uuid primary key default gen_random_uuid(),
   room_id uuid not null references public.watch_rooms(id) on delete cascade,
@@ -122,6 +117,12 @@ do $watch_role_constraint$ begin
   end if;
 end $watch_role_constraint$;
 update public.watch_room_participants set role='host' where is_host and role <> 'host';
+
+-- Preserve discoverability/deletion for rooms created before owner tracking existed.
+update public.watch_rooms wr set owner_token_hash=wp.token_hash, owner_user_id=coalesce(wr.owner_user_id,wp.user_id)
+from public.watch_room_participants wp
+where wp.id=wr.host_participant_id and wr.owner_token_hash is null;
+
 
 create table if not exists public.watch_room_requests (
   id bigserial primary key,
