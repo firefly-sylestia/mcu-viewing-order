@@ -275,7 +275,9 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
         voiceStreamRef.current?.getAudioTracks().forEach(track=>pc.addTrack(track,voiceStreamRef.current));
       }
       pc.__pendingIce=[];
-      pc.onicecandidate=e=>{if(e.candidate)sendVoiceSignal(remoteId,{type:'ice',candidate:e.candidate.toJSON()});};
+      pc.__queuedIce=[];
+      pc.__localDescriptionSent=false;
+      pc.onicecandidate=e=>{if(!e.candidate)return;const candidate=e.candidate.toJSON();if(!pc.__localDescriptionSent)pc.__queuedIce.push(candidate);else sendVoiceSignal(remoteId,{type:'ice',candidate});};
       pc.ontrack=e=>{
         const stream=e.streams?.[0]||(e.track?new MediaStream([e.track]):null);
         if(!stream||!context)return;
@@ -307,6 +309,8 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
           const offer=await pc.createOffer();
           await pc.setLocalDescription(offer);
           await sendVoiceSignal(member.id,{type:'offer',description:pc.localDescription.toJSON()});
+          pc.__localDescriptionSent=true;
+          for(const candidate of pc.__queuedIce.splice(0))await sendVoiceSignal(member.id,{type:'ice',candidate});
         }catch(e){removePeer(member.id);setVoiceError(e.message||'Could not connect a voice participant.');}
       }
     };
@@ -332,6 +336,8 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
               const answer=await pc.createAnswer();
               await pc.setLocalDescription(answer);
               await sendVoiceSignal(sender,{type:'answer',description:pc.localDescription.toJSON()});
+              pc.__localDescriptionSent=true;
+              for(const candidate of pc.__queuedIce.splice(0))await sendVoiceSignal(sender,{type:'ice',candidate});
             }else if(payload.type==='answer'&&isHost){
               const pc=peers.get(sender);
               if(pc&&pc.signalingState!=='stable'){
@@ -370,7 +376,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       voiceAudioRef.current.clear();
       setVoicePeerCount(0);
     };
-  },[voiceEnabled,room?.id,participant?.id,rpc,sendVoiceSignal]);
+  },[voiceEnabled,room?.id,participant?.id,participant?.is_host,participant?.role,rpc,sendVoiceSignal]);
   useEffect(()=>{
     if(!voiceEnabled){
       voiceStreamRef.current?.getTracks().forEach(track=>track.stop());
