@@ -2967,7 +2967,7 @@ function WatchBrowse({ activeItems, externalResults = [], externalLoading = fals
 
       {savedWatchRoom?.code && (
         <section className="wh3-room-resume" aria-label="Your created Watch Together room">
-          <div className="wh3-room-resume-art">{savedWatchRoom.media?.poster ? <img src={savedWatchRoom.media.poster} alt="" /> : <Users size={22} />}</div>
+          <div className="wh3-room-resume-art">{savedWatchRoom.media?.poster ? <img src={savedWatchRoom.media.poster} alt="" /> : <Clapperboard size={22} />}</div>
           <div className="wh3-room-resume-copy"><span className="wh3-overline">YOUR SCREENING ROOM · {savedWatchRoom.code}</span><strong>{savedWatchRoom.media?.title || 'Watch Together room'}</strong><small>Saved room · Pick up where your group left off</small></div>
           <button type="button" className="wh3-room-resume-action" onClick={resumeSavedWatchRoom}><Play size={14} fill="currentColor"/> Continue</button>
         </section>
