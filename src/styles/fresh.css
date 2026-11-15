@@ -12031,3 +12031,100 @@
 :root .movie-site.page-analytics .site-header .header-tools > .stats-universe-tabs.shared-switcher > button[aria-pressed="true"]::after {
   content: none !important;
 }
+
+/* Home top-edge atmosphere: avoid re-rasterizing a huge filtered layer while
+   the page rapidly scrolls back into view. The layered fade keeps the same
+   soft atmosphere without a live full-surface blur filter. */
+:root[data-top-atmosphere="on"] .movie-site::before {
+  filter: none !important;
+  -webkit-filter: none !important;
+  transform: translate3d(0,0,0) !important;
+  backface-visibility: hidden !important;
+  contain: paint !important;
+  will-change: auto !important;
+}
+:root[data-top-atmosphere="on"] .movie-site.page-home::before {
+  background-repeat: no-repeat !important;
+  background-position: center top !important;
+  background-size: 100% 100%, 115% auto !important;
+}
+:root .movie-site.page-home .top-carousel .carousel-backdrops {
+  overflow: hidden !important;
+  contain: paint !important;
+  isolation: isolate !important;
+  transform: translate3d(0,0,0) !important;
+}
+:root .movie-site.page-home .top-carousel .carousel-backdrop {
+  filter: blur(12px) saturate(1.08) !important;
+  -webkit-filter: blur(12px) saturate(1.08) !important;
+  transform: translate3d(0,0,0) scale(1.035) !important;
+  backface-visibility: hidden !important;
+  will-change: opacity !important;
+}
+:root .movie-site.page-home .top-carousel .carousel-backdrop.is-previous {
+  filter: blur(12px) saturate(1.08) brightness(.82) !important;
+  -webkit-filter: blur(12px) saturate(1.08) brightness(.82) !important;
+}
+@media (max-width: 760px) {
+  :root .movie-site.page-home .top-carousel .carousel-backdrop,
+  :root .movie-site.page-home .top-carousel .carousel-backdrop.is-previous {
+    filter: blur(8px) saturate(1.04) !important;
+    -webkit-filter: blur(8px) saturate(1.04) !important;
+  }
+  :root[data-top-atmosphere="on"] .movie-site.page-home::before {
+    background-size: 100% 100%, 145% auto !important;
+  }
+}
+
+/* List header: reserve a real, fixed-width slot for the filter control so its
+   icon/count can never be pushed beyond the header edge on narrow screens. */
+:root[data-header-design="cinematic"] .movie-site.page-list .site-header .header-tools {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  flex-wrap: nowrap !important;
+  overflow: visible !important;
+  gap: 8px !important;
+}
+:root[data-header-design="cinematic"] .movie-site.page-list .site-header .header-filter-btn {
+  position: relative !important;
+  box-sizing: border-box !important;
+  display: inline-flex !important;
+  flex: 0 0 42px !important;
+  width: 42px !important;
+  min-width: 42px !important;
+  max-width: 42px !important;
+  height: 40px !important;
+  padding: 0 !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0 !important;
+  overflow: visible !important;
+}
+:root[data-header-design="cinematic"] .movie-site.page-list .site-header .header-filter-btn .header-filter-label {
+  display: none !important;
+}
+:root[data-header-design="cinematic"] .movie-site.page-list .site-header .header-filter-btn > svg {
+  display: block !important;
+  flex: 0 0 auto !important;
+  width: 17px !important;
+  height: 17px !important;
+}
+@media (max-width: 620px) {
+  :root[data-header-design="cinematic"] .movie-site.page-list .site-header .header-tools {
+    gap: 7px !important;
+  }
+  :root[data-header-design="cinematic"] .movie-site.page-list .site-header .header-sort-btn {
+    flex: 1 1 0 !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+  :root[data-header-design="cinematic"] .movie-site.page-list .site-header .header-filter-btn {
+    flex-basis: 40px !important;
+    width: 40px !important;
+    min-width: 40px !important;
+    max-width: 40px !important;
+  }
+}
