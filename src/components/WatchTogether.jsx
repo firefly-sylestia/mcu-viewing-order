@@ -87,6 +87,8 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const voiceAudioRef = useRef(new Map());
   const voiceAudioContextRef = useRef(null);
   const voiceAudioNodesRef = useRef(new Map());
+  const voiceMixersRef = useRef(new Map());
+  const voiceRemoteSourcesRef = useRef(new Map());
   const voiceSignalCursorRef = useRef(0);
   const voiceMembersRef = useRef([]);
   const [ownedRooms, setOwnedRooms] = useState([]);
@@ -190,26 +192,206 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
 
   useEffect(()=>{voiceMembersRef.current=members;},[members]);
   const sendVoiceSignal=useCallback(async(to,payload)=>{const r=roomRef.current,p=participantRef.current;if(!r||!p)return;try{await rpc('send_watch_room_voice_signal',{p_code:r.code,p_token:p.token,p_to_participant_id:to,p_payload:payload});}catch(e){setVoiceError(e.message||'Voice connection signalling failed.');}},[rpc]);
-  const startVoice=async()=>{if(voiceEnabled){setVoiceEnabled(false);setVoiceMuted(false);return;}setVoiceError('');try{if(!navigator.mediaDevices?.getUserMedia)throw new Error('Microphone access is not available in this browser.');const AudioContextClass=window.AudioContext||window.webkitAudioContext;if(AudioContextClass){let context=voiceAudioContextRef.current;if(!context||context.state==='closed'){context=new AudioContextClass();voiceAudioContextRef.current=context;}await context.resume().catch(()=>{});}const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:false});voiceStreamRef.current=stream;setVoiceEnabled(true);setVoiceMuted(false);}catch(e){setVoiceError(e.name==='NotAllowedError'?'Allow microphone access to join voice chat.':e.message||'Could not start voice chat.');}};
+  const startVoice=async()=>{
+    if(voiceEnabled){setVoiceEnabled(false);setVoiceMuted(false);return;}
+    setVoiceError('');
+    try{
+      if(!navigator.mediaDevices?.getUserMedia)throw new Error('Microphone access is not available in this browser.');
+      const AudioContextClass=window.AudioContext||window.webkitAudioContext;
+      if(!AudioContextClass)throw new Error('This browser does not support the audio mixing needed for host voice rooms.');
+      let context=voiceAudioContextRef.current;
+      if(!context||context.state==='closed'){context=new AudioContextClass();voiceAudioContextRef.current=context;}
+      await context.resume();
+      const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:false});
+      voiceStreamRef.current=stream;
+      setVoiceEnabled(true);
+      setVoiceMuted(false);
+    }catch(e){setVoiceError(e.name==='NotAllowedError'?'Allow microphone access to join voice chat.':e.message||'Could not start voice chat.');}
+  };
   useEffect(()=>{
     if(!voiceEnabled||!room||!participant)return undefined;
     let active=true,polling=false;
     const peers=voicePeersRef.current;
+    const isHost=Boolean(participant.is_host||participant.role==='host');
+    const context=voiceAudioContextRef.current;
+    const cleanupAudio=(remoteId)=>{
+      const audio=voiceAudioRef.current.get(remoteId);
+      if(audio){audio.pause();audio.srcObject=null;voiceAudioRef.current.delete(remoteId);}
+      const node=voiceAudioNodesRef.current.get(remoteId);
+      try{node?.source?.disconnect();node?.gain?.disconnect();}catch{}
+      voiceAudioNodesRef.current.delete(remoteId);
+    };
+    const removePeer=(remoteId)=>{
+      const pc=peers.get(remoteId);
+      if(pc){peers.delete(remoteId);pc.onconnectionstatechange=null;pc.close();}
+      cleanupAudio(remoteId);
+      if(isHost){
+        const remote=voiceRemoteSourcesRef.current.get(remoteId);
+        try{remote?.source?.disconnect();}catch{}
+        voiceRemoteSourcesRef.current.delete(remoteId);
+        const mixer=voiceMixersRef.current.get(remoteId);
+        try{mixer?.micSource?.disconnect();mixer?.destination?.disconnect?.();}catch{}
+        voiceMixersRef.current.delete(remoteId);
+      }
+      setVoicePeerCount([...peers.values()].filter(peer=>peer.connectionState==='connected').length);
+    };
+    const createHostMixer=(remoteId)=>{
+      if(voiceMixersRef.current.has(remoteId))return voiceMixersRef.current.get(remoteId);
+      if(!context||context.state!=='running'||!voiceStreamRef.current)throw new Error('Audio mixer is not ready. Rejoin voice chat.');
+      const destination=context.createMediaStreamDestination();
+      const micSource=context.createMediaStreamSource(voiceStreamRef.current);
+      micSource.connect(destination);
+      for(const [sourceId,remote] of voiceRemoteSourcesRef.current){if(sourceId!==remoteId)remote.source.connect(destination);}
+      const mixer={destination,micSource};
+      voiceMixersRef.current.set(remoteId,mixer);
+      return mixer;
+    };
+    const playIncoming=(remoteId,stream)=>{
+      if(context&&context.state==='running'){
+        try{
+          const source=context.createMediaStreamSource(stream);
+          const gain=context.createGain();
+          gain.gain.value=1;
+          source.connect(gain);
+          gain.connect(context.destination);
+          voiceAudioNodesRef.current.set(remoteId,{source,gain});
+          return source;
+        }catch{}
+      }
+      let audio=voiceAudioRef.current.get(remoteId);
+      if(!audio){audio=new Audio();audio.autoplay=true;audio.playsInline=true;audio.setAttribute('playsinline','');audio.volume=1;voiceAudioRef.current.set(remoteId,audio);}
+      audio.srcObject=stream;
+      audio.play().catch(()=>setVoiceError('Audio playback is blocked. Tap Voice chat again and check your media volume.'));
+      return null;
+    };
     const makePeer=(remoteId)=>{
       if(peers.has(remoteId))return peers.get(remoteId);
       const pc=new RTCPeerConnection({iceServers:getVoiceIceServers(),iceTransportPolicy:'all',bundlePolicy:'max-bundle'});
-      voiceStreamRef.current?.getTracks().forEach(track=>pc.addTrack(track,voiceStreamRef.current));
-      pc.__pendingIce=[];pc.onicecandidate=e=>{if(e.candidate)sendVoiceSignal(remoteId,{type:'ice',candidate:e.candidate.toJSON()});};
-      pc.ontrack=async e=>{const stream=e.streams?.[0]||(e.track?new MediaStream([e.track]):null);if(!stream)return;const context=voiceAudioContextRef.current;if(context&&context.state!=='closed'){try{if(context.state!=='running')await context.resume();let node=voiceAudioNodesRef.current.get(remoteId);if(!node||node.stream!==stream){try{node?.source.disconnect();node?.gain.disconnect();}catch{}const source=context.createMediaStreamSource(stream);const gain=context.createGain();gain.gain.value=1;source.connect(gain);gain.connect(context.destination);node={source,gain,stream};voiceAudioNodesRef.current.set(remoteId,node);}if(context.state==='running')return;}catch(error){setVoiceError('Audio output is blocked. Tap Voice chat again and check your media volume.');}}let audio=voiceAudioRef.current.get(remoteId);if(!audio){audio=new Audio();audio.autoplay=true;audio.playsInline=true;audio.setAttribute('playsinline','');audio.volume=1;voiceAudioRef.current.set(remoteId,audio);}audio.srcObject=stream;try{await audio.play();}catch{setVoiceError('The connection is receiving audio but playback is blocked. Tap Voice chat again, then check media volume.');}};
-      pc.onconnectionstatechange=()=>{const connected=[...peers.values()].filter(x=>x.connectionState==='connected').length;setVoicePeerCount(connected);if(pc.connectionState==='failed'){setVoiceError('Voice network path failed. A TURN relay is required on some mobile networks.');}if(['failed','closed'].includes(pc.connectionState)){pc.close();peers.delete(remoteId);const audio=voiceAudioRef.current.get(remoteId);if(audio){audio.pause();audio.srcObject=null;voiceAudioRef.current.delete(remoteId);}const node=voiceAudioNodesRef.current.get(remoteId);try{node?.source.disconnect();node?.gain.disconnect();}catch{}voiceAudioNodesRef.current.delete(remoteId);setVoicePeerCount([...peers.values()].filter(x=>x.connectionState==='connected').length);}};
-      peers.set(remoteId,pc);return pc;
+      if(isHost){
+        const mixer=createHostMixer(remoteId);
+        const mixedTrack=mixer.destination.stream.getAudioTracks()[0];
+        if(mixedTrack)pc.addTrack(mixedTrack,mixer.destination.stream);
+      }else{
+        voiceStreamRef.current?.getAudioTracks().forEach(track=>pc.addTrack(track,voiceStreamRef.current));
+      }
+      pc.__pendingIce=[];
+      pc.onicecandidate=e=>{if(e.candidate)sendVoiceSignal(remoteId,{type:'ice',candidate:e.candidate.toJSON()});};
+      pc.ontrack=e=>{
+        const stream=e.streams?.[0]||(e.track?new MediaStream([e.track]):null);
+        if(!stream||!context)return;
+        const old=voiceRemoteSourcesRef.current.get(remoteId);
+        if(isHost&&old?.stream===stream)return;
+        if(old){try{old.source.disconnect();}catch{}}
+        const source=playIncoming(remoteId,stream);
+        if(isHost&&source){
+          voiceRemoteSourcesRef.current.set(remoteId,{source,stream});
+          for(const [targetId,mixer] of voiceMixersRef.current){if(targetId!==remoteId){try{source.connect(mixer.destination);}catch{}}}
+        }
+      };
+      pc.onconnectionstatechange=()=>{
+        const connected=[...peers.values()].filter(peer=>peer.connectionState==='connected').length;
+        setVoicePeerCount(connected);
+        if(pc.connectionState==='failed')setVoiceError('Direct voice connection failed. This network may require a TURN relay.');
+        if(['failed','closed'].includes(pc.connectionState))removePeer(remoteId);
+      };
+      peers.set(remoteId,pc);
+      return pc;
     };
-    const createOffers=async()=>{for(const member of voiceMembersRef.current){if(!active)break;if(!member?.id||member.id===participant.id||String(participant.id)>String(member.id)||peers.has(member.id))continue;try{const pc=makePeer(member.id);const offer=await pc.createOffer();await pc.setLocalDescription(offer);await sendVoiceSignal(member.id,{type:'offer',description:pc.localDescription.toJSON()});}catch(e){setVoiceError(e.message||'Could not connect voice participant.');}}};
-    const poll=async()=>{if(!active||polling)return;polling=true;try{const rows=await rpc('poll_watch_room_voice_signals',{p_code:room.code,p_token:participant.token,p_after_id:voiceSignalCursorRef.current});const signals=Array.isArray(rows)?rows:[];for(const signal of signals){if(!active)break;voiceSignalCursorRef.current=Math.max(voiceSignalCursorRef.current,Number(signal.id)||0);const sender=signal.sender_id,payload=signal.payload||{};if(!sender||sender===participant.id)continue;try{const pc=makePeer(sender);if(payload.type==='offer'){await pc.setRemoteDescription(new RTCSessionDescription(payload.description));for(const candidate of pc.__pendingIce.splice(0))await pc.addIceCandidate(new RTCIceCandidate(candidate));const answer=await pc.createAnswer();await pc.setLocalDescription(answer);await sendVoiceSignal(sender,{type:'answer',description:pc.localDescription.toJSON()});}else if(payload.type==='answer'&&pc.signalingState!=='stable'){await pc.setRemoteDescription(new RTCSessionDescription(payload.description));for(const candidate of pc.__pendingIce.splice(0))await pc.addIceCandidate(new RTCIceCandidate(candidate));}else if(payload.type==='ice'&&payload.candidate){if(pc.remoteDescription)await pc.addIceCandidate(new RTCIceCandidate(payload.candidate));else pc.__pendingIce.push(payload.candidate);}else if(payload.type==='bye'){pc.close();peers.delete(sender);}}catch(e){setVoiceError(e.message||'Voice connection could not be established.');}}}catch(e){if(active)setVoiceError(e.message||'Voice signalling temporarily unavailable.');}finally{polling=false;}};
-    createOffers();const timer=window.setInterval(()=>{createOffers();poll();},900);poll();
-    return()=>{active=false;window.clearInterval(timer);peers.forEach(pc=>pc.close());peers.clear();voiceAudioNodesRef.current.forEach(node=>{try{node.source.disconnect();node.gain?.disconnect();}catch{}});voiceAudioNodesRef.current.clear();voiceAudioRef.current.forEach(audio=>{audio.pause();audio.srcObject=null;});voiceAudioRef.current.clear();setVoicePeerCount(0);};
+    const createOffers=async()=>{
+      if(!isHost)return;
+      for(const member of voiceMembersRef.current){
+        if(!active)break;
+        if(!member?.id||member.id===participant.id||peers.has(member.id))continue;
+        try{
+          const pc=makePeer(member.id);
+          const offer=await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          await sendVoiceSignal(member.id,{type:'offer',description:pc.localDescription.toJSON()});
+        }catch(e){removePeer(member.id);setVoiceError(e.message||'Could not connect a voice participant.');}
+      }
+    };
+    const poll=async()=>{
+      if(!active||polling)return;
+      polling=true;
+      try{
+        const rows=await rpc('poll_watch_room_voice_signals',{p_code:room.code,p_token:participant.token,p_after_id:voiceSignalCursorRef.current});
+        const signals=Array.isArray(rows)?rows:[];
+        for(const signal of signals){
+          if(!active)break;
+          voiceSignalCursorRef.current=Math.max(voiceSignalCursorRef.current,Number(signal.id)||0);
+          const sender=signal.sender_id,payload=signal.payload||{};
+          if(!sender||sender===participant.id)continue;
+          try{
+            if(payload.type==='offer'){
+              if(isHost)continue;
+              const hostMember=voiceMembersRef.current.find(member=>member.is_host||member.role==='host');
+              if(hostMember?.id&&sender!==hostMember.id)continue;
+              const pc=makePeer(sender);
+              await pc.setRemoteDescription(new RTCSessionDescription(payload.description));
+              for(const candidate of pc.__pendingIce.splice(0))await pc.addIceCandidate(new RTCIceCandidate(candidate));
+              const answer=await pc.createAnswer();
+              await pc.setLocalDescription(answer);
+              await sendVoiceSignal(sender,{type:'answer',description:pc.localDescription.toJSON()});
+            }else if(payload.type==='answer'&&isHost){
+              const pc=peers.get(sender);
+              if(pc&&pc.signalingState!=='stable'){
+                await pc.setRemoteDescription(new RTCSessionDescription(payload.description));
+                for(const candidate of pc.__pendingIce.splice(0))await pc.addIceCandidate(new RTCIceCandidate(candidate));
+              }
+            }else if(payload.type==='ice'&&payload.candidate){
+              const pc=peers.get(sender);
+              if(!pc)continue;
+              if(pc.remoteDescription)await pc.addIceCandidate(new RTCIceCandidate(payload.candidate));
+              else pc.__pendingIce.push(payload.candidate);
+            }else if(payload.type==='bye'){
+              removePeer(sender);
+            }
+          }catch(e){setVoiceError(e.message||'Voice connection could not be established.');}
+        }
+      }catch(e){if(active)setVoiceError(e.message||'Voice signalling temporarily unavailable.');}
+      finally{polling=false;}
+    };
+    createOffers();
+    const timer=window.setInterval(()=>{createOffers();poll();},700);
+    poll();
+    return()=>{
+      active=false;
+      window.clearInterval(timer);
+      for(const remoteId of peers.keys())sendVoiceSignal(remoteId,{type:'bye'});
+      peers.forEach(pc=>pc.close());
+      peers.clear();
+      voiceMixersRef.current.forEach(mixer=>{try{mixer.micSource?.disconnect();mixer.destination?.disconnect?.();}catch{}});
+      voiceMixersRef.current.clear();
+      voiceRemoteSourcesRef.current.forEach(remote=>{try{remote.source?.disconnect();}catch{}});
+      voiceRemoteSourcesRef.current.clear();
+      voiceAudioNodesRef.current.forEach(node=>{try{node.source?.disconnect();node.gain?.disconnect();}catch{}});
+      voiceAudioNodesRef.current.clear();
+      voiceAudioRef.current.forEach(audio=>{audio.pause();audio.srcObject=null;});
+      voiceAudioRef.current.clear();
+      setVoicePeerCount(0);
+    };
   },[voiceEnabled,room?.id,participant?.id,rpc,sendVoiceSignal]);
-  useEffect(()=>{if(!voiceEnabled){voiceStreamRef.current?.getTracks().forEach(track=>track.stop());voiceStreamRef.current=null;voicePeersRef.current.forEach(pc=>pc.close());voicePeersRef.current.clear();voiceAudioNodesRef.current.forEach(node=>{try{node.source.disconnect();node.gain?.disconnect();}catch{}});voiceAudioNodesRef.current.clear();voiceAudioRef.current.forEach(audio=>{audio.pause();audio.srcObject=null;});voiceAudioRef.current.clear();if(voiceAudioContextRef.current&&voiceAudioContextRef.current.state!=='closed')voiceAudioContextRef.current.close().catch(()=>{});voiceAudioContextRef.current=null;setVoicePeerCount(0);return;}if(voiceStreamRef.current)voiceStreamRef.current.getAudioTracks().forEach(track=>{track.enabled=!voiceMuted;});},[voiceEnabled,voiceMuted]);
+  useEffect(()=>{
+    if(!voiceEnabled){
+      voiceStreamRef.current?.getTracks().forEach(track=>track.stop());
+      voiceStreamRef.current=null;
+      voicePeersRef.current.forEach(pc=>pc.close());
+      voicePeersRef.current.clear();
+      voiceMixersRef.current.forEach(mixer=>{try{mixer.micSource?.disconnect();mixer.destination?.disconnect?.();}catch{}});
+      voiceMixersRef.current.clear();
+      voiceRemoteSourcesRef.current.forEach(remote=>{try{remote.source?.disconnect();}catch{}});
+      voiceRemoteSourcesRef.current.clear();
+      voiceAudioNodesRef.current.forEach(node=>{try{node.source?.disconnect();node.gain?.disconnect();}catch{}});
+      voiceAudioNodesRef.current.clear();
+      voiceAudioRef.current.forEach(audio=>{audio.pause();audio.srcObject=null;});
+      voiceAudioRef.current.clear();
+      if(voiceAudioContextRef.current&&voiceAudioContextRef.current.state!=='closed')voiceAudioContextRef.current.close().catch(()=>{});
+      voiceAudioContextRef.current=null;
+      setVoicePeerCount(0);
+      return;
+    }
+    if(voiceStreamRef.current)voiceStreamRef.current.getAudioTracks().forEach(track=>{track.enabled=!voiceMuted;});
+  },[voiceEnabled,voiceMuted]);
 
   useEffect(() => { if(!room||!participant)return;let active=true;const ping=async()=>{if(!navigator.onLine){setNetworkState('offline');return;}const start=performance.now();try{await rpc('watch_room_playback_snapshot',{p_code:room.code,p_token:participant.token});if(active){setNetworkLatency(Math.round(performance.now()-start));setNetworkState('online');}}catch{if(active)setNetworkState('reconnecting');}};ping();const timer=window.setInterval(ping,15000);return()=>{active=false;window.clearInterval(timer);};},[room?.id,participant?.id,rpc]);
 
