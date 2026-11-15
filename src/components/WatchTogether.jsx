@@ -121,11 +121,11 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const [chatCollapsed, setChatCollapsed] = useState(false);
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const desktop = window.matchMedia('(min-width: 761px)');
-    const syncChatDefault = () => setChatCollapsed(desktop.matches);
+    const compact = window.matchMedia('(max-width: 760px)');
+    const syncChatDefault = () => setChatCollapsed(true);
     syncChatDefault();
-    desktop.addEventListener?.('change', syncChatDefault);
-    return () => desktop.removeEventListener?.('change', syncChatDefault);
+    compact.addEventListener?.('change', syncChatDefault);
+    return () => compact.removeEventListener?.('change', syncChatDefault);
   }, []);
   const [roomLink, setRoomLink] = useState('');
   const [guestNameDraft, setGuestNameDraft] = useState('');

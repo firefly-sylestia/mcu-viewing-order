@@ -13416,6 +13416,68 @@
 }
 
 
+
+
+/* Mobile screening mode: keep the player prominent and move secondary tools out of its way. */
+@media(max-width:760px) {
+  :root .movie-site.page-watch-together .wt-page {padding:7px 11px max(18px,env(safe-area-inset-bottom))!important;gap:0!important}
+  :root .movie-site.page-watch-together .wt-topbar {min-height:42px!important;padding:3px 0 7px!important;margin:0 0 5px!important}
+  :root .movie-site.page-watch-together .wt-brand {gap:8px!important}
+  :root .movie-site.page-watch-together .wt-brand-mark {width:30px!important;height:30px!important}
+  :root .movie-site.page-watch-together .wt-brand small {font-size:7px!important;letter-spacing:.09em!important}
+  :root .movie-site.page-watch-together .wt-brand strong {font-size:11px!important}
+  :root .movie-site.page-watch-together .wt-close {width:31px!important;height:31px!important}
+  :root .movie-site.page-watch-together .wt-main {padding:3px 0 12px!important}
+  :root .movie-site.page-watch-together .wt-room-title {display:flex!important;align-items:center!important;gap:5px!important;margin:0 0 7px!important}
+  :root .movie-site.page-watch-together .wt-room-title>div:first-child {flex:1 1 100%!important;display:flex!important;align-items:baseline!important;gap:7px!important;flex-wrap:wrap!important}
+  :root .movie-site.page-watch-together .wt-room-title>div:first-child>span {font-size:7px!important;letter-spacing:.12em!important}
+  :root .movie-site.page-watch-together .wt-room-title h2 {font-size:15px!important;line-height:1.2!important;margin:0!important;max-width:100%!important}
+  :root .movie-site.page-watch-together .wt-room-title small {font-size:9px!important}
+  :root .movie-site.page-watch-together .wt-room-actions {display:flex!important;flex-wrap:nowrap!important;gap:5px!important;width:100%!important;overflow-x:auto!important;padding:1px 0 3px!important;scrollbar-width:none!important}
+  :root .movie-site.page-watch-together .wt-room-actions::-webkit-scrollbar {display:none!important}
+  :root .movie-site.page-watch-together .wt-room-actions .wt-copy {min-height:29px!important;padding:0 9px!important;border-radius:10px!important;font-size:9px!important;white-space:nowrap!important}
+  :root .movie-site.page-watch-together .wt-playback-tip {margin:5px 0!important;padding:7px 9px!important;font-size:9px!important;line-height:1.35!important}
+  :root .movie-site.page-watch-together .wt-room-tools {min-height:31px!important;padding:3px 6px!important;margin:0 0 6px!important;gap:4px!important;border-radius:10px!important}
+  :root .movie-site.page-watch-together .wt-network {font-size:9px!important;gap:5px!important}
+  :root .movie-site.page-watch-together .wt-network small {font-size:8px!important}
+  :root .movie-site.page-watch-together .wt-room-tool-actions button {width:27px!important;height:27px!important}
+  :root .movie-site.page-watch-together .wt-voice-error {font-size:9px!important;line-height:1.25!important;flex:1 1 100%!important}
+  :root .movie-site.page-watch-together .wt-paused-indicator {margin:4px 0!important;padding:6px 8px!important;font-size:9px!important}
+  :root .movie-site.page-watch-together .wt-episode-picker {margin:5px 0 7px!important;padding:7px 8px!important;border-radius:11px!important}
+  :root .movie-site.page-watch-together .wt-episode-picker-head {margin:0 0 5px!important}
+  :root .movie-site.page-watch-together .wt-episode-picker-head strong {font-size:8px!important}
+  :root .movie-site.page-watch-together .wt-episode-picker-head small {font-size:8px!important}
+  :root .movie-site.page-watch-together .wt-season-row,
+  :root .movie-site.page-watch-together .wt-episode-row {display:flex!important;gap:5px!important;overflow-x:auto!important;flex-wrap:nowrap!important;scrollbar-width:none!important;padding-bottom:2px!important}
+  :root .movie-site.page-watch-together .wt-season-row button {min-height:27px!important;padding:0 9px!important;font-size:9px!important;flex:0 0 auto!important}
+  :root .movie-site.page-watch-together .wt-episode-row button {min-width:94px!important;max-width:125px!important;padding:6px 8px!important;flex:0 0 auto!important}
+  :root .movie-site.page-watch-together .wt-episode-row button b {font-size:8px!important}
+  :root .movie-site.page-watch-together .wt-episode-row button span {font-size:9px!important}
+  :root .movie-site.page-watch-together .wt-user-progress {display:flex!important;gap:5px!important;overflow-x:auto!important;flex-wrap:nowrap!important;padding:2px 0 6px!important;scrollbar-width:none!important}
+  :root .movie-site.page-watch-together .wt-progress-pill {flex:0 0 auto!important;min-height:24px!important;padding:3px 7px!important;gap:4px!important}
+  :root .movie-site.page-watch-together .wt-progress-pill img {width:15px!important;height:15px!important}
+  :root .movie-site.page-watch-together .wt-progress-pill b,
+  :root .movie-site.page-watch-together .wt-progress-pill i {font-size:8px!important}
+  :root .movie-site.page-watch-together .wt-player {margin:0!important;border-radius:12px!important}
+  :root .movie-site.page-watch-together .wt-controls {min-height:38px!important;margin:5px 0 2px!important;padding:0 2px!important;gap:5px!important}
+  :root .movie-site.page-watch-together .wt-controls button {width:29px!important;height:29px!important;flex-basis:29px!important}
+  :root .movie-site.page-watch-together .wt-controls .wt-play {width:36px!important;height:36px!important;flex-basis:36px!important}
+  :root .movie-site.page-watch-together .wt-controls .wt-time {font-size:8px!important}
+  :root .movie-site.page-watch-together .wt-seek {height:13px!important;margin:0 1px 6px!important}
+  :root .movie-site.page-watch-together .wt-role-banner {margin:5px 0!important;padding:7px 8px!important;font-size:9px!important}
+  :root .movie-site.page-watch-together .wt-request-actions {gap:5px!important;margin:5px 0!important}
+  :root .movie-site.page-watch-together .wt-request-actions button {min-height:29px!important;padding:0 8px!important;font-size:9px!important}
+  :root .movie-site.page-watch-together .wt-members {display:flex!important;flex-wrap:nowrap!important;gap:5px!important;overflow-x:auto!important;padding:4px 0 7px!important;scrollbar-width:none!important}
+  :root .movie-site.page-watch-together .wt-member {min-height:27px!important;flex:0 0 auto!important;padding:3px 7px!important;gap:5px!important;font-size:9px!important}
+  :root .movie-site.page-watch-together .wt-member-avatar {width:18px!important;height:18px!important}
+  :root .movie-site.page-watch-together .wt-chat {min-height:0!important;margin-top:4px!important;border-radius:12px!important}
+  :root .movie-site.page-watch-together .wt-chat.is-collapsed {height:auto!important;min-height:0!important}
+  :root .movie-site.page-watch-together .wt-chat.is-collapsed .wt-chat-head {min-height:38px!important;padding:4px 9px!important}
+  :root .movie-site.page-watch-together .wt-chat.is-collapsed .wt-chat-head strong,
+  :root .movie-site.page-watch-together .wt-chat.is-collapsed .wt-chat-head span {font-size:9px!important}
+  :root .movie-site.page-watch-together .wt-chat.is-collapsed .wt-chat-toggle {width:28px!important;height:28px!important}
+}
+
 /* Mobile Watch Together containment: keep every room section inside the viewport. */
 @media(max-width:760px) {
   :root .movie-site.page-watch-together,
