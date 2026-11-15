@@ -13301,3 +13301,62 @@
 .wt-owned-open{display:inline-flex;align-items:center;justify-content:center;gap:4px;min-height:31px;padding:0 10px;flex:0 0 auto;border:0;border-radius:999px;background:var(--fx-accent);color:#fff;font:inherit;font-size:10px;font-weight:850;cursor:pointer;}
 .wt-owned-open:disabled{opacity:.55;cursor:wait;}
 @media(max-width:560px){.wt-playback-actions{gap:5px;padding:4px 5px}.wt-playback-actions button{min-height:28px;padding:5px 9px;font-size:9px}.wt-owned-open{padding:0 8px;font-size:9px}}
+
+/* Watch Together refresh: quiet connection status, compact utility dock,
+   redesigned host controls, and viewport-safe room layout. */
+:root .wt-page .wt-room-tools{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;margin:10px 0 14px;padding:6px 8px 6px 13px;border:1px solid color-mix(in srgb,var(--fx-muted) 18%,transparent);border-radius:16px;background:color-mix(in srgb,var(--fx-surface-2) 84%,transparent);box-shadow:0 8px 24px rgba(15,23,42,.045);-webkit-backdrop-filter:blur(18px) saturate(1.25);backdrop-filter:blur(18px) saturate(1.25)}
+:root .wt-page .wt-network{display:inline-flex;align-items:center;gap:9px;min-width:0;padding:0 8px;color:var(--fx-text);font-size:11px;font-weight:750}
+:root .wt-page .wt-network i{width:7px;height:7px;flex:0 0 7px;border-radius:50%;background:#20a36b;box-shadow:0 0 0 4px rgba(32,163,107,.11)}
+:root .wt-page .wt-network.offline i,:root .wt-page .wt-network.reconnecting i{background:#d97706;box-shadow:0 0 0 4px rgba(217,119,6,.12)}
+:root .wt-page .wt-network small{color:var(--fx-muted);font-size:10px;font-weight:650;font-variant-numeric:tabular-nums}
+:root .wt-page .wt-room-tool-actions{display:flex;align-items:center;gap:5px}
+:root .wt-page .wt-room-tool-actions button{display:grid;place-items:center;width:36px;height:36px;padding:0;border:0;border-radius:11px;background:transparent;color:var(--fx-muted);transition:background .18s ease,color .18s ease,transform .18s ease}
+:root .wt-page .wt-room-tool-actions button:hover{background:var(--fx-surface);color:var(--fx-text);transform:translateY(-1px)}
+:root .wt-page .wt-room-tool-actions button:focus-visible{outline:2px solid var(--fx-accent);outline-offset:2px}
+:root .wt-page .wt-host-panel{width:min(720px,calc(100vw - 32px))!important;max-width:720px!important;max-height:min(88dvh,900px)!important;overflow:auto!important;padding:26px!important;border-radius:24px!important;background:var(--fx-surface)!important;color:var(--fx-text)!important;border:1px solid color-mix(in srgb,var(--fx-muted) 20%,transparent)!important;box-shadow:0 28px 90px rgba(0,0,0,.24)!important}
+:root .wt-page .wt-host-panel>header{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:22px}
+:root .wt-page .wt-host-panel>header span{color:var(--fx-accent);font-size:9px;font-weight:850;letter-spacing:.16em}
+:root .wt-page .wt-host-panel>header h2{margin:6px 0 5px;color:var(--fx-text);font-size:clamp(22px,3vw,28px);letter-spacing:-.04em}
+:root .wt-page .wt-host-panel>header p{margin:0;color:var(--fx-muted);font-size:12px;line-height:1.5}
+:root .wt-page .wt-host-panel>header>button{display:grid;place-items:center;width:36px;height:36px;flex:0 0 36px;border:1px solid color-mix(in srgb,var(--fx-muted) 20%,transparent);border-radius:12px;background:var(--fx-surface-2);color:var(--fx-text)}
+:root .wt-page .wt-host-settings{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;border:0;border-radius:0;overflow:visible}
+:root .wt-page .wt-host-settings label{min-width:0;min-height:76px;padding:14px 15px;gap:12px;border:1px solid color-mix(in srgb,var(--fx-muted) 17%,transparent)!important;border-radius:15px;background:var(--fx-surface-2)}
+:root .wt-page .wt-host-settings label span{gap:5px;min-width:0}
+:root .wt-page .wt-host-settings b{color:var(--fx-text);font-size:12px;font-weight:780}
+:root .wt-page .wt-host-settings small{color:var(--fx-muted);font-size:10px;line-height:1.45}
+:root .wt-page .wt-host-settings input[type=checkbox]{width:19px;height:19px;flex:0 0 19px;accent-color:var(--fx-accent);cursor:pointer}
+:root .wt-page .wt-host-settings select{max-width:150px;min-height:34px;padding:6px 9px;border:1px solid color-mix(in srgb,var(--fx-muted) 22%,transparent);border-radius:10px;background:var(--fx-surface);color:var(--fx-text);font:inherit;font-size:10px}
+:root .wt-page .wt-host-people{gap:10px;margin-top:24px}
+:root .wt-page .wt-host-people>strong{color:var(--fx-text);font-size:13px}
+:root .wt-page .wt-host-people>div{min-height:54px;padding:8px 10px;gap:8px;border:1px solid color-mix(in srgb,var(--fx-muted) 15%,transparent);border-radius:14px;background:var(--fx-surface-2)}
+:root .wt-page .wt-host-people>div>span{gap:3px}
+:root .wt-page .wt-host-people>div>span b{color:var(--fx-text);font-size:11px}
+:root .wt-page .wt-host-people>div>span small{color:var(--fx-muted);font-size:9px}
+:root .wt-page .wt-host-people button{min-height:32px;padding:0 10px;border:1px solid color-mix(in srgb,var(--fx-muted) 20%,transparent);border-radius:10px;background:var(--fx-surface);color:var(--fx-text);font-size:10px;font-weight:700}
+:root .wt-page .wt-host-people button:hover{border-color:color-mix(in srgb,var(--fx-accent) 45%,transparent)}
+:root .wt-page .wt-host-danger{margin-top:22px;padding-top:16px;border-top:1px solid color-mix(in srgb,var(--fx-muted) 16%,transparent)}
+:root .wt-page .wt-host-danger button{min-height:36px;padding:0 13px;border:1px solid color-mix(in srgb,#c43d4b 35%,transparent);border-radius:11px;background:color-mix(in srgb,#c43d4b 7%,var(--fx-surface));color:#c43d4b;font-size:11px;font-weight:750}
+:root .wt-page .wt-host-panel{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--fx-muted) 35%,transparent) transparent}
+:root .movie-site.page-watch-together .wt-page{height:100dvh!important;min-height:100dvh!important;max-height:100dvh!important;overflow-x:hidden!important;overflow-y:auto!important;overscroll-behavior-y:contain!important;-webkit-overflow-scrolling:touch!important;padding-bottom:max(22px,env(safe-area-inset-bottom))!important}
+:root .movie-site.page-watch-together .wt-content{min-height:0!important;height:auto!important;align-items:start!important}
+:root .movie-site.page-watch-together .wt-main{min-width:0!important;min-height:0!important}
+:root .movie-site.page-watch-together .wt-player{width:100%!important;height:auto!important;aspect-ratio:16/9!important;min-height:0!important}
+:root .movie-site.page-watch-together .wt-player iframe{display:block!important;width:100%!important;height:100%!important;min-height:0!important;transform:none!important}
+:root .movie-site.page-watch-together .wt-chat{min-height:0!important}
+@media(min-width:761px){:root .movie-site.page-watch-together .wt-page{display:flex!important;flex-direction:column!important}:root .movie-site.page-watch-together .wt-content{flex:1 0 auto!important;min-height:calc(100dvh - 92px)!important}}
+@media(max-width:760px){
+ :root .movie-site.page-watch-together .wt-page{padding:max(10px,env(safe-area-inset-top)) 12px max(24px,env(safe-area-inset-bottom))!important}
+ :root .movie-site.page-watch-together .wt-content{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:0!important}
+ :root .movie-site.page-watch-together .wt-main{padding:12px 0 18px!important}
+ :root .movie-site.page-watch-together .wt-chat{min-height:320px!important;height:auto!important;max-height:none!important;overflow:visible!important;border:1px solid color-mix(in srgb,var(--fx-muted) 16%,transparent)!important;border-radius:17px!important}
+ :root .movie-site.page-watch-together .wt-chat-messages{min-height:180px!important;max-height:340px!important}
+ :root .movie-site.page-watch-together .wt-room-tools{gap:6px;padding:5px 7px 5px 10px}
+ :root .movie-site.page-watch-together .wt-room-tool-actions{gap:1px}
+ :root .movie-site.page-watch-together .wt-room-tool-actions button{width:33px;height:33px}
+ :root .wt-page .wt-host-panel{width:calc(100vw - 24px)!important;max-height:calc(100dvh - 24px)!important;padding:18px!important;border-radius:19px!important}
+ :root .wt-page .wt-host-settings{grid-template-columns:minmax(0,1fr)!important;gap:7px}
+ :root .wt-page .wt-host-settings label{min-height:65px;padding:12px 13px}
+ :root .wt-page .wt-host-people>div{flex-wrap:nowrap!important}
+ :root .wt-page .wt-host-people>div>span{flex:1 1 auto!important;flex-basis:auto!important}
+ :root .wt-page .wt-host-people button{padding:0 8px}
+}
