@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Copy, Check, Users, MessageCircle, Play, Pause, SkipBack, SkipForward, X, Link2, Radio, Crown, Send, LogOut, RefreshCw, Volume2, VolumeX, Clock3, ShieldCheck, Search, ChevronRight, Pencil, PanelRightClose, PanelRightOpen, Settings2, UserMinus, Lock, Unlock, QrCode, Theater, Wifi, WifiOff, ArrowRightLeft, Timer, Smile } from 'lucide-react';
+import { Copy, Check, Users, MessageCircle, Play, Pause, SkipBack, SkipForward, X, Link2, Radio, Crown, Send, LogOut, RefreshCw, Volume2, VolumeX, Clock3, ShieldCheck, Search, ChevronRight, Pencil, PanelRightClose, PanelRightOpen, Settings2, UserMinus, Lock, Unlock, QrCode, Theater, Wifi, WifiOff, ArrowRightLeft, Timer, Smile, Mic, MicOff, Headphones } from 'lucide-react';
 import { supabasePublicRequest, supabaseDataRequest } from '../supabase';
 
 const RPC = '/rest/v1/rpc/';
@@ -62,6 +62,15 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const [networkState, setNetworkState] = useState(typeof navigator !== 'undefined' && navigator.onLine ? 'online' : 'offline');
   const [networkLatency, setNetworkLatency] = useState(null);
   const [pendingEpisode, setPendingEpisode] = useState(null);
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const [voiceMuted, setVoiceMuted] = useState(false);
+  const [voiceError, setVoiceError] = useState('');
+  const [voicePeerCount, setVoicePeerCount] = useState(0);
+  const voiceStreamRef = useRef(null);
+  const voicePeersRef = useRef(new Map());
+  const voiceAudioRef = useRef(new Map());
+  const voiceSignalCursorRef = useRef(0);
+  const voiceMembersRef = useRef([]);
   const [ownedRooms, setOwnedRooms] = useState([]);
   const [roomsLoading, setRoomsLoading] = useState(false);
   const [localPlaybackOverride, setLocalPlaybackOverride] = useState(false);
@@ -152,6 +161,29 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     if (user?.id) return supabaseDataRequest(`${RPC}${name}`, options);
     return supabasePublicRequest(`${RPC}${name}`, options);
   }, [user?.id]);
+
+  useEffect(()=>{voiceMembersRef.current=members;},[members]);
+  const sendVoiceSignal=useCallback(async(to,payload)=>{const r=roomRef.current,p=participantRef.current;if(!r||!p)return;try{await rpc('send_watch_room_voice_signal',{p_code:r.code,p_token:p.token,p_to_participant_id:to,p_payload:payload});}catch(e){setVoiceError(e.message||'Voice connection signalling failed.');}},[rpc]);
+  const startVoice=async()=>{if(voiceEnabled){setVoiceEnabled(false);setVoiceMuted(false);return;}setVoiceError('');try{if(!navigator.mediaDevices?.getUserMedia)throw new Error('Microphone access is not available in this browser.');const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:false});voiceStreamRef.current=stream;setVoiceEnabled(true);setVoiceMuted(false);}catch(e){setVoiceError(e.name==='NotAllowedError'?'Allow microphone access to join voice chat.':e.message||'Could not start voice chat.');}};
+  useEffect(()=>{
+    if(!voiceEnabled||!room||!participant)return undefined;
+    let active=true,polling=false;
+    const peers=voicePeersRef.current;
+    const makePeer=(remoteId)=>{
+      if(peers.has(remoteId))return peers.get(remoteId);
+      const pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]});
+      voiceStreamRef.current?.getTracks().forEach(track=>pc.addTrack(track,voiceStreamRef.current));
+      pc.onicecandidate=e=>{if(e.candidate)sendVoiceSignal(remoteId,{type:'ice',candidate:e.candidate.toJSON()});};
+      pc.ontrack=e=>{let audio=voiceAudioRef.current.get(remoteId);if(!audio){audio=new Audio();audio.autoplay=true;audio.playsInline=true;voiceAudioRef.current.set(remoteId,audio);}audio.srcObject=e.streams[0];audio.play().catch(()=>{});};
+      pc.onconnectionstatechange=()=>{const connected=[...peers.values()].filter(x=>x.connectionState==='connected').length;setVoicePeerCount(connected);if(['failed','closed'].includes(pc.connectionState)){pc.close();peers.delete(remoteId);const audio=voiceAudioRef.current.get(remoteId);if(audio){audio.srcObject=null;voiceAudioRef.current.delete(remoteId);}setVoicePeerCount([...peers.values()].filter(x=>x.connectionState==='connected').length);}};
+      peers.set(remoteId,pc);return pc;
+    };
+    const createOffers=async()=>{for(const member of voiceMembersRef.current){if(!active)break;if(!member?.id||member.id===participant.id||String(participant.id)>String(member.id)||peers.has(member.id))continue;try{const pc=makePeer(member.id);const offer=await pc.createOffer();await pc.setLocalDescription(offer);await sendVoiceSignal(member.id,{type:'offer',description:pc.localDescription.toJSON()});}catch(e){setVoiceError(e.message||'Could not connect voice participant.');}}};
+    const poll=async()=>{if(!active||polling)return;polling=true;try{const rows=await rpc('poll_watch_room_voice_signals',{p_code:room.code,p_token:participant.token,p_after_id:voiceSignalCursorRef.current});const signals=Array.isArray(rows)?rows:[];for(const signal of signals){if(!active)break;voiceSignalCursorRef.current=Math.max(voiceSignalCursorRef.current,Number(signal.id)||0);const sender=signal.sender_id,payload=signal.payload||{};if(!sender||sender===participant.id)continue;try{const pc=makePeer(sender);if(payload.type==='offer'){await pc.setRemoteDescription(new RTCSessionDescription(payload.description));const answer=await pc.createAnswer();await pc.setLocalDescription(answer);await sendVoiceSignal(sender,{type:'answer',description:pc.localDescription.toJSON()});}else if(payload.type==='answer'&&pc.signalingState!=='stable'){await pc.setRemoteDescription(new RTCSessionDescription(payload.description));}else if(payload.type==='ice'&&payload.candidate){await pc.addIceCandidate(new RTCIceCandidate(payload.candidate));}else if(payload.type==='bye'){pc.close();peers.delete(sender);}}catch(e){setVoiceError(e.message||'Voice connection could not be established.');}}}catch(e){if(active)setVoiceError(e.message||'Voice signalling temporarily unavailable.');}finally{polling=false;}};
+    createOffers();const timer=window.setInterval(()=>{createOffers();poll();},900);poll();
+    return()=>{active=false;window.clearInterval(timer);peers.forEach(pc=>pc.close());peers.clear();voiceAudioRef.current.forEach(audio=>{audio.pause();audio.srcObject=null;});voiceAudioRef.current.clear();setVoicePeerCount(0);};
+  },[voiceEnabled,room?.id,participant?.id,rpc,sendVoiceSignal]);
+  useEffect(()=>{if(!voiceEnabled){voiceStreamRef.current?.getTracks().forEach(track=>track.stop());voiceStreamRef.current=null;voicePeersRef.current.forEach(pc=>pc.close());voicePeersRef.current.clear();voiceAudioRef.current.forEach(audio=>{audio.pause();audio.srcObject=null;});voiceAudioRef.current.clear();setVoicePeerCount(0);return;}if(voiceStreamRef.current)voiceStreamRef.current.getAudioTracks().forEach(track=>{track.enabled=!voiceMuted;});},[voiceEnabled,voiceMuted]);
 
   useEffect(() => { if(!room||!participant)return;let active=true;const ping=async()=>{if(!navigator.onLine){setNetworkState('offline');return;}const start=performance.now();try{await rpc('watch_room_playback_snapshot',{p_code:room.code,p_token:participant.token});if(active){setNetworkLatency(Math.round(performance.now()-start));setNetworkState('online');}}catch{if(active)setNetworkState('reconnecting');}};ping();const timer=window.setInterval(ping,15000);return()=>{active=false;window.clearInterval(timer);};},[room?.id,participant?.id,rpc]);
 
@@ -495,7 +527,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const minimizeRoom = async () => {
     await flushWatchHistory();
     window.clearInterval(pollRef.current); window.clearInterval(playbackPollRef.current); window.clearInterval(heartbeatRef.current);
-    setRoom(null); setParticipant(null); setMembers([]); setMessages([]); setRequests([]); setPlayerReady(false); lastVersionRef.current = 0; setLocalPlaybackOverride(false);localPlaybackOverrideRef.current=false;setCanReturnLocal(false);setOpen(false); setSetupDialog(false);
+    setVoiceEnabled(false);setVoiceMuted(false);setRoom(null); setParticipant(null); setMembers([]); setMessages([]); setRequests([]); setPlayerReady(false); lastVersionRef.current = 0; setLocalPlaybackOverride(false);localPlaybackOverrideRef.current=false;setCanReturnLocal(false);setOpen(false); setSetupDialog(false);
     const url = new URL(window.location.href); url.searchParams.delete('room'); window.history.replaceState({}, '', url.toString());
     onClose?.();
   };
@@ -632,10 +664,10 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
             </div>
           </div> : <div className="wt-content">
             <div className="wt-main">
-              <div className="wt-room-title"><div><span>NOW SCREENING</span><h2>{room.media?.title || itemMedia.title}</h2><small>{members.length} {members.length === 1 ? 'viewer' : 'viewers'} · {participant.is_host ? 'Host' : (participant.role || 'viewer').replace(/^./, c => c.toUpperCase())}</small></div><div className="wt-room-actions">{guest.isGuest&&<button type="button" className="wt-copy" onClick={()=>setEditingGuestName(value=>!value)}><Pencil size={14}/> Name</button>}{participant.is_host&&<button type="button" className="wt-copy" onClick={()=>setHostPanelOpen(true)}><Settings2 size={14}/> Host controls</button>}{participant.is_host&&<button type="button" className="wt-copy wt-end-room" onClick={()=>setConfirmAction({type:'close'})}>End room</button>}<button className="wt-copy" onClick={copyLink}>{copied ? <Check size={15}/> : <Copy size={15}/ >}{copied ? 'Copied' : 'Invite'}</button></div></div>
+              <div className="wt-room-title"><div><span>NOW SCREENING</span><h2>{room.media?.title || itemMedia.title}</h2><small>{members.length} {members.length === 1 ? 'viewer' : 'viewers'} · {participant.is_host ? 'Host' : (participant.role || 'viewer').replace(/^./, c => c.toUpperCase())}</small></div><div className="wt-room-actions">{<button type="button" className={`wt-copy wt-voice-toggle${voiceEnabled?' active':''}`} onClick={startVoice} title={voiceEnabled?'Leave voice chat':'Join voice chat'}>{voiceEnabled?<Mic size={14}/>:<Headphones size={14}/>} {voiceEnabled?`Voice · ${voicePeerCount} connected`:'Voice chat'}</button>}{voiceEnabled&&<button type="button" className="wt-copy" onClick={()=>setVoiceMuted(v=>!v)} title={voiceMuted?'Unmute microphone':'Mute microphone'}>{voiceMuted?<MicOff size={14}/>:<Mic size={14}/>} {voiceMuted?'Muted':'Mic on'}</button>}{guest.isGuest&&<button type="button" className="wt-copy" onClick={()=>setEditingGuestName(value=>!value)}><Pencil size={14}/> Name</button>}{participant.is_host&&<button type="button" className="wt-copy" onClick={()=>setHostPanelOpen(true)}><Settings2 size={14}/> Host controls</button>}{participant.is_host&&<button type="button" className="wt-copy wt-end-room" onClick={()=>setConfirmAction({type:'close'})}>End room</button>}<button className="wt-copy" onClick={copyLink}>{copied ? <Check size={15}/> : <Copy size={15}/ >}{copied ? 'Copied' : 'Invite'}</button></div></div>
               {guest.isGuest&&editingGuestName&&<form className="wt-guest-name-form wt-room-rename" onSubmit={event=>{event.preventDefault();updateGuestName(guestNameDraft);}}><input value={guestNameDraft} onChange={event=>setGuestNameDraft(event.target.value)} maxLength={32} aria-label="Guest name"/><button type="submit" disabled={busy||!guestNameDraft.trim()}>Save name</button></form>}
               {showPlaybackNotice && <div className="wt-playback-tip" role="status"><span><strong>Playback tip</strong> If autoplay is blocked, tap Play once. A reputable ad blocker can help reduce pop-ups and redirects.</span><button type="button" onClick={() => setShowPlaybackNotice(false)} aria-label="Dismiss playback tip"><X size={15}/></button></div>}
-              <div className="wt-room-tools"><span className={`wt-network ${networkState}`}><i/>{networkState==='online'?(networkLatency==null?'Connected':networkLatency<180?'Excellent connection':networkLatency<450?'Stable connection':'Weak connection'):networkState==='offline'?'Offline · reconnecting':'Reconnecting'}{networkLatency!=null&&networkState==='online'?` · ${networkLatency} ms`:''}</span><button type="button" onClick={()=>refreshRoom()} title="Reconnect to room"><RefreshCw size={14}/> Reconnect</button><button type="button" onClick={copyTimestamp} title="Copy current timestamp"><Copy size={14}/> Timestamp</button><button type="button" onClick={()=>setTheatreMode(v=>!v)} title="Toggle theatre mode"><Theater size={14}/>{theatreMode?'Exit theatre':'Theatre'}</button><button type="button" onClick={()=>window.open(`https://quickchart.io/qr?size=220&text=${encodeURIComponent(roomLink)}`,'_blank','noopener,noreferrer')} title="Open room QR code"><QrCode size={14}/> QR</button></div>
+              <div className="wt-room-tools"><span className={`wt-network ${networkState}`}><i/>{networkState==='online'?(networkLatency==null?'Connected':networkLatency<180?'Excellent connection':networkLatency<450?'Stable connection':'Weak connection'):networkState==='offline'?'Offline · reconnecting':'Reconnecting'}{networkLatency!=null&&networkState==='online'?` · ${networkLatency} ms`:''}</span>{voiceError&&<span className="wt-voice-error" role="status">{voiceError}</span>}<button type="button" onClick={()=>refreshRoom()} title="Reconnect to room"><RefreshCw size={14}/> Reconnect</button><button type="button" onClick={copyTimestamp} title="Copy current timestamp"><Copy size={14}/> Timestamp</button><button type="button" onClick={()=>setTheatreMode(v=>!v)} title="Toggle theatre mode"><Theater size={14}/>{theatreMode?'Exit theatre':'Theatre'}</button><button type="button" onClick={()=>window.open(`https://quickchart.io/qr?size=220&text=${encodeURIComponent(roomLink)}`,'_blank','noopener,noreferrer')} title="Open room QR code"><QrCode size={14}/> QR</button></div>
               {room.playback?.paused && <div className="wt-paused-indicator"><Pause size={14}/><span><strong>Paused</strong> by {members.find(member=>member.id===room.playback?.actor)?.display_name || 'a room member'} · {timeText(room.playback?.position)}</span></div>}
               {(localPlaybackOverride || canReturnLocal) && <div className="wt-local-playback wt-playback-actions"><span>{localPlaybackOverride ? 'Independent playback' : 'Room playback'}</span>{localPlaybackOverride&&<button type="button" onClick={syncToRoom} disabled={!playerReady} title="Sync your player with the room">Sync with room</button>}{canReturnLocal&&<button type="button" onClick={returnToLocalPosition} disabled={!playerReady} title="Return to your saved playback position">Return to my spot</button>}</div>}
               {room.media?.mediaType === "tv" && <section className="wt-episode-picker" aria-label="Choose season and episode">

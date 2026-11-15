@@ -646,3 +646,51 @@ begin
 end $$;
 revoke all on function public.change_watch_room_episode(text,text,integer,integer) from public;
 grant execute on function public.change_watch_room_episode(text,text,integer,integer) to anon,authenticated;
+
+-- Private, room-scoped WebRTC signalling for Watch Together voice chat.
+create table if not exists public.watch_room_voice_signals (
+ id bigserial primary key,
+ room_id uuid not null references public.watch_rooms(id) on delete cascade,
+ sender_id uuid not null references public.watch_room_participants(id) on delete cascade,
+ receiver_id uuid not null references public.watch_room_participants(id) on delete cascade,
+ payload jsonb not null,
+ created_at timestamptz not null default now()
+);
+create index if not exists watch_room_voice_signals_receiver_idx on public.watch_room_voice_signals(room_id,receiver_id,id);
+alter table public.watch_room_voice_signals enable row level security;
+revoke all on public.watch_room_voice_signals from public,anon,authenticated;
+
+create or replace function public.send_watch_room_voice_signal(p_code text,p_token text,p_to_participant_id uuid,p_payload jsonb)
+returns bigint language plpgsql security definer set search_path=pg_catalog,public,pg_temp as $$
+declare r public.watch_rooms; sender public.watch_room_participants; target public.watch_room_participants; signal_id bigint;
+begin
+ select * into r from public.watch_rooms where code=upper(trim(p_code)) and closed_at is null and expires_at>now();
+ if not found then raise exception 'Room not found or expired.'; end if;
+ select * into sender from public.watch_room_participants where room_id=r.id and token_hash=encode(sha256(convert_to(p_token,'UTF8')),'hex');
+ if not found then raise exception 'You are not a member of this room.'; end if;
+ select * into target from public.watch_room_participants where id=p_to_participant_id and room_id=r.id and last_seen_at>now()-interval '60 seconds';
+ if not found then raise exception 'Voice participant is no longer connected.'; end if;
+ if pg_column_size(p_payload)>12000 or p_payload->>'type' not in ('offer','answer','ice','bye') then raise exception 'Invalid voice signal.'; end if;
+ insert into public.watch_room_voice_signals(room_id,sender_id,receiver_id,payload)
+ values(r.id,sender.id,target.id,p_payload) returning id into signal_id;
+ delete from public.watch_room_voice_signals where room_id=r.id and created_at<now()-interval '2 minutes';
+ return signal_id;
+end $$;
+
+create or replace function public.poll_watch_room_voice_signals(p_code text,p_token text,p_after_id bigint default 0)
+returns jsonb language plpgsql security definer set search_path=pg_catalog,public,pg_temp as $$
+declare r public.watch_rooms; p public.watch_room_participants; result jsonb;
+begin
+ select * into r from public.watch_rooms where code=upper(trim(p_code)) and closed_at is null and expires_at>now();
+ if not found then raise exception 'Room not found or expired.'; end if;
+ select * into p from public.watch_room_participants where room_id=r.id and token_hash=encode(sha256(convert_to(p_token,'UTF8')),'hex');
+ if not found then raise exception 'You are not a member of this room.'; end if;
+ select coalesce(jsonb_agg(jsonb_build_object('id',s.id,'sender_id',s.sender_id,'payload',s.payload) order by s.id),'[]'::jsonb)
+ into result from public.watch_room_voice_signals s
+ where s.room_id=r.id and s.receiver_id=p.id and s.id>greatest(0,coalesce(p_after_id,0)) and s.created_at>now()-interval '2 minutes';
+ return result;
+end $$;
+revoke all on function public.send_watch_room_voice_signal(text,text,uuid,jsonb) from public;
+revoke all on function public.poll_watch_room_voice_signals(text,text,bigint) from public;
+grant execute on function public.send_watch_room_voice_signal(text,text,uuid,jsonb) to anon,authenticated;
+grant execute on function public.poll_watch_room_voice_signals(text,text,bigint) to anon,authenticated;

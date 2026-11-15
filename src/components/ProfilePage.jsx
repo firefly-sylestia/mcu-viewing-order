@@ -77,7 +77,7 @@ const formatTimeAgo = (timestamp) => {
   return 'Synced ' + Math.floor(hours / 24) + 'd ago';
 };
 
-function ProfilePage({ pageHeader, setActiveTab, installApp, installAvailable, appInstalled, stats, activeItems, universe, activeTab = 'insights', query = '', setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, profileName, setProfileName, user, configured, onLogin, onLogout, lastSynced, syncing, onSync, conflict, onResolveRemote, onResolveLocal, onResolveMerge, syncToast, quietBrowsingOn = false, setQuietBrowsingOn, borderlessHeaderOn = false, setBorderlessHeaderOn, liquidGlassNavOn = false, setLiquidGlassNavOn, liquidGlassNavConfig, setLiquidGlassNavConfig }) {
+function ProfilePage({ pageHeader, setActiveTab, installApp, installAvailable, appInstalled, stats, activeItems, universe, activeTab = 'insights', query = '', setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, profileName, setProfileName, user, configured, onLogin, onLogout, lastSynced, syncing, onSync, conflict, onResolveRemote, onResolveLocal, onResolveMerge, syncToast, quietBrowsingOn = false, setQuietBrowsingOn,   }) {
   
   const savedItems = activeItems.filter(i => i.bookmarked);
   const inProgressItems = activeItems.filter(i => i.userStatus === 'watching');
@@ -284,17 +284,11 @@ export function ProfileHeader({ universe, stats, profileName, setProfileName, pr
   );
 }
 
-function SettingsPanel({ installApp, installAvailable, appInstalled, query = '', profileName, setProfileName, user, configured, onLogin, onLogout, universe, activeItems, setStatus, toggleBookmark, nativePlayer, setNativePlayer, quietBrowsingOn = false, setQuietBrowsingOn, borderlessHeaderOn = false, setBorderlessHeaderOn, liquidGlassNavOn = false, setLiquidGlassNavOn, liquidGlassNavConfig = {}, setLiquidGlassNavConfig }) {
+function SettingsPanel({ installApp, installAvailable, appInstalled, query = '', profileName, setProfileName, user, configured, onLogin, onLogout, universe, activeItems, setStatus, toggleBookmark, nativePlayer, setNativePlayer, quietBrowsingOn = false, setQuietBrowsingOn,   }) {
   const search = query.trim().toLowerCase();
   const showGroup = (terms) => !search || terms.includes(search);
   const { theme, setTheme } = useAppTheme();
-  const [topAtmosphereOn, setTopAtmosphereOn] = useState(() => {
-    try { return localStorage.getItem('top-atmosphere') !== '0'; } catch { return true; }
-  });
-  useEffect(() => {
-    document.documentElement.setAttribute('data-top-atmosphere', topAtmosphereOn ? 'on' : 'off');
-    try { localStorage.setItem('top-atmosphere', topAtmosphereOn ? '1' : '0'); } catch {}
-  }, [topAtmosphereOn]);
+  useEffect(() => { document.documentElement.setAttribute('data-top-atmosphere', 'on'); try { localStorage.setItem('top-atmosphere', '1'); } catch {} }, []);
   const [hapticsOn, setHapticsOn] = useState(() => getHapticsEnabled());
   const [performanceModeOn, setPerformanceModeOn] = useState(() => {
     try { return localStorage.getItem('performance-mode') === '1'; } catch { return false; }
@@ -304,7 +298,6 @@ function SettingsPanel({ installApp, installAvailable, appInstalled, query = '',
   const [editing, setEditing] = useState(false);
   const inputRef = useRef(null);
   const [confirmingLogout, setConfirmingLogout] = useState(false);
-  const [liquidGlassDialogOpen, setLiquidGlassDialogOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -332,7 +325,7 @@ function SettingsPanel({ installApp, installAvailable, appInstalled, query = '',
   return (
     <div className="settings-section">
       {/* Theme Toggle */}
-      <div className="settings-group" hidden={!showGroup('appearance theme interface haptics dark light layout vibration liquid glass navigation reflection refraction')}>
+      <div className="settings-group" hidden={!showGroup('appearance theme interface haptics dark light layout vibration')}>
         <h3 className="settings-group-title">Appearance</h3>
         <div className="settings-row">
           <div className="settings-row-label">
@@ -354,82 +347,6 @@ function SettingsPanel({ installApp, installAvailable, appInstalled, query = '',
             </span>
           </button>
         </div>
-        <div className="settings-row">
-          <div className="settings-row-label">
-            <span className="settings-row-icon"><Sparkles size={18} /></span>
-            <div>
-              <strong>Top atmosphere</strong>
-              <small>{topAtmosphereOn ? 'Blurred poster fade behind the header' : 'Standard page background'}</small>
-            </div>
-          </div>
-          <button
-            className="theme-toggle"
-            role="switch"
-            aria-checked={topAtmosphereOn}
-            onClick={() => { hapticTap(); setTopAtmosphereOn(value => !value); }}
-            aria-label={`Turn top atmosphere ${topAtmosphereOn ? 'off' : 'on'}`}
-          >
-            <span className={`theme-toggle-track ${topAtmosphereOn ? 'dark' : 'light'}`}>
-              <span className="theme-toggle-thumb"><Sparkles size={14} /></span>
-            </span>
-          </button>
-        </div>
-        <div className="settings-row">
-          <div className="settings-row-label">
-            <span className="settings-row-icon"><Sparkles size={18} /></span>
-            <div>
-              <strong>Borderless header</strong>
-              <small>{borderlessHeaderOn ? 'Artwork and outlines hidden · blur surfaces retained' : 'Use the current header appearance'}</small>
-            </div>
-          </div>
-          <button className="theme-toggle" type="button" role="switch" aria-checked={borderlessHeaderOn}
-            onClick={() => { hapticTap(); setBorderlessHeaderOn?.(value => !value); }}
-            aria-label={`Turn borderless header ${borderlessHeaderOn ? 'off' : 'on'}`}>
-            <span className={`theme-toggle-track ${borderlessHeaderOn ? 'dark' : 'light'}`}><span className="theme-toggle-thumb"><Sparkles size={14} /></span></span>
-          </button>
-        </div>
-        <p className="settings-data-desc">Removes the blurred poster artwork and header outlines while keeping the existing translucent blur surfaces and their opacity.</p>
-        <div className="settings-row liquid-glass-settings-row">
-          <div className="settings-row-label">
-            <span className="settings-row-icon"><Sparkles size={18} /></span>
-            <div>
-              <strong>Liquid Glass navigation</strong>
-              <small>{liquidGlassNavOn ? "Real-time refraction and elastic glass enabled" : "Your standard navigation stays unchanged"}</small>
-            </div>
-          </div>
-          <div className="liquid-glass-row-actions">
-            <button className="liquid-glass-customize" type="button" onClick={() => setLiquidGlassDialogOpen(true)}>Customize</button>
-            <button className="theme-toggle" role="switch" aria-checked={liquidGlassNavOn}
-              onClick={() => { hapticTap(); setLiquidGlassNavOn?.(value => !value); }}
-              aria-label={"Turn Liquid Glass navigation " + (liquidGlassNavOn ? "off" : "on")}>
-              <span className={"theme-toggle-track " + (liquidGlassNavOn ? "dark" : "light")}>
-                <span className="theme-toggle-thumb"><Sparkles size={14} /></span>
-              </span>
-            </button>
-          </div>
-        </div>
-        {liquidGlassDialogOpen && (
-          <div className="liquid-glass-dialog-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setLiquidGlassDialogOpen(false); }}>
-            <section className="liquid-glass-dialog" role="dialog" aria-modal="true" aria-labelledby="liquid-glass-dialog-title">
-              <header className="liquid-glass-dialog-head">
-                <div><span className="liquid-glass-dialog-kicker">Navigation appearance</span><h2 id="liquid-glass-dialog-title">Liquid Glass</h2><p>Shape the refraction, clarity and movement of your navigation.</p></div>
-                <button type="button" className="liquid-glass-dialog-close" onClick={() => setLiquidGlassDialogOpen(false)} aria-label="Close"><X size={19} /></button>
-              </header>
-              <div className="liquid-glass-preview"><span className="liquid-glass-preview-shine" /><span className="liquid-glass-preview-icons">⌂　▤　▥　◉</span><small>{liquidGlassNavOn ? 'Live effect enabled' : 'Preview · enable to apply'}</small></div>
-              <div className="liquid-glass-mode-picker" role="group" aria-label="Refraction style">
-                {[{id:'clear',label:'Clear'},{id:'standard',label:'Classic'},{id:'polar',label:'Prismatic'},{id:'prominent',label:'Sculpted'}].map(option => <button type="button" key={option.id} className={liquidGlassNavConfig.mode === option.id ? 'active' : ''} onClick={() => setLiquidGlassNavConfig(current => option.id === 'clear' ? { ...current, mode:'clear', displacementScale:38, blurAmount:0.06, saturation:205, aberrationIntensity:0.8, elasticity:0.12 } : { ...current, mode:option.id })}>{option.label}</button>)}
-              </div>
-              <div className="liquid-glass-controls">
-                <label><span><b>Refraction</b><output>{liquidGlassNavConfig.displacementScale}</output></span><input type="range" min="20" max="100" step="1" value={liquidGlassNavConfig.displacementScale} onChange={event => setLiquidGlassNavConfig(current => ({ ...current, displacementScale: Number(event.target.value) }))} /></label>
-                <label><span><b>Frosted clarity</b><output>{Math.round(liquidGlassNavConfig.blurAmount * 100)}%</output></span><input type="range" min="0.03" max="0.3" step="0.01" value={liquidGlassNavConfig.blurAmount} onChange={event => setLiquidGlassNavConfig(current => ({ ...current, blurAmount: Number(event.target.value) }))} /></label>
-                <label><span><b>Colour richness</b><output>{liquidGlassNavConfig.saturation}%</output></span><input type="range" min="110" max="240" step="5" value={liquidGlassNavConfig.saturation} onChange={event => setLiquidGlassNavConfig(current => ({ ...current, saturation: Number(event.target.value) }))} /></label>
-                <label><span><b>Edge prism</b><output>{liquidGlassNavConfig.aberrationIntensity.toFixed(1)}</output></span><input type="range" min="0" max="4" step="0.1" value={liquidGlassNavConfig.aberrationIntensity} onChange={event => setLiquidGlassNavConfig(current => ({ ...current, aberrationIntensity: Number(event.target.value) }))} /></label>
-                <label><span><b>Elastic movement</b><output>{liquidGlassNavConfig.elasticity.toFixed(2)}</output></span><input type="range" min="0" max="0.45" step="0.01" value={liquidGlassNavConfig.elasticity} onChange={event => setLiquidGlassNavConfig(current => ({ ...current, elasticity: Number(event.target.value) }))} /></label>
-              </div>
-              <footer className="liquid-glass-dialog-footer"><button type="button" className="liquid-glass-reset" onClick={() => setLiquidGlassNavConfig({ displacementScale: 58, blurAmount: 0.12, saturation: 175, aberrationIntensity: 1.8, elasticity: 0.18, mode: 'prominent' })}>Reset</button><button type="button" className="liquid-glass-done" onClick={() => { setLiquidGlassDialogOpen(false); if (!liquidGlassNavOn) setLiquidGlassNavOn?.(true); }}>Apply</button></footer>
-            </section>
-          </div>
-        )}
         <div className="settings-row">
           <div className="settings-row-label">
             <span className="settings-row-icon"><Vibrate size={18} /></span>
