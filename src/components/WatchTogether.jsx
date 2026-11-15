@@ -584,12 +584,12 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     const playback = room.playback;
     const target = Math.max(0, Number(playback.position) + (playback.paused ? 0 : Math.max(0, (Date.now() - Date.parse(playback.updated_at || room.updated_at || new Date().toISOString())) / 1000)));
     applyingRemoteRef.current = true;
-    sendPlayerCommand('seek', [target]);
-    sendPlayerCommand(playback.paused ? 'pause' : 'play');
+    postPlayerCommand('seek', [target]);
+    postPlayerCommand(playback.paused ? 'pause' : 'play');
     setCurrentTime(target); currentTimeRef.current = target;
     setPaused(Boolean(playback.paused)); pausedRef.current = Boolean(playback.paused);
     window.setTimeout(() => { applyingRemoteRef.current = false; }, 900);
-  }, [playerReady, room?.id, sendPlayerCommand]);
+  }, [playerReady, room?.id, postPlayerCommand]);
 
   if (launchOnly) return <button type="button" className="watch-together-launch" onClick={() => { onBeforeOpenRef.current?.(); onWatchTogether?.(); }}><Users size={16} /><span>Watch together</span></button>;
   return <>
