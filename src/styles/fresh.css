@@ -13969,19 +13969,47 @@
   :root .movie-site.page-watch-together > .site-footer.wt-screening-footer .footer-info-btn {margin-left:auto!important;}
 }
 
-/* Keep the Watch Together content well clear of the footer.
-   The clearance belongs after the room/create screen, not inside the footer. */
+/* Keep a generous, intentional background runway between Watch Together
+   controls and the footer. The footer itself remains a separate rounded surface. */
 :root .movie-site.page-watch-together .wt-page:not(.wt-minimized):not(.wt-theatre-mode) {
-  margin-bottom:clamp(150px,18vh,220px)!important;
+  margin-bottom:clamp(190px,22vh,280px)!important;
 }
 :root .movie-site.page-watch-together > .site-footer.wt-screening-footer {
   margin-top:0!important;
+  border-radius:30px 30px 0 0!important;
+  overflow:hidden!important;
+  box-shadow:0 -10px 36px rgba(15,23,42,.055)!important;
 }
+:root[data-theme="dark"] .movie-site.page-watch-together > .site-footer.wt-screening-footer {
+  background:#08090d!important;color:#aeb4c0!important;
+  border-top:1px solid rgba(255,255,255,.09)!important;
+  box-shadow:0 -12px 40px rgba(0,0,0,.18)!important;
+}
+:root[data-theme="dark"] .movie-site.page-watch-together > .site-footer.wt-screening-footer .footer-bottom span {color:#aeb4c0!important}
+:root[data-theme="dark"] .movie-site.page-watch-together > .site-footer.wt-screening-footer .footer-info-btn {
+  border-color:rgba(255,255,255,.14)!important;background:#171a21!important;color:#f1f3f7!important;
+}
+:root[data-theme="dark"] .movie-site.page-watch-together > .site-footer.wt-screening-footer .footer-content h4 {color:#f2f4f8!important}
+:root[data-theme="dark"] .movie-site.page-watch-together > .site-footer.wt-screening-footer .footer-content p {color:#aeb4c0!important}
+:root[data-theme="light"] .movie-site.page-watch-together > .site-footer.wt-screening-footer {
+  background:#f1f3f7!important;color:#596273!important;
+  border-top:1px solid rgba(30,41,59,.09)!important;
+  box-shadow:0 -10px 34px rgba(30,41,59,.045)!important;
+}
+:root[data-theme="light"] .movie-site.page-watch-together > .site-footer.wt-screening-footer .footer-bottom,
+:root[data-theme="light"] .movie-site.page-watch-together > .site-footer.wt-screening-footer .footer-bottom span,
+:root[data-theme="light"] .movie-site.page-watch-together > .site-footer.wt-screening-footer .footer-content p {
+  color:#596273!important;
+}
+:root[data-theme="light"] .movie-site.page-watch-together > .site-footer.wt-screening-footer .footer-info-btn {
+  border:1px solid rgba(30,41,59,.12)!important;background:#fff!important;color:#303b4d!important;
+}
+:root[data-theme="light"] .movie-site.page-watch-together > .site-footer.wt-screening-footer .footer-content h4 {color:#202a39!important}
 @media(max-width:760px) {
   :root .movie-site.page-watch-together .wt-page:not(.wt-minimized):not(.wt-theatre-mode) {
-    margin-bottom:calc(clamp(240px,34vh,360px) + env(safe-area-inset-bottom))!important;
+    margin-bottom:calc(clamp(300px,40vh,440px) + env(safe-area-inset-bottom))!important;
   }
   :root .movie-site.page-watch-together > .site-footer.wt-screening-footer {
-    margin-top:0!important;
+    margin-top:0!important;border-radius:26px 26px 0 0!important;
   }
 }
