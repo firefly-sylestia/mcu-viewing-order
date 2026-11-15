@@ -12032,50 +12032,6 @@
   content: none !important;
 }
 
-/* Home top-edge atmosphere: avoid re-rasterizing a huge filtered layer while
-   the page rapidly scrolls back into view. The layered fade keeps the same
-   soft atmosphere without a live full-surface blur filter. */
-:root[data-top-atmosphere="on"] .movie-site::before {
-  filter: none !important;
-  -webkit-filter: none !important;
-  transform: translate3d(0,0,0) !important;
-  backface-visibility: hidden !important;
-  contain: paint !important;
-  will-change: auto !important;
-}
-:root[data-top-atmosphere="on"] .movie-site.page-home::before {
-  background-repeat: no-repeat !important;
-  background-position: center top !important;
-  background-size: 100% 100%, 115% auto !important;
-}
-:root .movie-site.page-home .top-carousel .carousel-backdrops {
-  overflow: hidden !important;
-  contain: paint !important;
-  isolation: isolate !important;
-  transform: translate3d(0,0,0) !important;
-}
-:root .movie-site.page-home .top-carousel .carousel-backdrop {
-  filter: blur(12px) saturate(1.08) !important;
-  -webkit-filter: blur(12px) saturate(1.08) !important;
-  transform: translate3d(0,0,0) scale(1.035) !important;
-  backface-visibility: hidden !important;
-  will-change: opacity !important;
-}
-:root .movie-site.page-home .top-carousel .carousel-backdrop.is-previous {
-  filter: blur(12px) saturate(1.08) brightness(.82) !important;
-  -webkit-filter: blur(12px) saturate(1.08) brightness(.82) !important;
-}
-@media (max-width: 760px) {
-  :root .movie-site.page-home .top-carousel .carousel-backdrop,
-  :root .movie-site.page-home .top-carousel .carousel-backdrop.is-previous {
-    filter: blur(8px) saturate(1.04) !important;
-    -webkit-filter: blur(8px) saturate(1.04) !important;
-  }
-  :root[data-top-atmosphere="on"] .movie-site.page-home::before {
-    background-size: 100% 100%, 145% auto !important;
-  }
-}
-
 /* List header: reserve a real, fixed-width slot for the filter control so its
    icon/count can never be pushed beyond the header edge on narrow screens. */
 :root[data-header-design="cinematic"] .movie-site.page-list .site-header .header-tools {
