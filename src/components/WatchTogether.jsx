@@ -49,6 +49,7 @@ const makeAccountIdentity = (user, profileName, profileAvatar) => {
 export default function WatchTogether({ item, tmdbId, mediaType, season = 1, episode = 1, playerUrl, onEpisodeChange, onBeforeOpen, user, profileName, profileAvatar }) {
   const guest = useMemo(() => user?.id ? makeAccountIdentity(user, profileName, profileAvatar) : { ...makeGuest(), isGuest: true }, [user?.id, user?.displayName, user?.email, user?.user_metadata?.display_name, user?.user_metadata?.full_name, user?.user_metadata?.avatar_url, user?.user_metadata?.picture, profileName, profileAvatar]);
   const [open, setOpen] = useState(false);
+  const [showPlaybackNotice, setShowPlaybackNotice] = useState(false);
   const [room, setRoom] = useState(null);
   const [participant, setParticipant] = useState(null);
   const [members, setMembers] = useState([]);
@@ -139,6 +140,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       setParticipant(result.participant);
       applyRoomSnapshot(result);
       setOpen(true);
+      setShowPlaybackNotice(true);
       const url = new URL(window.location.href);
       url.searchParams.set('room', code.trim().toUpperCase());
       setRoomLink(url.toString());
@@ -165,6 +167,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       const link = url.toString();
       setRoomLink(link);
       setOpen(true);
+      setShowPlaybackNotice(true);
       try { await navigator.clipboard.writeText(link); setCopied(true); window.setTimeout(() => setCopied(false), 2200); } catch {}
     } catch (e) { setError(e.message || 'Could not create the room.'); }
     finally { setBusy(false); }
@@ -376,6 +379,16 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
               {error && <p className="wt-error wt-chat-error">{error}</p>}
               <div className="wt-chat-foot"><Clock3 size={13} /> Chat and room expire automatically after inactivity.</div>
             </aside>
+          </div>}
+          {room && showPlaybackNotice && <div className="wt-notice-backdrop" role="presentation">
+            <section className="wt-playback-notice" role="dialog" aria-modal="true" aria-labelledby="wt-playback-notice-title">
+              <span className="wt-notice-icon"><Play size={20} fill="currentColor" /></span>
+              <span className="wt-notice-kicker">ONE QUICK STEP</span>
+              <h2 id="wt-playback-notice-title">Tap Play once to get started</h2>
+              <p>Your browser may block autoplay. Once the player is ready, tap its Play button or the shared Play control once to allow playback for this session.</p>
+              <div className="wt-adblock-tip"><ShieldCheck size={17} /><span><strong>Always use an ad blocker.</strong> It helps reduce intrusive ads, pop-ups and redirects while browsing. Never install unfamiliar extensions.</span></div>
+              <button type="button" onClick={() => setShowPlaybackNotice(false)}>Got it, let's watch</button>
+            </section>
           </div>}
         </section>
       </div>, document.body
