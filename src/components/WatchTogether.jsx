@@ -156,6 +156,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     if (version > lastVersionRef.current) {
       lastVersionRef.current = version;
       const playback = nextRoom.playback || {};
+      const previousTime = currentTimeRef.current;
       if (!localPlaybackOverrideRef.current) { setPaused(Boolean(playback.paused)); pausedRef.current=Boolean(playback.paused); }
       if (Number.isFinite(Number(playback.position))) {
         const target = Math.max(0, Number(playback.position) + (playback.paused ? 0 : Math.max(0, (Date.now() - Date.parse(playback.updated_at || nextRoom.updated_at || new Date().toISOString())) / 1000)));
