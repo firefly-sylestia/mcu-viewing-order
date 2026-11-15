@@ -60,6 +60,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const [roomsLoading, setRoomsLoading] = useState(false);
   const [localPlaybackOverride, setLocalPlaybackOverride] = useState(false);
   const [savedLocalPosition, setSavedLocalPosition] = useState(null);
+  const [savedLocalPaused, setSavedLocalPaused] = useState(true);
   const [canReturnLocal, setCanReturnLocal] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState(item || null);
   const [mediaQuery, setMediaQuery] = useState('');
@@ -377,7 +378,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
 
   const syncToRoom = useCallback(() => {
     if (!room?.playback) return;
-    setSavedLocalPosition(currentTimeRef.current); setCanReturnLocal(true);
+    setSavedLocalPosition(currentTimeRef.current); setSavedLocalPaused(pausedRef.current); setCanReturnLocal(true);
     const playback=room.playback;
     const target=Math.max(0,Number(playback.position)||0)+(playback.paused?0:Math.max(0,(Date.now()-Date.parse(playback.updated_at||room.updated_at||new Date().toISOString()))/1000));
     applyingRemoteRef.current=true; iframeRef.current?.contentWindow?.postMessage({type:'cinesrc:command',command:'seek',args:[target]},'https://cinesrc.st');
@@ -388,7 +389,8 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const returnToLocalPosition = useCallback(() => {
     if (savedLocalPosition == null) return;
     applyingRemoteRef.current=true;iframeRef.current?.contentWindow?.postMessage({type:'cinesrc:command',command:'seek',args:[savedLocalPosition]},'https://cinesrc.st');
-    setCurrentTime(savedLocalPosition);currentTimeRef.current=savedLocalPosition;setLocalPlaybackOverride(true);localPlaybackOverrideRef.current=true;setCanReturnLocal(false);
+    iframeRef.current?.contentWindow?.postMessage({type:'cinesrc:command',command:savedLocalPaused?'pause':'play',args:[]},'https://cinesrc.st');
+    setCurrentTime(savedLocalPosition);currentTimeRef.current=savedLocalPosition;setPaused(savedLocalPaused);pausedRef.current=savedLocalPaused;setLocalPlaybackOverride(true);localPlaybackOverrideRef.current=true;setCanReturnLocal(false);
     window.setTimeout(()=>{applyingRemoteRef.current=false;},700);
   }, [savedLocalPosition]);
 
