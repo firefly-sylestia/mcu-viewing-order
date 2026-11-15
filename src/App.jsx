@@ -3162,7 +3162,7 @@ const saveServerPref = (tmdbId, server) => {
     return currentItem.type === 'series'
       ? `https://cinesrc.st/embed/tv/${id}?s=${selectedSeason}&e=${selectedEpisode}&${params.toString()}`
       : `https://cinesrc.st/embed/movie/${id}?${params.toString()}`;
-  }, [currentItem.tmdbId, currentItem.type, selectedSeason, currentItem.accent, tmdbId, playerEpisode]);
+  }, [currentItem.tmdbId, currentItem.type, selectedSeason, selectedEpisode, currentItem.accent, tmdbId]);
   const roadmapInfo = useMemo(() => getRoadmap(currentItem, activeItems), [activeItems, currentItem]);
 
   const currentOrder = currentItem.order || currentItem.id;
