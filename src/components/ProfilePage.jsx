@@ -168,7 +168,7 @@ export function ProfileHeader({ universe, stats, profileName, setProfileName, pr
   useEffect(() => { if (profileAvatar !== undefined) setLocalAvatar(profileAvatar || ''); }, [profileAvatar]);
   const universeName = universe === 'all' ? 'Multiverse' : universe === 'marvel' ? 'MCU' : universe === 'xmen' ? 'X-Men' : universe === 'sony' ? 'Sony' : 'DC';
   const guestIdentity = getGuestIdentity();
-  const displayName = (profileName || (!nameCleared ? user?.displayName : '') || user?.email?.split('@')[0] || guestIdentity.name).trim();
+  const displayName = (profileName || (nameCleared ? 'Your profile' : user?.displayName || user?.email?.split('@')[0] || guestIdentity.name)).trim();
   const avatarInitial = (displayName[0] || universeName[0]).toUpperCase();
   const generatedAvatar = `https://blobatar.dev/avatar/${encodeURIComponent(displayName)}?size=256&gen=2&background=squircle`;
 
