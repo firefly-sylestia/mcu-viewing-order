@@ -165,7 +165,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
           const frame = iframeRef.current;
           const send = (command, args = []) => frame?.contentWindow?.postMessage({ type: 'cinesrc:command', command, args }, 'https://cinesrc.st');
           if (!localPlaybackOverrideRef.current) {
-            if (Math.abs(currentTimeRef.current - target) > 5) send('seek', [target]);
+            if (Math.abs(previousTime - target) > 5) send('seek', [target]);
             if (playback.paused) { send('pause'); setPaused(true); pausedRef.current = true; }
             else { send('play'); setPaused(false); pausedRef.current = false; }
           }
@@ -300,14 +300,16 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       const playback = state?.playback || {};
       if (version > lastVersionRef.current) {
         lastVersionRef.current = version;
+        setRoom(previous => previous ? { ...previous, state_version: version, playback } : previous);
         if (!localPlaybackOverrideRef.current) { setPaused(Boolean(playback.paused)); pausedRef.current=Boolean(playback.paused); }
+        const previousTime = currentTimeRef.current;
         const target = Math.max(0, Number(playback.position) + (playback.paused ? 0 : Math.max(0, (Date.now() - Date.parse(playback.updated_at || state.updated_at || new Date().toISOString())) / 1000)));
         if (!localPlaybackOverrideRef.current) { setCurrentTime(target); currentTimeRef.current=target; }
         if (playback.actor !== activeParticipant.id && playerReadyRef.current && !applyingRemoteRef.current && !localPlaybackOverrideRef.current) {
           applyingRemoteRef.current = true;
           const frame = iframeRef.current;
           const send = (command, args = []) => frame?.contentWindow?.postMessage({ type: 'cinesrc:command', command, args }, 'https://cinesrc.st');
-          if (Math.abs(currentTimeRef.current - target) > 5) send('seek', [target]);
+          if (Math.abs(previousTime - target) > 5) send('seek', [target]);
           send(playback.paused ? 'pause' : 'play');
           setTimeout(() => { applyingRemoteRef.current = false; }, 1800);
         }
