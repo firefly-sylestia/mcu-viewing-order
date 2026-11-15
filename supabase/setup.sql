@@ -180,7 +180,7 @@ revoke all on sequence public.watch_room_messages_id_seq from anon, authenticate
 
 
 create or replace function public.cleanup_expired_watch_rooms()
-returns bigint language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $
+returns bigint language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $$
 declare removed bigint;
 begin
   delete from public.watch_rooms where closed_at is not null or expires_at <= now();
@@ -191,7 +191,7 @@ end $$;
 create or replace function public.create_watch_room(
   p_code text, p_token text, p_name text, p_avatar text, p_media jsonb
 ) returns jsonb
-language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $
+language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $$
 declare r public.watch_rooms; p public.watch_room_participants; existing_count integer; stale_room_id uuid;
 begin
   perform public.cleanup_expired_watch_rooms();
@@ -261,7 +261,7 @@ end $$;
 create or replace function public.join_watch_room(
   p_code text, p_token text, p_name text, p_avatar text
 ) returns jsonb
-language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $
+language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $$
 declare r public.watch_rooms; p public.watch_room_participants; parts jsonb; msgs jsonb; reqs jsonb;
 begin
   perform public.cleanup_expired_watch_rooms();
@@ -285,7 +285,7 @@ begin
 end $$;
 
 create or replace function public.watch_room_snapshot(p_code text, p_token text)
-returns jsonb language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $
+returns jsonb language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $$
 declare r public.watch_rooms; p public.watch_room_participants; parts jsonb; msgs jsonb; reqs jsonb;
 begin
   select * into r from public.watch_rooms where code=upper(trim(p_code)) and closed_at is null and expires_at > now();
@@ -303,7 +303,7 @@ begin
 end $$;
 
 create or replace function public.watch_room_heartbeat(p_code text,p_token text)
-returns boolean language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $
+returns boolean language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $$
 declare rid uuid;
 begin
   select id into rid from public.watch_rooms where code=upper(trim(p_code)) and closed_at is null and expires_at > now();
@@ -316,7 +316,7 @@ end $$;
 
 
 create or replace function public.watch_room_playback_snapshot(p_code text,p_token text)
-returns jsonb language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $
+returns jsonb language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $$
 declare r public.watch_rooms; p public.watch_room_participants;
 begin
   select * into r from public.watch_rooms where code=upper(trim(p_code)) and closed_at is null and expires_at > now();
@@ -327,7 +327,7 @@ begin
 end $$;
 
 create or replace function public.set_watch_room_playback(p_code text,p_token text,p_playback jsonb)
-returns jsonb language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $
+returns jsonb language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $$
 declare r public.watch_rooms; p public.watch_room_participants; next_state jsonb;
 begin
   select * into r from public.watch_rooms where code=upper(trim(p_code)) and closed_at is null and expires_at > now() for update;
@@ -351,7 +351,7 @@ begin
 end $$;
 
 create or replace function public.send_watch_room_message(p_code text,p_token text,p_body text)
-returns jsonb language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $
+returns jsonb language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $$
 declare r public.watch_rooms; p public.watch_room_participants; m public.watch_room_messages;
 begin
   select * into r from public.watch_rooms where code=upper(trim(p_code)) and closed_at is null and expires_at > now();
@@ -367,7 +367,7 @@ begin
 end $$;
 
 create or replace function public.leave_watch_room(p_code text,p_token text)
-returns boolean language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $
+returns boolean language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $$
 declare rid uuid;
 begin
   select id into rid from public.watch_rooms where code=upper(trim(p_code));
@@ -379,7 +379,7 @@ begin
 end $$;
 
 create or replace function public.close_watch_room(p_code text,p_token text)
-returns boolean language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $
+returns boolean language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $$
 declare rid uuid;
 begin
   select r.id into rid from public.watch_rooms r join public.watch_room_participants p on p.id=r.host_participant_id
@@ -391,7 +391,7 @@ end $$;
 
 
 create or replace function public.request_watch_room_access(p_code text,p_token text,p_request_type text,p_payload jsonb default '{}'::jsonb)
-returns jsonb language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $
+returns jsonb language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $$
 declare r public.watch_rooms; p public.watch_room_participants; q public.watch_room_requests;
 begin
   select * into r from public.watch_rooms where code=upper(trim(p_code)) and closed_at is null and expires_at > now();
@@ -409,7 +409,7 @@ begin
 end $$;
 
 create or replace function public.resolve_watch_room_request(p_code text,p_token text,p_request_id bigint,p_approve boolean)
-returns jsonb language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $
+returns jsonb language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $$
 declare r public.watch_rooms; p public.watch_room_participants; q public.watch_room_requests; next_state jsonb; pos double precision;
 begin
   select * into r from public.watch_rooms where code=upper(trim(p_code)) and closed_at is null and expires_at > now() for update;
@@ -437,7 +437,7 @@ end $$;
 
 
 create or replace function public.rename_watch_room_participant(p_code text,p_token text,p_name text,p_avatar text)
-returns jsonb language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $
+returns jsonb language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $$
 declare r public.watch_rooms; p public.watch_room_participants;
 begin
   select * into r from public.watch_rooms where code=upper(trim(p_code)) and closed_at is null and expires_at>now();
@@ -451,7 +451,7 @@ begin
 end $$;
 
 create or replace function public.record_watch_together_history(p_code text,p_token text,p_duration_seconds integer)
-returns jsonb language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $
+returns jsonb language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $$
 declare r public.watch_rooms; p public.watch_room_participants; h public.watch_together_history;
 begin
   if auth.uid() is null then raise exception 'Sign in to sync Watch Together history.'; end if;
@@ -469,7 +469,7 @@ begin
 end $$;
 
 create or replace function public.get_watch_together_history()
-returns jsonb language sql stable security definer set search_path = pg_catalog, public, pg_temp as $
+returns jsonb language sql stable security definer set search_path = pg_catalog, public, pg_temp as $$
   select coalesce(jsonb_agg(to_jsonb(h) order by h.last_watched_at desc),'[]'::jsonb)
   from (select id,room_code,title,media,duration_seconds,started_at,last_watched_at from public.watch_together_history
         where user_id=auth.uid() order by last_watched_at desc limit 50) h;
