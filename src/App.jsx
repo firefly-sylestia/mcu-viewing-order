@@ -29,13 +29,10 @@ const parseHash = () => {
   const raw = window.location.hash.replace('#', '');
   const slash = raw.indexOf('/');
   const section = slash > -1 ? raw.slice(0, slash) : raw;
-  // Handle search query: #list?q=thor
-  const qMark = section.indexOf('?');
-  const cleanSection = qMark > -1 ? section.slice(0, qMark) : section;
-  const searchQuery = qMark > -1 ? new URLSearchParams(section.slice(qMark)).get('q') || '' : '';
+  const cleanSection = section.split('?')[0];
   const rawSlug = slash > -1 ? raw.slice(slash + 1) : null;
   const slug = rawSlug ? rawSlug.split('?')[0] : null;
-  return { section: VALID_HASHES.includes(cleanSection) ? cleanSection : null, slug, searchQuery };
+  return { section: VALID_HASHES.includes(cleanSection) ? cleanSection : null, slug };
 };
 
 const STATUS_LABELS = { unwatched: 'Unwatched', watching: 'Watching', watched: 'Watched', dropped: 'Dropped' };
@@ -211,7 +208,7 @@ const enhance = (item, universe) => ({
 export default function App() {
   const saved = useMemo(readSavedState, []);
   const [universe, setUniverse] = useState(saved.universe || 'marvel');
-  const [query, setQuery] = useState(saved.query || '');
+  const [query, setQuery] = useState('');
   const [focusListSearch, setFocusListSearch] = useState(false);
   const listSearchInputRef = useRef(null);
   const [externalSearchResults, setExternalSearchResults] = useState([]);
@@ -618,8 +615,9 @@ export default function App() {
 
   // Auto-start watching from item-level deep link (e.g. #watch/iron-man) on mount
   useEffect(() => {
-    const { section: s, slug, searchQuery: sq } = parseHash();
-    if (s === 'list' && sq) setQuery(sq);
+    const { section: s, slug } = parseHash();
+    if (window.location.hash.startsWith('#list?')) window.history.replaceState(null, '', '#list');
+    setQuery('');
     if (s === 'watch' && slug && allItems.length && !watchItem) {
       const found = allItems.find(i => slugifyPosterName(i.title) === slug);
       if (found) handleStartWatch(found, found.tmdbId || null, found.type === 'series' ? 'tv' : 'movie');
@@ -633,8 +631,8 @@ export default function App() {
   const allItems = useMemo(() => [...RAW.map(item => enhance(item, 'marvel')), ...DC_RAW.map(item => enhance(item, 'dc')), ...XMEN_RAW.map(item => enhance(item, 'xmen')), ...SONY_RAW.map(item => enhance(item, 'sony'))], []);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ universe, query, listPreferences, genre, rating, ageRatingFilter, sortBy, sortDirection, phaseFilters, phaseFilter, typeFilter, actions, section, watchItem, profileName }));
-  }, [universe, query, listPreferences, genre, rating, ageRatingFilter, sortBy, sortDirection, phaseFilters, phaseFilter, typeFilter, actions, section, watchItem, profileName]);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ universe, listPreferences, genre, rating, ageRatingFilter, sortBy, sortDirection, phaseFilters, phaseFilter, typeFilter, actions, section, watchItem, profileName }));
+  }, [universe, listPreferences, genre, rating, ageRatingFilter, sortBy, sortDirection, phaseFilters, phaseFilter, typeFilter, actions, section, watchItem, profileName]);
 
   const initialRender = useRef(true);
   useEffect(() => {
@@ -642,7 +640,7 @@ export default function App() {
     if (hashed !== section) {
       const target = section === 'watch' && safeWatchItem
         ? `#watch/${slugifyPosterName(safeWatchItem.item.title)}`
-        : section === 'list' && query ? `#list?q=${encodeURIComponent(query)}` : `#${section}`;
+        : `#${section}`;
       if (initialRender.current) {
         window.history.replaceState(null, '', target);
         initialRender.current = false;
@@ -651,15 +649,6 @@ export default function App() {
       }
     }
   }, [section, safeWatchItem]);
-
-  // Sync search query into URL silently (no history entry per keystroke)
-  useEffect(() => {
-    if (section === 'list' && !initialRender.current) {
-      const q = query ? `?q=${encodeURIComponent(query)}` : '';
-      const currentHash = window.location.hash.replace(/\?.*/, '');
-      window.history.replaceState(null, '', `${currentHash}${q}`);
-    }
-  }, [query, section]);
 
   // Android/browser Back should dismiss an open menu or dialog before
   // navigating away from the current page.
@@ -681,9 +670,9 @@ export default function App() {
 
   useEffect(() => {
     const syncLocation = () => {
-      const { section: s, slug, searchQuery: sq } = parseHash();
+      const { section: s, slug } = parseHash();
       if (s) setSection(s);
-      if (s === 'list') setQuery(sq || '');
+      if (s === 'list') setQuery('');
       if (s === 'watch' && slug && allItems.length) {
         const found = allItems.find(i => slugifyPosterName(i.title) === slug);
         if (found) handleStartWatch(found, found.tmdbId || null, found.type === 'series' ? 'tv' : 'movie');

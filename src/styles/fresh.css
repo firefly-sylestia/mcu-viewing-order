@@ -11715,3 +11715,20 @@
     display: none !important;
   }
 }
+
+
+/* List page sits directly on the page atmosphere; no enclosing panel/card. */
+:root [data-ui="fresh"] .list-section,
+:root .movie-site.page-list .list-section {
+  background: transparent !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+:root [data-ui="fresh"] .list-results-bar,
+:root .movie-site.page-list .list-results-bar {
+  background: transparent !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
