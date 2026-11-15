@@ -69,7 +69,9 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const [roomLink, setRoomLink] = useState('');
   const iframeRef = useRef(null);
   const pollRef = useRef(null);
+  const playbackPollRef = useRef(null);
   const pollInFlightRef = useRef(false);
+  const playbackPollInFlightRef = useRef(false);
   const heartbeatRef = useRef(null);
   const lastVersionRef = useRef(0);
   const applyingRemoteRef = useRef(false);
@@ -217,14 +219,43 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   useEffect(() => {
     if (!room || !participant) return undefined;
     refreshRoom();
-    pollRef.current = window.setInterval(refreshRoom, 650);
+    refreshPlayback();
+    pollRef.current = window.setInterval(refreshRoom, 4200);
+    playbackPollRef.current = window.setInterval(refreshPlayback, 450);
     heartbeatRef.current = window.setInterval(() => {
       const r = roomRef.current, p = participantRef.current;
       if (r && p) rpc('watch_room_heartbeat', { p_code: r.code, p_token: p.token }).catch(() => {});
     }, 12000);
-    return () => { window.clearInterval(pollRef.current); window.clearInterval(heartbeatRef.current); };
-  }, [room?.id, participant?.id, refreshRoom, rpc]);
+    return () => { window.clearInterval(pollRef.current); window.clearInterval(playbackPollRef.current); window.clearInterval(heartbeatRef.current); };
+  }, [room?.id, participant?.id, refreshRoom, refreshPlayback, rpc]);
 
+  const refreshPlayback = useCallback(async () => {
+    const activeRoom = roomRef.current;
+    const activeParticipant = participantRef.current;
+    if (!activeRoom?.code || !activeParticipant?.token || playbackPollInFlightRef.current) return;
+    playbackPollInFlightRef.current = true;
+    try {
+      const state = await rpc('watch_room_playback_snapshot', { p_code: activeRoom.code, p_token: activeParticipant.token });
+      const version = Number(state?.state_version || 0);
+      const playback = state?.playback || {};
+      if (version > lastVersionRef.current) {
+        lastVersionRef.current = version;
+        setPaused(Boolean(playback.paused));
+        const target = Math.max(0, Number(playback.position) + (playback.paused ? 0 : Math.max(0, (Date.now() - Date.parse(playback.updated_at || state.updated_at || new Date().toISOString())) / 1000)));
+        setCurrentTime(target);
+        if (playback.actor !== activeParticipant.id && playerReadyRef.current && !applyingRemoteRef.current) {
+          applyingRemoteRef.current = true;
+          const frame = iframeRef.current;
+          const send = (command, args = []) => frame?.contentWindow?.postMessage({ type: 'cinesrc:command', command, args }, 'https://cinesrc.st');
+          if (Math.abs(currentTimeRef.current - target) > 1.25) send('seek', [target]);
+          send(playback.paused ? 'pause' : 'play');
+          setTimeout(() => { applyingRemoteRef.current = false; }, 550);
+        }
+      }
+    } catch (error) {
+      if (/expired|closed|not found|not a member/i.test(error.message || '')) setError('This room has ended or expired.');
+    } finally { playbackPollInFlightRef.current = false; }
+  }, [rpc]);
   const publishPlayback = useCallback(async (next, force = false) => {
     const r = roomRef.current, p = participantRef.current;
     if (!r || !p || !['host','operator'].includes(p.role || (p.is_host ? 'host' : 'viewer')) || applyingRemoteRef.current) return;
@@ -294,7 +325,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       if (p.is_host) await rpc('close_watch_room', { p_code: r.code, p_token: p.token }).catch(() => {});
       else await rpc('leave_watch_room', { p_code: r.code, p_token: p.token }).catch(() => {});
     }
-    window.clearInterval(pollRef.current); window.clearInterval(heartbeatRef.current);
+    window.clearInterval(pollRef.current); window.clearInterval(playbackPollRef.current); window.clearInterval(heartbeatRef.current);
     setRoom(null); setParticipant(null); setMembers([]); setMessages([]); setRequests([]); setPlayerReady(false); lastVersionRef.current = 0; setOpen(false); setSetupDialog(false); onClose?.();
     const url = new URL(window.location.href); url.searchParams.delete('room'); window.history.replaceState({}, '', url.toString());
   };

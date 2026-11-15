@@ -2,7 +2,7 @@
 
 This folder has **one canonical SQL file**: [setup.sql](./setup.sql).
 
-It contains the database setup for the website's existing account viewing-data sync **and** Watch Together (screening rooms, guest participants, room presence, chat, playback sync, host/operator/viewer roles, and access/skip requests). Keep using this same file when the project adds or updates database features. Do not run old feature-specific SQL files.
+It contains the database setup for the website's existing account viewing-data sync **and** Watch Together (screening rooms, guest participants, room presence, chat, playback sync, host/operator/viewer roles, access/skip requests, and a lightweight fast playback-state poll). Keep using this same file when the project adds or updates database features. Do not run old feature-specific SQL files.
 
 ## First-time setup
 
@@ -65,3 +65,8 @@ No extra Supabase extension, scheduled job, or separate database script is requi
 - **Viewer:** can watch and chat, and can request Operator access or a one-time 10-second skip. Playback changes are enforced by database permissions, not just hidden buttons.
 
 The same master `setup.sql` creates the request queue and its RPC permissions without dropping existing room or participant data. Run the full updated master file again after a database update.
+
+
+### Playback responsiveness update
+
+The room now checks a lightweight playback-state RPC roughly every 450 ms, while full room/chat/member refreshes happen less frequently. This reduces command propagation delay without repeatedly downloading the full chat history. Re-run the complete `setup.sql` after this update to add the playback snapshot RPC.
