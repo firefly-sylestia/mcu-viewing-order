@@ -238,7 +238,6 @@ begin
   if not found then raise exception 'Room not found or expired.'; end if;
   select * into p from public.watch_room_participants where room_id=r.id and token_hash=encode(sha256(convert_to(p_token,'UTF8')),'hex');
   if not found then raise exception 'You are not a member of this room.'; end if;
-  update public.watch_room_participants set last_seen_at=now() where id=p.id;
   return jsonb_build_object('playback',r.playback,'state_version',r.state_version,'updated_at',r.updated_at);
 end $$;
 
