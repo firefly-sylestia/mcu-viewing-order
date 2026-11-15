@@ -12128,3 +12128,72 @@
     max-width: 40px !important;
   }
 }
+
+/* LIGHT THEME — strengthen secondary ink across the interface.
+   Keep headings near-black, but give supporting copy, metadata and labels
+   enough contrast against white / pale surfaces to remain comfortably legible. */
+:root[data-theme="light"] {
+  --fx-muted: #465365 !important;
+  --fx-muted-strong: #344154 !important;
+}
+:root[data-theme="light"] .movie-site .eyebrow,
+:root[data-theme="light"] .movie-site .section-title span,
+:root[data-theme="light"] .movie-site .card-meta-text,
+:root[data-theme="light"] .movie-site .card-meta-phase,
+:root[data-theme="light"] .movie-site .list-intro,
+:root[data-theme="light"] .movie-site .list-summary span,
+:root[data-theme="light"] .movie-site .list-results-bar,
+:root[data-theme="light"] .movie-site .list-page-indicator,
+:root[data-theme="light"] .movie-site .list-copy > span,
+:root[data-theme="light"] .movie-site .list-copy > p,
+:root[data-theme="light"] .movie-site .list-index,
+:root[data-theme="light"] .movie-site .list-title-line > span,
+:root[data-theme="light"] .movie-site .list-tags span,
+:root[data-theme="light"] .movie-site .list-row .list-actions > button,
+:root[data-theme="light"] .movie-site .watch-meta,
+:root[data-theme="light"] .movie-site .watch-desc,
+:root[data-theme="light"] .movie-site .watch-episode-head span,
+:root[data-theme="light"] .movie-site .watch-episode-row,
+:root[data-theme="light"] .movie-site .watch-upnext h2,
+:root[data-theme="light"] .movie-site .watch-rec-card > small,
+:root[data-theme="light"] .movie-site .watch-controlbar-chip,
+:root[data-theme="light"] .movie-site .watch-action-btn,
+:root[data-theme="light"] .movie-site .wb-stat-label,
+:root[data-theme="light"] .movie-site .wb-section-count,
+:root[data-theme="light"] .movie-site .wh3-watch-index,
+:root[data-theme="light"] .movie-site .wh3-watch-info > span,
+:root[data-theme="light"] .movie-site .wh3-resume-copy > p,
+:root[data-theme="light"] .movie-site .rm-meta,
+:root[data-theme="light"] .movie-site .unb-meta,
+:root[data-theme="light"] .movie-site .empty-state,
+:root[data-theme="light"] .movie-site .site-footer {
+  color: #465365 !important;
+}
+:root[data-theme="light"] .movie-site .list-copy > p,
+:root[data-theme="light"] .movie-site .watch-desc,
+:root[data-theme="light"] .movie-site .watch-meta,
+:root[data-theme="light"] .movie-site .wb-hero p,
+:root[data-theme="light"] .movie-site .profile-subtitle,
+:root[data-theme="light"] .movie-site .settings-row small,
+:root[data-theme="light"] .movie-site .auth-header p,
+:root[data-theme="light"] .movie-site .adblocker-toast-desc {
+  color: #3f4b5d !important;
+}
+:root[data-theme="light"] .movie-site .list-index,
+:root[data-theme="light"] .movie-site .list-title-line > span,
+:root[data-theme="light"] .movie-site .list-tags span,
+:root[data-theme="light"] .movie-site .list-row .list-actions > button,
+:root[data-theme="light"] .movie-site .watch-server-select,
+:root[data-theme="light"] .movie-site .watch-episode-picker,
+:root[data-theme="light"] .movie-site .watch-controlbar-chip,
+:root[data-theme="light"] .movie-site .watch-action-btn {
+  color: #344154 !important;
+}
+:root[data-theme="light"] .movie-site .watch-episode-row.watched .watch-ep-title {
+  color: #687487 !important;
+}
+:root[data-theme="light"] .movie-site input::placeholder,
+:root[data-theme="light"] .movie-site textarea::placeholder {
+  color: #667386 !important;
+  opacity: 1 !important;
+}
