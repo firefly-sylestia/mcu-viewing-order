@@ -13360,3 +13360,57 @@
  :root .wt-create-backdrop .wt-host-people>div>span{flex:1 1 auto!important;flex-basis:auto!important}
  :root .wt-create-backdrop .wt-host-people button{padding:0 8px}
 }
+
+/* Watch Together: chat starts tucked away on desktop, with a quiet top breathing area. */
+@media (min-width:761px) {
+  :root .movie-site.page-watch-together .wt-chat.is-collapsed .wt-chat-head {
+    margin-top:18px;
+    padding-top:10px;
+  }
+  :root .movie-site.page-watch-together .wt-chat.is-collapsed .wt-chat-toggle {
+    width:42px;height:42px;border-radius:14px;
+    background:color-mix(in srgb,var(--fx-surface) 78%,transparent);
+    border:1px solid color-mix(in srgb,var(--fx-muted) 22%,transparent);
+    box-shadow:0 8px 24px rgba(15,23,42,.07);
+  }
+}
+/* A cleaner reaction strip and a single, integrated message composer. */
+:root .wt-page .wt-reactions {
+  display:flex;align-items:center;gap:7px;padding:9px 12px 3px;
+}
+:root .wt-page .wt-reactions button {
+  display:grid;place-items:center;width:34px;height:34px;flex:0 0 34px;
+  padding:0;border:1px solid color-mix(in srgb,var(--fx-muted) 17%,transparent);
+  border-radius:12px;background:var(--fx-surface-2);color:var(--fx-text);
+  font-size:16px;line-height:1;cursor:pointer;
+  transition:transform .16s ease,background .16s ease,border-color .16s ease;
+}
+:root .wt-page .wt-reactions button:hover {
+  transform:translateY(-2px);background:var(--fx-surface);
+  border-color:color-mix(in srgb,var(--fx-accent) 36%,transparent);
+}
+:root .wt-page .wt-reactions button:active { transform:scale(.94); }
+:root .wt-page .wt-chat-form {
+  align-items:center;gap:8px;padding:10px 12px 12px;border-top:0;
+}
+:root .wt-page .wt-chat-form input {
+  min-height:42px;padding:0 15px;border-radius:14px;
+  background:var(--fx-surface-2);border:1px solid color-mix(in srgb,var(--fx-muted) 17%,transparent);
+  box-shadow:inset 0 1px 2px rgba(15,23,42,.025);
+}
+:root .wt-page .wt-chat-form input:focus {
+  border-color:color-mix(in srgb,var(--fx-accent) 55%,transparent);
+  outline:3px solid color-mix(in srgb,var(--fx-accent) 10%,transparent);
+}
+:root .wt-page .wt-chat-form button {
+  display:grid;place-items:center;width:42px;height:42px;flex:0 0 42px;
+  border:0;border-radius:14px;background:var(--fx-accent);color:#fff;
+  box-shadow:0 5px 14px color-mix(in srgb,var(--fx-accent) 22%,transparent);
+  transition:transform .16s ease,opacity .16s ease;
+}
+:root .wt-page .wt-chat-form button:not(:disabled):hover { transform:translateY(-1px); }
+:root .wt-page .wt-chat-form button:disabled { opacity:.35;box-shadow:none; }
+@media(max-width:760px) {
+  :root .wt-page .wt-reactions {padding:8px 12px 2px;gap:6px}
+  :root .wt-page .wt-reactions button {width:32px;height:32px;flex-basis:32px}
+}
