@@ -126,18 +126,19 @@ function ProfilePage({ pageHeader, setActiveTab, installApp, installAvailable, a
   );
 }
 
-export function ProfileHeader({ universe, stats, profileName, setProfileName, user, onLogin, onLogout, watchingItem, nextUp, onSelectItem, syncing = false, lastSynced, onSync }) {
+export function ProfileHeader({ universe, stats, profileName, setProfileName, profileAvatar = '', setProfileAvatar, user, onLogin, onLogout, watchingItem, nextUp, onSelectItem, syncing = false, lastSynced, onSync }) {
   const [confirmingLogout, setConfirmingLogout] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState(profileName || user?.displayName || '');
   const [avatarDialogOpen, setAvatarDialogOpen] = useState(false);
   const [avatarFullscreen, setAvatarFullscreen] = useState(false);
-  const [localAvatar, setLocalAvatar] = useState(() => { try { return localStorage.getItem('incursion-profile-avatar') || ''; } catch { return ''; } });
+  const [localAvatar, setLocalAvatar] = useState(() => profileAvatar || (() => { try { return localStorage.getItem('incursion-profile-avatar') || ''; } catch { return ''; } })());
   const [profilePageTarget, setProfilePageTarget] = useState(null);
   const avatarInput = useRef(null);
   useEffect(() => {
     setProfilePageTarget(document.querySelector('.movie-site.page-profile .profile-page'));
   }, [localAvatar, user?.photoURL]);
+  useEffect(() => { if (profileAvatar !== undefined) setLocalAvatar(profileAvatar || ''); }, [profileAvatar]);
   const universeName = universe === 'all' ? 'Multiverse' : universe === 'marvel' ? 'MCU' : universe === 'xmen' ? 'X-Men' : universe === 'sony' ? 'Sony' : 'DC';
   const displayName = (profileName || user?.displayName || user?.email?.split('@')[0] || `${universeName} Viewer`).trim();
   const avatarInitial = (displayName[0] || universeName[0]).toUpperCase();
@@ -156,7 +157,7 @@ export function ProfileHeader({ universe, stats, profileName, setProfileName, us
         canvas.height = Math.max(1, Math.round(image.height * scale));
         canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
         const data = canvas.toDataURL('image/jpeg', 0.82);
-        try { localStorage.setItem('incursion-profile-avatar', data); setLocalAvatar(data); }
+        try { localStorage.setItem('incursion-profile-avatar', data); setLocalAvatar(data); setProfileAvatar?.(data); }
         catch { window.alert('This image is too large for local browser storage. Try a smaller photo.'); }
       };
       image.src = reader.result;
@@ -168,6 +169,7 @@ export function ProfileHeader({ universe, stats, profileName, setProfileName, us
   const clearAvatar = () => {
     try { localStorage.removeItem('incursion-profile-avatar'); } catch {}
     setLocalAvatar('');
+    setProfileAvatar?.('');
   };
 
   const saveDisplayName = () => {
@@ -206,7 +208,7 @@ export function ProfileHeader({ universe, stats, profileName, setProfileName, us
               ) : (
                 <><strong>{displayName}</strong><button type="button" className="avatar-name-edit-trigger" onClick={() => { setNameDraft(displayName); setEditingName(true); }}><Pencil size={13} /> Edit name</button></>
               )}
-              <span>{localAvatar ? 'Saved on this device' : user?.photoURL ? 'Profile picture' : 'Choose a photo for your profile'}</span>
+              <span>{localAvatar ? (user ? 'Synced with your account' : 'Saved on this device') : user?.photoURL ? 'Account profile picture' : 'Choose a photo for your profile'}</span>
             </div>
             <div className="avatar-dialog-actions">
               <div className="avatar-photo-actions">

@@ -33,19 +33,19 @@ function mergeActions(localActions = {}, remoteActions = {}) {
   return merged;
 }
 
-export function useCloudSync(user, actions, profileName, setActions, setProfileName, watchItem, setWatchItem) {
+export function useCloudSync(user, actions, profileName, setActions, setProfileName, watchItem, setWatchItem, profileAvatar = '', setProfileAvatar = () => {}) {
   const pushTimer = useRef(null);
   const pollTimer = useRef(null);
   const lastSyncedState = useRef(null);
   const lastRemoteUpdatedAt = useRef(null);
-  const localStateRef = useRef({ actions, profileName, watchItem });
+  const localStateRef = useRef({ actions, profileName, watchItem, profileAvatar });
   const applyingRemote = useRef(false);
   const [lastSynced, setLastSynced] = useState(null);
   const [syncing, setSyncing] = useState(false);
   const [conflict, setConflict] = useState(null);
   const [toast, setToast] = useState(null);
 
-  useEffect(() => { localStateRef.current = { actions, profileName, watchItem }; }, [actions, profileName, watchItem]);
+  useEffect(() => { localStateRef.current = { actions, profileName, watchItem, profileAvatar }; }, [actions, profileName, watchItem, profileAvatar]);
   useEffect(() => {
     if (!toast) return undefined;
     const timer = window.setTimeout(() => setToast(null), 3200);
@@ -56,6 +56,7 @@ export function useCloudSync(user, actions, profileName, setActions, setProfileN
     actions: localStateRef.current.actions || {},
     profileName: localStateRef.current.profileName || '',
     watchItem: localStateRef.current.watchItem ?? null,
+    profileAvatar: localStateRef.current.profileAvatar || '',
   }), []);
 
   const markSynced = useCallback((state, updatedAt) => {
@@ -74,12 +75,12 @@ export function useCloudSync(user, actions, profileName, setActions, setProfileN
 
   const applyRemote = useCallback((row) => {
     const data = row?.data || {};
-    const next = { actions: data.actions || {}, profileName: data.profileName || '', watchItem: data.watchItem ?? null };
+    const next = { actions: data.actions || {}, profileName: data.profileName || '', watchItem: data.watchItem ?? null, profileAvatar: data.profileAvatar || '' };
     applyingRemote.current = true;
-    setActions(next.actions); setProfileName(next.profileName); setWatchItem(next.watchItem);
+    setActions(next.actions); setProfileName(next.profileName); setWatchItem(next.watchItem); setProfileAvatar(next.profileAvatar);
     markSynced(next, row?.updated_at);
     window.setTimeout(() => { applyingRemote.current = false; }, 0);
-  }, [setActions, setProfileName, setWatchItem, markSynced]);
+  }, [setActions, setProfileName, setWatchItem, setProfileAvatar, markSynced]);
 
   const pushToCloud = useCallback(async ({ silent = false, force = false } = {}) => {
     if (!configured || !user?.id) return false;
@@ -94,6 +95,7 @@ export function useCloudSync(user, actions, profileName, setActions, setProfileN
             remoteActions: remote?.data?.actions || {},
             remoteProfile: remote?.data?.profileName || '',
             remoteWatchItem: remote?.data?.watchItem ?? null,
+            remoteProfileAvatar: remote?.data?.profileAvatar || '',
             remoteUpdatedAt: remote?.updated_at || null,
           });
           setToast({ message: 'Another device has newer changes. Resolve the sync conflict first.', type: 'error' });
@@ -139,11 +141,13 @@ export function useCloudSync(user, actions, profileName, setActions, setProfileN
             actions: remoteData.actions || {},
             profileName: remoteData.profileName || '',
             watchItem: remoteData.watchItem ?? null,
+            profileAvatar: remoteData.profileAvatar || '',
           };
           const merged = {
             actions: mergeActions(local.actions, remoteState.actions),
             profileName: local.profileName || remoteState.profileName,
             watchItem: local.watchItem || remoteState.watchItem,
+            profileAvatar: local.profileAvatar || remoteState.profileAvatar,
           };
           // Mark the remote snapshot as the baseline. The normal debounced
           // sync then uploads the merged state with the existing concurrency
@@ -152,6 +156,7 @@ export function useCloudSync(user, actions, profileName, setActions, setProfileN
           setActions(merged.actions);
           setProfileName(merged.profileName);
           setWatchItem(merged.watchItem);
+          setProfileAvatar(merged.profileAvatar);
         }
       } catch (error) {
         if (!cancelled) setToast({ message: error.message || 'Cloud sync unavailable — changes remain on this device', type: 'error' });
@@ -171,6 +176,7 @@ export function useCloudSync(user, actions, profileName, setActions, setProfileN
             remoteActions: row.data?.actions || {},
             remoteProfile: row.data?.profileName || '',
             remoteWatchItem: row.data?.watchItem ?? null,
+            remoteProfileAvatar: row.data?.profileAvatar || '',
             remoteUpdatedAt: row.updated_at,
           });
         } else applyRemote(row);
@@ -195,7 +201,7 @@ export function useCloudSync(user, actions, profileName, setActions, setProfileN
 
   const resolveUseRemote = useCallback(() => {
     if (!conflict) return;
-    applyRemote({ data: { actions: conflict.remoteActions, profileName: conflict.remoteProfile, watchItem: conflict.remoteWatchItem }, updated_at: conflict.remoteUpdatedAt });
+    applyRemote({ data: { actions: conflict.remoteActions, profileName: conflict.remoteProfile, watchItem: conflict.remoteWatchItem, profileAvatar: conflict.remoteProfileAvatar || '' }, updated_at: conflict.remoteUpdatedAt });
     setConflict(null);
     setToast(null);
   }, [conflict, applyRemote]);

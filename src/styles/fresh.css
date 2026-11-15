@@ -12546,3 +12546,143 @@
 @media (prefers-reduced-motion: reduce) {
   :root .movie-site.page-profile .profile-page-avatar-backdrop img { transform: none !important; }
 }
+
+
+/* Profile identity: make the portrait and name feel like the page's anchor. */
+:root .movie-site.page-profile .profile-header.profile-header-compact .profile-avatar {
+  flex: 0 0 88px !important;
+  width: 88px !important;
+  height: 88px !important;
+  min-width: 88px !important;
+  min-height: 88px !important;
+  opacity: 1 !important;
+  filter: none !important;
+  border-radius: 26px !important;
+  background: var(--fx-surface-2, #e9edf4) !important;
+  overflow: hidden !important;
+}
+:root .movie-site.page-profile .profile-header.profile-header-compact .profile-avatar img {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  opacity: 1 !important;
+  filter: none !important;
+  object-fit: cover !important;
+  mix-blend-mode: normal !important;
+}
+:root .movie-site.page-profile .profile-header.profile-header-compact .profile-info {
+  gap: 6px !important;
+}
+:root .movie-site.page-profile .profile-header.profile-header-compact .profile-title {
+  font-size: clamp(28px, 4vw, 42px) !important;
+  line-height: 1.08 !important;
+  font-weight: 850 !important;
+  letter-spacing: -.045em !important;
+  opacity: 1 !important;
+}
+:root .movie-site.page-profile .profile-header.profile-header-compact .profile-brand-kicker {
+  font-size: 11px !important;
+  font-weight: 750 !important;
+  opacity: .78 !important;
+}
+:root .movie-site.page-profile .profile-header.profile-header-compact .profile-auth-btn {
+  width: 44px !important;
+  min-width: 44px !important;
+  height: 44px !important;
+}
+:root .movie-site.page-profile .profile-header.profile-header-compact .profile-auth-btn svg {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+/* The old header poster/portrait layer is retired. Only the page-level
+   profile-photo atmosphere remains, and the actual avatar stays fully opaque. */
+:root .movie-site.page-profile .profile-header-compact::before,
+:root .movie-site.page-profile .profile-header-compact::after,
+:root .movie-site.page-profile .profile-header-compact .profile-avatar-backdrop {
+  display: none !important;
+  content: none !important;
+}
+:root .movie-site.page-profile .profile-page-avatar-backdrop {
+  opacity: .24 !important;
+}
+:root[data-theme="dark"] .movie-site.page-profile .profile-page-avatar-backdrop {
+  opacity: .28 !important;
+}
+:root .movie-site.page-profile .profile-page-avatar-backdrop img {
+  filter: blur(52px) saturate(1.18) brightness(1.08) !important;
+}
+
+/* Full screen photo viewer: occupy the entire viewport, including mobile
+   browser safe areas, instead of merely enlarging the modal card. */
+:root .avatar-dialog-backdrop:has(.avatar-dialog-fullscreen) {
+  padding: 0 !important;
+  place-items: stretch !important;
+  background: rgba(8, 11, 18, .9) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(1.25) !important;
+  backdrop-filter: blur(28px) saturate(1.25) !important;
+}
+:root .avatar-dialog-fullscreen {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  min-height: 100vh !important;
+  max-height: none !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: max(22px, env(safe-area-inset-top)) 20px max(22px, env(safe-area-inset-bottom)) !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 22px !important;
+  overflow-y: auto !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+:root .avatar-dialog-fullscreen .avatar-dialog-preview {
+  width: min(78vmin, 680px) !important;
+  height: min(78vmin, 680px) !important;
+  max-width: calc(100vw - 40px) !important;
+  max-height: calc(100dvh - 190px) !important;
+  flex: 0 0 auto !important;
+  margin: 0 !important;
+  border-radius: 28px !important;
+}
+:root .avatar-dialog-fullscreen .avatar-dialog-close {
+  position: fixed !important;
+  top: max(18px, env(safe-area-inset-top)) !important;
+  right: 18px !important;
+  z-index: 5 !important;
+  width: 46px !important;
+  height: 46px !important;
+  background: rgba(128,136,154,.22) !important;
+}
+:root .avatar-dialog-fullscreen .avatar-dialog-copy,
+:root .avatar-dialog-fullscreen .avatar-dialog-actions {
+  flex: 0 0 auto !important;
+}
+@media (max-width: 620px) {
+  :root .movie-site.page-profile .profile-header.profile-header-compact .profile-avatar {
+    flex-basis: 76px !important;
+    width: 76px !important;
+    height: 76px !important;
+    min-width: 76px !important;
+    min-height: 76px !important;
+    border-radius: 23px !important;
+  }
+  :root .movie-site.page-profile .profile-header.profile-header-compact .profile-title {
+    font-size: clamp(25px, 7vw, 34px) !important;
+  }
+  :root .avatar-dialog-fullscreen .avatar-dialog-preview {
+    width: min(82vw, 62dvh) !important;
+    height: min(82vw, 62dvh) !important;
+    max-width: calc(100vw - 32px) !important;
+    max-height: calc(100dvh - 190px) !important;
+    border-radius: 24px !important;
+  }
+}
