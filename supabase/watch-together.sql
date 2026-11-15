@@ -67,6 +67,8 @@ begin
   if p_code !~ '^[A-HJ-NP-Z2-9]{8}$' or length(p_token) < 32 then raise exception 'Invalid room credentials.'; end if;
   if coalesce(length(trim(p_name)),0) not between 1 and 32 then raise exception 'Display name must be 1–32 characters.'; end if;
   if coalesce((p_media->>'tmdbId')::bigint,0) <= 0 then raise exception 'This title cannot be screened because its TMDB ID is missing.'; end if;
+  if (length(p_media::text) > 12000) then raise exception 'Room media details are too large.'; end if;
+  if (select count(*) from public.watch_rooms r join public.watch_room_participants hp on hp.id=r.host_participant_id where hp.token_hash=encode(sha256(convert_to(p_token,'UTF8')),'hex') and r.closed_at is null and r.expires_at > now()) >= 2 then raise exception 'You already have two active screening rooms.'; end if;
   delete from public.watch_rooms where expires_at < now() or closed_at is not null;
   insert into public.watch_rooms(code, media, playback)
   values (p_code, p_media, jsonb_build_object('position',0,'paused',true,'season',greatest(1,coalesce((p_media->>'season')::integer,1)),'episode',greatest(1,coalesce((p_media->>'episode')::integer,1)),'updated_at',now()))
@@ -92,6 +94,7 @@ begin
   if length(p_token) < 32 then raise exception 'Invalid guest token.'; end if;
   select * into r from public.watch_rooms where code=upper(trim(p_code)) and closed_at is null and expires_at > now();
   if not found then raise exception 'Room not found or expired.'; end if;
+  if (select count(*) from public.watch_room_participants where room_id=r.id and last_seen_at > now()-interval '45 seconds') >= 12 then raise exception 'This room is full (12 viewers maximum).'; end if;
   insert into public.watch_room_participants(room_id, token_hash, display_name, avatar_url)
   values (r.id, encode(sha256(convert_to(p_token,'UTF8')),'hex'), left(trim(p_name),32), left(coalesce(p_avatar,''),1000))
   on conflict(room_id,token_hash) do update set display_name=excluded.display_name, avatar_url=excluded.avatar_url, last_seen_at=now()
@@ -127,6 +130,7 @@ begin
   if rid is null then return false; end if;
   update public.watch_room_participants set last_seen_at=now()
   where room_id=rid and token_hash=encode(sha256(convert_to(p_token,'UTF8')),'hex');
+  if found then update public.watch_rooms set expires_at=greatest(expires_at,now()+interval '2 hours') where id=rid; end if;
   return found;
 end $$;
 

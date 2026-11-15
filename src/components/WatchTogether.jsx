@@ -61,6 +61,8 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const lastHostTimePushRef = useRef(0);
   const lastMessageIdRef = useRef(0);
   const roomRef = useRef(room);
+  const onBeforeOpenRef = useRef(onBeforeOpen);
+  const onEpisodeChangeRef = useRef(onEpisodeChange);
   const participantRef = useRef(participant);
   const currentTimeRef = useRef(0);
   const pausedRef = useRef(true);
@@ -75,6 +77,8 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     accent: item?.accent || '#da1e37',
   }), [item?.title, item?.poster, item?.tmdbId, item?.type, item?.accent, tmdbId, mediaType, season, episode]);
   useEffect(() => { roomRef.current = room; }, [room]);
+  useEffect(() => { onBeforeOpenRef.current = onBeforeOpen; }, [onBeforeOpen]);
+  useEffect(() => { onEpisodeChangeRef.current = onEpisodeChange; }, [onEpisodeChange]);
   useEffect(() => { participantRef.current = participant; }, [participant]);
   useEffect(() => { currentTimeRef.current = currentTime; }, [currentTime]);
   useEffect(() => { pausedRef.current = paused; }, [paused]);
@@ -159,11 +163,11 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   useEffect(() => {
     const code = new URLSearchParams(window.location.search).get('room');
     if (code && !roomRef.current) {
-      onBeforeOpen?.();
+      onBeforeOpenRef.current?.();
       setOpen(true);
       joinExisting(code);
     }
-  }, [joinExisting, onBeforeOpen]);
+  }, [joinExisting]);
 
   const refreshRoom = useCallback(async () => {
     const activeRoom = roomRef.current;
@@ -280,7 +284,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       if (data.type === 'cinesrc:nextepisode') {
         const next = Number(data.episode);
         if (Number.isInteger(next) && next > 0) {
-          onEpisodeChange?.(next);
+          onEpisodeChangeRef.current?.(next);
           publishPlayback({ position: 0, paused: false, season: Number(data.season) || season, episode: next }, true);
         }
       }
@@ -292,8 +296,8 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   useEffect(() => {
     if (!room || !participant || !room.media) return;
     const roomEpisode = Number(room.playback?.episode || room.media.episode || episode);
-    if (roomEpisode > 0 && roomEpisode !== Number(episode)) onEpisodeChange?.(roomEpisode);
-  }, [room?.state_version, room?.media?.episode, room?.playback?.episode, episode, onEpisodeChange]);
+    if (roomEpisode > 0 && roomEpisode !== Number(episode)) onEpisodeChangeRef.current?.(roomEpisode);
+  }, [room?.state_version, room?.media?.episode, room?.playback?.episode, episode]);
 
   const sharedPlayerUrl = useMemo(() => {
     if (!room?.media) return playerUrl;
@@ -320,7 +324,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   }, [playerReady, room?.id, sendPlayerCommand]);
 
   return <>
-    <button type="button" className="watch-together-launch" onClick={() => { onBeforeOpen?.(); setOpen(true); setError(''); }}><Users size={16} /><span>Watch together</span></button>
+    <button type="button" className="watch-together-launch" onClick={() => { onBeforeOpenRef.current?.(); setOpen(true); setError(''); }}><Users size={16} /><span>Watch together</span></button>
     {open && createPortal(
       <div className="wt-overlay" role="presentation" onMouseDown={e => { if (e.target === e.currentTarget && !room) setOpen(false); }}>
         <section className={`wt-modal${room ? ' wt-room-active' : ''}`} role="dialog" aria-modal="true" aria-label="Watch together">
