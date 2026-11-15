@@ -13758,3 +13758,48 @@
  :root .movie-site.page-watch-together .wt-page-back{margin-bottom:10px!important}
  :root .wt-create-backdrop{padding-bottom:calc(82px + env(safe-area-inset-bottom))!important}
 }
+
+
+/* Watch Together: keep chat composer, chat footer and bottom navigation in separate flow. */
+@media(max-width:760px) {
+  :root .movie-site.page-watch-together .wt-chat {
+    display:flex!important;flex-direction:column!important;gap:0!important;
+    padding:0 0 calc(22px + env(safe-area-inset-bottom))!important;
+    margin-bottom:26px!important;overflow:visible!important;
+  }
+  :root .movie-site.page-watch-together .wt-chat-messages {
+    flex:0 1 auto!important;min-height:140px!important;max-height:38dvh!important;
+    margin-bottom:10px!important;overflow-y:auto!important;
+  }
+  :root .movie-site.page-watch-together .wt-chat-form {
+    position:relative!important;inset:auto!important;bottom:auto!important;
+    z-index:1!important;flex:0 0 auto!important;margin:0 12px 14px!important;
+    padding:8px!important;border-radius:14px!important;
+  }
+  :root .movie-site.page-watch-together .wt-chat-foot {
+    position:relative!important;inset:auto!important;display:flex!important;
+    flex:0 0 auto!important;margin:0 12px!important;padding:10px 2px 14px!important;
+    line-height:1.5!important;white-space:normal!important;
+  }
+  :root .movie-site.page-watch-together .wt-chat-error {margin:0 12px 10px!important}
+  :root .movie-site.page-watch-together .wt-content,
+  :root .movie-site.page-watch-together .wt-main {padding-bottom:34px!important}
+  :root .movie-site.page-watch-together .wt-page {
+    padding-bottom:calc(148px + env(safe-area-inset-bottom))!important;
+  }
+  :root .wt-create-backdrop {
+    box-sizing:border-box!important;overflow-y:auto!important;align-items:center!important;
+    padding:16px 12px calc(104px + env(safe-area-inset-bottom))!important;
+  }
+  :root .wt-create-backdrop .wt-create-dialog {
+    box-sizing:border-box!important;max-height:calc(100dvh - 132px - env(safe-area-inset-bottom))!important;
+    padding-bottom:calc(26px + env(safe-area-inset-bottom))!important;
+    margin:auto 0!important;overscroll-behavior:contain!important;
+  }
+  :root .wt-create-backdrop .wt-create-dialog>.wt-create {
+    margin-bottom:8px!important;min-height:48px!important;
+  }
+}
+/* The room stays mounted off-screen while browsing; no floating mini-player. */
+:root .wt-page.wt-minimized {visibility:hidden!important}
+:root .wt-page.wt-minimized * {pointer-events:none!important}

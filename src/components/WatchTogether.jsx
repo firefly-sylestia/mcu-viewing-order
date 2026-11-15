@@ -67,11 +67,12 @@ const makeAccountIdentity = (user, profileName, profileAvatar) => {
 };
 
 
-export default function WatchTogether({ item, tmdbId, mediaType, season = 1, episode = 1, playerUrl, onEpisodeChange, onBeforeOpen, onWatchTogether, onReturn, onClose, startOpen = false, launchOnly = false, user, profileName, profileAvatar, selectableItems = [], requireMediaSelection = false }) {
+export default function WatchTogether({ item, tmdbId, mediaType, season = 1, episode = 1, playerUrl, onEpisodeChange, onBeforeOpen, onWatchTogether, onRoomStateChange, onClose, startOpen = false, launchOnly = false, user, profileName, profileAvatar, selectableItems = [], requireMediaSelection = false }) {
   const [guestNameOverride, setGuestNameOverride] = useState('');
   const guest = useMemo(() => { const identity=user?.id?makeAccountIdentity(user,profileName,profileAvatar):{...makeGuest(),isGuest:true}; if(!user?.id&&guestNameOverride){identity.name=guestNameOverride;identity.avatar=blobatar(guestNameOverride);} return identity; }, [user?.id,user?.displayName,user?.email,user?.user_metadata?.display_name,user?.user_metadata?.full_name,user?.user_metadata?.avatar_url,user?.user_metadata?.picture,profileName,profileAvatar,guestNameOverride]);
   const [open, setOpen] = useState(startOpen);
   useEffect(() => { setOpen(Boolean(startOpen)); }, [startOpen]);
+  useEffect(() => { onRoomStateChange?.(Boolean(room)); }, [room?.id, onRoomStateChange]);
   const [showPlaybackNotice, setShowPlaybackNotice] = useState(false);
   const [hostPanelOpen, setHostPanelOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
@@ -942,6 +943,6 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
 
 
     </section>}
-    {room && !open && <button type="button" className="wt-mini-player" onClick={() => { setOpen(true); onReturn?.(); }} aria-label={`Return to ${room.media?.title || 'Watch Together'}`}><span className="wt-mini-player-art">{room.media?.poster ? <img src={room.media.poster} alt=""/> : <Radio size={16}/>}</span><span><b>{room.media?.title || 'Watch Together'}</b><small>{paused ? 'Paused' : 'Playing'} · Return to player</small></span><Play size={17} fill="currentColor"/></button>}
+
   </>;
 }
