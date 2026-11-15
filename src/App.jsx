@@ -2059,33 +2059,6 @@ function ListSection({ items, sortBy = 'order', sortDirection = 'asc', sortKey, 
     </article>)}</div>}
     {pageCount > 1 && <nav className="pagination" aria-label="Viewing list pages"><button onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} aria-label="Previous page"><ChevronLeft size={18} /></button>{Array.from({ length: pageCount }, (_, index) => index + 1).map(pageNumber => <button key={pageNumber} className={currentPage === pageNumber ? 'active' : ''} aria-current={currentPage === pageNumber ? 'page' : undefined} onClick={() => goToPage(pageNumber)}>{pageNumber}</button>)}<button onClick={() => goToPage(currentPage + 1)} disabled={currentPage === pageCount} aria-label="Next page"><ChevronRight size={18} /></button></nav>}
     
-    {watchSearchResults.length > 0 && (
-      <div className="external-results">
-        <div className="external-header">
-          <h3>{items.length > 0 ? 'Also Found' : 'Search Results'}</h3>
-          <p className="external-subtitle">{items.length > 0 ? 'Other matches in TMDB' : 'Not in database - Play directly'}</p>
-        </div>
-        <div className="external-grid">
-          {externalResults.map(result => (
-            <div key={result.id} className="external-result-card" onClick={() => onPlayExternal(result)}>
-              <div className="external-poster">
-                <img src={result.poster} alt={result.title} width="300" height="450" loading="lazy" decoding="async" />
-                <div className="external-badge">{items.length > 0 ? 'TMDB' : 'New'}</div>
-                <button className="external-play-btn" onClick={(e) => { e.stopPropagation(); onPlayExternal(result); }} aria-label={`Play ${result.title}`}>
-                  <Play size={24} fill="white" />
-                </button>
-              </div>
-              <div className="external-info">
-                <h4>{result.title}</h4>
-                <p className="external-meta">{result.year || 'Date TBA'} · {result.type === 'tv' ? 'Series' : 'Movie'}{result.runtime ? ` · ${runtimeLabel(result.runtime, result.type === 'tv' ? 'series' : 'film')}` : ''}</p>
-                {result.overview && <p className="external-overview">{result.overview}</p>}
-                {result.rating && <p className="external-rating"><Star size={14} fill="currentColor" /> {result.rating}{result.voteCount ? ` · ${result.voteCount.toLocaleString()} ratings` : ''}</p>}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    )}
     {items.length === 0 && externalResults.length === 0 && query && !externalLoading && (
       <div className="no-results">
         <p>No results found for "{query}"</p>
@@ -3056,7 +3029,7 @@ function WatchBrowse({ activeItems, externalResults = [], externalLoading = fals
         </section>
       )}
 
-      {externalResults.length > 0 && (
+      {watchSearchResults.length > 0 && (
         <section className="wh3-section">
           <div className="wh3-section-title"><div><span className="wh3-overline">DISCOVER</span><h2>Search results</h2></div><span>{watchSearchResults.length} found · TMDB</span></div>
           <div className="wh3-watchlist wh3-search-list">
