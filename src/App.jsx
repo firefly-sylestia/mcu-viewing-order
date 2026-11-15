@@ -225,8 +225,9 @@ export default function App() {
   useEffect(() => {
     const root = document.documentElement;
     root.setAttribute('data-header-surface', 'borderless');
-    try { localStorage.setItem('borderless-header-style-v2', '1'); } catch {}
-  }, [borderlessHeaderOn]);
+    root.setAttribute('data-top-atmosphere', 'on');
+    try { localStorage.setItem('borderless-header-style-v2', '1'); localStorage.setItem('top-atmosphere', '1'); } catch {}
+  }, []);
   const [headerDesign, setHeaderDesign] = useState(() => {
     try { return localStorage.getItem('incursion-header-design') || 'cinematic'; } catch { return 'cinematic'; }
   });
@@ -1570,7 +1571,7 @@ export default function App() {
       <nav
         ref={navRef}
         className="bottom-nav"
-        data-liquid-glass={liquidGlassNavOn ? "true" : "false"}
+        data-liquid-glass="false"
         aria-label="Primary"
         data-holding={navHolding ? 'true' : 'false'}
         style={{ '--nav-index': navHoldIndex ?? Math.max(0, NAV_VISIBLE.indexOf(section)), '--nav-count': NAV_VISIBLE.length, '--nav-dur': navHolding ? '150ms' : '.58s' }}

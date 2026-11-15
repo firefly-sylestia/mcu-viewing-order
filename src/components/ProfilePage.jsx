@@ -143,7 +143,7 @@ function ProfilePage({ pageHeader, setActiveTab, installApp, installAvailable, a
 
         {activeTab === 'settings' && (
           <div id="settings-panel" role="tabpanel" className="profile-panel settings-panel">
-            <SettingsPanel installApp={installApp} installAvailable={installAvailable} appInstalled={appInstalled} query={query} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={onLogin} onLogout={onLogout} universe={universe} activeItems={activeItems} setStatus={setStatus} toggleBookmark={toggleBookmark} quietBrowsingOn={quietBrowsingOn} setQuietBrowsingOn={setQuietBrowsingOn} borderlessHeaderOn={borderlessHeaderOn} setBorderlessHeaderOn={setBorderlessHeaderOn} liquidGlassNavOn={liquidGlassNavOn} setLiquidGlassNavOn={setLiquidGlassNavOn} liquidGlassNavConfig={liquidGlassNavConfig} setLiquidGlassNavConfig={setLiquidGlassNavConfig} />
+            <SettingsPanel installApp={installApp} installAvailable={installAvailable} appInstalled={appInstalled} query={query} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={onLogin} onLogout={onLogout} universe={universe} activeItems={activeItems} setStatus={setStatus} toggleBookmark={toggleBookmark} quietBrowsingOn={quietBrowsingOn} setQuietBrowsingOn={setQuietBrowsingOn} />
           </div>
         )}
       </div>
