@@ -115,7 +115,7 @@ create table if not exists public.watch_room_requests (
   id bigserial primary key,
   room_id uuid not null references public.watch_rooms(id) on delete cascade,
   participant_id uuid not null references public.watch_room_participants(id) on delete cascade,
-  request_type text not null check (request_type in ('operator','moderator','skip_forward','skip_back','seek')),
+  request_type text not null check (request_type in ('operator','skip_forward','skip_back','seek')),
   payload jsonb not null default '{}'::jsonb,
   status text not null default 'pending' check (status in ('pending','approved','denied')),
   created_at timestamptz not null default now(),
@@ -301,7 +301,7 @@ begin
   select * into p from public.watch_room_participants where room_id=r.id and token_hash=encode(sha256(convert_to(p_token,'UTF8')),'hex');
   if not found then raise exception 'You are not a member of this room.'; end if;
   if p.role in ('host','operator') then raise exception 'You already have playback access.'; end if;
-  if p_request_type not in ('operator','moderator','skip_forward','skip_back','seek') then raise exception 'Unknown request.'; end if;
+  if p_request_type not in ('operator','skip_forward','skip_back','seek') then raise exception 'Unknown request.'; end if;
   if (select count(*) from public.watch_room_requests where participant_id=p.id and status='pending') >= 3 then raise exception 'You already have three pending requests.'; end if;
   if exists(select 1 from public.watch_room_requests where participant_id=p.id and created_at > now()-interval '8 seconds') then raise exception 'Please wait before sending another request.'; end if;
   if p_request_type='seek' and coalesce((p_payload->>'position')::double precision,-1) not between 0 and 86400 then raise exception 'Invalid seek position.'; end if;

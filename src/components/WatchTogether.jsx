@@ -251,7 +251,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     finally { setBusy(false); }
   };
   const sendPlayerCommand = useCallback((command, args = []) => {
-    if (!canControl) { setError('Request Operator access from the host to control playback.'); return; }
+    if (!canControl && !applyingRemoteRef.current && !['getCurrentTime','getDuration'].includes(command)) { setError('Request Operator access from the host to control playback.'); return; }
     iframeRef.current?.contentWindow?.postMessage({ type: 'cinesrc:command', command, args }, 'https://cinesrc.st');
     if (command === 'play') { setPaused(false); publishPlayback({ position: currentTimeRef.current, paused: false }); }
     if (command === 'pause') { setPaused(true); publishPlayback({ position: currentTimeRef.current, paused: true }); }
