@@ -661,6 +661,24 @@ export default function App() {
     }
   }, [query, section]);
 
+  // Android/browser Back should dismiss an open menu or dialog before
+  // navigating away from the current page.
+  useEffect(() => {
+    const dismissTopOverlay = (event) => {
+      if (phaseMenuOpen || sortOpen || filtersOpen || statsUniverseMenuOpen) {
+        // popstate has already consumed the current history entry. Restore the
+        // current URL so the next Back press can continue normal navigation.
+        window.history.pushState({ ...(window.history.state || {}), overlayDismissed: true }, '', window.location.href);
+        if (phaseMenuOpen) setPhaseMenuOpen(false);
+        else if (sortOpen) setSortOpen(false);
+        else if (filtersOpen) setFiltersOpen(false);
+        else if (statsUniverseMenuOpen) setStatsUniverseMenuOpen(false);
+      }
+    };
+    window.addEventListener('popstate', dismissTopOverlay);
+    return () => window.removeEventListener('popstate', dismissTopOverlay);
+  }, [phaseMenuOpen, sortOpen, filtersOpen, statsUniverseMenuOpen]);
+
   useEffect(() => {
     const syncLocation = () => {
       const { section: s, slug, searchQuery: sq } = parseHash();
