@@ -310,7 +310,7 @@ end $$;
 
 drop function if exists public.watch_room_heartbeat(text,text);
 create or replace function public.watch_room_heartbeat(p_code text,p_token text,p_position double precision default null,p_duration double precision default null)
-returns boolean language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $
+returns boolean language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $$
 declare rid uuid;
 begin
   select id into rid from public.watch_rooms where code=upper(trim(p_code)) and closed_at is null and expires_at > now();
@@ -322,7 +322,7 @@ begin
   where room_id=rid and token_hash=encode(sha256(convert_to(p_token,'UTF8')),'hex');
   if found then update public.watch_rooms set expires_at=now()+interval '30 minutes' where id=rid; end if;
   return found;
-end $;
+end $$;
 
 
 create or replace function public.watch_room_playback_snapshot(p_code text,p_token text)
@@ -362,7 +362,7 @@ end $$;
 
 
 create or replace function public.grant_watch_room_operator(p_code text,p_token text,p_participant_id uuid)
-returns jsonb language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $
+returns jsonb language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $$
 declare r public.watch_rooms; host public.watch_room_participants; target public.watch_room_participants;
 begin
   select * into r from public.watch_rooms where code=upper(trim(p_code)) and closed_at is null and expires_at>now() for update;
@@ -375,15 +375,15 @@ begin
   update public.watch_room_participants set role='operator' where id=target.id;
   update public.watch_room_participants set last_seen_at=now() where id=host.id;
   return jsonb_build_object('participant_id',target.id,'role','operator');
-end $;
+end $$;
 
 create or replace function public.watch_room_preview(p_code text)
-returns jsonb language sql stable security definer set search_path = pg_catalog, public, pg_temp as $
+returns jsonb language sql stable security definer set search_path = pg_catalog, public, pg_temp as $$
   select jsonb_build_object('code',r.code,'media',r.media,'playback',r.playback,
     'viewer_count',(select count(*) from public.watch_room_participants p where p.room_id=r.id and p.last_seen_at>now()-interval '45 seconds'),
     'is_active',r.closed_at is null and r.expires_at>now())
   from public.watch_rooms r where r.code=upper(trim(p_code)) and r.closed_at is null and r.expires_at>now() limit 1;
-$;
+$$;
 
 create or replace function public.send_watch_room_message(p_code text,p_token text,p_body text)
 returns jsonb language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $$
