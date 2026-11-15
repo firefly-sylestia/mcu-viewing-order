@@ -36,7 +36,7 @@ const roomCode = () => {
 };
 const blobatar = name => `https://blobatar.dev/avatar/${encodeURIComponent(name || 'Viewer')}?size=96&background=squircle&gen=2`;
 
-export default function WatchTogether({ item, tmdbId, mediaType, season = 1, episode = 1, playerUrl, onEpisodeChange }) {
+export default function WatchTogether({ item, tmdbId, mediaType, season = 1, episode = 1, playerUrl, onEpisodeChange, onBeforeOpen }) {
   const guest = useMemo(makeGuest, []);
   const [open, setOpen] = useState(false);
   const [room, setRoom] = useState(null);
@@ -159,10 +159,11 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   useEffect(() => {
     const code = new URLSearchParams(window.location.search).get('room');
     if (code && !roomRef.current) {
+      onBeforeOpen?.();
       setOpen(true);
       joinExisting(code);
     }
-  }, [joinExisting]);
+  }, [joinExisting, onBeforeOpen]);
 
   const refreshRoom = useCallback(async () => {
     const activeRoom = roomRef.current;
@@ -319,7 +320,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   }, [playerReady, room?.id, sendPlayerCommand]);
 
   return <>
-    <button type="button" className="watch-together-launch" onClick={() => { setOpen(true); setError(''); }}><Users size={16} /><span>Watch together</span></button>
+    <button type="button" className="watch-together-launch" onClick={() => { onBeforeOpen?.(); setOpen(true); setError(''); }}><Users size={16} /><span>Watch together</span></button>
     {open && createPortal(
       <div className="wt-overlay" role="presentation" onMouseDown={e => { if (e.target === e.currentTarget && !room) setOpen(false); }}>
         <section className={`wt-modal${room ? ' wt-room-active' : ''}`} role="dialog" aria-modal="true" aria-label="Watch together">

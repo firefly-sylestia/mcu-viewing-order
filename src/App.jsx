@@ -3261,7 +3261,7 @@ const saveServerPref = (tmdbId, server) => {
           <span>{universeShortName(currentItem.universe)} · #{String(currentItem.order || currentItem.id).padStart(2, '0')}</span>
           <h1>{currentItem.title}</h1>
         </div>
-        <div className="watch-v2-header-actions"><WatchTogether item={currentItem} tmdbId={currentItem.tmdbId || tmdbId} mediaType={mediaType} season={currentItem.season || 1} episode={selectedEpisode} playerUrl={playerUrl} onEpisodeChange={next => { setSelectedEpisode(next); setPlayerEpisode(next); }} /><span className="watch-v2-provider">CineSrc</span></div>
+        <div className="watch-v2-header-actions"><WatchTogether item={currentItem} tmdbId={currentItem.tmdbId || tmdbId} mediaType={mediaType} season={currentItem.season || 1} episode={selectedEpisode} playerUrl={playerUrl} onEpisodeChange={next => { setSelectedEpisode(next); setPlayerEpisode(next); }} onBeforeOpen={() => iframeRef.current?.contentWindow?.postMessage({ type: 'cinesrc:command', command: 'pause', args: [] }, 'https://cinesrc.st')} /><span className="watch-v2-provider">CineSrc</span></div>
       </header>
 
       {toast && <div className="watch-v2-toast" role="status"><span>{toast}</span><button onClick={() => { setToast(''); setIframeTimedOut(false); }} aria-label="Dismiss"><X size={15} /></button></div>}

@@ -68,8 +68,8 @@ begin
   if coalesce(length(trim(p_name)),0) not between 1 and 32 then raise exception 'Display name must be 1–32 characters.'; end if;
   if coalesce((p_media->>'tmdbId')::bigint,0) <= 0 then raise exception 'This title cannot be screened because its TMDB ID is missing.'; end if;
   delete from public.watch_rooms where expires_at < now() or closed_at is not null;
-  insert into public.watch_rooms(code, media)
-  values (p_code, p_media)
+  insert into public.watch_rooms(code, media, playback)
+  values (p_code, p_media, jsonb_build_object('position',0,'paused',true,'season',greatest(1,coalesce((p_media->>'season')::integer,1)),'episode',greatest(1,coalesce((p_media->>'episode')::integer,1)),'updated_at',now()))
   returning * into r;
   insert into public.watch_room_participants(room_id, token_hash, display_name, avatar_url, is_host)
   values (r.id, encode(sha256(convert_to(p_token,'UTF8')),'hex'), trim(p_name), left(coalesce(p_avatar,''),1000), true)
