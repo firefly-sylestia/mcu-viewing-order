@@ -11400,3 +11400,175 @@
     display: none;
   }
 }
+
+
+/* Remove the coloured edge stripe from both the main list rows and Watch rows. */
+:root .movie-site .list-row::before,
+:root .watch-hub-v3 .wh3-watch-row::before {
+  content: none !important;
+  display: none !important;
+}
+:root .movie-site .list-row[data-state]::before,
+:root .movie-site .list-row:hover::before {
+  content: none !important;
+  display: none !important;
+}
+
+/* YOUR LIST — quieter, poster-led rows with a clear action hierarchy. */
+:root .watch-hub-v3 .wh3-section-title {
+  align-items: center !important;
+  margin-bottom: 15px !important;
+}
+:root .watch-hub-v3 .wh3-section-title .wh3-overline {
+  margin-bottom: 5px;
+  font-size: 9px !important;
+  letter-spacing: .19em !important;
+  color: #7a8492 !important;
+}
+:root .watch-hub-v3 .wh3-section-title h2 {
+  margin: 0 !important;
+  font-size: clamp(21px, 3vw, 25px) !important;
+  line-height: 1.12;
+  letter-spacing: -.045em !important;
+  font-weight: 820 !important;
+}
+:root .watch-hub-v3 .wh3-section-title > span {
+  padding: 7px 10px;
+  border: 1px solid rgba(128,145,171,.16);
+  border-radius: 999px;
+  background: rgba(128,145,171,.055);
+  font-size: 10px !important;
+  font-weight: 700;
+  white-space: nowrap;
+}
+:root .watch-hub-v3 .wh3-watchlist {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  border: 0 !important;
+}
+:root .watch-hub-v3 .wh3-watch-row {
+  display: grid !important;
+  grid-template-columns: 28px 54px minmax(0,1fr) auto !important;
+  align-items: center !important;
+  gap: 13px !important;
+  min-height: 92px !important;
+  padding: 10px 12px !important;
+  overflow: hidden;
+  border: 1px solid rgba(128,145,171,.15) !important;
+  border-radius: 14px !important;
+  background: rgba(255,255,255,.48) !important;
+  box-shadow: 0 2px 10px rgba(36,48,69,.025) !important;
+  transition: background .18s ease, border-color .18s ease, transform .18s ease !important;
+}
+:root .watch-hub-v3 .wh3-watch-row:hover {
+  transform: translateY(-1px);
+  background: rgba(255,255,255,.76) !important;
+  border-color: rgba(128,145,171,.25) !important;
+}
+:root .watch-hub-v3 .wh3-watch-index {
+  display: block !important;
+  width: auto !important;
+  height: auto !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: #929baa !important;
+  font-size: 10px !important;
+  font-weight: 750 !important;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+:root .watch-hub-v3 .wh3-watch-thumb {
+  width: 54px !important;
+  height: 76px !important;
+  border-radius: 7px !important;
+  background: #171b22 !important;
+  box-shadow: 0 2px 7px rgba(15,22,34,.13) !important;
+}
+:root .watch-hub-v3 .wh3-watch-info {
+  gap: 6px !important;
+}
+:root .watch-hub-v3 .wh3-watch-info .wh3-title-link {
+  color: #202938 !important;
+  font-size: 13px !important;
+  font-weight: 780 !important;
+  letter-spacing: -.02em;
+}
+:root .watch-hub-v3 .wh3-watch-info > span {
+  color: #788394 !important;
+  font-size: 10px !important;
+  font-weight: 550;
+}
+:root .watch-hub-v3 .wh3-watch-now {
+  min-width: 76px !important;
+  width: auto !important;
+  height: 34px !important;
+  padding: 0 12px !important;
+  border: 1px solid rgba(128,145,171,.2) !important;
+  border-radius: 9px !important;
+  background: rgba(128,145,171,.075) !important;
+  color: #465367 !important;
+  font-size: 10px !important;
+  font-weight: 750 !important;
+}
+:root .watch-hub-v3 .wh3-watch-now:active {
+  transform: scale(.97);
+}
+:root[data-theme="dark"] .watch-hub-v3 .wh3-section-title .wh3-overline {
+  color: #aab4c3 !important;
+}
+:root[data-theme="dark"] .watch-hub-v3 .wh3-section-title > span {
+  border-color: rgba(169,183,207,.14);
+  background: rgba(255,255,255,.045);
+  color: #b7c0ce !important;
+}
+:root[data-theme="dark"] .watch-hub-v3 .wh3-watch-row {
+  border-color: rgba(169,183,207,.12) !important;
+  background: rgba(30,37,50,.52) !important;
+  box-shadow: none !important;
+}
+:root[data-theme="dark"] .watch-hub-v3 .wh3-watch-row:hover {
+  border-color: rgba(169,183,207,.22) !important;
+  background: rgba(37,45,60,.72) !important;
+}
+:root[data-theme="dark"] .watch-hub-v3 .wh3-watch-index {
+  color: #8793a5 !important;
+}
+:root[data-theme="dark"] .watch-hub-v3 .wh3-watch-info .wh3-title-link {
+  color: #edf1f7 !important;
+}
+:root[data-theme="dark"] .watch-hub-v3 .wh3-watch-info > span {
+  color: #a5afbf !important;
+}
+:root[data-theme="dark"] .watch-hub-v3 .wh3-watch-now {
+  border-color: rgba(169,183,207,.17) !important;
+  background: rgba(255,255,255,.055) !important;
+  color: #e0e6ef !important;
+}
+@media(max-width:600px) {
+  :root .watch-hub-v3 .wh3-section-title { margin-bottom: 12px !important; }
+  :root .watch-hub-v3 .wh3-section-title h2 { font-size: 20px !important; }
+  :root .watch-hub-v3 .wh3-watchlist { gap: 7px !important; }
+  :root .watch-hub-v3 .wh3-watch-row {
+    grid-template-columns: 20px 47px minmax(0,1fr) 34px !important;
+    gap: 9px !important;
+    min-height: 76px !important;
+    padding: 8px 9px !important;
+    border-radius: 12px !important;
+  }
+  :root .watch-hub-v3 .wh3-watch-thumb {
+    width: 47px !important;
+    height: 66px !important;
+  }
+  :root .watch-hub-v3 .wh3-watch-info .wh3-title-link { font-size: 11px !important; }
+  :root .watch-hub-v3 .wh3-watch-info > span { font-size: 9px !important; }
+  :root .watch-hub-v3 .wh3-watch-now {
+    min-width: 32px !important;
+    width: 32px !important;
+    height: 32px !important;
+    padding: 0 !important;
+  }
+  :root .watch-hub-v3 .wh3-watch-now span { display: none; }
+}
