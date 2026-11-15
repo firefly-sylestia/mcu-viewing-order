@@ -74,7 +74,7 @@ create table if not exists public.watch_rooms (
   closed_at timestamptz,
   owner_user_id uuid references auth.users(id) on delete set null,
   owner_token_hash text,
-  settings jsonb not null default '{"locked":false,"chat_enabled":true,"reactions_enabled":true,"guests_can_change_episode":false,"expiry_minutes":30}'::jsonb
+  settings jsonb not null default '{"locked":false,"chat_enabled":true,"reactions_enabled":true,"guests_can_change_episode":false,"voice_enabled":false,"expiry_minutes":30}'::jsonb
 );
 
 alter table public.watch_rooms add column if not exists owner_user_id uuid references auth.users(id) on delete set null;
@@ -587,6 +587,7 @@ begin
   'locked',case when p_settings ? 'locked' then (p_settings->>'locked')::boolean else null end,
   'chat_enabled',case when p_settings ? 'chat_enabled' then (p_settings->>'chat_enabled')::boolean else null end,
   'reactions_enabled',case when p_settings ? 'reactions_enabled' then (p_settings->>'reactions_enabled')::boolean else null end,
+  'voice_enabled',case when p_settings ? 'voice_enabled' then (p_settings->>'voice_enabled')::boolean else null end,
   'guests_can_change_episode',case when p_settings ? 'guests_can_change_episode' then (p_settings->>'guests_can_change_episode')::boolean else null end,
   'expiry_minutes',case when p_settings ? 'expiry_minutes' then greatest(30,least(1440,(p_settings->>'expiry_minutes')::integer)) else null end
  ));

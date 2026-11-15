@@ -67,7 +67,7 @@ const makeAccountIdentity = (user, profileName, profileAvatar) => {
 };
 
 
-export default function WatchTogether({ item, tmdbId, mediaType, season = 1, episode = 1, playerUrl, onEpisodeChange, onBeforeOpen, onWatchTogether, onRoomStateChange, onClose, startOpen = false, launchOnly = false, user, profileName, profileAvatar, selectableItems = [], requireMediaSelection = false }) {
+export default function WatchTogether({ item, tmdbId, mediaType, season = 1, episode = 1, playerUrl, onEpisodeChange, onBeforeOpen, onWatchTogether, onRoomStateChange, onClose, startOpen = false, launchOnly = false, user, profileName, profileAvatar, voiceChatDefault = true, selectableItems = [], requireMediaSelection = false }) {
   const [guestNameOverride, setGuestNameOverride] = useState('');
   const guest = useMemo(() => { const identity=user?.id?makeAccountIdentity(user,profileName,profileAvatar):{...makeGuest(),isGuest:true}; if(!user?.id&&guestNameOverride){identity.name=guestNameOverride;identity.avatar=blobatar(guestNameOverride);} return identity; }, [user?.id,user?.displayName,user?.email,user?.user_metadata?.display_name,user?.user_metadata?.full_name,user?.user_metadata?.avatar_url,user?.user_metadata?.picture,profileName,profileAvatar,guestNameOverride]);
   const [open, setOpen] = useState(startOpen);
@@ -513,6 +513,12 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
         p_avatar: guest.avatar,
         p_media: itemMedia,
       });
+      if (voiceChatDefault) {
+        const savedSettings = await rpc('update_watch_room_settings', {
+          p_code: code, p_token: guest.token, p_settings: { voice_enabled: true },
+        });
+        if (result.room) result.room.settings = savedSettings;
+      }
       setParticipant(result.participant);
       applyRoomSnapshot(result);
       saveActiveRoom(code, guest, itemMedia);
@@ -524,7 +530,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       try { await navigator.clipboard.writeText(link); setCopied(true); window.setTimeout(() => setCopied(false), 2200); } catch {}
     } catch (e) { setError(e.message || 'Could not create the room.'); }
     finally { setBusy(false); }
-  }, [rpc, guest, itemMedia, applyRoomSnapshot, loadOwnedRooms]);
+  }, [rpc, guest, itemMedia, applyRoomSnapshot, loadOwnedRooms, voiceChatDefault]);
 
   useEffect(() => {
     if (restoreAttemptedRef.current || roomRef.current) return;
