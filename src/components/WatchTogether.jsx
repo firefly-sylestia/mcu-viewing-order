@@ -36,8 +36,18 @@ const roomCode = () => {
 };
 const blobatar = name => `https://blobatar.dev/avatar/${encodeURIComponent(name || 'Viewer')}?size=96&background=squircle&gen=2`;
 
-export default function WatchTogether({ item, tmdbId, mediaType, season = 1, episode = 1, playerUrl, onEpisodeChange, onBeforeOpen }) {
-  const guest = useMemo(makeGuest, []);
+const makeAccountIdentity = (user, profileName, profileAvatar) => {
+  const displayName = String(profileName || user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Viewer').trim().slice(0,32);
+  const key = `mcu-watch-account-token-v1:${user.id}`;
+  let token = '';
+  try { token = localStorage.getItem(key) || ''; if (!token) { token = randomHex(); localStorage.setItem(key, token); } } catch { token = randomHex(); }
+  const avatar = profileAvatar?.startsWith('http') ? profileAvatar : (user?.user_metadata?.avatar_url || user?.user_metadata?.picture || blobatar(displayName));
+  return { name: displayName, token, avatar, isGuest: false };
+};
+
+
+export default function WatchTogether({ item, tmdbId, mediaType, season = 1, episode = 1, playerUrl, onEpisodeChange, onBeforeOpen, user, profileName, profileAvatar }) {
+  const guest = useMemo(() => user?.id ? makeAccountIdentity(user, profileName, profileAvatar) : { ...makeGuest(), isGuest: true }, [user?.id, user?.displayName, user?.email, user?.user_metadata?.display_name, user?.user_metadata?.full_name, user?.user_metadata?.avatar_url, user?.user_metadata?.picture, profileName, profileAvatar]);
   const [open, setOpen] = useState(false);
   const [room, setRoom] = useState(null);
   const [participant, setParticipant] = useState(null);
@@ -335,8 +345,8 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
             <button className="wt-close" onClick={() => room ? leaveRoom() : setOpen(false)} aria-label="Close"><X size={19} /></button>
           </header>
           {!room ? <div className="wt-entry">
-            <div className="wt-entry-art"><img src={itemMedia.poster || blobatar(guest.name)} alt="" /><div><span>YOUR SCREENING ROOM</span><h2>Good stories are better shared.</h2><p>Watch in sync, chat live, and invite anyone with one private link. No account required.</p></div></div>
-            <div className="wt-identity"><img src={guest.avatar} alt="" /><div><small>YOU'RE JOINING AS</small><strong>{guest.name}</strong><span>Guest · ready to watch</span></div><button onClick={() => { localStorage.removeItem('mcu-watch-together-guest-v1'); window.location.reload(); }} title="Generate another guest name"><RefreshCw size={16} /></button></div>
+            <div className="wt-entry-art"><img src={itemMedia.poster || guest.avatar} alt="" /><div><span>YOUR SCREENING ROOM</span><h2>Good stories are better shared.</h2><p>Watch in sync, chat live, and invite anyone with one private link. No account required.</p></div></div>
+            <div className="wt-identity"><img src={guest.avatar} alt="" /><div><small>YOU'RE JOINING AS</small><strong>{guest.name}</strong><span>{guest.isGuest ? 'Guest · ready to watch' : 'Signed in · profile identity'}</span></div>{guest.isGuest && <button onClick={() => { localStorage.removeItem('mcu-watch-together-guest-v1'); window.location.reload(); }} title="Generate another guest name"><RefreshCw size={16} /></button>}</div>
             <button className="wt-create" disabled={busy} onClick={createRoom}>{busy ? 'Creating room…' : 'Create a screening room'}<Link2 size={17} /></button>
             <div className="wt-or"><span />OR JOIN A FRIEND<span /></div>
             <form className="wt-join-form" onSubmit={e => { e.preventDefault(); joinExisting(joinCode); }}><input value={joinCode} onChange={e => setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8))} placeholder="Enter 8-character room code" maxLength={8} autoComplete="off" /><button disabled={busy || joinCode.length !== 8}>{busy ? 'Joining…' : 'Join room'}</button></form>
