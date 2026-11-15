@@ -144,10 +144,10 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     if (version > lastVersionRef.current) {
       lastVersionRef.current = version;
       const playback = nextRoom.playback || {};
-      setPaused(Boolean(playback.paused));
+      if (!localPlaybackOverrideRef.current) { setPaused(Boolean(playback.paused)); pausedRef.current=Boolean(playback.paused); }
       if (Number.isFinite(Number(playback.position))) {
         const target = Math.max(0, Number(playback.position) + (playback.paused ? 0 : Math.max(0, (Date.now() - Date.parse(playback.updated_at || nextRoom.updated_at || new Date().toISOString())) / 1000)));
-        setCurrentTime(target);
+        if (!localPlaybackOverrideRef.current) { setCurrentTime(target); currentTimeRef.current=target; }
         if (playerReadyRef.current && !applyingRemoteRef.current) {
           applyingRemoteRef.current = true;
           const frame = iframeRef.current;
@@ -197,7 +197,12 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     finally { setBusy(false); }
   }, [busy, guest?.token, rpc]);
 
-  useEffect(() => { if (open && !room) loadOwnedRooms(); }, [open, room?.id, loadOwnedRooms]);
+  useEffect(() => {
+    if (!open || room) return undefined;
+    loadOwnedRooms();
+    const timer=window.setInterval(loadOwnedRooms,30000);
+    return()=>window.clearInterval(timer);
+  }, [open, room?.id, loadOwnedRooms]);
 
   const joinExisting = useCallback(async (code, identity = guest) => {
     setBusy(true); setError(''); lastVersionRef.current = 0; watchSecondsRef.current=0; localHistoryFlushRef.current=0; remoteHistoryFlushRef.current=0;
@@ -290,9 +295,9 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       const playback = state?.playback || {};
       if (version > lastVersionRef.current) {
         lastVersionRef.current = version;
-        setPaused(Boolean(playback.paused));
+        if (!localPlaybackOverrideRef.current) { setPaused(Boolean(playback.paused)); pausedRef.current=Boolean(playback.paused); }
         const target = Math.max(0, Number(playback.position) + (playback.paused ? 0 : Math.max(0, (Date.now() - Date.parse(playback.updated_at || state.updated_at || new Date().toISOString())) / 1000)));
-        setCurrentTime(target);
+        if (!localPlaybackOverrideRef.current) { setCurrentTime(target); currentTimeRef.current=target; }
         if (playback.actor !== activeParticipant.id && playerReadyRef.current && !applyingRemoteRef.current && !localPlaybackOverrideRef.current) {
           applyingRemoteRef.current = true;
           const frame = iframeRef.current;
