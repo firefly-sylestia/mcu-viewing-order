@@ -9,7 +9,7 @@ import { SONY_RAW, SONY_PHASES } from './data/sonyData';
 import { getTrailerByTitle, trailerEmbedUrl } from './data/trailerData';
 import { STORY_BRIDGES } from './data/connections';
 import { STORY_ORDER_OVERRIDES, DOOMSDAY_COUNTDOWN_TITLES, SECRET_WARS_PREP_TITLES, getTitleGuidance } from './data/timelineModes';
-import ProfilePage, { ProfileHeader } from './components/ProfilePage';
+import ProfilePage, { ProfileHeader, getGuestIdentity } from './components/ProfilePage';
 import AuthModal from './components/AuthModal';
 import SeoHead from './components/SeoHead';
 import NotFoundPage from './components/NotFoundPage';
@@ -1417,8 +1417,9 @@ export default function App() {
   const universeName = universe === 'marvel' ? 'MCU' : universe === 'xmen' ? 'X-Men' : universe === 'sony' ? 'Sony' : 'DC';
   const universeAccent = universe === 'marvel' ? '#da1e37' : universe === 'xmen' ? '#a0a0ac' : universe === 'sony' ? '#2f6bd8' : '#2f80ed';
   const selectedTitle = selected?.title || safeWatchItem?.item?.title || '';
-  const statsAvatar = profileAvatar || user?.photoURL || (profileName ? `https://blobatar.dev/avatar/${encodeURIComponent(profileName)}?size=128&gen=2&background=squircle` : 'https://blobatar.dev/avatar/GuestViewer?size=128&gen=2&background=squircle');
-  const statsDisplayName = (profileName || user?.displayName || user?.email?.split('@')[0] || 'Your profile').trim();
+  const profileNameCleared = (() => { try { return localStorage.getItem(`incursion-profile-name-cleared:${user?.id || 'local'}`) === '1'; } catch { return false; } })();
+  const statsDisplayName = (profileName || (profileNameCleared ? 'Your profile' : user?.displayName || user?.email?.split('@')[0] || getGuestIdentity().name)).trim();
+  const statsAvatar = profileAvatar || user?.photoURL || `https://blobatar.dev/avatar/${encodeURIComponent(statsDisplayName)}?size=128&gen=2&background=squircle`;
   const activeFilterCount = [genre !== 'All', rating > 0, ageRatingFilter !== 'All', typeFilter !== 'All'].filter(Boolean).length;
 
   if (window.location.pathname !== '/') return <NotFoundPage onHome={() => { window.location.hash = 'home'; window.history.pushState(null, '', '/#home'); window.location.reload(); }} />;
