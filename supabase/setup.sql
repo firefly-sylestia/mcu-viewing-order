@@ -299,7 +299,7 @@ begin
   select * into p from public.watch_room_participants where room_id=r.id and token_hash=encode(sha256(convert_to(p_token,'UTF8')),'hex');
   if not found then raise exception 'You are not a member of this room.'; end if;
   update public.watch_room_participants set last_seen_at=now() where id=p.id;
-  select coalesce(jsonb_agg(jsonb_build_object('id',id,'display_name',display_name,'avatar_url',avatar_url,'is_host',is_host,'role',role) order by joined_at),'[]'::jsonb)
+  select coalesce(jsonb_agg(jsonb_build_object('id',id,'display_name',display_name,'avatar_url',avatar_url,'is_host',is_host,'role',role,'playback_position',playback_position,'playback_duration',playback_duration,'playback_updated_at',playback_updated_at) order by joined_at),'[]'::jsonb)
   into parts from public.watch_room_participants where room_id=r.id and last_seen_at > now()-interval '45 seconds';
   select coalesce(jsonb_agg(to_jsonb(m) order by id),'[]'::jsonb) into msgs
   from (select id,participant_id,display_name,avatar_url,body,created_at from public.watch_room_messages where room_id=r.id order by id desc limit 60) m;

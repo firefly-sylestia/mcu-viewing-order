@@ -332,7 +332,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     heartbeatRef.current = window.setInterval(() => {
       const r = roomRef.current, p = participantRef.current;
       if (r && p) rpc('watch_room_heartbeat', { p_code: r.code, p_token: p.token, p_position: currentTimeRef.current, p_duration: durationRef.current }).catch(() => {});
-    }, 12000);
+    }, 4000);
     return () => { window.clearInterval(pollRef.current); window.clearInterval(playbackPollRef.current); window.clearInterval(heartbeatRef.current); };
   }, [room?.id, participant?.id, refreshRoom, refreshPlayback, rpc]);
 
@@ -514,13 +514,14 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       if (data.type === 'cinesrc:timeupdate' && Number.isFinite(Number(data.currentTime))) {
         const time = Math.max(0, Number(data.currentTime));
         setCurrentTime(time);
+        currentTimeRef.current = time;
         if (canControl && Date.now() - lastHostTimePushRef.current > 4500) {
           lastHostTimePushRef.current = Date.now();
           publishPlayback({ position: time, paused: pausedRef.current });
         }
       }
-      if (data.type === 'cinesrc:loadedmetadata' && Number.isFinite(Number(data.duration))) setDuration(Number(data.duration));
-      if (data.type === 'cinesrc:response' && data.command === 'getDuration' && Number.isFinite(Number(data.result))) setDuration(Number(data.result));
+      if (data.type === 'cinesrc:loadedmetadata' && Number.isFinite(Number(data.duration))) { setDuration(Number(data.duration)); durationRef.current = Number(data.duration); }
+      if (data.type === 'cinesrc:response' && data.command === 'getDuration' && Number.isFinite(Number(data.result))) { setDuration(Number(data.result)); durationRef.current = Number(data.result); }
       if (data.type === 'cinesrc:response' && data.command === 'getCurrentTime' && Number.isFinite(Number(data.result))) setCurrentTime(Number(data.result));
       if (data.type === 'cinesrc:play') {
         setPaused(false); pausedRef.current=false;
