@@ -2838,7 +2838,7 @@ function TrailerModal({ trailer, onClose }) {
 
 function ContinueWatching({ items, setSelected, setStatus, toggleBookmark, playTrailer, onResume }) {
   const handleResume = async (item) => {
-    if (item.id === 2401 || /endgame\s*\(?(?:theatrical\s*)?encore\)?/i.test(item.title || '')) { onStartWatch(item, 299534, 'movie'); return; }
+    if (item.id === 2401 || /endgame\s*\(?(?:theatrical\s*)?encore\)?/i.test(item.title || '')) { onStartWatch({ ...item, tmdbId: 299534, streamTmdbId: 299534 }, 299534, 'movie'); return; }
     const params = new URLSearchParams({ title: item.title, year: String(item.year || '') });
     if (item.tmdbId) params.set('tmdbId', String(item.tmdbId));
     const res = await fetch(apiUrl(`/api/tmdb/poster?${params.toString()}`));
