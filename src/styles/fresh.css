@@ -13414,3 +13414,109 @@
   :root .wt-page .wt-reactions {padding:8px 12px 2px;gap:6px}
   :root .wt-page .wt-reactions button {width:32px;height:32px;flex-basis:32px}
 }
+
+
+/* Mobile Watch Together containment: keep every room section inside the viewport. */
+@media(max-width:760px) {
+  :root .movie-site.page-watch-together,
+  :root .movie-site.page-watch-together .wt-page,
+  :root .movie-site.page-watch-together .wt-content,
+  :root .movie-site.page-watch-together .wt-main,
+  :root .movie-site.page-watch-together .wt-chat {
+    box-sizing:border-box!important;min-width:0!important;max-width:100%!important;
+  }
+  :root .movie-site.page-watch-together .wt-page {
+    width:100%!important;padding-left:14px!important;padding-right:14px!important;
+    overflow-x:clip!important;
+  }
+  :root .movie-site.page-watch-together .wt-content {width:100%!important;display:grid!important;grid-template-columns:minmax(0,1fr)!important;overflow:visible!important}
+  :root .movie-site.page-watch-together .wt-main {width:100%!important;padding:12px 0 20px!important;overflow:visible!important}
+  :root .movie-site.page-watch-together .wt-room-title {align-items:flex-start!important;flex-wrap:wrap!important;gap:8px!important}
+  :root .movie-site.page-watch-together .wt-room-title>div {min-width:0!important;flex:1 1 160px!important}
+  :root .movie-site.page-watch-together .wt-copy {flex:0 0 auto!important;max-width:100%!important}
+  :root .movie-site.page-watch-together .wt-room-tools {width:100%!important;max-width:100%!important;box-sizing:border-box!important;flex-wrap:wrap!important;justify-content:space-between!important}
+  :root .movie-site.page-watch-together .wt-network {flex:1 1 110px!important}
+  :root .movie-site.page-watch-together .wt-room-tool-actions {flex:0 1 auto!important;max-width:100%!important}
+  :root .movie-site.page-watch-together .wt-player {width:100%!important;max-width:100%!important;aspect-ratio:16/9!important;overflow:hidden!important}
+  :root .movie-site.page-watch-together .wt-player iframe {
+    width:200%!important;height:200%!important;max-width:none!important;min-height:0!important;
+    transform:scale(.5)!important;transform-origin:top left!important;
+  }
+  :root .movie-site.page-watch-together .wt-controls {width:100%!important;max-width:100%!important;gap:clamp(4px,2vw,10px)!important;flex-wrap:nowrap!important}
+  :root .movie-site.page-watch-together .wt-controls button {flex:0 0 34px!important;width:34px!important;height:34px!important}
+  :root .movie-site.page-watch-together .wt-controls .wt-play {flex-basis:42px!important;width:42px!important;height:42px!important}
+  :root .movie-site.page-watch-together .wt-time {min-width:0!important;margin:0!important;font-size:8px!important;white-space:nowrap!important}
+  :root .movie-site.page-watch-together .wt-controls .wt-mute {margin-left:auto!important}
+  :root .movie-site.page-watch-together .wt-seek,
+  :root .movie-site.page-watch-together .wt-user-progress,
+  :root .movie-site.page-watch-together .wt-episode-picker,
+  :root .movie-site.page-watch-together .wt-members,
+  :root .movie-site.page-watch-together .wt-paused-indicator,
+  :root .movie-site.page-watch-together .wt-local-playback,
+  :root .movie-site.page-watch-together .wt-role-banner,
+  :root .movie-site.page-watch-together .wt-request-actions {max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
+  :root .movie-site.page-watch-together .wt-role-banner {flex-wrap:wrap!important;gap:9px!important;padding:12px!important}
+  :root .movie-site.page-watch-together .wt-role-banner span {min-width:0!important;flex:1 1 180px!important}
+  :root .movie-site.page-watch-together .wt-request-actions {display:flex!important;flex-wrap:wrap!important}
+  :root .movie-site.page-watch-together .wt-request-actions button {flex:1 1 120px!important;min-width:0!important}
+  :root .movie-site.page-watch-together .wt-chat {width:100%!important;max-width:100%!important;box-sizing:border-box!important;overflow:hidden!important}
+  :root .movie-site.page-watch-together .wt-chat-head {min-width:0!important;padding:0 12px!important}
+  :root .movie-site.page-watch-together .wt-chat-messages {min-width:0!important;overflow-x:hidden!important}
+  :root .movie-site.page-watch-together .wt-chat-form {min-width:0!important;box-sizing:border-box!important}
+  :root .movie-site.page-watch-together .wt-chat-form input {width:0!important;min-width:0!important}
+  :root .movie-site.page-watch-together .wt-chat-foot {flex-wrap:wrap!important;line-height:1.4!important}
+  :root .movie-site.page-watch-together .wt-episode-picker {padding:11px!important}
+  :root .movie-site.page-watch-together .wt-episode-row,
+  :root .movie-site.page-watch-together .wt-season-row {max-width:100%!important}
+}
+
+/* Host controls: a focused, compact management sheet rather than a stack of dated boxes. */
+:root .wt-create-backdrop .wt-host-panel {
+  width:min(620px,calc(100vw - 28px))!important;max-width:620px!important;
+  padding:0!important;overflow:hidden!important;border-radius:22px!important;
+  background:var(--fx-surface)!important;
+}
+:root .wt-create-backdrop .wt-host-panel>header {
+  position:sticky;top:0;z-index:2;margin:0!important;padding:22px 24px 18px!important;
+  background:color-mix(in srgb,var(--fx-surface) 94%,transparent);
+  border-bottom:1px solid color-mix(in srgb,var(--fx-muted) 15%,transparent);
+  -webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);
+}
+:root .wt-create-backdrop .wt-host-panel>header span {font-size:9px!important;letter-spacing:.17em!important}
+:root .wt-create-backdrop .wt-host-panel>header h2 {font-size:24px!important;letter-spacing:-.045em!important}
+:root .wt-create-backdrop .wt-host-panel>header p {font-size:11px!important}
+:root .wt-create-backdrop .wt-host-settings {padding:18px 22px 4px!important;gap:8px!important}
+:root .wt-create-backdrop .wt-host-settings label {
+  display:flex!important;align-items:center!important;justify-content:space-between!important;
+  min-height:64px!important;padding:12px 14px!important;border-radius:13px!important;
+  background:var(--fx-surface-2)!important;box-shadow:none!important;
+}
+:root .wt-create-backdrop .wt-host-settings label span {display:grid!important;gap:4px!important}
+:root .wt-create-backdrop .wt-host-settings b {font-size:11px!important}
+:root .wt-create-backdrop .wt-host-settings small {font-size:9px!important;line-height:1.4!important}
+:root .wt-create-backdrop .wt-host-people {margin:16px 22px 0!important;padding-top:15px!important;border-top:1px solid color-mix(in srgb,var(--fx-muted) 15%,transparent)}
+:root .wt-create-backdrop .wt-host-people>strong {font-size:12px!important}
+:root .wt-create-backdrop .wt-host-people>div {
+  display:flex!important;align-items:center!important;gap:6px!important;min-height:52px!important;
+  padding:7px 8px!important;border-radius:12px!important;background:var(--fx-surface-2)!important;
+}
+:root .wt-create-backdrop .wt-host-people>div>span {flex:1 1 auto!important;min-width:0!important}
+:root .wt-create-backdrop .wt-host-people>div>span b {overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+:root .wt-create-backdrop .wt-host-people button {min-height:30px!important;padding:0 9px!important;font-size:9px!important}
+:root .wt-create-backdrop .wt-host-danger {margin:16px 22px 20px!important;padding-top:13px!important}
+@media(max-width:760px) {
+  :root .wt-create-backdrop {padding:12px!important;align-items:center!important;box-sizing:border-box!important}
+  :root .wt-create-backdrop .wt-host-panel {
+    width:100%!important;max-width:520px!important;max-height:calc(100dvh - 24px)!important;
+    overflow-y:auto!important;overflow-x:hidden!important;border-radius:20px!important;
+  }
+  :root .wt-create-backdrop .wt-host-panel>header {padding:18px 17px 15px!important}
+  :root .wt-create-backdrop .wt-host-panel>header h2 {font-size:21px!important}
+  :root .wt-create-backdrop .wt-host-settings {grid-template-columns:minmax(0,1fr)!important;padding:13px 14px 2px!important;gap:7px!important}
+  :root .wt-create-backdrop .wt-host-settings label {min-height:58px!important;padding:10px 12px!important}
+  :root .wt-create-backdrop .wt-host-people {margin:14px 14px 0!important}
+  :root .wt-create-backdrop .wt-host-people>div {flex-wrap:wrap!important}
+  :root .wt-create-backdrop .wt-host-people>div>span {flex:1 1 100%!important}
+  :root .wt-create-backdrop .wt-host-people button {flex:1 1 auto!important}
+  :root .wt-create-backdrop .wt-host-danger {margin:14px 14px 16px!important}
+}
