@@ -11903,3 +11903,77 @@
     opacity: .34 !important;
   }
 }
+
+
+/* Stats universe selector — match the Home/List frosted gradient language.
+   This control supports multi-select, so each selected universe gets its own
+   softly animated glass pill rather than a single exclusive sliding blob. */
+:root .movie-site.page-analytics .stats-universe-tabs.shared-switcher {
+  position: relative !important;
+  isolation: isolate !important;
+  overflow: visible !important;
+  background: color-mix(in srgb, var(--fx-surface-2, #fff) 14%, transparent) !important;
+  border: 1px solid color-mix(in srgb, var(--fx-border, #aab2c0) 22%, transparent) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.18) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(1.25) !important;
+  backdrop-filter: blur(16px) saturate(1.25) !important;
+}
+:root .movie-site.page-analytics .stats-universe-tabs.shared-switcher > button,
+:root .movie-site.page-analytics .stats-universe-tabs.shared-switcher > button:hover,
+:root .movie-site.page-analytics .stats-universe-tabs.shared-switcher > button:focus,
+:root .movie-site.page-analytics .stats-universe-tabs.shared-switcher > button:focus-visible,
+:root .movie-site.page-analytics .stats-universe-tabs.shared-switcher > button:active {
+  -webkit-tap-highlight-color: transparent !important;
+  tap-highlight-color: transparent !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+  filter: none !important;
+  transform: none !important;
+}
+:root .movie-site.page-analytics .stats-universe-tabs.shared-switcher > button {
+  position: relative !important;
+  transition: color .2s ease, background .2s ease !important;
+}
+:root .movie-site.page-analytics .stats-universe-tabs.shared-switcher > button.active,
+:root .movie-site.page-analytics .stats-universe-tabs.shared-switcher > button[aria-pressed="true"] {
+  color: var(--fx-text, #202938) !important;
+  background: linear-gradient(135deg, rgba(255,255,255,.62), rgba(255,255,255,.24) 52%, rgba(222,231,245,.16)) !important;
+  border: 1px solid rgba(255,255,255,.40) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.64),
+    inset 0 -1px 0 rgba(135,150,174,.08),
+    0 4px 14px rgba(31,45,68,.075) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.35) !important;
+  backdrop-filter: blur(18px) saturate(1.35) !important;
+}
+:root[data-theme="dark"] .movie-site.page-analytics .stats-universe-tabs.shared-switcher > button.active,
+:root[data-theme="dark"] .movie-site.page-analytics .stats-universe-tabs.shared-switcher > button[aria-pressed="true"] {
+  color: #f1f4f9 !important;
+  background: linear-gradient(135deg, rgba(255,255,255,.17), rgba(210,222,241,.075) 52%, rgba(255,255,255,.03)) !important;
+  border-color: rgba(255,255,255,.15) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.19),
+    inset 0 -1px 0 rgba(0,0,0,.12),
+    0 4px 14px rgba(0,0,0,.16) !important;
+}
+:root .movie-site.page-analytics .stats-universe-tabs.shared-switcher > button.active::after,
+:root .movie-site.page-analytics .stats-universe-tabs.shared-switcher > button[aria-pressed="true"]::after {
+  content: none !important;
+}
+:root .movie-site.page-analytics .stats-universe-tabs.shared-switcher > button:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--fx-text) 24%, transparent) !important;
+  outline-offset: -3px !important;
+}
+@media (hover: hover) and (pointer: fine) {
+  :root .movie-site.page-analytics .stats-universe-tabs.shared-switcher > button:not(.active):hover {
+    background: linear-gradient(135deg, rgba(255,255,255,.22), rgba(255,255,255,.08)) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.22) !important;
+  }
+  :root[data-theme="dark"] .movie-site.page-analytics .stats-universe-tabs.shared-switcher > button:not(.active):hover {
+    background: linear-gradient(135deg, rgba(255,255,255,.09), rgba(255,255,255,.025)) !important;
+  }
+}
