@@ -284,8 +284,10 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       if (data.type === 'cinesrc:nextepisode') {
         const next = Number(data.episode);
         if (Number.isInteger(next) && next > 0) {
+          const nextSeason = Number(data.season) || season;
           onEpisodeChangeRef.current?.(next);
-          publishPlayback({ position: 0, paused: false, season: Number(data.season) || season, episode: next }, true);
+          setRoom(previous => previous ? { ...previous, playback: { ...(previous.playback || {}), position: 0, paused: false, season: nextSeason, episode: next } } : previous);
+          publishPlayback({ position: 0, paused: false, season: nextSeason, episode: next }, true);
         }
       }
     };
