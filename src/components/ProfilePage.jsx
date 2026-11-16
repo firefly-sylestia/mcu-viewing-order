@@ -293,6 +293,9 @@ function SettingsPanel({ installApp, installAvailable, appInstalled, query = '',
   const [performanceModeOn, setPerformanceModeOn] = useState(() => {
     try { return localStorage.getItem('performance-mode') === '1'; } catch { return false; }
   });
+  const [heroBackdropTransparent, setHeroBackdropTransparent] = useState(() => {
+    try { return localStorage.getItem('hero-backdrop-transparent') === '1'; } catch { return false; }
+  });
   const [mounted, setMounted] = useState(false);
   const [draft, setDraft] = useState(profileName);
   const [editing, setEditing] = useState(false);
@@ -303,6 +306,11 @@ function SettingsPanel({ installApp, installAvailable, appInstalled, query = '',
     setMounted(true);
     document.documentElement.classList.toggle('performance-mode', performanceModeOn);
   }, [performanceModeOn]);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-hero-backdrop', heroBackdropTransparent ? 'transparent' : 'standard');
+    try { localStorage.setItem('hero-backdrop-transparent', heroBackdropTransparent ? '1' : '0'); } catch {}
+  }, [heroBackdropTransparent]);
 
   const updatePerformanceMode = (enabled) => {
     setPerformanceModeOn(enabled);
@@ -365,6 +373,27 @@ function SettingsPanel({ installApp, installAvailable, appInstalled, query = '',
               <span className="theme-toggle-thumb">
                 <Vibrate size={14} />
               </span>
+            </span>
+          </button>
+        </div>
+
+        <div className="settings-row">
+          <div className="settings-row-label">
+            <span className="settings-row-icon"><LayoutGrid size={18} /></span>
+            <div>
+              <strong>Transparent hero backdrop</strong>
+              <small>{heroBackdropTransparent ? 'Carousel blends into the page with a soft blurred fade' : 'Keep the standard featured carousel surface'}</small>
+            </div>
+          </div>
+          <button
+            className="theme-toggle"
+            role="switch"
+            aria-checked={heroBackdropTransparent}
+            onClick={() => setHeroBackdropTransparent(value => !value)}
+            aria-label={`Turn transparent hero backdrop ${heroBackdropTransparent ? 'off' : 'on'}`}
+          >
+            <span className={`theme-toggle-track ${heroBackdropTransparent ? 'dark' : 'light'}`}>
+              <span className="theme-toggle-thumb"><LayoutGrid size={14} /></span>
             </span>
           </button>
         </div>

@@ -14225,3 +14225,88 @@
 @media(max-width:380px) {
   :root .wt-create-backdrop .wt-create-dialog .wt-picker-grid {grid-template-columns:repeat(2,minmax(0,1fr))!important}
 }
+
+
+/* ── Native safe areas + optional transparent home hero ─────────────────── */
+:root .movie-site.page-profile .profile-page {
+  padding-top: max(16px, env(safe-area-inset-top, 0px));
+}
+:root .movie-site.page-profile .profile-header {
+  scroll-margin-top: calc(env(safe-area-inset-top, 0px) + 16px);
+}
+:root[data-hero-backdrop="transparent"] .movie-site .top-carousel {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+:root[data-hero-backdrop="transparent"] .movie-site .carousel-backdrops {
+  background: transparent !important;
+}
+:root[data-hero-backdrop="transparent"] .movie-site .carousel-backdrop {
+  filter: blur(42px) saturate(1.12) !important;
+  opacity: .18 !important;
+}
+:root[data-hero-backdrop="transparent"] .movie-site .carousel-backdrop-shade {
+  background: linear-gradient(110deg, color-mix(in srgb, var(--fx-bg, #f6f7fb) 72%, transparent), color-mix(in srgb, var(--fx-bg, #f6f7fb) 90%, transparent)) !important;
+  opacity: .38 !important;
+}
+:root[data-theme="dark"][data-hero-backdrop="transparent"] .movie-site .carousel-backdrop-shade {
+  background: linear-gradient(110deg, rgba(10, 12, 17, .62), rgba(10, 12, 17, .84)) !important;
+}
+:root[data-hero-backdrop="transparent"] .movie-site .top-carousel::before,
+:root[data-hero-backdrop="transparent"] .movie-site .top-carousel::after {
+  opacity: 0 !important;
+}
+
+/* Performance mode is global and deliberately removes costly paint/compositing
+   effects, not just the carousel animation. */
+:root.performance-mode *,
+:root.performance-mode *::before,
+:root.performance-mode *::after {
+  scroll-behavior: auto !important;
+  animation-duration: .001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: .001ms !important;
+  transition-delay: 0ms !important;
+}
+:root.performance-mode .movie-site :is(
+  .top-carousel, .web-rail, .rail-card, .movie-card, .list-row,
+  .profile-header, .profile-card, .profile-analytics, .profile-rail,
+  .analytics-panel, .detail-modal, .bottom-nav, .site-header,
+  .carousel-nav, .carousel-nav > button, .poster-stack, .stack-poster,
+  .header-image-backdrop, .carousel-backdrop, .detail-backdrop,
+  .wb-card, .wt-chat, .wt-player, .wt-room-tools
+) {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+}
+:root.performance-mode .movie-site :is(
+  .carousel-backdrop, .detail-backdrop, .header-image-backdrop,
+  .site-glow, .feature-glow, .poster-glow
+) {
+  filter: none !important;
+  opacity: .08 !important;
+}
+:root.performance-mode .movie-site .carousel-backdrops {
+  display: none !important;
+}
+:root.performance-mode .movie-site .top-carousel {
+  box-shadow: none !important;
+}
+:root.performance-mode .movie-site .smooth-stack .stack-poster {
+  transition: none !important;
+  filter: none !important;
+}
+:root.performance-mode .movie-site :is(.movie-card:hover, .list-row:hover, .wb-card:hover) {
+  transform: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root .movie-site *,
+  :root .movie-site *::before,
+  :root .movie-site *::after {
+    animation-duration: .001ms !important;
+    transition-duration: .001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
