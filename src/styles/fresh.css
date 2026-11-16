@@ -14497,3 +14497,31 @@
   color:var(--fx-accent)!important;
   font-weight:750!important;
 }
+
+
+/* Watch browser progress summary: keep all three counts on one clean row
+   beneath the full-width progress indicator on phone layouts. */
+@media(max-width:700px) {
+  :root .movie-site .watch-hub-v3 .wh3-overview {
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    align-items:stretch!important;
+    gap:8px!important;
+  }
+  :root .movie-site .watch-hub-v3 .wh3-progress-copy {
+    grid-column:1/-1!important;
+    min-width:0!important;
+  }
+  :root .movie-site .watch-hub-v3 .wh3-stat {
+    min-width:0!important;
+    padding-left:9px!important;
+    white-space:nowrap!important;
+  }
+  :root .movie-site .watch-hub-v3 .wh3-stat:first-of-type {
+    border-left:0!important;
+    padding-left:0!important;
+  }
+  :root .movie-site .watch-hub-v3 .wh3-stat span {
+    white-space:nowrap!important;
+    font-size:clamp(8px,2.5vw,10px)!important;
+  }
+}

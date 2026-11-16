@@ -1127,10 +1127,8 @@ export default function App() {
 
     if (section === 'home') {
       gather(heroItems);                                                        // Hero carousel
-      gather(homeUpNextItems); // Up next rail
       gather(homeContinueWatchingItems);              // Continue watching
       gather(homeEssentialItems);                              // Essential picks
-      gather(homeRecentlyWatchedItems); // Recently watched
       gather(activeItems);                                                      // Everything else
     } else {
       gather(activeItems);
@@ -1498,8 +1496,6 @@ export default function App() {
         <section className="hero-layout" key={universe}>
           <TopCarousel items={heroItems} initialIndex={(() => { try { return Number(localStorage.getItem('mcu-home-hero-index')) || saved.heroIndex || 0; } catch { return saved.heroIndex || 0; } })()} setSelected={selectItem} />
         </section>
-        <UpNextBoard items={homeUpNextItems} setSelected={selectItem} onStart={(item) => startWatchWithConfirm(item, item.tmdbId || null, item.type === 'series' ? 'tv' : 'movie')} />
-        <MovieRail title="Recently watched" items={homeRecentlyWatchedItems} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} empty="Mark titles as watched to see them here." paginated gridControls />
         {externalTrackedItems.length > 0 && (
           <MovieRail
             title="Your TMDB"
