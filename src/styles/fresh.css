@@ -14654,3 +14654,8 @@
 }
 :root.performance-mode .movie-site.page-home .top-carousel.hero-redesign :is(.hero-redesign-backdrop img,.hero-redesign-orb,.hero-redesign-art-glow) {filter:none!important;animation:none!important}
 :root.performance-mode .movie-site.page-home .top-carousel.hero-redesign :is(.hero-redesign-copy,.hero-redesign-poster) {animation:none!important}
+
+
+/* Retain the profile safe-area spacing from the previous settings pass. */
+:root .movie-site.page-profile .profile-page {padding-top:max(16px,env(safe-area-inset-top,0px))}
+:root .movie-site.page-profile .profile-header {scroll-margin-top:calc(env(safe-area-inset-top,0px) + 16px)}

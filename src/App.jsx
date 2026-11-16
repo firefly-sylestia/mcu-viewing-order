@@ -1824,7 +1824,7 @@ function TopCarousel({ items, initialIndex = 0, setSelected }) {
         <div className="hero-redesign-progress"><span style={{width:(((heroIndex+1)/Math.max(items.length,1))*100)+'%'}} /></div>
         <div className="hero-redesign-bottom-row">
           <div className="hero-redesign-thumbs" aria-label="Choose featured title">
-            {items.slice(0,Math.min(items.length,7)).map((item,index)=><button key={item.id} type="button" className={index===heroIndex?'active':''} onClick={()=>{hapticSelect();setHeroIndex(index);setInlineTrailer(null);}} aria-label={"Show "+item.title} title={item.title}><PosterArt item={item}/></button>)}
+            {Array.from({length:Math.min(items.length,7)},(_,offset)=>({item:items[(heroIndex+offset)%items.length],index:(heroIndex+offset)%items.length})).map(({item,index},offset)=><button key={item.id} type="button" className={offset===0?'active':''} onClick={()=>{hapticSelect();setHeroIndex(index);setInlineTrailer(null);}} aria-label={"Show "+item.title} title={item.title}><PosterArt item={item}/></button>)}
           </div>
           <div className="hero-redesign-arrows"><button onClick={()=>move(-1)} aria-label="Previous title"><ChevronLeft/></button><button onClick={()=>move(1)} aria-label="Next title"><ChevronRight/></button></div>
         </div>
