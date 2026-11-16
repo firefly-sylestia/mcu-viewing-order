@@ -1811,7 +1811,7 @@ function TopCarousel({ items, initialIndex = 0, setSelected }) {
           const activeDot = items.length <= 6 ? heroIndex % items.length === dotIndex : Math.round((heroIndex % items.length) * 5 / (items.length - 1)) === dotIndex;
           return <button key={dotIndex} aria-label={"Show carousel group " + (dotIndex + 1)} className={activeDot ? 'active' : ''} onClick={() => { hapticSelect(); setHeroIndex(targetIndex); setInlineTrailer(null); }} />;
         })}</div><button onClick={() => move(1)} aria-label="Next title"><ChevronRight /></button></div>
-    </>}
+    </>
   </section>;
 }
 
