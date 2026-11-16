@@ -14310,3 +14310,75 @@
     scroll-behavior: auto !important;
   }
 }
+
+
+/* Watch Together picker: correct mobile sizing and stable poster tiles.
+   Older full-screen dialog rules were overriding the compact grid sizing. */
+@media (max-width:760px) {
+  :root .wt-create-backdrop {
+    display:grid!important;
+    place-items:center!important;
+    padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom))!important;
+    overflow:hidden!important;
+  }
+  :root .wt-create-backdrop .wt-create-dialog {
+    width:min(100%, 520px)!important;
+    height:auto!important;
+    min-height:0!important;
+    max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 24px)!important;
+    display:flex!important;
+    flex-direction:column!important;
+    overflow:hidden!important;
+    border:1px solid color-mix(in srgb,var(--fx-muted) 22%,transparent)!important;
+    border-radius:22px!important;
+    padding:16px!important;
+    background:color-mix(in srgb,var(--fx-surface) 88%,transparent)!important;
+    box-shadow:0 24px 80px rgba(0,0,0,.24)!important;
+  }
+  :root .wt-create-backdrop .wt-create-dialog .wt-picker-grid {
+    flex:0 1 auto!important;
+    min-height:0!important;
+    max-height:min(38dvh, 330px)!important;
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    grid-auto-rows:max-content!important;
+    align-content:start!important;
+    gap:9px!important;
+  }
+  :root .wt-create-backdrop .wt-create-dialog .wt-picker-grid>button {
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+    align-self:start!important;
+    display:flex!important;
+    flex-direction:column!important;
+    padding:4px!important;
+    overflow:hidden!important;
+  }
+  :root .wt-create-backdrop .wt-create-dialog .wt-picker-grid>button img,
+  :root .wt-create-backdrop .wt-create-dialog .wt-picker-grid>button .wt-poster-placeholder {
+    display:block!important;
+    width:100%!important;
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+    aspect-ratio:2/3!important;
+    flex:0 0 auto!important;
+    object-fit:cover!important;
+  }
+  :root .wt-create-backdrop .wt-create-dialog .wt-picker-grid>button.poster-unavailable img {display:none!important}
+  :root .wt-create-backdrop .wt-create-dialog .wt-poster-placeholder {
+    display:grid!important;
+    place-items:center!important;
+    border-radius:9px!important;
+    background:linear-gradient(145deg,rgba(128,138,158,.2),rgba(128,138,158,.07))!important;
+    color:var(--fx-muted)!important;
+    font-size:10px!important;
+  }
+  :root .wt-create-backdrop .wt-create-dialog .wt-picker-grid>button i {
+    width:22px!important;height:22px!important;top:8px!important;right:8px!important;
+    opacity:0!important;
+  }
+  :root .wt-create-backdrop .wt-create-dialog .wt-picker-grid>button.selected i {opacity:1!important}
+  :root .wt-create-backdrop .wt-create-dialog .wt-dialog-selected {flex:0 0 auto!important}
+  :root .wt-create-backdrop .wt-create-dialog>.wt-create {flex:0 0 auto!important}
+}

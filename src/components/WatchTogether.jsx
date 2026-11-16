@@ -523,13 +523,16 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       setParticipant(result.participant);
       applyRoomSnapshot(result);
       saveActiveRoom(code, guest, itemMedia);
-      await loadOwnedRooms();
+      // Room creation is already complete; refresh the room list in the background
+      // so a slow history/list request cannot leave the create button spinning.
+      loadOwnedRooms().catch(() => {});
       const link = window.location.origin + '/watch-room/' + code;
       setRoomLink(link);
       setOpen(true);
       setShowPlaybackNotice(true);
       try { await navigator.clipboard.writeText(link); setCopied(true); window.setTimeout(() => setCopied(false), 2200); } catch {}
-    } catch (e) { setError(e.message || 'Could not create the room.'); }
+      return true;
+    } catch (e) { setError(e.message || 'Could not create the room.'); return false; }
     finally { setBusy(false); }
   }, [rpc, guest, itemMedia, applyRoomSnapshot, loadOwnedRooms, voiceChatDefault]);
 
@@ -955,10 +958,10 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
             <section className="wt-create-dialog" role="dialog" aria-modal="true" aria-label="Create a screening room">
               <header><div><span>NEW SCREENING</span><h2>Choose your title</h2><p>Everyone joining this room will open this movie or series.</p></div><button type="button" onClick={()=>setSetupDialog(false)} aria-label="Close"><X size={18}/></button></header>
               <label className="wt-picker-search"><Search size={16}/><input value={mediaQuery} onChange={event=>setMediaQuery(event.target.value)} placeholder="Search any movie or series…"/></label>
-              <div className="wt-picker-grid">{tmdbSearchLoading && <p className="wt-picker-empty">Searching your library and TMDB…</p>}{filteredMediaItems.length?filteredMediaItems.map((candidate,index)=><button type="button" key={`${candidate.tmdbId || candidate.id}-${index}`} onClick={()=>{setSelectedMedia(candidate);setError('');}} className={selectedMedia?.tmdbId===candidate.tmdbId?'selected':''}><img src={candidate.poster || guest.avatar} alt=""/><span><strong>{candidate.title}</strong><small>{candidate.year || '—'} · {candidate.type==='series'||candidate.mediaType==='tv'?'Series':'Movie'}</small></span><i>{selectedMedia?.tmdbId===candidate.tmdbId?<Check size={15}/>:null}</i></button>):<p className="wt-picker-empty">No titles found. Try another title or spelling.</p>}</div>
+              <div className="wt-picker-grid">{tmdbSearchLoading && <p className="wt-picker-empty">Searching your library and TMDB…</p>}{filteredMediaItems.length?filteredMediaItems.map((candidate,index)=><button type="button" key={`${candidate.tmdbId || candidate.id}-${index}`} onClick={()=>{setSelectedMedia(candidate);setError('');}} className={selectedMedia?.tmdbId===candidate.tmdbId?'selected':''}>{candidate.poster ? <img src={candidate.poster} alt="" loading={index<9?'eager':'lazy'} decoding="async" onError={event=>{event.currentTarget.style.visibility='hidden';event.currentTarget.parentElement.classList.add('poster-unavailable');}}/> : <span className="wt-poster-placeholder" aria-hidden="true">No poster</span>}<span><strong>{candidate.title}</strong><small>{candidate.year || '—'} · {candidate.type==='series'||candidate.mediaType==='tv'?'Series':'Movie'}</small></span><i>{selectedMedia?.tmdbId===candidate.tmdbId?<Check size={15}/>:null}</i></button>):<p className="wt-picker-empty">No titles found. Try another title or spelling.</p>}</div>
               {selectedMedia && <div className="wt-dialog-selected"><img src={selectedMedia.poster || guest.avatar} alt=""/><span><strong>{selectedMedia.title}</strong><small>{selectedMedia.year || '—'} · {selectedMedia.type==='series'||selectedMedia.mediaType==='tv'?'Series':'Movie'}</small></span></div>}
               {error && <p className="wt-error">{error}</p>}
-              <button className="wt-create" disabled={busy || !selectedMedia || !Number(selectedMedia.tmdbId)} onClick={async()=>{await createRoom();setSetupDialog(false);}}>{busy?'Creating room…':'Create screening room'}<Link2 size={17}/></button>
+              <button className="wt-create" disabled={busy || !selectedMedia || !Number(selectedMedia.tmdbId)} onClick={async()=>{const created=await createRoom();if(created)setSetupDialog(false);}}>{busy?'Creating room…':'Create screening room'}<Link2 size={17}/></button>
             </section>
           </div>, document.body)}
 
