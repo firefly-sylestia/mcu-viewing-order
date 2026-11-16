@@ -1855,6 +1855,8 @@ function TopCarousel({ items, initialIndex = 0, setSelected }) {
         })}</div><button onClick={() => move(1)} aria-label="Next title"><ChevronRight /></button></div>
     </>}
   </section>;
+}
+
 function PosterArt({ item, loading: loadingProp = 'lazy', fetchPriority: fetchPriorityProp = 'auto' }) {
   const [retryAttempt, setRetryAttempt] = useState(0);
   const [failed, setFailed] = useState(false);

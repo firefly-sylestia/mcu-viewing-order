@@ -14659,3 +14659,73 @@
 /* Retain the profile safe-area spacing from the previous settings pass. */
 :root .movie-site.page-profile .profile-page {padding-top:max(16px,env(safe-area-inset-top,0px))}
 :root .movie-site.page-profile .profile-header {scroll-margin-top:calc(env(safe-area-inset-top,0px) + 16px)}
+
+
+/* Keep the list/grid selection pill fully inside its segmented control. */
+:root .movie-site .list-view-toggle {
+  position: relative !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  align-items: stretch !important;
+  box-sizing: border-box !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  isolation: isolate !important;
+  gap: 3px !important;
+}
+:root .movie-site .list-view-toggle > button {
+  position: relative !important;
+  z-index: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  padding-inline: 10px !important;
+  transform: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+:root .movie-site .list-view-toggle > button.active {
+  background: var(--fx-surface-3) !important;
+  color: var(--fx-text) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fx-text) 7%, transparent) !important;
+}
+:root[data-theme="light"] .movie-site .list-view-toggle > button.active {
+  background: #e9edf4 !important;
+  color: #18202c !important;
+  box-shadow: inset 0 0 0 1px rgba(16,24,40,.045) !important;
+}
+
+/* Page arrows use a quiet neutral press state, never the universe red accent. */
+:root .movie-site .list-page-control .list-page-step,
+:root .movie-site .pagination > button[aria-label="Previous page"],
+:root .movie-site .pagination > button[aria-label="Next page"] {
+  -webkit-tap-highlight-color: transparent !important;
+  outline-color: transparent;
+  transition: background-color .16s ease, color .16s ease, opacity .16s ease !important;
+}
+:root .movie-site .list-page-control .list-page-step:not(:disabled):active,
+:root .movie-site .pagination > button[aria-label="Previous page"]:not(:disabled):active,
+:root .movie-site .pagination > button[aria-label="Next page"]:not(:disabled):active {
+  background: var(--fx-surface-3) !important;
+  color: var(--fx-text) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+:root .movie-site .list-page-control .list-page-step:focus:not(:focus-visible),
+:root .movie-site .pagination > button[aria-label="Previous page"]:focus:not(:focus-visible),
+:root .movie-site .pagination > button[aria-label="Next page"]:focus:not(:focus-visible) {
+  outline: none !important;
+  box-shadow: none !important;
+}
+:root .movie-site .pagination > button.active {
+  background: var(--fx-surface-3) !important;
+  color: var(--fx-text) !important;
+  box-shadow: none !important;
+}
+:root[data-theme="light"] .movie-site .pagination > button.active {
+  background: #e9edf4 !important;
+  color: #18202c !important;
+}
