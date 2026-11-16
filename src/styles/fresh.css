@@ -14227,37 +14227,6 @@
 }
 
 
-/* ── Native safe areas + optional transparent home hero ─────────────────── */
-:root .movie-site.page-profile .profile-page {
-  padding-top: max(16px, env(safe-area-inset-top, 0px));
-}
-:root .movie-site.page-profile .profile-header {
-  scroll-margin-top: calc(env(safe-area-inset-top, 0px) + 16px);
-}
-:root[data-hero-backdrop="transparent"] .movie-site .top-carousel {
-  background: transparent !important;
-  border-color: transparent !important;
-  box-shadow: none !important;
-}
-:root[data-hero-backdrop="transparent"] .movie-site .carousel-backdrops {
-  background: transparent !important;
-}
-:root[data-hero-backdrop="transparent"] .movie-site .carousel-backdrop {
-  filter: blur(42px) saturate(1.12) !important;
-  opacity: .18 !important;
-}
-:root[data-hero-backdrop="transparent"] .movie-site .carousel-backdrop-shade {
-  background: linear-gradient(110deg, color-mix(in srgb, var(--fx-bg, #f6f7fb) 72%, transparent), color-mix(in srgb, var(--fx-bg, #f6f7fb) 90%, transparent)) !important;
-  opacity: .38 !important;
-}
-:root[data-theme="dark"][data-hero-backdrop="transparent"] .movie-site .carousel-backdrop-shade {
-  background: linear-gradient(110deg, rgba(10, 12, 17, .62), rgba(10, 12, 17, .84)) !important;
-}
-:root[data-hero-backdrop="transparent"] .movie-site .top-carousel::before,
-:root[data-hero-backdrop="transparent"] .movie-site .top-carousel::after {
-  opacity: 0 !important;
-}
-
 /* Performance mode is global and deliberately removes costly paint/compositing
    effects, not just the carousel animation. */
 :root.performance-mode *,
@@ -14527,117 +14496,6 @@
 }
 
 
-/* ── Optional cinematic glass hero redesign ───────────────────────────────
-   A separate opt-in presentation: original carousel markup, poster stack,
-   copy and manual controls remain intact. */
-:root[data-hero-design="cinematic-glass"] .movie-site.page-home .top-carousel {
-  isolation: isolate;
-  overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--fx-text, #202532) 9%, transparent) !important;
-  border-radius: 34px !important;
-  background:
-    radial-gradient(ellipse at 12% 8%, color-mix(in srgb, var(--accent, #8b7cff) 18%, transparent), transparent 48%),
-    linear-gradient(118deg, color-mix(in srgb, var(--fx-card, #fff) 76%, transparent), color-mix(in srgb, var(--fx-bg, #f6f7fb) 62%, transparent)) !important;
-  box-shadow: 0 26px 70px -46px rgba(20, 27, 42, .42), inset 0 1px 0 rgba(255,255,255,.62) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(1.28) !important;
-  backdrop-filter: blur(24px) saturate(1.28) !important;
-  transition: background .8s ease, border-color .8s ease, box-shadow .8s ease !important;
-}
-:root[data-theme="dark"][data-hero-design="cinematic-glass"] .movie-site.page-home .top-carousel {
-  border-color: rgba(255,255,255,.09) !important;
-  background:
-    radial-gradient(ellipse at 12% 8%, color-mix(in srgb, var(--accent, #8b7cff) 24%, transparent), transparent 52%),
-    linear-gradient(118deg, rgba(23,27,37,.72), rgba(12,15,22,.58)) !important;
-  box-shadow: 0 28px 80px -48px rgba(0,0,0,.8), inset 0 1px 0 rgba(255,255,255,.08) !important;
-}
-:root[data-hero-design="cinematic-glass"] .movie-site.page-home .carousel-backdrops {
-  inset: -8% !important;
-  opacity: .72 !important;
-  -webkit-mask-image: linear-gradient(90deg, #000 0%, rgba(0,0,0,.76) 48%, transparent 100%), linear-gradient(0deg, transparent 0%, #000 24%, #000 78%, transparent 100%);
-  mask-image: linear-gradient(90deg, #000 0%, rgba(0,0,0,.76) 48%, transparent 100%), linear-gradient(0deg, transparent 0%, #000 24%, #000 78%, transparent 100%);
-  -webkit-mask-composite: source-in;
-  mask-composite: intersect;
-}
-:root[data-hero-design="cinematic-glass"] .movie-site.page-home .carousel-backdrop {
-  filter: blur(48px) saturate(1.35) brightness(.88) !important;
-  opacity: .22 !important;
-  transform: scale(1.12) !important;
-}
-:root[data-theme="dark"][data-hero-design="cinematic-glass"] .movie-site.page-home .carousel-backdrop {
-  filter: blur(52px) saturate(1.28) brightness(.58) !important;
-  opacity: .32 !important;
-}
-:root[data-hero-design="cinematic-glass"] .movie-site.page-home .carousel-backdrop-shade {
-  background: linear-gradient(90deg, color-mix(in srgb, var(--fx-bg, #f6f7fb) 16%, transparent), color-mix(in srgb, var(--fx-bg, #f6f7fb) 68%, transparent) 66%, var(--fx-bg, #f6f7fb)) !important;
-  opacity: .68 !important;
-}
-:root[data-theme="dark"][data-hero-design="cinematic-glass"] .movie-site.page-home .carousel-backdrop-shade {
-  background: linear-gradient(90deg, rgba(7,10,16,.12), rgba(7,10,16,.54) 68%, rgba(7,10,16,.82)) !important;
-  opacity: .8 !important;
-}
-:root[data-hero-design="cinematic-glass"] .movie-site.page-home .top-carousel::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  inset: 0;
-  pointer-events: none;
-  border-radius: inherit;
-  background: radial-gradient(ellipse at 78% 0%, color-mix(in srgb, var(--accent, #8b7cff) 15%, transparent), transparent 46%);
-  opacity: .9;
-  animation: cinematicHeroAura 11s ease-in-out infinite alternate;
-}
-:root[data-hero-design="cinematic-glass"] .movie-site.page-home .feature-text {
-  animation: cinematicHeroCopyIn .72s cubic-bezier(.2,.75,.2,1) both;
-}
-:root[data-hero-design="cinematic-glass"] .movie-site.page-home .smooth-stack .stack-poster {
-  box-shadow: 0 24px 54px -24px rgba(8,12,22,.5), 0 0 0 1px rgba(255,255,255,.18) !important;
-  transition: transform .82s cubic-bezier(.2,.8,.2,1), opacity .58s ease, box-shadow .58s ease !important;
-}
-:root[data-hero-design="cinematic-glass"] .movie-site.page-home .smooth-stack .stack-poster.poster-0 {
-  box-shadow: 0 30px 68px -26px color-mix(in srgb, var(--accent, #8b7cff) 36%, transparent), 0 0 0 1px rgba(255,255,255,.24) !important;
-}
-:root[data-hero-design="cinematic-glass"] .movie-site.page-home .feature-meta-pill {
-  -webkit-backdrop-filter: blur(16px) saturate(1.3) !important;
-  backdrop-filter: blur(16px) saturate(1.3) !important;
-  background: color-mix(in srgb, var(--fx-card, #fff) 64%, transparent) !important;
-  border: 1px solid color-mix(in srgb, var(--fx-text, #202532) 9%, transparent) !important;
-}
-:root[data-theme="dark"][data-hero-design="cinematic-glass"] .movie-site.page-home .feature-meta-pill {
-  background: rgba(255,255,255,.09) !important;
-  border-color: rgba(255,255,255,.1) !important;
-}
-:root[data-hero-design="cinematic-glass"] .movie-site.page-home .carousel-nav {
-  background: color-mix(in srgb, var(--fx-card, #fff) 48%, transparent) !important;
-  border: 1px solid color-mix(in srgb, var(--fx-text, #202532) 8%, transparent) !important;
-  box-shadow: 0 12px 34px -22px rgba(12,18,30,.36), inset 0 1px 0 rgba(255,255,255,.6) !important;
-  -webkit-backdrop-filter: blur(22px) saturate(1.3) !important;
-  backdrop-filter: blur(22px) saturate(1.3) !important;
-}
-:root[data-theme="dark"][data-hero-design="cinematic-glass"] .movie-site.page-home .carousel-nav {
-  background: rgba(20,24,33,.5) !important;
-  border-color: rgba(255,255,255,.1) !important;
-  box-shadow: 0 14px 38px -22px rgba(0,0,0,.72), inset 0 1px 0 rgba(255,255,255,.08) !important;
-}
-@keyframes cinematicHeroAura {
-  from { opacity: .48; transform: scale(1); }
-  to { opacity: .95; transform: scale(1.035); }
-}
-@keyframes cinematicHeroCopyIn {
-  from { opacity: .45; transform: translateY(12px); filter: blur(5px); }
-  to { opacity: 1; transform: translateY(0); filter: blur(0); }
-}
-:root.performance-mode[data-hero-design="cinematic-glass"] .movie-site.page-home .top-carousel::before,
-:root.performance-mode[data-hero-design="cinematic-glass"] .movie-site.page-home .feature-text {
-  animation: none !important;
-}
-@media (prefers-reduced-motion: reduce) {
-  :root[data-hero-design="cinematic-glass"] .movie-site.page-home .top-carousel::before,
-  :root[data-hero-design="cinematic-glass"] .movie-site.page-home .feature-text {
-    animation: none !important;
-  }
-}
-
-
 /* Screening title picker: compact single-line title + dedicated rating row. */
 :root .wt-create-backdrop .wt-create-dialog .wt-picker-grid>button .wt-picker-copy {
   display:grid!important;
@@ -14704,3 +14562,95 @@
 :root[data-theme="dark"] .wt-create-backdrop .wt-create-dialog>.wt-create {
   background:linear-gradient(112deg,#343b49 0%,#596273 52%,#343b49 100%)!important;
 }
+
+
+/* ── Full alternate hero carousel: editorial glass premiere layout ─────── */
+:root .movie-site.page-home .top-carousel.hero-redesign {
+  position:relative!important;display:flex!important;flex-direction:column!important;justify-content:space-between!important;
+  min-height:clamp(520px,48vw,650px)!important;padding:clamp(24px,4vw,48px)!important;overflow:hidden!important;isolation:isolate!important;
+  border:1px solid rgba(255,255,255,.16)!important;border-radius:32px!important;
+  background:linear-gradient(120deg,rgba(245,247,252,.78),rgba(231,235,244,.48))!important;
+  box-shadow:0 28px 78px -48px rgba(22,30,48,.48),inset 0 1px 0 rgba(255,255,255,.72)!important;
+  -webkit-backdrop-filter:blur(30px) saturate(1.35)!important;backdrop-filter:blur(30px) saturate(1.35)!important;
+}
+:root[data-theme="dark"] .movie-site.page-home .top-carousel.hero-redesign {background:linear-gradient(120deg,rgba(20,24,34,.78),rgba(12,15,23,.56))!important;border-color:rgba(255,255,255,.1)!important;box-shadow:0 34px 90px -50px rgba(0,0,0,.82),inset 0 1px 0 rgba(255,255,255,.08)!important}
+.hero-redesign-backdrop {position:absolute;inset:-8%;z-index:-4;overflow:hidden;pointer-events:none}
+.hero-redesign-backdrop img {position:absolute;width:100%;height:100%;inset:0;object-fit:cover;filter:blur(54px) saturate(1.3);transform:scale(1.12);opacity:.23}
+.hero-redesign-backdrop-current {animation:heroBackdropReveal .9s ease both}
+:root[data-theme="dark"] .hero-redesign-backdrop img {opacity:.3;filter:blur(58px) saturate(1.25) brightness(.58)}
+.hero-redesign-wash {position:absolute;inset:0;z-index:-3;pointer-events:none;background:linear-gradient(90deg,rgba(255,255,255,.22),rgba(255,255,255,.5) 48%,rgba(255,255,255,.8)),linear-gradient(0deg,rgba(255,255,255,.74),transparent 42%)}
+:root[data-theme="dark"] .hero-redesign-wash {background:linear-gradient(90deg,rgba(8,11,17,.32),rgba(8,11,17,.58) 52%,rgba(8,11,17,.78)),linear-gradient(0deg,rgba(8,11,17,.76),transparent 44%)}
+.hero-redesign-orb {position:absolute;z-index:-2;pointer-events:none;border-radius:50%;filter:blur(2px);opacity:.52}
+.hero-redesign-orb-one {width:340px;height:340px;right:12%;top:-210px;background:radial-gradient(circle,color-mix(in srgb,var(--accent) 26%,transparent),transparent 70%);animation:heroOrbFloat 12s ease-in-out infinite alternate}
+.hero-redesign-orb-two {width:260px;height:260px;left:22%;bottom:-210px;background:radial-gradient(circle,rgba(255,255,255,.62),transparent 70%)}
+:root[data-theme="dark"] .hero-redesign-orb-two {background:radial-gradient(circle,rgba(255,255,255,.12),transparent 70%)}
+.hero-redesign-main {position:relative;z-index:1;display:grid;grid-template-columns:minmax(0,1.12fr) minmax(230px,.78fr);align-items:center;gap:clamp(22px,5vw,76px);flex:1;padding:8px 2% 22px}
+.hero-redesign-copy {min-width:0;max-width:650px;animation:heroCopyReveal .72s cubic-bezier(.2,.75,.2,1) both}
+.hero-redesign-eyebrow {display:flex;align-items:center;gap:10px;margin-bottom:22px;font-size:10px;font-weight:850;letter-spacing:.2em;color:var(--fx-muted-strong);text-transform:uppercase}
+.hero-redesign-eyebrow span {width:24px;height:2px;border-radius:3px;background:var(--accent)}
+.hero-redesign-meta {display:flex;align-items:center;gap:11px;margin-bottom:13px;font-size:11px;font-weight:750;letter-spacing:.04em;color:var(--fx-muted-strong)}
+.hero-redesign-meta i {width:3px;height:3px;border-radius:50%;background:var(--fx-muted)}
+.hero-redesign-copy h1 {max-width:720px;margin:0 0 16px;font-size:clamp(36px,5.4vw,72px);line-height:.98;letter-spacing:-.055em;font-weight:900;text-wrap:balance;color:var(--fx-text)}
+.hero-redesign-copy>p {max-width:54ch;margin:0;color:var(--fx-muted-strong);font-size:clamp(12px,1.2vw,15px);line-height:1.7;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.hero-redesign-actions {display:flex;align-items:center;gap:10px;margin-top:26px}
+.hero-redesign-actions button {height:44px;display:inline-flex;align-items:center;justify-content:center;gap:9px;padding:0 18px;border-radius:999px;font-size:12px;font-weight:850;transition:transform .22s ease,background .22s ease,box-shadow .22s ease}
+.hero-redesign-primary {border:1px solid color-mix(in srgb,var(--fx-text) 14%,transparent);background:var(--fx-text);color:var(--fx-bg);box-shadow:0 12px 26px -16px rgba(0,0,0,.42)}
+.hero-redesign-trailer {border:1px solid color-mix(in srgb,var(--fx-text) 14%,transparent);background:color-mix(in srgb,var(--fx-card) 45%,transparent);color:var(--fx-text);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
+.hero-redesign-actions button:hover {transform:translateY(-2px)}
+.hero-redesign-genres {display:flex;flex-wrap:wrap;gap:7px;margin-top:22px}
+.hero-redesign-genres span {padding:6px 10px;border:1px solid color-mix(in srgb,var(--fx-text) 10%,transparent);border-radius:999px;background:color-mix(in srgb,var(--fx-card) 35%,transparent);font-size:9px;font-weight:750;color:var(--fx-muted-strong);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+.hero-redesign-art {position:relative;display:grid;place-items:center;min-width:0;min-height:340px}
+.hero-redesign-art-glow {position:absolute;width:80%;height:90%;border-radius:50%;background:radial-gradient(ellipse,color-mix(in srgb,var(--accent) 32%,transparent),transparent 68%);filter:blur(34px);opacity:.75;animation:heroArtPulse 6s ease-in-out infinite alternate}
+.hero-redesign-poster {position:relative;width:clamp(190px,23vw,292px);aspect-ratio:2/3;border-radius:20px;overflow:hidden;cursor:pointer;transform:rotate(2.5deg);box-shadow:0 34px 70px -30px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.35);animation:heroPosterEnter .82s cubic-bezier(.2,.75,.2,1) both;transition:transform .45s ease,box-shadow .45s ease}
+.hero-redesign-poster:hover {transform:rotate(0) translateY(-5px);box-shadow:0 42px 84px -30px rgba(0,0,0,.72),0 0 0 1px rgba(255,255,255,.42)}
+.hero-redesign-poster>img,.hero-redesign-poster>.fallback-poster {width:100%;height:100%;object-fit:cover}
+.hero-redesign-poster-gloss {position:absolute;inset:0;pointer-events:none;background:linear-gradient(125deg,rgba(255,255,255,.28),transparent 28%,transparent 68%,rgba(255,255,255,.08));mix-blend-mode:screen}
+.hero-redesign-side-note {position:absolute;right:0;bottom:4%;display:flex;align-items:center;gap:8px;padding:9px 12px;border:1px solid rgba(255,255,255,.22);border-radius:999px;background:rgba(18,22,31,.42);color:white;font-size:10px;font-weight:800;-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
+.hero-redesign-side-note span {font-size:8px;letter-spacing:.13em;opacity:.72}.hero-redesign-side-note b {font-size:13px}.hero-redesign-side-note i {width:1px;height:12px;background:rgba(255,255,255,.42)}
+.hero-redesign-trailer-frame {position:relative;width:min(100%,520px);aspect-ratio:16/9;overflow:hidden;border-radius:18px;box-shadow:0 30px 70px -28px rgba(0,0,0,.68)}
+.hero-redesign-trailer-frame iframe {width:100%;height:100%;border:0}
+.hero-redesign-trailer-frame>button {position:absolute;right:10px;top:10px;width:34px;height:34px;border:0;border-radius:50%;background:rgba(0,0,0,.65);color:white}
+.hero-redesign-bottom {position:relative;z-index:2}
+.hero-redesign-progress {height:2px;margin:0 0 15px;background:color-mix(in srgb,var(--fx-text) 10%,transparent);overflow:hidden;border-radius:4px}
+.hero-redesign-progress span {display:block;height:100%;background:var(--accent);transition:width .5s ease}
+.hero-redesign-bottom-row {display:flex;align-items:center;justify-content:space-between;gap:16px}
+.hero-redesign-thumbs {display:flex;align-items:center;gap:9px;min-width:0;overflow-x:auto;scrollbar-width:none;padding:3px 2px}
+.hero-redesign-thumbs::-webkit-scrollbar {display:none}
+.hero-redesign-thumbs button {position:relative;flex:0 0 38px;width:38px;height:54px;padding:0;border:1px solid transparent;border-radius:7px;overflow:hidden;background:transparent;opacity:.48;transition:opacity .25s ease,transform .25s ease,border-color .25s ease}
+.hero-redesign-thumbs button img,.hero-redesign-thumbs button .fallback-poster {width:100%;height:100%;object-fit:cover}
+.hero-redesign-thumbs button.active {opacity:1;transform:translateY(-3px);border-color:var(--fx-text);box-shadow:0 5px 18px -8px rgba(0,0,0,.6)}
+.hero-redesign-arrows {display:flex;gap:8px;flex:0 0 auto}
+.hero-redesign-arrows button {display:grid;place-items:center;width:38px;height:38px;border:1px solid color-mix(in srgb,var(--fx-text) 13%,transparent);border-radius:50%;background:color-mix(in srgb,var(--fx-card) 45%,transparent);color:var(--fx-text);-webkit-backdrop-filter:blur(15px);backdrop-filter:blur(15px);transition:transform .2s ease,background .2s ease}
+.hero-redesign-arrows button:hover {transform:scale(1.06);background:color-mix(in srgb,var(--fx-card) 72%,transparent)}
+@keyframes heroBackdropReveal {from{opacity:0;transform:scale(1.18)}to{opacity:1;transform:scale(1.12)}}
+@keyframes heroCopyReveal {from{opacity:0;transform:translateY(16px);filter:blur(7px)}to{opacity:1;transform:translateY(0);filter:blur(0)}}
+@keyframes heroPosterEnter {from{opacity:0;transform:translateY(22px) rotate(6deg) scale(.94)}to{opacity:1;transform:translateY(0) rotate(2.5deg) scale(1)}}
+@keyframes heroArtPulse {from{transform:scale(.92);opacity:.52}to{transform:scale(1.08);opacity:.88}}
+@keyframes heroOrbFloat {from{transform:translate3d(-10px,0,0)}to{transform:translate3d(14px,20px,0)}}
+@media(max-width:760px) {
+  :root .movie-site.page-home .top-carousel.hero-redesign {min-height:0!important;padding:20px 16px 15px!important;border-radius:24px!important}
+  .hero-redesign-main {grid-template-columns:minmax(0,1fr) 116px;gap:12px;padding:12px 0 20px;align-items:center}
+  .hero-redesign-copy {align-self:center}
+  .hero-redesign-eyebrow {font-size:8px;letter-spacing:.13em;margin-bottom:13px;gap:7px}.hero-redesign-eyebrow span {width:15px}
+  .hero-redesign-meta {gap:6px;font-size:9px;flex-wrap:wrap;margin-bottom:10px}
+  .hero-redesign-copy h1 {font-size:clamp(25px,7vw,38px);line-height:1.02;margin-bottom:10px;letter-spacing:-.045em}
+  .hero-redesign-copy>p {font-size:10px;line-height:1.5;-webkit-line-clamp:3}
+  .hero-redesign-actions {gap:6px;margin-top:16px;flex-wrap:wrap}
+  .hero-redesign-actions button {height:36px;padding:0 11px;font-size:10px;gap:6px}
+  .hero-redesign-genres {gap:5px;margin-top:13px}.hero-redesign-genres span {font-size:8px;padding:5px 7px}
+  .hero-redesign-art {min-height:190px}.hero-redesign-poster {width:clamp(105px,29vw,150px);border-radius:12px}
+  .hero-redesign-side-note {right:-3px;bottom:0;padding:6px 8px;gap:5px;font-size:8px}
+  .hero-redesign-side-note span {font-size:6px}.hero-redesign-side-note b {font-size:10px}
+  .hero-redesign-thumbs {gap:6px}.hero-redesign-thumbs button {flex-basis:30px;width:30px;height:43px}
+  .hero-redesign-arrows {gap:5px}.hero-redesign-arrows button {width:32px;height:32px}
+}
+@media(max-width:390px) {
+  .hero-redesign-main {grid-template-columns:minmax(0,1fr) 96px;gap:8px}
+  .hero-redesign-poster {width:96px}.hero-redesign-art {min-height:150px}
+  .hero-redesign-copy h1 {font-size:25px}.hero-redesign-copy>p {-webkit-line-clamp:2}
+}
+@media(prefers-reduced-motion:reduce) {
+  .hero-redesign-backdrop-current,.hero-redesign-copy,.hero-redesign-poster,.hero-redesign-art-glow,.hero-redesign-orb-one {animation:none!important}
+}
+:root.performance-mode .movie-site.page-home .top-carousel.hero-redesign :is(.hero-redesign-backdrop img,.hero-redesign-orb,.hero-redesign-art-glow) {filter:none!important;animation:none!important}
+:root.performance-mode .movie-site.page-home .top-carousel.hero-redesign :is(.hero-redesign-copy,.hero-redesign-poster) {animation:none!important}

@@ -25,7 +25,6 @@
     <script>
       try {
         document.documentElement.setAttribute('data-header-design', 'cinematic');
-        document.documentElement.setAttribute('data-hero-backdrop', localStorage.getItem('hero-backdrop-transparent') === '1' ? 'transparent' : 'standard');
         document.documentElement.setAttribute('data-hero-design', localStorage.getItem('cinematic-hero-design') === '1' ? 'cinematic-glass' : 'standard');
         document.documentElement.classList.toggle('performance-mode', localStorage.getItem('performance-mode') === '1');
         document.documentElement.setAttribute('data-ui', localStorage.getItem('ui-variant') || 'fresh');

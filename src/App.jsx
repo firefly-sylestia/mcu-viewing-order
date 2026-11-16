@@ -1793,36 +1793,68 @@ function TopCarousel({ items, initialIndex = 0, setSelected }) {
     }
   };
 
-  return <section className="top-carousel" style={{ '--accent': featured?.accent || '#9a4a4a' }} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocusCapture={() => setPaused(true)} onBlurCapture={() => setPaused(false)} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onTouchCancel={handleTouchCancel}>
-    <div className="carousel-backdrops" aria-hidden="true">
-      {prevBg?.poster && <img className="carousel-backdrop is-previous" src={prevBg.poster} alt="" width="300" height="450" referrerPolicy="no-referrer" />}
-      {featured?.poster && <img key={featured.id} className="carousel-backdrop is-current" src={featured.poster} alt="" width="300" height="450" referrerPolicy="no-referrer" />}
-    </div>
-    <div className="carousel-backdrop-shade" aria-hidden="true" />
-    
-    <div className="feature-stage">
-      <div className="poster-stack smooth-stack">
-        {inlineTrailer ? <div className="inline-trailer"><iframe src={inlineTrailer} title={`${featured.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={() => setInlineTrailer(null)} aria-label="Close trailer"><X size={20} /></button></div> : carouselEntries.map(({ item, rawIndex, offset, isLeaving }) => { const posterClass = isLeaving ? 'poster-exit' : `poster-${offset}`; return <button key={item.id} aria-label={offset ? `Show ${item.title}` : `View ${item.title} details`} aria-hidden={offset === 3 || isLeaving ? 'true' : undefined} tabIndex={offset === 3 || isLeaving ? -1 : 0} className={`stack-poster ${posterClass}`} onClick={() => selectPoster(item, rawIndex, offset)} style={{ '--accent': item.accent }}><PosterArt item={item} loading="eager" fetchPriority={offset === 0 ? 'high' : 'auto'} /></button>; })}
+  return <section className={"top-carousel" + (cinematicHeroOn ? " hero-redesign" : "")} style={{ '--accent': featured?.accent || '#9a4a4a' }} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocusCapture={() => setPaused(true)} onBlurCapture={() => setPaused(false)} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onTouchCancel={handleTouchCancel}>
+    {cinematicHeroOn ? <>
+      <div className="hero-redesign-backdrop" aria-hidden="true">
+        {prevBg?.poster && <img className="hero-redesign-backdrop-old" src={prevBg.poster} alt="" />}
+        {featured?.poster && <img key={featured.id} className="hero-redesign-backdrop-current" src={featured.poster} alt="" />}
       </div>
-      <div className="feature-copy">
-        <div className="feature-text" key={featured?.id}>
-          <div className="feature-kicker" aria-label="Title information"><span className="feature-meta-pill feature-meta-year">{featured?.year}</span><span className="feature-meta-pill feature-meta-duration">{runtimeLabel(featured?.runtime, featured?.type)}</span><span className="feature-meta-pill feature-meta-rating">{featured?.rating} rating</span></div>
+      <div className="hero-redesign-wash" aria-hidden="true" />
+      <div className="hero-redesign-orb hero-redesign-orb-one" aria-hidden="true" />
+      <div className="hero-redesign-orb hero-redesign-orb-two" aria-hidden="true" />
+      <div className="hero-redesign-main">
+        <div className="hero-redesign-copy" key={featured?.id}>
+          <div className="hero-redesign-eyebrow"><span /> FEATURED IN THE UNIVERSE</div>
+          <div className="hero-redesign-meta"><span>{featured?.year}</span><i /><span>{runtimeLabel(featured?.runtime, featured?.type)}</span><i /><span>★ {featured?.rating || '—'}</span></div>
           <h1>{featured?.title}</h1>
-          <p key={featured?.id} className="feature-desc">{featured?.desc || `Follow ${featured?.title} in the complete ${featured?.universe === 'marvel' ? 'Marvel Cinematic Universe' : 'DC Universe'} viewing order.`}</p>
+          <p>{featured?.desc || ('Follow ' + featured?.title + ' in the complete viewing order.')}</p>
+          <div className="hero-redesign-actions">
+            <button className="hero-redesign-primary" onClick={() => setSelected(featured)}><Play size={17} fill="currentColor" /> Explore title</button>
+            <button className="hero-redesign-trailer" onClick={showTrailer}><Clapperboard size={16} /> Trailer</button>
+          </div>
+          <div className="hero-redesign-genres">{featured?.genres.slice(0,3).map(g=><span key={g}>{g}</span>)}</div>
         </div>
-        <div className="feature-footer"><button className="feature-play" onClick={showTrailer}><Clapperboard size={18} /> Watch trailer</button><div className="chips">{featured?.genres.slice(0, 3).map(g => <span key={g}>{g}</span>)}</div></div>
+        <div className="hero-redesign-art">
+          <div className="hero-redesign-art-glow" />
+          {inlineTrailer ? <div className="hero-redesign-trailer-frame"><iframe src={inlineTrailer} title={featured.title + " trailer"} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={() => setInlineTrailer(null)} aria-label="Close trailer"><X size={18}/></button></div> : <div className="hero-redesign-poster" key={featured?.id} onClick={() => setSelected(featured)} role="button" tabIndex={0} onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();setSelected(featured);}}}><PosterArt item={featured} loading="eager" fetchPriority="high"/><div className="hero-redesign-poster-gloss" /></div>}
+          <div className="hero-redesign-side-note"><span>NOW SHOWING</span><b>{String(heroIndex+1).padStart(2,'0')}</b><i />{String(items.length).padStart(2,'0')}</div>
+        </div>
       </div>
-    </div>
-    <div className="carousel-nav"><button onClick={() => move(-1)} aria-label="Previous title"><ChevronLeft /></button><div className="dots">{Array.from({ length: Math.min(items.length, 6) }, (_, dotIndex) => {
-        const targetIndex = items.length <= 6 ? dotIndex : Math.round(dotIndex * (items.length - 1) / 5);
-        const activeDot = items.length <= 6
-          ? heroIndex % items.length === dotIndex
-          : Math.round((heroIndex % items.length) * 5 / (items.length - 1)) === dotIndex;
-        return <button key={dotIndex} aria-label={`Show carousel group ${dotIndex + 1}`} className={activeDot ? 'active' : ''} onClick={() => { hapticSelect(); setHeroIndex(targetIndex); setInlineTrailer(null); }} />;
-      })}</div><button onClick={() => move(1)} aria-label="Next title"><ChevronRight /></button></div>
+      <div className="hero-redesign-bottom">
+        <div className="hero-redesign-progress"><span style={{width:(((heroIndex+1)/Math.max(items.length,1))*100)+'%'}} /></div>
+        <div className="hero-redesign-bottom-row">
+          <div className="hero-redesign-thumbs" aria-label="Choose featured title">
+            {items.slice(0,Math.min(items.length,7)).map((item,index)=><button key={item.id} type="button" className={index===heroIndex?'active':''} onClick={()=>{hapticSelect();setHeroIndex(index);setInlineTrailer(null);}} aria-label={"Show "+item.title} title={item.title}><PosterArt item={item}/></button>)}
+          </div>
+          <div className="hero-redesign-arrows"><button onClick={()=>move(-1)} aria-label="Previous title"><ChevronLeft/></button><button onClick={()=>move(1)} aria-label="Next title"><ChevronRight/></button></div>
+        </div>
+      </div>
+    </> : <>
+      <div className="carousel-backdrops" aria-hidden="true">
+        {prevBg?.poster && <img className="carousel-backdrop is-previous" src={prevBg.poster} alt="" width="300" height="450" referrerPolicy="no-referrer" />}
+        {featured?.poster && <img key={featured.id} className="carousel-backdrop is-current" src={featured.poster} alt="" width="300" height="450" referrerPolicy="no-referrer" />}
+      </div>
+      <div className="carousel-backdrop-shade" aria-hidden="true" />
+      <div className="feature-stage">
+        <div className="poster-stack smooth-stack">
+          {inlineTrailer ? <div className="inline-trailer"><iframe src={inlineTrailer} title={featured.title + " trailer"} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={() => setInlineTrailer(null)} aria-label="Close trailer"><X size={20} /></button></div> : carouselEntries.map(({ item, rawIndex, offset, isLeaving }) => { const posterClass = isLeaving ? 'poster-exit' : 'poster-' + offset; return <button key={item.id} aria-label={offset ? 'Show ' + item.title : 'View ' + item.title + ' details'} aria-hidden={offset === 3 || isLeaving ? 'true' : undefined} tabIndex={offset === 3 || isLeaving ? -1 : 0} className={'stack-poster ' + posterClass} onClick={() => selectPoster(item, rawIndex, offset)} style={{ '--accent': item.accent }}><PosterArt item={item} loading="eager" fetchPriority={offset === 0 ? 'high' : 'auto'} /></button>; })}
+        </div>
+        <div className="feature-copy">
+          <div className="feature-text" key={featured?.id}>
+            <div className="feature-kicker" aria-label="Title information"><span className="feature-meta-pill feature-meta-year">{featured?.year}</span><span className="feature-meta-pill feature-meta-duration">{runtimeLabel(featured?.runtime, featured?.type)}</span><span className="feature-meta-pill feature-meta-rating">{featured?.rating} rating</span></div>
+            <h1>{featured?.title}</h1>
+            <p key={featured?.id} className="feature-desc">{featured?.desc || ('Follow ' + featured?.title + ' in the complete viewing order.')}</p>
+          </div>
+          <div className="feature-footer"><button className="feature-play" onClick={showTrailer}><Clapperboard size={18} /> Watch trailer</button><div className="chips">{featured?.genres.slice(0, 3).map(g => <span key={g}>{g}</span>)}</div></div>
+        </div>
+      </div>
+      <div className="carousel-nav"><button onClick={() => move(-1)} aria-label="Previous title"><ChevronLeft /></button><div className="dots">{Array.from({ length: Math.min(items.length, 6) }, (_, dotIndex) => {
+          const targetIndex = items.length <= 6 ? dotIndex : Math.round(dotIndex * (items.length - 1) / 5);
+          const activeDot = items.length <= 6 ? heroIndex % items.length === dotIndex : Math.round((heroIndex % items.length) * 5 / (items.length - 1)) === dotIndex;
+          return <button key={dotIndex} aria-label={"Show carousel group " + (dotIndex + 1)} className={activeDot ? 'active' : ''} onClick={() => { hapticSelect(); setHeroIndex(targetIndex); setInlineTrailer(null); }} />;
+        })}</div><button onClick={() => move(1)} aria-label="Next title"><ChevronRight /></button></div>
+    </>}
   </section>;
-}
-
 function PosterArt({ item, loading: loadingProp = 'lazy', fetchPriority: fetchPriorityProp = 'auto' }) {
   const [retryAttempt, setRetryAttempt] = useState(0);
   const [failed, setFailed] = useState(false);
