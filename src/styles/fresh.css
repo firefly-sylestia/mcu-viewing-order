@@ -14462,3 +14462,38 @@
 :root.performance-mode .movie-site :is(.movie-card:hover, .list-row:hover, .wb-card:hover) {
   transform: none !important;
 }
+
+
+/* Screening dialog: match the main Create Room gradient and keep long titles
+   to one line, with the rating on its own metadata row. */
+:root .wt-create-backdrop .wt-create-dialog>.wt-create {
+  background:linear-gradient(110deg,var(--fx-accent),color-mix(in srgb,var(--fx-accent) 65%,#7764df))!important;
+  color:#fff!important;
+  box-shadow:0 10px 24px color-mix(in srgb,var(--fx-accent) 20%,transparent)!important;
+}
+:root .wt-create-backdrop .wt-create-dialog>.wt-create:disabled {
+  opacity:.56!important;
+}
+:root .wt-create-backdrop .wt-create-dialog .wt-dialog-selected {
+  min-width:0!important;
+}
+:root .wt-create-backdrop .wt-create-dialog .wt-dialog-selected .wt-dialog-selected-meta {
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  gap:3px!important;
+  min-width:0!important;
+  flex:1!important;
+}
+:root .wt-create-backdrop .wt-create-dialog .wt-dialog-selected strong {
+  display:block!important;
+  min-width:0!important;
+  max-width:100%!important;
+  overflow:hidden!important;
+  white-space:nowrap!important;
+  text-overflow:ellipsis!important;
+  line-height:1.25!important;
+}
+:root .wt-create-backdrop .wt-create-dialog .wt-dialog-selected .wt-dialog-rating {
+  color:var(--fx-accent)!important;
+  font-weight:750!important;
+}
