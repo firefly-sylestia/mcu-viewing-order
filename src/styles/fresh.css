@@ -14729,3 +14729,57 @@
   background: #e9edf4 !important;
   color: #18202c !important;
 }
+
+
+/* Restore the original sliding selection blob, using a neutral MCU slate instead of universe red. */
+:root .movie-site .list-view-toggle {
+  display: flex !important;
+  position: relative !important;
+  isolation: isolate !important;
+  min-height: 38px !important;
+  gap: 2px !important;
+  padding: 3px !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+}
+:root .movie-site .list-view-toggle::before {
+  content: "" !important;
+  position: absolute !important;
+  z-index: 0 !important;
+  top: 3px !important;
+  bottom: 3px !important;
+  left: 3px !important;
+  width: calc(50% - 2px) !important;
+  border-radius: 999px !important;
+  background: linear-gradient(135deg, #596273 0%, #788394 100%) !important;
+  box-shadow: 0 5px 14px -8px rgba(35,43,56,.5) !important;
+  transform: translateX(0) !important;
+  transition: transform .42s cubic-bezier(.2,.85,.25,1) !important;
+}
+:root .movie-site .list-view-toggle.grid::before {
+  transform: translateX(calc(100% + 2px)) !important;
+}
+:root .movie-site .list-view-toggle > button {
+  flex: 1 1 0 !important;
+  width: auto !important;
+  min-width: 62px !important;
+  max-width: none !important;
+  height: 32px !important;
+  padding: 0 13px !important;
+  transform: none !important;
+  background: transparent !important;
+  color: var(--fx-muted) !important;
+  box-shadow: none !important;
+}
+:root .movie-site .list-view-toggle > button.active {
+  background: transparent !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+:root[data-theme="light"] .movie-site .list-view-toggle {
+  background: #f2f4f8 !important;
+  box-shadow: inset 0 0 0 1px rgba(16,24,40,.05) !important;
+}
+:root[data-theme="dark"] .movie-site .list-view-toggle {
+  background: var(--fx-surface) !important;
+}

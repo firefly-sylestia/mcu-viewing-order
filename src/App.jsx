@@ -1668,6 +1668,9 @@ function ControlOverview({ stats, items, nextUp, universeLabel, onOpen, onStart,
 }
 
 function TopCarousel({ items, initialIndex = 0, setSelected }) {
+  const [cinematicHeroOn] = useState(() => {
+    try { return localStorage.getItem('cinematic-hero-design') === '1'; } catch { return false; }
+  });
   const [heroIndex, setHeroIndex] = useState(() => Math.max(0, Number(initialIndex) || 0));
   const featured = items[heroIndex % Math.max(items.length, 1)] || items[0];
   useEffect(() => {
