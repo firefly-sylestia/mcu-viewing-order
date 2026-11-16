@@ -1668,9 +1668,6 @@ function ControlOverview({ stats, items, nextUp, universeLabel, onOpen, onStart,
 }
 
 function TopCarousel({ items, initialIndex = 0, setSelected }) {
-  const [cinematicHeroOn] = useState(() => {
-    try { return localStorage.getItem('cinematic-hero-design') === '1'; } catch { return false; }
-  });
   const [heroIndex, setHeroIndex] = useState(() => Math.max(0, Number(initialIndex) || 0));
   const featured = items[heroIndex % Math.max(items.length, 1)] || items[0];
   useEffect(() => {
@@ -1801,45 +1798,8 @@ function TopCarousel({ items, initialIndex = 0, setSelected }) {
     }
   };
 
-  return <section className={"top-carousel" + (cinematicHeroOn ? " hero-redesign" : "")} style={{ '--accent': featured?.accent || '#9a4a4a' }} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocusCapture={() => setPaused(true)} onBlurCapture={() => setPaused(false)} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onTouchCancel={handleTouchCancel}>
-    {cinematicHeroOn ? <>
-      <div className="hero-redesign-backdrop" aria-hidden="true">
-        {prevBg?.poster && <img className="hero-redesign-backdrop-old" src={prevBg.poster} alt="" />}
-        {featured?.poster && <img key={featured.id} className="hero-redesign-backdrop-current" src={featured.poster} alt="" />}
-      </div>
-      <div className="hero-redesign-wash" aria-hidden="true" />
-      <div className="hero-redesign-orb hero-redesign-orb-one" aria-hidden="true" />
-      <div className="hero-redesign-orb hero-redesign-orb-two" aria-hidden="true" />
-      <div className="hero-redesign-main">
-        <div className="hero-redesign-copy">
-          <div className="hero-redesign-meta"><span>{featured?.year}</span><i /><span>{runtimeLabel(featured?.runtime, featured?.type)}</span><i /><span>★ {featured?.rating || '—'}</span></div>
-          <h1>{featured?.title}</h1>
-          <p>{featured?.desc || ('Follow ' + featured?.title + ' in the complete viewing order.')}</p>
-          <div className="hero-redesign-actions">
-            <button className="hero-redesign-primary" onClick={() => setSelected(featured)}><Play size={17} /> Explore title</button>
-            <button className="hero-redesign-trailer" onClick={showTrailer}><Clapperboard size={16} /> Trailer</button>
-          </div>
-          <div className="hero-redesign-genres">{featured?.genres.slice(0,3).map(g=><span key={g}>{g}</span>)}</div>
-        </div>
-        <div className="hero-redesign-art">
-          {inlineTrailer ? <div className="hero-redesign-trailer-frame"><iframe src={inlineTrailer} title={featured.title + " trailer"} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={() => setInlineTrailer(null)} aria-label="Close trailer"><X size={18}/></button></div> : <div className="hero-redesign-poster-stage">
-            {[-1,0,1].map(offset => {
-              const index=(heroIndex+offset+items.length)%items.length;
-              const item=items[index];
-              return <button key={item.id} type="button" className={"hero-redesign-poster-card poster-offset-"+offset+(offset===0?" is-featured":"")} onClick={()=>{if(offset===0)setSelected(item);else {setHeroIndex(index);setInlineTrailer(null);}}} aria-label={offset===0?"Explore "+item.title:"Show "+item.title}>
-                <PosterArt item={item} loading="eager" fetchPriority={offset===0?"high":"auto"}/>
-              </button>;
-            })}
-          </div>}
-        </div>
-      </div>
-      <div className="hero-redesign-bottom">
-        <div className="hero-redesign-thumbs" aria-label="Choose featured title">
-          {Array.from({length:Math.min(items.length,5)},(_,offset)=>({item:items[(heroIndex+offset)%items.length],index:(heroIndex+offset)%items.length})).map(({item,index},offset)=><button key={item.id} type="button" className={offset===0?'active':''} onClick={()=>{hapticSelect();setHeroIndex(index);setInlineTrailer(null);}} aria-label={"Show "+item.title} title={item.title}><span className="hero-redesign-thumb-art"><PosterArt item={item}/></span><span className="hero-redesign-thumb-title">{item.title}</span></button>)}
-        </div>
-        <div className="hero-redesign-arrows"><button onClick={()=>move(-1)} aria-label="Previous title"><ChevronLeft/></button><button onClick={()=>move(1)} aria-label="Next title"><ChevronRight/></button></div>
-      </div>
-    </> : <>
+  return <section className="top-carousel" style={{ '--accent': featured?.accent || '#9a4a4a' }} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocusCapture={() => setPaused(true)} onBlurCapture={() => setPaused(false)} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onTouchCancel={handleTouchCancel}>
+    <>
       <div className="carousel-backdrops" aria-hidden="true">
         {prevBg?.poster && <img className="carousel-backdrop is-previous" src={prevBg.poster} alt="" width="300" height="450" referrerPolicy="no-referrer" />}
         {featured?.poster && <img key={featured.id} className="carousel-backdrop is-current" src={featured.poster} alt="" width="300" height="450" referrerPolicy="no-referrer" />}
