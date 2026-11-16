@@ -1674,7 +1674,6 @@ function TopCarousel({ items, initialIndex = 0, setSelected }) {
     try { localStorage.setItem('mcu-home-hero-index', String(heroIndex)); } catch {}
   }, [heroIndex]);
   const [inlineTrailer, setInlineTrailer] = useState(null);
-  const [inlineTrailer, setInlineTrailer] = useState(null);
   const touchStartPoint = useRef(null);
   const didSwipe = useRef(false);
   const [leavingId, setLeavingId] = useState(null);
