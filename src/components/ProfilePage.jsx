@@ -296,6 +296,9 @@ function SettingsPanel({ installApp, installAvailable, appInstalled, query = '',
   const [heroBackdropTransparent, setHeroBackdropTransparent] = useState(() => {
     try { return localStorage.getItem('hero-backdrop-transparent') === '1'; } catch { return false; }
   });
+  const [cinematicHeroOn, setCinematicHeroOn] = useState(() => {
+    try { return localStorage.getItem('cinematic-hero-design') === '1'; } catch { return false; }
+  });
   const [mounted, setMounted] = useState(false);
   const [draft, setDraft] = useState(profileName);
   const [editing, setEditing] = useState(false);
@@ -311,6 +314,11 @@ function SettingsPanel({ installApp, installAvailable, appInstalled, query = '',
     document.documentElement.setAttribute('data-hero-backdrop', heroBackdropTransparent ? 'transparent' : 'standard');
     try { localStorage.setItem('hero-backdrop-transparent', heroBackdropTransparent ? '1' : '0'); } catch {}
   }, [heroBackdropTransparent]);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-hero-design', cinematicHeroOn ? 'cinematic-glass' : 'standard');
+    try { localStorage.setItem('cinematic-hero-design', cinematicHeroOn ? '1' : '0'); } catch {}
+  }, [cinematicHeroOn]);
 
   const updatePerformanceMode = (enabled) => {
     setPerformanceModeOn(enabled);
@@ -394,6 +402,28 @@ function SettingsPanel({ installApp, installAvailable, appInstalled, query = '',
           >
             <span className={`theme-toggle-track ${heroBackdropTransparent ? 'dark' : 'light'}`}>
               <span className="theme-toggle-thumb"><LayoutGrid size={14} /></span>
+            </span>
+          </button>
+        </div>
+
+        <div className="settings-row">
+          <div className="settings-row-label">
+            <span className="settings-row-icon"><Clapperboard size={18} /></span>
+            <div>
+              <strong>Cinematic glass hero</strong>
+              <small>{cinematicHeroOn ? 'Layered blur, soft light and fluid poster transitions' : 'Use the original hero carousel design'}</small>
+            </div>
+          </div>
+          <button
+            className="theme-toggle"
+            type="button"
+            role="switch"
+            aria-checked={cinematicHeroOn}
+            onClick={() => setCinematicHeroOn(value => !value)}
+            aria-label={`Turn cinematic glass hero ${cinematicHeroOn ? 'off' : 'on'}`}
+          >
+            <span className={`theme-toggle-track ${cinematicHeroOn ? 'dark' : 'light'}`}>
+              <span className="theme-toggle-thumb"><Clapperboard size={14} /></span>
             </span>
           </button>
         </div>
