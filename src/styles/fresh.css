@@ -14382,3 +14382,83 @@
   :root .wt-create-backdrop .wt-create-dialog .wt-dialog-selected {flex:0 0 auto!important}
   :root .wt-create-backdrop .wt-create-dialog>.wt-create {flex:0 0 auto!important}
 }
+
+
+/* Stability pass: avoid filter/transform compositing during page swaps.
+   Content styling is unchanged; only the transition is a lightweight fade. */
+:root .movie-site .nav-page-transition,
+:root .movie-site.page-analytics .nav-page-transition,
+.performance-mode .movie-site .nav-page-transition {
+  animation: navPageFadeIn 180ms ease-out both !important;
+  transform: none !important;
+  filter: none !important;
+  backface-visibility: visible !important;
+}
+@keyframes navPageFadeIn {
+  from { opacity: .72; }
+  to { opacity: 1; }
+}
+
+/* Performance mode: replace backdrop blur with an opaque, softly fading
+   surface. Keep the navigation shell's own fill, blob and elevation intact. */
+:root.performance-mode .movie-site :is(
+  .top-carousel, .web-rail, .rail-card, .movie-card, .list-row,
+  .profile-header, .profile-card, .profile-analytics, .profile-rail,
+  .analytics-panel, .detail-modal, .site-header,
+  .carousel-nav, .carousel-nav > button, .poster-stack, .stack-poster,
+  .header-image-backdrop, .carousel-backdrop, .detail-backdrop,
+  .wb-card, .wt-chat, .wt-player, .wt-room-tools
+) {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  transition: opacity 180ms ease-out, background-color 180ms ease-out !important;
+}
+:root.performance-mode .movie-site .bottom-nav {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: rgba(16, 19, 27, .94) !important;
+  box-shadow: 0 18px 42px -26px rgba(0,0,0,.62), inset 0 1px 0 rgba(255,255,255,.08) !important;
+  opacity: 1 !important;
+}
+:root[data-theme="light"].performance-mode .movie-site .bottom-nav {
+  background: rgba(255,255,255,.96) !important;
+  box-shadow: 0 16px 38px -26px rgba(16,24,40,.34), inset 0 1px 0 rgba(255,255,255,.92) !important;
+}
+:root.performance-mode .movie-site .liquid-nav-glass > .glass {
+  background: rgba(18, 22, 30, .88) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+:root[data-theme="light"].performance-mode .movie-site .liquid-nav-glass > .glass {
+  background: rgba(255,255,255,.92) !important;
+}
+:root.performance-mode .movie-site .liquid-nav-glass .bottom-nav {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+:root.performance-mode .movie-site .bottom-nav .nav-blob {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  opacity: .9 !important;
+}
+:root.performance-mode .movie-site :is(
+  .carousel-backdrop, .detail-backdrop, .header-image-backdrop,
+  .site-glow, .feature-glow, .poster-glow
+) {
+  filter: none !important;
+  opacity: .12 !important;
+  transition: opacity 220ms ease-out !important;
+}
+:root.performance-mode .movie-site .carousel-backdrops {
+  display: block !important;
+}
+:root.performance-mode .movie-site .top-carousel {
+  box-shadow: none !important;
+}
+:root.performance-mode .movie-site .smooth-stack .stack-poster {
+  transition: opacity 180ms ease-out !important;
+  filter: none !important;
+}
+:root.performance-mode .movie-site :is(.movie-card:hover, .list-row:hover, .wb-card:hover) {
+  transform: none !important;
+}
