@@ -14593,10 +14593,13 @@
 .hero-redesign-copy h1 {max-width:720px;margin:0 0 16px;font-size:clamp(36px,5.4vw,72px);line-height:.98;letter-spacing:-.055em;font-weight:900;text-wrap:balance;color:var(--fx-text)}
 .hero-redesign-copy>p {max-width:54ch;margin:0;color:var(--fx-muted-strong);font-size:clamp(12px,1.2vw,15px);line-height:1.7;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .hero-redesign-actions {display:flex;align-items:center;gap:10px;margin-top:26px}
-.hero-redesign-actions button {height:44px;display:inline-flex;align-items:center;justify-content:center;gap:9px;padding:0 18px;border-radius:999px;font-size:12px;font-weight:850;transition:transform .22s ease,background .22s ease,box-shadow .22s ease}
-.hero-redesign-primary {border:1px solid color-mix(in srgb,var(--fx-text) 14%,transparent);background:var(--fx-text);color:var(--fx-bg);box-shadow:0 12px 26px -16px rgba(0,0,0,.42)}
-.hero-redesign-trailer {border:1px solid color-mix(in srgb,var(--fx-text) 14%,transparent);background:color-mix(in srgb,var(--fx-card) 45%,transparent);color:var(--fx-text);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
-.hero-redesign-actions button:hover {transform:translateY(-2px)}
+.hero-redesign-actions button {height:44px;display:inline-flex;align-items:center;justify-content:center;gap:9px;padding:0 18px;border-radius:999px;font-size:12px;font-weight:850;letter-spacing:.01em;transition:transform .22s ease,background .22s ease,border-color .22s ease,box-shadow .22s ease;-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
+.hero-redesign-primary,.hero-redesign-trailer {border:1px solid color-mix(in srgb,var(--fx-text) 26%,transparent);background:color-mix(in srgb,var(--fx-card) 68%,transparent);color:var(--fx-text);box-shadow:0 8px 24px -18px rgba(0,0,0,.48),inset 0 1px 0 color-mix(in srgb,var(--fx-text) 9%,transparent)}
+.hero-redesign-primary {background:color-mix(in srgb,var(--fx-card) 82%,transparent);border-color:color-mix(in srgb,var(--fx-text) 34%,transparent)}
+:root[data-theme="light"] .hero-redesign-actions button {background:rgba(255,255,255,.72);border-color:rgba(40,48,62,.24);color:#202633;box-shadow:0 7px 20px -14px rgba(20,28,42,.42),inset 0 1px 0 rgba(255,255,255,.9)}
+:root[data-theme="dark"] .hero-redesign-actions button {background:rgba(22,27,38,.58);border-color:rgba(255,255,255,.24);color:#f5f7fb;box-shadow:0 8px 22px -16px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.12)}
+.hero-redesign-actions button:hover {transform:translateY(-2px);border-color:color-mix(in srgb,var(--fx-text) 48%,transparent)}
+.hero-redesign-actions button:focus-visible {outline:2px solid var(--fx-text);outline-offset:3px}
 .hero-redesign-genres {display:flex;flex-wrap:wrap;gap:7px;margin-top:22px}
 .hero-redesign-genres span {padding:6px 10px;border:1px solid color-mix(in srgb,var(--fx-text) 10%,transparent);border-radius:999px;background:color-mix(in srgb,var(--fx-card) 35%,transparent);font-size:9px;font-weight:750;color:var(--fx-muted-strong);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
 .hero-redesign-art {position:relative;display:grid;place-items:center;min-width:0;min-height:340px}
@@ -14610,15 +14613,7 @@
 .hero-redesign-trailer-frame {position:relative;width:min(100%,520px);aspect-ratio:16/9;overflow:hidden;border-radius:18px;box-shadow:0 30px 70px -28px rgba(0,0,0,.68)}
 .hero-redesign-trailer-frame iframe {width:100%;height:100%;border:0}
 .hero-redesign-trailer-frame>button {position:absolute;right:10px;top:10px;width:34px;height:34px;border:0;border-radius:50%;background:rgba(0,0,0,.65);color:white}
-.hero-redesign-bottom {position:relative;z-index:2}
-.hero-redesign-progress {height:2px;margin:0 0 15px;background:color-mix(in srgb,var(--fx-text) 10%,transparent);overflow:hidden;border-radius:4px}
-.hero-redesign-progress span {display:block;height:100%;background:var(--accent);transition:width .5s ease}
-.hero-redesign-bottom-row {display:flex;align-items:center;justify-content:space-between;gap:16px}
-.hero-redesign-thumbs {display:flex;align-items:center;gap:9px;min-width:0;overflow-x:auto;scrollbar-width:none;padding:3px 2px}
-.hero-redesign-thumbs::-webkit-scrollbar {display:none}
-.hero-redesign-thumbs button {position:relative;flex:0 0 38px;width:38px;height:54px;padding:0;border:1px solid transparent;border-radius:7px;overflow:hidden;background:transparent;opacity:.48;transition:opacity .25s ease,transform .25s ease,border-color .25s ease}
-.hero-redesign-thumbs button img,.hero-redesign-thumbs button .fallback-poster {width:100%;height:100%;object-fit:cover}
-.hero-redesign-thumbs button.active {opacity:1;transform:translateY(-3px);border-color:var(--fx-text);box-shadow:0 5px 18px -8px rgba(0,0,0,.6)}
+.hero-redesign-bottom {position:relative;z-index:2;display:flex;justify-content:flex-end;margin-top:auto;padding-top:4px}
 .hero-redesign-arrows {display:flex;gap:8px;flex:0 0 auto}
 .hero-redesign-arrows button {display:grid;place-items:center;width:38px;height:38px;border:1px solid color-mix(in srgb,var(--fx-text) 13%,transparent);border-radius:50%;background:color-mix(in srgb,var(--fx-card) 45%,transparent);color:var(--fx-text);-webkit-backdrop-filter:blur(15px);backdrop-filter:blur(15px);transition:transform .2s ease,background .2s ease}
 .hero-redesign-arrows button:hover {transform:scale(1.06);background:color-mix(in srgb,var(--fx-card) 72%,transparent)}
@@ -14641,7 +14636,6 @@
   .hero-redesign-art {min-height:190px}.hero-redesign-poster {width:clamp(105px,29vw,150px);border-radius:12px}
   .hero-redesign-side-note {right:-3px;bottom:0;padding:6px 8px;gap:5px;font-size:8px}
   .hero-redesign-side-note span {font-size:6px}.hero-redesign-side-note b {font-size:10px}
-  .hero-redesign-thumbs {gap:6px}.hero-redesign-thumbs button {flex-basis:30px;width:30px;height:43px}
   .hero-redesign-arrows {gap:5px}.hero-redesign-arrows button {width:32px;height:32px}
 }
 @media(max-width:390px) {

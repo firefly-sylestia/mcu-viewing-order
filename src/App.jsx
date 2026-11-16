@@ -1812,7 +1812,7 @@ function TopCarousel({ items, initialIndex = 0, setSelected }) {
           <h1>{featured?.title}</h1>
           <p>{featured?.desc || ('Follow ' + featured?.title + ' in the complete viewing order.')}</p>
           <div className="hero-redesign-actions">
-            <button className="hero-redesign-primary" onClick={() => setSelected(featured)}><Play size={17} fill="currentColor" /> Explore title</button>
+            <button className="hero-redesign-primary" onClick={() => setSelected(featured)}><Play size={17} /> Explore title</button>
             <button className="hero-redesign-trailer" onClick={showTrailer}><Clapperboard size={16} /> Trailer</button>
           </div>
           <div className="hero-redesign-genres">{featured?.genres.slice(0,3).map(g=><span key={g}>{g}</span>)}</div>
@@ -1820,17 +1820,10 @@ function TopCarousel({ items, initialIndex = 0, setSelected }) {
         <div className="hero-redesign-art">
           <div className="hero-redesign-art-glow" />
           {inlineTrailer ? <div className="hero-redesign-trailer-frame"><iframe src={inlineTrailer} title={featured.title + " trailer"} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={() => setInlineTrailer(null)} aria-label="Close trailer"><X size={18}/></button></div> : <div className="hero-redesign-poster" key={featured?.id} onClick={() => setSelected(featured)} role="button" tabIndex={0} onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();setSelected(featured);}}}><PosterArt item={featured} loading="eager" fetchPriority="high"/><div className="hero-redesign-poster-gloss" /></div>}
-          <div className="hero-redesign-side-note"><span>NOW SHOWING</span><b>{String(heroIndex+1).padStart(2,'0')}</b><i />{String(items.length).padStart(2,'0')}</div>
         </div>
       </div>
       <div className="hero-redesign-bottom">
-        <div className="hero-redesign-progress"><span style={{width:(((heroIndex+1)/Math.max(items.length,1))*100)+'%'}} /></div>
-        <div className="hero-redesign-bottom-row">
-          <div className="hero-redesign-thumbs" aria-label="Choose featured title">
-            {Array.from({length:Math.min(items.length,7)},(_,offset)=>({item:items[(heroIndex+offset)%items.length],index:(heroIndex+offset)%items.length})).map(({item,index},offset)=><button key={item.id} type="button" className={offset===0?'active':''} onClick={()=>{hapticSelect();setHeroIndex(index);setInlineTrailer(null);}} aria-label={"Show "+item.title} title={item.title}><PosterArt item={item}/></button>)}
-          </div>
-          <div className="hero-redesign-arrows"><button onClick={()=>move(-1)} aria-label="Previous title"><ChevronLeft/></button><button onClick={()=>move(1)} aria-label="Next title"><ChevronRight/></button></div>
-        </div>
+        <div className="hero-redesign-arrows"><button onClick={()=>move(-1)} aria-label="Previous title"><ChevronLeft/></button><button onClick={()=>move(1)} aria-label="Next title"><ChevronRight/></button></div>
       </div>
     </> : <>
       <div className="carousel-backdrops" aria-hidden="true">
