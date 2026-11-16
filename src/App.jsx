@@ -1806,7 +1806,7 @@ function TopCarousel({ items, initialIndex = 0, setSelected }) {
       <div className="hero-redesign-orb hero-redesign-orb-one" aria-hidden="true" />
       <div className="hero-redesign-orb hero-redesign-orb-two" aria-hidden="true" />
       <div className="hero-redesign-main">
-        <div className="hero-redesign-copy" key={featured?.id}>
+        <div className="hero-redesign-copy">
           <div className="hero-redesign-eyebrow"><span /> FEATURED IN THE UNIVERSE</div>
           <div className="hero-redesign-meta"><span>{featured?.year}</span><i /><span>{runtimeLabel(featured?.runtime, featured?.type)}</span><i /><span>★ {featured?.rating || '—'}</span></div>
           <h1>{featured?.title}</h1>
@@ -1823,6 +1823,9 @@ function TopCarousel({ items, initialIndex = 0, setSelected }) {
         </div>
       </div>
       <div className="hero-redesign-bottom">
+        <div className="hero-redesign-thumbs" aria-label="Choose featured title">
+          {Array.from({length:Math.min(items.length,5)},(_,offset)=>({item:items[(heroIndex+offset)%items.length],index:(heroIndex+offset)%items.length})).map(({item,index},offset)=><button key={item.id} type="button" className={offset===0?'active':''} onClick={()=>{hapticSelect();setHeroIndex(index);setInlineTrailer(null);}} aria-label={"Show "+item.title} title={item.title}><span className="hero-redesign-thumb-art"><PosterArt item={item}/></span><span className="hero-redesign-thumb-title">{item.title}</span></button>)}
+        </div>
         <div className="hero-redesign-arrows"><button onClick={()=>move(-1)} aria-label="Previous title"><ChevronLeft/></button><button onClick={()=>move(1)} aria-label="Next title"><ChevronRight/></button></div>
       </div>
     </> : <>
