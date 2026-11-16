@@ -14636,3 +14636,71 @@
     animation: none !important;
   }
 }
+
+
+/* Screening title picker: compact single-line title + dedicated rating row. */
+:root .wt-create-backdrop .wt-create-dialog .wt-picker-grid>button .wt-picker-copy {
+  display:grid!important;
+  grid-template-rows:minmax(13px,auto) auto!important;
+  gap:5px!important;
+  min-width:0!important;
+  width:100%!important;
+  flex:1 1 auto!important;
+  padding:7px 3px 3px!important;
+}
+:root .wt-create-backdrop .wt-create-dialog .wt-picker-grid>button .wt-picker-copy>strong {
+  display:block!important;
+  min-width:0!important;
+  width:100%!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+  -webkit-line-clamp:unset!important;
+  -webkit-box-orient:initial!important;
+  line-height:1.25!important;
+}
+:root .wt-create-backdrop .wt-create-dialog .wt-picker-grid>button .wt-picker-rating-row {
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:4px!important;
+  min-width:0!important;
+  white-space:nowrap!important;
+  font-size:8px!important;
+  line-height:1.2!important;
+}
+:root .wt-create-backdrop .wt-create-dialog .wt-picker-grid>button .wt-picker-rating-row>span {
+  display:block!important;
+  min-width:0!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+  padding:0!important;
+  flex:1 1 auto!important;
+}
+:root .wt-create-backdrop .wt-create-dialog .wt-picker-grid>button .wt-picker-rating-row>b {
+  display:block!important;
+  flex:0 0 auto!important;
+  padding:0!important;
+  color:var(--fx-text)!important;
+  font-size:8px!important;
+  font-weight:750!important;
+}
+:root .wt-create-backdrop .wt-create-dialog>.wt-create {
+  background:linear-gradient(112deg,#343b49 0%,#596273 52%,#343b49 100%)!important;
+  color:#fff!important;
+  border:1px solid rgba(255,255,255,.12)!important;
+  box-shadow:0 10px 26px -16px rgba(20,27,40,.62),inset 0 1px 0 rgba(255,255,255,.13)!important;
+  transition:filter .2s ease,transform .2s ease,box-shadow .2s ease!important;
+}
+:root .wt-create-backdrop .wt-create-dialog>.wt-create:hover:not(:disabled) {
+  filter:brightness(1.12)!important;
+  transform:translateY(-1px)!important;
+  box-shadow:0 14px 30px -16px rgba(20,27,40,.7),inset 0 1px 0 rgba(255,255,255,.17)!important;
+}
+:root[data-theme="light"] .wt-create-backdrop .wt-create-dialog>.wt-create {
+  background:linear-gradient(112deg,#343b49 0%,#626d7e 52%,#343b49 100%)!important;
+}
+:root[data-theme="dark"] .wt-create-backdrop .wt-create-dialog>.wt-create {
+  background:linear-gradient(112deg,#343b49 0%,#596273 52%,#343b49 100%)!important;
+}
