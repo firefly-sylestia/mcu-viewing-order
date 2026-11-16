@@ -15070,3 +15070,117 @@
     flex-basis:104px;
   }
 }
+
+
+/* Refined cinematic hero: a calm three-poster stage, stable copy and light-touch surfaces. */
+@media (max-width:760px) {
+  :root .movie-site.page-home .top-carousel.hero-redesign {
+    min-height:0 !important;
+    height:auto !important;
+    padding:18px 14px 12px !important;
+    background:transparent !important;
+    border-radius:22px !important;
+    overflow:hidden;
+  }
+  :root .movie-site.page-home .top-carousel.hero-redesign .hero-redesign-backdrop,
+  :root .movie-site.page-home .top-carousel.hero-redesign .hero-redesign-wash,
+  :root .movie-site.page-home .top-carousel.hero-redesign .hero-redesign-orb {display:none !important}
+  :root .movie-site.page-home .top-carousel.hero-redesign .hero-redesign-main {
+    display:flex !important;
+    flex-direction:column-reverse !important;
+    gap:0 !important;
+    min-height:0 !important;
+  }
+  :root .movie-site.page-home .top-carousel.hero-redesign .hero-redesign-art {
+    position:relative !important;
+    inset:auto !important;
+    width:100% !important;
+    height:clamp(210px, 58vw, 285px) !important;
+    min-height:0 !important;
+    display:flex !important;
+    align-items:center;
+    justify-content:center;
+    overflow:visible !important;
+    margin:0 0 12px !important;
+  }
+  :root .movie-site.page-home .top-carousel.hero-redesign .hero-redesign-poster-stage {
+    width:100%;
+    height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:clamp(7px,2.4vw,14px);
+    perspective:900px;
+  }
+  :root .movie-site.page-home .top-carousel.hero-redesign .hero-redesign-poster-card {
+    position:relative;
+    display:block;
+    flex:0 1 27%;
+    width:27%;
+    height:78%;
+    min-width:0;
+    padding:0;
+    border:1px solid rgba(255,255,255,.13);
+    border-radius:10px;
+    overflow:hidden;
+    background:#151b25;
+    opacity:.72;
+    transform:scale(.88);
+    box-shadow:0 8px 22px rgba(0,0,0,.16);
+    transition:transform .28s ease,opacity .28s ease;
+  }
+  :root .movie-site.page-home .top-carousel.hero-redesign .hero-redesign-poster-card.is-featured {
+    flex-basis:34%;
+    width:34%;
+    height:100%;
+    opacity:1;
+    transform:scale(1);
+    z-index:2;
+    border-color:rgba(255,255,255,.3);
+    box-shadow:0 12px 28px rgba(0,0,0,.2);
+  }
+  :root .movie-site.page-home .top-carousel.hero-redesign .hero-redesign-poster-card img,
+  :root .movie-site.page-home .top-carousel.hero-redesign .hero-redesign-poster-card .fallback-poster {
+    display:block;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+  }
+  :root .movie-site.page-home .top-carousel.hero-redesign .hero-redesign-copy {
+    min-height:0 !important;
+    height:auto !important;
+    padding:0 2px 14px !important;
+    justify-content:flex-start !important;
+    color:var(--fx-text);
+  }
+  :root .movie-site.page-home .top-carousel.hero-redesign .hero-redesign-meta,
+  :root .movie-site.page-home .top-carousel.hero-redesign .hero-redesign-copy h1 {color:var(--fx-text);text-shadow:none}
+  :root .movie-site.page-home .top-carousel.hero-redesign .hero-redesign-copy h1 {
+    display:-webkit-box;
+    min-height:2.08em !important;
+    height:2.08em;
+    max-height:2.08em !important;
+    overflow:hidden;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:2;
+    font-size:clamp(26px,7vw,34px) !important;
+    line-height:1.04 !important;
+    margin:5px 0 9px !important;
+  }
+  :root .movie-site.page-home .top-carousel.hero-redesign .hero-redesign-copy>p {
+    min-height:4.5em !important;
+    max-height:4.5em;
+    overflow:hidden;
+    -webkit-line-clamp:3;
+    color:var(--fx-muted);
+  }
+  :root .movie-site.page-home .top-carousel.hero-redesign .hero-redesign-genres {margin-top:10px}
+  :root .movie-site.page-home .top-carousel.hero-redesign .hero-redesign-thumbs {touch-action:pan-x pan-y;overscroll-behavior-x:contain}
+  :root .movie-site.page-home .top-carousel.hero-redesign .hero-redesign-thumbs>button {background:rgba(110,120,138,.12);box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
+  :root .movie-site.page-home .top-carousel.hero-redesign .hero-redesign-arrows button {background:rgba(110,120,138,.14);backdrop-filter:none;-webkit-backdrop-filter:none}
+}
+@media (max-width:420px) {
+  :root .movie-site.page-home .top-carousel.hero-redesign .hero-redesign-art {height:clamp(195px,56vw,235px) !important}
+  :root .movie-site.page-home .top-carousel.hero-redesign .hero-redesign-copy h1 {font-size:26px !important}
+  :root .movie-site.page-home .top-carousel.hero-redesign .hero-redesign-copy>p {font-size:10px}
+}

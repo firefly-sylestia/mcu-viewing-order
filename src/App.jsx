@@ -1713,6 +1713,11 @@ function TopCarousel({ items, initialIndex = 0, setSelected }) {
     setHeroIndex((heroIndex + dir + items.length) % Math.max(items.length, 1));
   };
   const handleTouchStart = (event) => {
+    if (event.target.closest?.('.hero-redesign-bottom')) {
+      touchStartPoint.current = null;
+      didSwipe.current = false;
+      return;
+    }
     window.clearTimeout(resumeTimer.current);
     const touch = event.touches[0];
     touchStartPoint.current = touch ? { x: touch.clientX, y: touch.clientY } : null;
@@ -1807,7 +1812,6 @@ function TopCarousel({ items, initialIndex = 0, setSelected }) {
       <div className="hero-redesign-orb hero-redesign-orb-two" aria-hidden="true" />
       <div className="hero-redesign-main">
         <div className="hero-redesign-copy">
-          <div className="hero-redesign-eyebrow"><span /> FEATURED IN THE UNIVERSE</div>
           <div className="hero-redesign-meta"><span>{featured?.year}</span><i /><span>{runtimeLabel(featured?.runtime, featured?.type)}</span><i /><span>★ {featured?.rating || '—'}</span></div>
           <h1>{featured?.title}</h1>
           <p>{featured?.desc || ('Follow ' + featured?.title + ' in the complete viewing order.')}</p>
@@ -1818,8 +1822,15 @@ function TopCarousel({ items, initialIndex = 0, setSelected }) {
           <div className="hero-redesign-genres">{featured?.genres.slice(0,3).map(g=><span key={g}>{g}</span>)}</div>
         </div>
         <div className="hero-redesign-art">
-          <div className="hero-redesign-art-glow" />
-          {inlineTrailer ? <div className="hero-redesign-trailer-frame"><iframe src={inlineTrailer} title={featured.title + " trailer"} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={() => setInlineTrailer(null)} aria-label="Close trailer"><X size={18}/></button></div> : <div className="hero-redesign-poster" key={featured?.id} onClick={() => setSelected(featured)} role="button" tabIndex={0} onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();setSelected(featured);}}}><PosterArt item={featured} loading="eager" fetchPriority="high"/><div className="hero-redesign-poster-gloss" /></div>}
+          {inlineTrailer ? <div className="hero-redesign-trailer-frame"><iframe src={inlineTrailer} title={featured.title + " trailer"} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /><button onClick={() => setInlineTrailer(null)} aria-label="Close trailer"><X size={18}/></button></div> : <div className="hero-redesign-poster-stage">
+            {[-1,0,1].map(offset => {
+              const index=(heroIndex+offset+items.length)%items.length;
+              const item=items[index];
+              return <button key={item.id} type="button" className={"hero-redesign-poster-card poster-offset-"+offset+(offset===0?" is-featured":"")} onClick={()=>{if(offset===0)setSelected(item);else {setHeroIndex(index);setInlineTrailer(null);}}} aria-label={offset===0?"Explore "+item.title:"Show "+item.title}>
+                <PosterArt item={item} loading="eager" fetchPriority={offset===0?"high":"auto"}/>
+              </button>;
+            })}
+          </div>}
         </div>
       </div>
       <div className="hero-redesign-bottom">
