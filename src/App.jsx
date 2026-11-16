@@ -1760,11 +1760,8 @@ function TopCarousel({ items, initialIndex = 0, setSelected }) {
     }
   };
 
-  useEffect(() => {
-    if (paused || inlineTrailer || items.length < 2) return undefined;
-    const timer = window.setTimeout(() => setHeroIndex((heroIndex + 1) % items.length), 4800);
-    return () => window.clearTimeout(timer);
-  }, [heroIndex, inlineTrailer, items.length, paused, setHeroIndex]);
+  // Hero carousel is intentionally manual-only: no timed slide changes.
+  // Navigation remains available through arrows, dots, poster selection and swipe.
 
   // Render only the four carousel cards that can be visible, plus an outgoing card during its exit.
   const carouselEntries = useMemo(() => {
