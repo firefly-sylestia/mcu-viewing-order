@@ -1499,9 +1499,7 @@ export default function App() {
           <TopCarousel items={heroItems} initialIndex={(() => { try { return Number(localStorage.getItem('mcu-home-hero-index')) || saved.heroIndex || 0; } catch { return saved.heroIndex || 0; } })()} setSelected={selectItem} />
         </section>
         <UpNextBoard items={homeUpNextItems} setSelected={selectItem} onStart={(item) => startWatchWithConfirm(item, item.tmdbId || null, item.type === 'series' ? 'tv' : 'movie')} />
-        <MovieRail title="Essential picks" items={homeEssentialItems} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} paginated gridControls />
         <MovieRail title="Recently watched" items={homeRecentlyWatchedItems} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} empty="Mark titles as watched to see them here." paginated gridControls />
-        {homeContinueWatchingItems.length > 0 &&          <ContinueWatching items={homeContinueWatchingItems} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} onResume={startWatchWithConfirm} />}
         {externalTrackedItems.length > 0 && (
           <MovieRail
             title="Your TMDB"
