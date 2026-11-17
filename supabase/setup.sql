@@ -205,7 +205,8 @@ begin
   perform public.cleanup_expired_watch_rooms();
   if p_code !~ '^[A-HJ-NP-Z2-9]{8}$' or length(p_token) < 32 then raise exception 'Invalid room credentials.'; end if;
   if coalesce(length(trim(p_name)),0) not between 1 and 32 then raise exception 'Display name must be 1–32 characters.'; end if;
-  if coalesce((p_media->>'tmdbId')::bigint,0) <= 0 then raise exception 'This title cannot be screened because its TMDB ID is missing.'; end if;
+  if coalesce(p_media->>'kind','') <> 'local_file' and coalesce((p_media->>'tmdbId')::bigint,0) <= 0 then raise exception 'This title cannot be screened because its TMDB ID is missing.'; end if;
+  if coalesce(p_media->>'kind','') = 'local_file' and (coalesce(length(p_media->>'fileFingerprint'),0) <> 64 or coalesce((p_media->>'fileSize')::bigint,0) <= 0 or coalesce(length(p_media->>'fileName'),0)=0) then raise exception 'A valid local video file is required.'; end if;
   if (length(p_media::text) > 12000) then raise exception 'Room media details are too large.'; end if;
   -- Keep up to three rooms per creator. When full, evict the oldest
   -- inactive room only; never remove a room with a live participant.
@@ -238,6 +239,9 @@ begin
   );
 end $$;
 
+
+create or replace function public.preview_watch_room(p_code text) returns jsonb language plpgsql security definer set search_path=pg_catalog,public,pg_temp as $ declare room_media jsonb; begin perform public.cleanup_expired_watch_rooms();select media into room_media from public.watch_rooms where code=upper(trim(p_code)) and closed_at is null and expires_at>now();if not found then raise exception 'Room not found or expired.';end if;return jsonb_build_object('media',room_media);end $;
+revoke all on function public.preview_watch_room(text) from public;grant execute on function public.preview_watch_room(text) to anon,authenticated;
 create or replace function public.list_watch_rooms(p_token text)
 returns jsonb language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $$
 declare result jsonb;
