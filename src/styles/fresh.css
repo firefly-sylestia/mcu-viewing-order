@@ -13244,14 +13244,14 @@
   :root .page-watch-together .wt-chat { min-width:0; min-height:0; height:100%; max-height:calc(100dvh - 82px); }
   :root .page-watch-together .wt-chat.is-collapsed { width:58px; min-width:58px; overflow:hidden; }
   :root .page-watch-together .wt-content:has(.wt-chat.is-collapsed) { grid-template-columns:minmax(0,1fr) 58px; }
-  :root .page-watch-together .wt-chat.is-collapsed .wt-chat-head { min-height:58px; padding:10px; justify-content:center; }
-  :root .page-watch-together .wt-chat.is-collapsed .wt-chat-head>div,
-  :root .page-watch-together .wt-chat.is-collapsed .wt-chat-head>span,
+  :root .page-watch-together .wt-chat.is-collapsed .wt-chat-head,
   :root .page-watch-together .wt-chat.is-collapsed .wt-role-legend,
   :root .page-watch-together .wt-chat.is-collapsed .wt-requests,
   :root .page-watch-together .wt-chat.is-collapsed .wt-chat-messages,
-  :root .page-watch-together .wt-chat.is-collapsed .wt-chat-form,
   :root .page-watch-together .wt-chat.is-collapsed .wt-chat-foot { display:none!important; }
+  :root .page-watch-together .wt-chat.is-collapsed .wt-chat-form { margin-top:auto; padding:10px 7px!important; justify-content:center; }
+  :root .page-watch-together .wt-chat.is-collapsed .wt-chat-form input,
+  :root .page-watch-together .wt-chat.is-collapsed .wt-chat-form button[type="submit"] { display:none!important; }
   :root .page-watch-together .wt-chat-toggle { display:grid; place-items:center; width:34px; height:34px; flex:0 0 34px; border:1px solid color-mix(in srgb,var(--fx-muted) 20%,transparent); border-radius:10px; background:var(--fx-surface-2); color:var(--fx-text); }
 }
 .wt-chat-head { display:flex; align-items:center; justify-content:space-between; gap:8px; }
@@ -14708,4 +14708,15 @@
 }
 @media (prefers-reduced-motion: reduce) {
   :root .movie-site .bottom-nav { transition: none; }
+}
+
+
+/* Desktop Watch Together composer: keep collapse beside send and anchor the
+   action row to the lower edge of the player/chat column. */
+@media (min-width:761px) {
+  :root .movie-site.page-watch-together .wt-chat { display:flex!important; flex-direction:column!important; align-self:stretch!important; min-height:0!important; }
+  :root .movie-site.page-watch-together .wt-chat-form { display:flex!important; align-items:center!important; gap:7px!important; margin-top:auto!important; flex:0 0 auto!important; }
+  :root .movie-site.page-watch-together .wt-chat-form .wt-chat-toggle,
+  :root .movie-site.page-watch-together .wt-chat-form button[type="submit"] { width:40px!important; height:40px!important; flex:0 0 40px!important; display:grid!important; place-items:center!important; }
+  :root .movie-site.page-watch-together .wt-chat.is-collapsed .wt-chat-form { margin-top:auto!important; }
 }
