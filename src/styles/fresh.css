@@ -15529,3 +15529,82 @@
     padding: 20px 9px max(7px,env(safe-area-inset-bottom)) !important;
   }
 }
+
+
+/* Desktop local video: use the file's intrinsic vertical ratio. */
+@media(min-width:761px) {
+  :root .movie-site.page-watch-together .wt-content:has(.wt-local-video-player) {
+    grid-template-columns:minmax(0,1fr) 350px !important;align-items:start !important;
+  }
+  :root .movie-site.page-watch-together .wt-content:has(.wt-local-video-player) > .wt-main {
+    min-width:0 !important;align-self:start !important;overflow:visible !important;
+  }
+  :root .movie-site.page-watch-together .wt-local-video-player {
+    display:block !important;height:auto !important;min-height:0 !important;max-height:none !important;
+  }
+  :root .movie-site.page-watch-together .wt-local-video-player > video {
+    position:relative !important;inset:auto !important;display:block !important;
+    width:100% !important;height:auto !important;max-width:100% !important;max-height:none !important;
+    object-fit:contain !important;object-position:center !important;
+  }
+}
+
+/* Keep the extra controls exclusive to fullscreen. */
+:root .wt-local-overlay-tools,:root .wt-local-adjustments {display:none !important}
+:root .wt-local-video-player:fullscreen .wt-local-overlay-tools {
+  position:absolute !important;z-index:16 !important;top:max(14px,env(safe-area-inset-top)) !important;
+  right:16px !important;display:flex !important;align-items:center !important;gap:8px !important;
+}
+:root .wt-local-video-player:fullscreen .wt-local-overlay-tools button {
+  display:grid !important;place-items:center !important;width:40px !important;height:40px !important;
+  padding:0 !important;border:1px solid rgba(255,255,255,.18) !important;border-radius:14px !important;
+  color:#fff !important;background:rgba(10,13,20,.58) !important;box-shadow:0 8px 28px rgba(0,0,0,.22) !important;
+  -webkit-backdrop-filter:blur(20px) saturate(1.2) !important;backdrop-filter:blur(20px) saturate(1.2) !important;
+  cursor:pointer !important;transition:opacity .18s ease,background .18s ease !important;
+}
+:root .wt-local-video-player:fullscreen .wt-local-overlay-tools button:hover {background:rgba(255,255,255,.18) !important}
+:root .wt-local-video-player:fullscreen.is-controls-hidden .wt-local-controls,
+:root .wt-local-video-player:fullscreen.is-controls-locked .wt-local-controls {
+  opacity:0 !important;visibility:hidden !important;pointer-events:none !important;
+  transition:opacity .22s ease,visibility .22s ease !important;
+}
+:root .wt-local-video-player:fullscreen:not(.is-controls-hidden):not(.is-controls-locked) .wt-local-controls {
+  opacity:1 !important;visibility:visible !important;pointer-events:auto !important;transition:opacity .18s ease !important;
+}
+:root .wt-local-video-player:fullscreen.is-controls-hidden .wt-local-overlay-tools button:not(.wt-local-lock) {
+  opacity:0 !important;pointer-events:none !important;
+}
+:root .wt-local-video-player:fullscreen.is-controls-locked .wt-local-overlay-tools button:not(.wt-local-lock) {opacity:.55 !important}
+:root .wt-local-video-player:fullscreen .wt-local-lock {border-color:rgba(255,255,255,.3) !important}
+:root .wt-local-video-player:fullscreen video {cursor:pointer !important}
+:root .wt-local-video-player:fullscreen .wt-local-adjustments {
+  position:absolute !important;z-index:17 !important;top:max(64px,calc(54px + env(safe-area-inset-top))) !important;
+  right:16px !important;display:grid !important;gap:15px !important;width:min(280px,calc(100vw - 32px)) !important;
+  padding:15px !important;border:1px solid rgba(255,255,255,.16) !important;border-radius:18px !important;
+  color:#fff !important;background:rgba(10,13,20,.78) !important;box-shadow:0 18px 55px rgba(0,0,0,.38) !important;
+  -webkit-backdrop-filter:blur(28px) saturate(1.3) !important;backdrop-filter:blur(28px) saturate(1.3) !important;
+}
+:root .wt-local-adjustments header {display:flex !important;align-items:center !important;justify-content:space-between !important;gap:10px !important}
+:root .wt-local-adjustments header strong {font-size:12px !important;font-weight:800 !important}
+:root .wt-local-adjustments header button {
+  display:inline-flex !important;align-items:center !important;gap:5px !important;padding:5px 8px !important;
+  border:1px solid rgba(255,255,255,.12) !important;border-radius:9px !important;
+  background:rgba(255,255,255,.08) !important;color:rgba(255,255,255,.78) !important;font-size:10px !important;
+}
+:root .wt-local-adjustments label {display:grid !important;gap:8px !important}
+:root .wt-local-adjustments label span {display:flex !important;justify-content:space-between !important;color:rgba(255,255,255,.78) !important;font-size:11px !important}
+:root .wt-local-adjustments label output {color:#fff !important;font-variant-numeric:tabular-nums !important}
+:root .wt-local-adjustments input {width:100% !important;margin:0 !important;accent-color:#fff !important;cursor:pointer !important}
+.wt-theatre-chat-portal .wt-chat-messages article {
+  margin:0 0 8px !important;padding:9px !important;border:1px solid rgba(255,255,255,.07) !important;
+  border-radius:13px !important;background:rgba(255,255,255,.055) !important;
+  -webkit-backdrop-filter:blur(12px) !important;backdrop-filter:blur(12px) !important;
+}
+.wt-theatre-chat-portal .wt-chat-messages article.mine {
+  border-color:rgba(255,255,255,.13) !important;background:rgba(255,255,255,.095) !important;
+}
+@media(max-width:760px) {
+  :root .wt-local-video-player:fullscreen .wt-local-overlay-tools {top:max(8px,env(safe-area-inset-top)) !important;right:8px !important;gap:5px !important}
+  :root .wt-local-video-player:fullscreen .wt-local-overlay-tools button {width:36px !important;height:36px !important;border-radius:12px !important}
+  :root .wt-local-video-player:fullscreen .wt-local-adjustments {top:max(54px,calc(48px + env(safe-area-inset-top))) !important;right:8px !important}
+}

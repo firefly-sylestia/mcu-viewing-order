@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronDown, ChevronUp, Copy, Check, Users, MessageCircle, Play, Pause, SkipBack, SkipForward, X, Link2, Radio, Crown, Send, LogOut, RefreshCw, Volume2, VolumeX, Clock3, ShieldCheck, Search, ChevronRight, Pencil, PanelRightClose, PanelRightOpen, ArrowLeft, Settings2, UserMinus, Eye, EyeOff, Lock, Unlock, QrCode, Theater, Wifi, WifiOff, ArrowRightLeft, Timer, Smile, Mic, MicOff, Headphones, Maximize2, Minimize2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, Copy, Check, Users, MessageCircle, Play, Pause, SkipBack, SkipForward, X, Link2, Radio, Crown, Send, LogOut, RefreshCw, Volume2, VolumeX, Clock3, ShieldCheck, Search, ChevronRight, Pencil, PanelRightClose, PanelRightOpen, ArrowLeft, Settings2, UserMinus, Eye, EyeOff, Lock, Unlock, QrCode, Theater, Wifi, WifiOff, ArrowRightLeft, Timer, Smile, Mic, MicOff, Headphones, Maximize2, Minimize2, SlidersHorizontal } from 'lucide-react';
 import { supabasePublicRequest, supabaseDataRequest } from '../supabase';
 
 const RPC = '/rest/v1/rpc/';
@@ -140,6 +140,13 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   
   const [localVideoError,setLocalVideoError]=useState('');
   const [isLocalFullscreen,setIsLocalFullscreen]=useState(false);
+  const [localControlsVisible,setLocalControlsVisible]=useState(true);
+  const [localControlsLocked,setLocalControlsLocked]=useState(false);
+  const [localAdjustmentsOpen,setLocalAdjustmentsOpen]=useState(false);
+  const [localContrast,setLocalContrast]=useState(100);
+  const [localSaturation,setLocalSaturation]=useState(100);
+  const localControlsLockedRef=useRef(false);
+  const localControlsHideTimerRef=useRef(null);
   const [roomType,setRoomType]=useState('movie');const [localFile,setLocalFile]=useState(null);const [localFileFingerprint,setLocalFileFingerprint]=useState('');const [localFileBusy,setLocalFileBusy]=useState(false);const [pendingJoinCode,setPendingJoinCode]=useState('');const [pendingJoinIdentity,setPendingJoinIdentity]=useState(null);const [pendingJoinMedia,setPendingJoinMedia]=useState(null);const [joinPreviewOpen,setJoinPreviewOpen]=useState(false);const [isChangingMedia,setIsChangingMedia]=useState(false);const [localVideoUrl,setLocalVideoUrl]=useState('');const localSelectionBeforeChangeRef=useRef(null);const localFileInputRef=useRef(null);const joinFileInputRef=useRef(null);const localVideoRef=useRef(null);
   const [mediaQuery, setMediaQuery] = useState('');
   const [tmdbMediaItems, setTmdbMediaItems] = useState([]);
@@ -907,6 +914,43 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     if (command === 'seek') { const position = Math.max(0, Number(args[0]) || 0); setCurrentTime(position); currentTimeRef.current = position; publishPlayback({ position, paused: pausedRef.current }, true); }
   }, [publishPlayback, canControl, postPlayerCommand]);
 
+  const scheduleLocalControlsHide = useCallback(() => {
+    if (localControlsHideTimerRef.current) window.clearTimeout(localControlsHideTimerRef.current);
+    if (!isLocalFullscreen || paused || localControlsLockedRef.current) return;
+    localControlsHideTimerRef.current = window.setTimeout(() => setLocalControlsVisible(false), 2400);
+  }, [isLocalFullscreen, paused]);
+
+  const revealLocalControls = useCallback(() => {
+    if (localControlsLockedRef.current) return;
+    setLocalControlsVisible(true);
+    scheduleLocalControlsHide();
+  }, [scheduleLocalControlsHide]);
+
+  const toggleLocalControlsLock = useCallback(() => {
+    const next = !localControlsLockedRef.current;
+    localControlsLockedRef.current = next;
+    setLocalControlsLocked(next);
+    if (localControlsHideTimerRef.current) window.clearTimeout(localControlsHideTimerRef.current);
+    if (next) setLocalControlsVisible(false);
+    else { setLocalControlsVisible(true); scheduleLocalControlsHide(); }
+  }, [scheduleLocalControlsHide]);
+
+  useEffect(() => {
+    if (localControlsHideTimerRef.current) window.clearTimeout(localControlsHideTimerRef.current);
+    if (!isLocalFullscreen) {
+      setLocalControlsVisible(true);
+      setLocalAdjustmentsOpen(false);
+      localControlsLockedRef.current = false;
+      setLocalControlsLocked(false);
+      return undefined;
+    }
+    setLocalControlsVisible(true);
+    scheduleLocalControlsHide();
+    return () => {
+      if (localControlsHideTimerRef.current) window.clearTimeout(localControlsHideTimerRef.current);
+    };
+  }, [isLocalFullscreen, paused, scheduleLocalControlsHide]);
+
   const toggleLocalFullscreen = useCallback(async () => {
     const video = localVideoRef.current;
     const player = video?.parentElement;
@@ -930,9 +974,11 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     const updateFullscreen = () => {
       const active = Boolean(document.fullscreenElement);
       setIsLocalFullscreen(active);
-      if (!active) {
-        try { screen.orientation?.unlock?.(); } catch {}
-      }
+       if (!active) {
+         setTheatreChatOpen(false);
+         setLocalAdjustmentsOpen(false);
+         try { screen.orientation?.unlock?.(); } catch {}
+       }
     };
     document.addEventListener('fullscreenchange', updateFullscreen);
     return () => document.removeEventListener('fullscreenchange', updateFullscreen);
@@ -1193,7 +1239,13 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
               </section>}
               <div className="wt-user-progress" aria-label="Participant playback progress">{members.map(member=>{const pct=Number(member.playback_duration)>0?Math.max(0,Math.min(100,Math.round(Number(member.playback_position||0)/Number(member.playback_duration)*100))):0;const pausedHere=Boolean(room.playback?.paused&&room.playback?.actor===member.id);return <span className="wt-progress-pill" key={member.id}><img src={member.avatar_url||blobatar(member.display_name)} alt=""/><b>{member.display_name}</b><i>{Number(member.playback_duration)>0?pct+"%":timeText(member.playback_position||0)}</i>{pausedHere&&<Pause className="wt-progress-paused" size={11} aria-label="Paused here"/>}</span>;})}</div>
               {pendingEpisode && <div className="wt-episode-transition"><div><strong>Next episode is ready</strong><span>Everyone can move to S{pendingEpisode.season} · E{pendingEpisode.episode}. Viewers who are behind can finish first.</span></div><button type="button" onClick={()=>setPendingEpisode(null)}>Finish current</button><button type="button" onClick={()=>{const next=pendingEpisode;setPendingEpisode(null);onEpisodeChangeRef.current?.(next.episode);setRoom(old=>old?{...old,playback:{...(old.playback||{}),position:0,paused:false,season:next.season,episode:next.episode}}:old);publishPlayback({position:0,paused:false,season:next.season,episode:next.episode},true);}}>Go now</button></div>}
-              <div className={room.media?.kind==='local_file'?"wt-player wt-local-video-player":"wt-player"}>
+              <div
+                className={"wt-player"+(room.media?.kind==='local_file'?" wt-local-video-player"+(isLocalFullscreen?" is-fullscreen":"")+(localControlsVisible?"":" is-controls-hidden")+(localControlsLocked?" is-controls-locked":""):"")}
+                onPointerMove={room.media?.kind==='local_file'&&isLocalFullscreen?revealLocalControls:undefined}
+                onPointerEnter={room.media?.kind==='local_file'&&isLocalFullscreen?revealLocalControls:undefined}
+                onPointerDown={room.media?.kind==='local_file'&&isLocalFullscreen?revealLocalControls:undefined}
+                onPointerLeave={room.media?.kind==='local_file'&&isLocalFullscreen?scheduleLocalControlsHide:undefined}
+              >
                 {room.media?.kind==='local_file' ? <>
                   <video
                     key={room.media?.fileFingerprint||room.id}
@@ -1201,6 +1253,12 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                     src={localVideoUrl}
                     playsInline
                     preload="auto"
+                    style={{filter:`contrast(${localContrast}%) saturate(${localSaturation}%)`}}
+                    onClick={event=>{
+                      if(event.target!==event.currentTarget||localControlsLockedRef.current)return;
+                      sendPlayerCommand(paused?'play':'pause');
+                      if(isLocalFullscreen)revealLocalControls();
+                    }}
                     onLoadedMetadata={event=>{
                       const video=event.currentTarget;
                       setLocalVideoError('');
@@ -1252,7 +1310,17 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                     }}
                     onLoadedData={()=>setLocalVideoError('')}
                   />
-                  <div className="wt-local-controls" role="group" aria-label="Local video controls">
+                  <div className="wt-local-overlay-tools" onClick={event=>event.stopPropagation()}>
+                    <button type="button" className="wt-local-lock" onClick={toggleLocalControlsLock} aria-label={localControlsLocked?'Unlock player controls':'Lock player controls'} title={localControlsLocked?'Unlock controls':'Lock controls'}>{localControlsLocked?<Lock size={17}/>:<Unlock size={17}/>}</button>
+                    <button type="button" onClick={()=>{setLocalAdjustmentsOpen(value=>!value);revealLocalControls();}} aria-expanded={localAdjustmentsOpen} aria-label="Adjust picture" title="Picture adjustments"><SlidersHorizontal size={17}/></button>
+                    <button type="button" onClick={()=>{setChatCollapsed(false);setTheatreChatOpen(value=>!value);}} aria-expanded={theatreChatOpen} aria-label={theatreChatOpen?'Close room chat':'Open room chat'} title="Room chat"><MessageCircle size={17}/></button>
+                  </div>
+                  {localAdjustmentsOpen && <div className="wt-local-adjustments" onClick={event=>event.stopPropagation()}>
+                    <header><strong>Picture</strong><button type="button" onClick={()=>{setLocalContrast(100);setLocalSaturation(100);}} title="Reset picture"><RefreshCw size={14}/> Reset</button></header>
+                    <label><span>Contrast <output>{localContrast}%</output></span><input type="range" min="50" max="150" step="1" value={localContrast} onChange={event=>setLocalContrast(Number(event.target.value))}/></label>
+                    <label><span>Saturation <output>{localSaturation}%</output></span><input type="range" min="0" max="200" step="1" value={localSaturation} onChange={event=>setLocalSaturation(Number(event.target.value))}/></label>
+                  </div>}
+                  <div className="wt-local-controls" role="group" aria-label="Local video controls" onClick={event=>event.stopPropagation()}>
                     <div className="wt-local-control-row">
                       <button type="button" onClick={()=>sendPlayerCommand('seek',[Math.max(0,currentTimeRef.current-10)])} disabled={!playerReady} aria-label="Back 10 seconds" title="Back 10 seconds"><SkipBack size={17}/><small>10</small></button>
                       <button type="button" className="wt-local-play" onClick={()=>sendPlayerCommand(paused?'play':'pause')} disabled={!playerReady} aria-label={paused?'Play video':'Pause video'} title={paused?'Play':'Pause'}>{paused?<Play size={19} fill="currentColor"/>:<Pause size={19} fill="currentColor"/>}</button>
@@ -1397,8 +1465,8 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
 
     </section>}
 
-    {theatreMode && theatreChatOpen && typeof document !== 'undefined' && createPortal(
-      <div className="wt-theatre-chat-portal" style={{position:"fixed",inset:0,zIndex:2147483647,pointerEvents:"none",isolation:"isolate"}}><aside className={"wt-chat wt-theatre-chat-open"+(chatCollapsed?" is-collapsed":"")} style={{display:"flex",position:"fixed",top:"calc(58px + env(safe-area-inset-top))",right:14,bottom:"calc(14px + env(safe-area-inset-bottom))",width:"min(390px, calc(100vw - 28px))",height:"auto",maxHeight:"none",minHeight:0,margin:0,boxSizing:"border-box",flexDirection:"column",overflow:"hidden",pointerEvents:"auto",zIndex:1,border:"1px solid rgba(255,255,255,.14)",borderRadius:20,background:"rgba(10,13,20,.9)",color:"#f5f7fb",boxShadow:"0 24px 90px rgba(0,0,0,.6)",backdropFilter:"blur(30px) saturate(1.25)",WebkitBackdropFilter:"blur(30px) saturate(1.25)"}}>
+    {(theatreMode || isLocalFullscreen) && theatreChatOpen && typeof document !== 'undefined' && createPortal(
+      <div className="wt-theatre-chat-portal" style={{position:"fixed",inset:0,zIndex:2147483647,pointerEvents:"none",isolation:"isolate"}}><aside className={"wt-chat wt-theatre-chat-open"+(chatCollapsed?" is-collapsed":"")} style={{display:"flex",position:"fixed",top:"calc(58px + env(safe-area-inset-top))",right:14,bottom:"calc(14px + env(safe-area-inset-bottom))",width:"min(390px, calc(100vw - 28px))",height:"auto",maxHeight:"none",minHeight:0,margin:0,boxSizing:"border-box",flexDirection:"column",overflow:"hidden",pointerEvents:"auto",zIndex:1,border:"1px solid rgba(255,255,255,.14)",borderRadius:20,background:"rgba(10,13,20,.76)",color:"#f5f7fb",boxShadow:"0 24px 90px rgba(0,0,0,.6)",backdropFilter:"blur(30px) saturate(1.25)",WebkitBackdropFilter:"blur(30px) saturate(1.25)"}}>
               <div className="wt-chat-head"><div><MessageCircle size={17}/><strong>Room chat</strong><span className="wt-theatre-online">{members.length} online</span></div><div className="wt-theatre-chat-actions"><button type="button" onClick={()=>setQrDialogOpen(true)} title="Show room QR code" aria-label="Show room QR code"><QrCode size={16}/></button><button type="button" onClick={copyLink} title="Copy invite link" aria-label="Copy invite link">{copied?<Check size={16}/>:<Copy size={16}/>}</button><button type="button" className="wt-theatre-chat-close" onClick={()=>setTheatreChatOpen(false)} title="Close chat" aria-label="Close chat"><X size={17}/></button></div></div>
               {theatreMode && <button type="button" className="wt-theatre-preview-setting" onClick={()=>{setTheatrePreviewsEnabled(value=>!value);setTheatreToast(null);}}>{theatrePreviewsEnabled?<Eye size={14}/>:<EyeOff size={14}/>} Message popups {theatrePreviewsEnabled?'on':'off'}</button>}
               {participant?.is_host && requests.length>0 && <div className="wt-requests"><strong>Access requests <small>{requests.length}</small></strong>{requests.map(req=><div className="wt-request" key={req.id}><span><b>{req.display_name}</b><small>{({operator:'Operator access',skip_forward:'Skip forward 10s',skip_back:'Skip back 10s',seek:'Seek request'})[req.request_type] || req.request_type}</small></span><button onClick={()=>resolveRequest(req.id,true)} disabled={busy}>Allow</button><button onClick={()=>resolveRequest(req.id,false)} disabled={busy}>Deny</button></div>)}</div>}
