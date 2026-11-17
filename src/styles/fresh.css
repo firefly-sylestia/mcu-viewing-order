@@ -16043,3 +16043,36 @@
     min-width:34px!important;height:34px!important;border-radius:10px!important;
   }
 }
+
+
+/* Keep the non-fullscreen local player calm: a centered 16:10 tablet canvas
+   with breathing room, while all picture/chat popovers stay fullscreen-only. */
+:root .movie-site.page-watch-together .wt-local-video-player:not(:fullscreen) {
+  width:100%!important;max-width:min(100%,1120px)!important;
+  aspect-ratio:16/10!important;height:auto!important;max-height:min(70dvh,calc((100vw - 40px)*.625))!important;
+  margin:clamp(12px,2.2vw,26px) auto!important;padding:clamp(10px,1.5vw,18px) 0!important;
+  box-sizing:border-box!important;overflow:hidden!important;
+  background:var(--wt-player-background,#000)!important;
+}
+:root .movie-site.page-watch-together .wt-local-video-player:not(:fullscreen) > video {
+  position:absolute!important;inset:clamp(10px,1.5vw,18px) 0!important;
+  width:100%!important;height:calc(100% - 2 * clamp(10px,1.5vw,18px))!important;
+  max-height:none!important;object-fit:contain!important;
+}
+:root .movie-site.page-watch-together .wt-local-video-player:not(:fullscreen) .wt-local-adjustments {
+  display:none!important;visibility:hidden!important;pointer-events:none!important;
+}
+:root .movie-site.page-watch-together .wt-local-video-player:not(:fullscreen) .wt-local-overlay-tools button[aria-label="Adjust picture"],
+:root .movie-site.page-watch-together .wt-local-video-player:not(:fullscreen) .wt-local-overlay-tools button[aria-label="Open room chat"],
+:root .movie-site.page-watch-together .wt-local-video-player:not(:fullscreen) .wt-local-overlay-tools button[aria-label="Close room chat"] {
+  display:none!important;
+}
+@media(max-width:760px) {
+  :root .movie-site.page-watch-together .wt-local-video-player:not(:fullscreen) {
+    max-height:min(62dvh,calc((100vw - 24px)*.625))!important;
+    margin:12px auto!important;padding:9px 0!important;
+  }
+  :root .movie-site.page-watch-together .wt-local-video-player:not(:fullscreen) > video {
+    inset:9px 0!important;height:calc(100% - 18px)!important;
+  }
+}
