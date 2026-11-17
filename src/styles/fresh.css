@@ -16076,3 +16076,32 @@
     inset:9px 0!important;height:calc(100% - 18px)!important;
   }
 }
+
+
+/* Chat message history must own a real scroll viewport. The parent chat is a
+   flex column; min-height:0 is essential or the message list expands instead
+   of scrolling. Explicit wheel/touch gestures stay inside the history. */
+:root .movie-site.page-watch-together .wt-content > .wt-chat:not(.is-collapsed) {
+  display:flex!important;flex-direction:column!important;
+  min-height:0!important;max-height:min(76dvh,820px)!important;
+  overflow:hidden!important;overscroll-behavior:contain!important;
+}
+:root .movie-site.page-watch-together .wt-content > .wt-chat:not(.is-collapsed) .wt-chat-messages {
+  display:flex!important;flex:1 1 0%!important;
+  min-height:0!important;height:0!important;max-height:none!important;
+  overflow-x:hidden!important;overflow-y:auto!important;
+  -webkit-overflow-scrolling:touch!important;
+  overscroll-behavior-y:contain!important;touch-action:pan-y!important;
+  overscroll-behavior:contain!important;
+  scrollbar-gutter:stable!important;
+}
+:root .movie-site.page-watch-together .wt-content > .wt-chat:not(.is-collapsed) .wt-chat-form,
+:root .movie-site.page-watch-together .wt-content > .wt-chat:not(.is-collapsed) .wt-reactions,
+:root .movie-site.page-watch-together .wt-content > .wt-chat:not(.is-collapsed) .wt-chat-foot {
+  flex:0 0 auto!important;
+}
+@media(max-width:760px) {
+  :root .movie-site.page-watch-together .wt-content > .wt-chat:not(.is-collapsed) {
+    max-height:min(68dvh,640px)!important;
+  }
+}
