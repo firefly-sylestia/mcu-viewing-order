@@ -1211,9 +1211,9 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                   '--wt-grade-split-opacity':String(localGradeSplitStrength/100),
                   '--wt-player-background':/^#[0-9a-fA-F]{6}$/.test(localBackgroundColor)?localBackgroundColor:'#000000'
                 }:undefined}
-                onPointerMove={room.media?.kind==='local_file'?revealLocalControls:undefined}
-                onPointerEnter={room.media?.kind==='local_file'?revealLocalControls:undefined}
-                onPointerDown={room.media?.kind==='local_file'?revealLocalControls:undefined}
+                onPointerMove={room.media?.kind==='local_file'?(event=>{if(event.pointerType!=='touch')revealLocalControls();}):undefined}
+                onPointerEnter={room.media?.kind==='local_file'?(event=>{if(event.pointerType!=='touch')revealLocalControls();}):undefined}
+                onPointerDown={room.media?.kind==='local_file'?(event=>{if(event.pointerType!=='touch')revealLocalControls();}):undefined}
                 onPointerLeave={room.media?.kind==='local_file'?scheduleLocalControlsHide:undefined}
               >
                 {room.media?.kind==='local_file' ? <>
