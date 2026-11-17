@@ -15958,3 +15958,28 @@
   :root .wt-grade-background-row {grid-template-columns:1fr auto!important}
   :root .wt-grade-background-row>span {grid-column:1/-1!important}
 }
+
+
+/* Higher-specificity theatre overrides: these replace the earlier 100vw
+   declarations on nested content, which were wider than their containing box. */
+:root .movie-site.page-watch-together .wt-page.wt-theatre-mode .wt-content {
+  width:100%!important;max-width:100%!important;box-sizing:border-box!important;
+}
+:root .movie-site.page-watch-together .wt-page.wt-theatre-mode .wt-main {
+  width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important;
+}
+:root .movie-site.page-watch-together .wt-page.wt-theatre-mode .wt-player {
+  width:100%!important;max-width:100%!important;box-sizing:border-box!important;
+}
+:root .movie-site.page-watch-together .wt-page.wt-theatre-mode .wt-local-video-player {
+  width:100%!important;max-width:100%!important;box-sizing:border-box!important;
+}
+:root .movie-site.page-watch-together .wt-page.wt-theatre-mode .wt-local-video-player > video {
+  max-width:100%!important;
+}
+:root .movie-site.page-watch-together .wt-local-video-player:fullscreen,
+:root .movie-site.page-watch-together .wt-local-video-player:fullscreen > video,
+:root .movie-site.page-watch-together .wt-page.wt-theatre-mode .wt-local-video-player,
+:root .movie-site.page-watch-together .wt-page.wt-theatre-mode .wt-local-video-player > video {
+  background:var(--wt-player-background,#000000)!important;
+}
