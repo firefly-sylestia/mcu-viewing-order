@@ -13698,6 +13698,28 @@
 }
 
 
+/* Theatre mode is a self-contained full-screen surface: hide the site footer
+   and app navigation so neither can slide into or overlap the player/chat. */
+:root:has(.wt-page.wt-theatre-mode) .site-footer,
+:root:has(.wt-page.wt-theatre-mode) .bottom-nav,
+:root:has(.wt-page.wt-theatre-mode) .site-header,
+:root:has(.wt-page.wt-theatre-mode) .mobile-nav,
+:root:has(.wt-page.wt-theatre-mode) .liquid-glass-nav,
+:root:has(.wt-page.wt-theatre-mode) .app-bottom-nav,
+:root:has(.wt-page.wt-theatre-mode) .page-bottom-nav {
+  display:none!important;
+  visibility:hidden!important;
+  opacity:0!important;
+  pointer-events:none!important;
+}
+:root:has(.wt-page.wt-theatre-mode) .wt-theatre-chat-portal {
+  position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;
+  overflow:hidden!important;pointer-events:none!important;
+}
+:root:has(.wt-page.wt-theatre-mode) .wt-theatre-chat-portal .wt-chat.wt-theatre-chat-open {
+  position:fixed!important;box-sizing:border-box!important;
+  max-height:calc(100dvh - 72px - env(safe-area-inset-top) - env(safe-area-inset-bottom))!important;
+}
 /* Theatre mode must sit above the app chrome, not underneath it. */
 :root:has(.wt-page.wt-theatre-mode) .movie-site .bottom-nav,
 :root:has(.wt-page.wt-theatre-mode) .site-header,
