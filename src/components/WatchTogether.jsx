@@ -106,7 +106,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const [savedLocalPaused, setSavedLocalPaused] = useState(true);
   const [canReturnLocal, setCanReturnLocal] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState(item || null);
-  const [roomType,setRoomType]=useState('movie');const [localFile,setLocalFile]=useState(null);const [localFileFingerprint,setLocalFileFingerprint]=useState('');const [localFileBusy,setLocalFileBusy]=useState(false);const [pendingJoinCode,setPendingJoinCode]=useState('');const [localVideoUrl,setLocalVideoUrl]=useState('');const localFileInputRef=useRef(null);const joinFileInputRef=useRef(null);const localVideoRef=useRef(null);
+  const [roomType,setRoomType]=useState('movie');const [localFile,setLocalFile]=useState(null);const [localFileFingerprint,setLocalFileFingerprint]=useState('');const [localFileBusy,setLocalFileBusy]=useState(false);const [pendingJoinCode,setPendingJoinCode]=useState('');const [pendingJoinIdentity,setPendingJoinIdentity]=useState(null);const [localVideoUrl,setLocalVideoUrl]=useState('');const localFileInputRef=useRef(null);const joinFileInputRef=useRef(null);const localVideoRef=useRef(null);
   const [mediaQuery, setMediaQuery] = useState('');
   const [tmdbMediaItems, setTmdbMediaItems] = useState([]);
   const [tmdbSearchLoading, setTmdbSearchLoading] = useState(false);
@@ -503,7 +503,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   }, [open, room?.id, loadOwnedRooms]);
 
   const joinExisting = useCallback(async (code, identity = guest, verifiedFingerprint = localFileFingerprint) => { setBusy(true);setError('');lastVersionRef.current=0;watchSecondsRef.current=0;localHistoryFlushRef.current=0;remoteHistoryFlushRef.current=0;try{const result=await rpc('join_watch_room',{p_code:code.trim().toUpperCase(),p_token:identity.token,p_name:identity.name,p_avatar:identity.avatar});if(result.room?.media?.kind==='local_file'&&result.room.media.fileFingerprint!==verifiedFingerprint)throw new Error('That file does not match this room. Select the exact same video file.');setParticipant(result.participant);applyRoomSnapshot(result);if(identity?.token)saveActiveRoom(code.trim().toUpperCase(),identity,result.room?.media||null);setOpen(true);setRoomLink(window.location.origin+'/watch-room/'+code.trim().toUpperCase());}catch(e){setError(e.message||'Could not join this room.');}finally{setBusy(false);}},[rpc,guest,applyRoomSnapshot,localFileFingerprint]);
-  const beginJoin=useCallback(async code=>{setBusy(true);setError('');try{const preview=await rpc('preview_watch_room',{p_code:code.trim().toUpperCase()});if(preview?.media?.kind==='local_file'){setPendingJoinCode(code.trim().toUpperCase());joinFileInputRef.current?.click();}else await joinExisting(code);}catch(e){setError(e.message||'Could not find this room.');}finally{setBusy(false);}},[rpc,joinExisting]);
+  const beginJoin=useCallback(async(code,identity=guest)=>{setBusy(true);setError('');try{const preview=await rpc('preview_watch_room',{p_code:code.trim().toUpperCase()});if(preview?.media?.kind==='local_file'){setPendingJoinCode(code.trim().toUpperCase());setPendingJoinIdentity(identity);joinFileInputRef.current?.click();}else await joinExisting(code,identity);}catch(e){setError(e.message||'Could not find this room.');}finally{setBusy(false);}},[rpc,joinExisting,guest]);
   const handleLocalFile=useCallback(async file=>{if(!file)return '';setLocalFileBusy(true);setError('');try{if(!file.type.startsWith('video/'))throw new Error('Please choose a video file.');const fingerprint=await fingerprintLocalVideo(file);setLocalFile(file);setLocalFileFingerprint(fingerprint);const url=URL.createObjectURL(file);setLocalVideoUrl(previous=>{if(previous)URL.revokeObjectURL(previous);return url;});return fingerprint;}catch(e){setError(e.message||'Could not read the video file.');return '';}finally{setLocalFileBusy(false);}},[]);
 
 
@@ -554,8 +554,8 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     onBeforeOpenRef.current?.();
     setOpen(true);
     const identity = saved?.code === code.trim().toUpperCase() && saved.identity?.token ? saved.identity : guest;
-    joinExisting(code, identity);
-  }, [joinExisting, guest]);
+    beginJoin(code, identity);
+  }, [beginJoin, guest]);
 
   const refreshRoom = useCallback(async () => {
     const activeRoom = roomRef.current;
@@ -888,7 +888,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                 <button disabled={busy || joinCode.length !== 8}>{busy ? 'Joining…' : 'Join room'}<ChevronRight size={16}/></button>
               </form>
               <div className="wt-or"><span />OR<span /></div>
-              <button type="button" className="wt-create" onClick={() => { setSetupDialog(true); setRoomType('movie'); setSelectedMedia(item || null); setLocalFile(null); setLocalFileFingerprint(''); setError(''); }}><span><strong>Create a new room</strong><small>Choose a movie, series or your own video file</small></span><Link2 size={18}/></button><input ref={joinFileInputRef} type="file" accept="video/*" hidden onChange={async event=>{const file=event.target.files?.[0];event.target.value='';if(!file)return;const fingerprint=await handleLocalFile(file);if(fingerprint&&pendingJoinCode){setLocalFileFingerprint(fingerprint);await joinExisting(pendingJoinCode,guest,fingerprint);setPendingJoinCode('');}}}/>
+              <button type="button" className="wt-create" onClick={() => { setSetupDialog(true); setRoomType('movie'); setSelectedMedia(item || null); setLocalFile(null); setLocalFileFingerprint(''); setError(''); }}><span><strong>Create a new room</strong><small>Choose a movie, series or your own video file</small></span><Link2 size={18}/></button><input ref={joinFileInputRef} type="file" accept="video/*" hidden onChange={async event=>{const file=event.target.files?.[0];event.target.value='';if(!file)return;const fingerprint=await handleLocalFile(file);if(fingerprint&&pendingJoinCode){setLocalFileFingerprint(fingerprint);await joinExisting(pendingJoinCode,pendingJoinIdentity||guest,fingerprint);setPendingJoinCode('');setPendingJoinIdentity(null);}}}/>
               <div className="wt-identity"><img src={guest.avatar} alt="" /><div><small>YOU'RE JOINING AS</small><strong>{guest.name}</strong><span>{guest.isGuest ? 'Guest · no account needed' : 'Signed in · profile identity'}</span></div>{guest.isGuest&&<button type="button" onClick={()=>setEditingGuestName(value=>!value)} title="Change guest name"><Pencil size={16}/></button>}</div>
               {guest.isGuest&&editingGuestName&&<form className="wt-guest-name-form" onSubmit={event=>{event.preventDefault();updateGuestName(guestNameDraft);}}><input value={guestNameDraft} onChange={event=>setGuestNameDraft(event.target.value)} maxLength={32} placeholder="Choose a guest name" aria-label="Guest name"/><button type="submit" disabled={busy||!guestNameDraft.trim()}>Save name</button></form>}
               {error && <p className="wt-error">{error}</p>}
