@@ -15613,3 +15613,165 @@
 :root .wt-local-video-player:fullscreen.is-controls-locked .wt-local-adjustments {
   opacity:0 !important;visibility:hidden !important;pointer-events:none !important;
 }
+
+
+/* Final local-player layout fixes: keep collapsed chat from reserving its full
+   desktop column, and let fullscreen/theatre video stages own the viewport. */
+@media (min-width:761px) {
+  :root .movie-site.page-watch-together .wt-content:has(.wt-local-video-player):has(.wt-chat.is-collapsed) {
+    grid-template-columns:minmax(0,1fr) 58px !important;
+  }
+}
+
+/* The intrinsic-ratio desktop rule must never override the browser fullscreen
+   stage. Center the video inside the complete viewport, with controls layered
+   over it rather than leaving an empty strip above or below. */
+:root .movie-site.page-watch-together .wt-local-video-player:fullscreen {
+  position:fixed !important;
+  inset:0 !important;
+  display:block !important;
+  box-sizing:border-box !important;
+  width:100vw !important;
+  height:100vh !important;
+  height:100dvh !important;
+  min-height:0 !important;
+  max-width:100vw !important;
+  max-height:none !important;
+  margin:0 !important;
+  aspect-ratio:auto !important;
+  overflow:hidden !important;
+  border-radius:0 !important;
+  background:#000 !important;
+}
+:root .movie-site.page-watch-together .wt-local-video-player:fullscreen > video {
+  position:absolute !important;
+  inset:0 !important;
+  display:block !important;
+  width:100% !important;
+  height:100% !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  max-width:100vw !important;
+  max-height:100dvh !important;
+  margin:0 !important;
+  object-fit:contain !important;
+  object-position:center center !important;
+}
+
+/* Theatre mode is an immersive stage too. This later, more-specific rule
+   intentionally wins over the normal desktop intrinsic-height rule. */
+:root .movie-site.page-watch-together .wt-page.wt-theatre-mode .wt-content {
+  display:block !important;
+  width:100vw !important;
+  max-width:none !important;
+  height:100dvh !important;
+  min-height:100dvh !important;
+  margin:0 !important;
+  overflow:hidden !important;
+}
+:root .movie-site.page-watch-together .wt-page.wt-theatre-mode .wt-main {
+  display:flex !important;
+  flex-direction:column !important;
+  width:100vw !important;
+  height:100dvh !important;
+  min-height:100dvh !important;
+  max-width:none !important;
+  padding:0 !important;
+  margin:0 !important;
+  overflow:hidden !important;
+}
+:root .movie-site.page-watch-together .wt-page.wt-theatre-mode .wt-local-video-player {
+  position:relative !important;
+  display:block !important;
+  flex:1 1 auto !important;
+  align-self:stretch !important;
+  width:100vw !important;
+  height:100dvh !important;
+  min-height:0 !important;
+  max-height:none !important;
+  margin:0 !important;
+  aspect-ratio:auto !important;
+  overflow:hidden !important;
+  border-radius:0 !important;
+  background:#000 !important;
+}
+:root .movie-site.page-watch-together .wt-page.wt-theatre-mode .wt-local-video-player > video {
+  position:absolute !important;
+  inset:0 !important;
+  display:block !important;
+  width:100% !important;
+  height:100% !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  max-width:100vw !important;
+  max-height:100dvh !important;
+  margin:0 !important;
+  object-fit:contain !important;
+  object-position:center center !important;
+}
+
+/* A fullscreen element only displays descendants in its top layer. Mount the
+   chat portal inside the local player and position it against that stage. */
+.wt-theatre-chat-portal.wt-local-fullscreen-chat-portal {
+  position:absolute !important;
+  inset:0 !important;
+  z-index:2147483647 !important;
+  pointer-events:none !important;
+  isolation:isolate !important;
+}
+.wt-theatre-chat-portal.wt-local-fullscreen-chat-portal .wt-chat.wt-theatre-chat-open {
+  position:absolute !important;
+  top:calc(58px + env(safe-area-inset-top)) !important;
+  right:14px !important;
+  bottom:calc(14px + env(safe-area-inset-bottom)) !important;
+  left:auto !important;
+  width:min(390px,calc(100vw - 28px)) !important;
+  height:auto !important;
+  max-width:calc(100vw - 28px) !important;
+  max-height:none !important;
+  min-height:0 !important;
+  margin:0 !important;
+  overflow:hidden !important;
+  pointer-events:auto !important;
+  z-index:1 !important;
+}
+@media(max-width:760px) {
+  .wt-theatre-chat-portal.wt-local-fullscreen-chat-portal .wt-chat.wt-theatre-chat-open {
+    top:calc(54px + env(safe-area-inset-top)) !important;
+    right:9px !important;
+    bottom:calc(9px + env(safe-area-inset-bottom)) !important;
+    width:min(390px,calc(100vw - 18px)) !important;
+    max-width:calc(100vw - 18px) !important;
+  }
+}
+
+/* Auto-hide the entire overlay toolbar, including the lock button. The lock
+   still blocks video-surface play/pause, but pointer movement can reveal the
+   toolbar again so the user can unlock it. */
+:root .movie-site.page-watch-together .wt-local-video-player:fullscreen.is-controls-hidden .wt-local-overlay-tools {
+  opacity:0 !important;
+  visibility:hidden !important;
+  pointer-events:none !important;
+  transition:opacity .22s ease,visibility .22s ease !important;
+}
+:root .movie-site.page-watch-together .wt-local-video-player:fullscreen:not(.is-controls-hidden) .wt-local-overlay-tools {
+  opacity:1 !important;
+  visibility:visible !important;
+  pointer-events:auto !important;
+  transition:opacity .18s ease !important;
+}
+:root .movie-site.page-watch-together .wt-local-video-player:fullscreen.is-controls-hidden .wt-local-controls {
+  opacity:0 !important;
+  visibility:hidden !important;
+  pointer-events:none !important;
+}
+:root .movie-site.page-watch-together .wt-local-video-player:fullscreen:not(.is-controls-hidden) .wt-local-controls {
+  opacity:1 !important;
+  visibility:visible !important;
+  pointer-events:auto !important;
+}
+:root .movie-site.page-watch-together .wt-local-video-player:fullscreen.is-controls-locked:not(.is-controls-hidden) .wt-local-controls {
+  opacity:1 !important;
+  visibility:visible !important;
+  pointer-events:auto !important;
+}

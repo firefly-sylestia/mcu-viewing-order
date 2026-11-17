@@ -916,12 +916,11 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
 
   const scheduleLocalControlsHide = useCallback(() => {
     if (localControlsHideTimerRef.current) window.clearTimeout(localControlsHideTimerRef.current);
-    if (!isLocalFullscreen || paused || localControlsLockedRef.current) return;
+    if (!isLocalFullscreen || paused) return;
     localControlsHideTimerRef.current = window.setTimeout(() => setLocalControlsVisible(false), 2400);
   }, [isLocalFullscreen, paused]);
 
   const revealLocalControls = useCallback(() => {
-    if (localControlsLockedRef.current) return;
     setLocalControlsVisible(true);
     scheduleLocalControlsHide();
   }, [scheduleLocalControlsHide]);
@@ -1172,6 +1171,8 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     setPaused(Boolean(playback.paused)); pausedRef.current = Boolean(playback.paused);
     window.setTimeout(() => { applyingRemoteRef.current = false; }, 900);
   }, [playerReady, room?.id, postPlayerCommand]);
+
+  const fullscreenChatPlayer = typeof document !== 'undefined' && isLocalFullscreen && document.fullscreenElement === localVideoRef.current?.parentElement ? document.fullscreenElement : null;
 
   if (launchOnly) return <button type="button" className="watch-together-launch" onClick={() => { onBeforeOpenRef.current?.(); onWatchTogether?.(); }}><Users size={16} /><span>Watch together</span></button>;
   return <>
@@ -1466,7 +1467,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     </section>}
 
     {(theatreMode || isLocalFullscreen) && theatreChatOpen && typeof document !== 'undefined' && createPortal(
-      <div className="wt-theatre-chat-portal" style={{position:"fixed",inset:0,zIndex:2147483647,pointerEvents:"none",isolation:"isolate"}}><aside className={"wt-chat wt-theatre-chat-open"+(chatCollapsed?" is-collapsed":"")} style={{display:"flex",position:"fixed",top:"calc(58px + env(safe-area-inset-top))",right:14,bottom:"calc(14px + env(safe-area-inset-bottom))",width:"min(390px, calc(100vw - 28px))",height:"auto",maxHeight:"none",minHeight:0,margin:0,boxSizing:"border-box",flexDirection:"column",overflow:"hidden",pointerEvents:"auto",zIndex:1,border:"1px solid rgba(255,255,255,.14)",borderRadius:20,background:"rgba(10,13,20,.76)",color:"#f5f7fb",boxShadow:"0 24px 90px rgba(0,0,0,.6)",backdropFilter:"blur(30px) saturate(1.25)",WebkitBackdropFilter:"blur(30px) saturate(1.25)"}}>
+      <div className={`wt-theatre-chat-portal${fullscreenChatPlayer ? ' wt-local-fullscreen-chat-portal' : ''}`} style={{position:fullscreenChatPlayer?"absolute":"fixed",inset:0,zIndex:2147483647,pointerEvents:"none",isolation:"isolate"}}><aside className={"wt-chat wt-theatre-chat-open"+(chatCollapsed?" is-collapsed":"")} style={{display:"flex",position:fullscreenChatPlayer?"absolute":"fixed",top:"calc(58px + env(safe-area-inset-top))",right:14,bottom:"calc(14px + env(safe-area-inset-bottom))",width:"min(390px, calc(100vw - 28px))",height:"auto",maxHeight:"none",minHeight:0,margin:0,boxSizing:"border-box",flexDirection:"column",overflow:"hidden",pointerEvents:"auto",zIndex:1,border:"1px solid rgba(255,255,255,.14)",borderRadius:20,background:"rgba(10,13,20,.76)",color:"#f5f7fb",boxShadow:"0 24px 90px rgba(0,0,0,.6)",backdropFilter:"blur(30px) saturate(1.25)",WebkitBackdropFilter:"blur(30px) saturate(1.25)"}}>
               <div className="wt-chat-head"><div><MessageCircle size={17}/><strong>Room chat</strong><span className="wt-theatre-online">{members.length} online</span></div><div className="wt-theatre-chat-actions"><button type="button" onClick={()=>setQrDialogOpen(true)} title="Show room QR code" aria-label="Show room QR code"><QrCode size={16}/></button><button type="button" onClick={copyLink} title="Copy invite link" aria-label="Copy invite link">{copied?<Check size={16}/>:<Copy size={16}/>}</button><button type="button" className="wt-theatre-chat-close" onClick={()=>setTheatreChatOpen(false)} title="Close chat" aria-label="Close chat"><X size={17}/></button></div></div>
               {theatreMode && <button type="button" className="wt-theatre-preview-setting" onClick={()=>{setTheatrePreviewsEnabled(value=>!value);setTheatreToast(null);}}>{theatrePreviewsEnabled?<Eye size={14}/>:<EyeOff size={14}/>} Message popups {theatrePreviewsEnabled?'on':'off'}</button>}
               {participant?.is_host && requests.length>0 && <div className="wt-requests"><strong>Access requests <small>{requests.length}</small></strong>{requests.map(req=><div className="wt-request" key={req.id}><span><b>{req.display_name}</b><small>{({operator:'Operator access',skip_forward:'Skip forward 10s',skip_back:'Skip back 10s',seek:'Seek request'})[req.request_type] || req.request_type}</small></span><button onClick={()=>resolveRequest(req.id,true)} disabled={busy}>Allow</button><button onClick={()=>resolveRequest(req.id,false)} disabled={busy}>Deny</button></div>)}</div>}
@@ -1476,7 +1477,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
               {error && <p className="wt-error wt-chat-error">{error}</p>}
               <div className="wt-chat-foot"><Clock3 size={13}/> Chat and room expire automatically after inactivity.</div>
             </aside>
-      </div>, document.body
+      </div>, fullscreenChatPlayer || document.body
     )}
 
   </>;
