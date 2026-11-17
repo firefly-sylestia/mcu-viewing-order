@@ -413,6 +413,10 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       try { element.pause(); element.srcObject = null; element.remove(); } catch {}
     });
     voiceRemoteAudioElementsRef.current.clear();
+    setVoiceEnabled(false);
+    setVoiceMuted(false);
+    setVoicePeerCount(0);
+    setVoiceLoading(false);
   }, [room?.id]);
 
   useEffect(() => { if(!room||!participant)return;let active=true;const ping=async()=>{if(!navigator.onLine){setNetworkState('offline');return;}const start=performance.now();try{await rpc('watch_room_playback_snapshot',{p_code:room.code,p_token:participant.token});if(active){setNetworkLatency(Math.round(performance.now()-start));setNetworkState('online');}}catch{if(active)setNetworkState('reconnecting');}};ping();const timer=window.setInterval(ping,15000);return()=>{active=false;window.clearInterval(timer);};},[room?.id,participant?.id,rpc]);

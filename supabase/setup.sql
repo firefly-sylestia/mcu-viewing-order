@@ -79,7 +79,9 @@ create table if not exists public.watch_rooms (
 
 alter table public.watch_rooms add column if not exists owner_user_id uuid references auth.users(id) on delete set null;
 alter table public.watch_rooms add column if not exists owner_token_hash text;
-alter table public.watch_rooms add column if not exists settings jsonb not null default '{"locked":false,"chat_enabled":true,"reactions_enabled":true,"guests_can_change_episode":false,"expiry_minutes":30}'::jsonb;
+alter table public.watch_rooms add column if not exists settings jsonb not null default '{"locked":false,"chat_enabled":true,"reactions_enabled":true,"guests_can_change_episode":false,"voice_enabled":false,"expiry_minutes":30}'::jsonb;
+alter table public.watch_rooms alter column settings set default '{"locked":false,"chat_enabled":true,"reactions_enabled":true,"guests_can_change_episode":false,"voice_enabled":false,"expiry_minutes":30}'::jsonb;
+update public.watch_rooms set settings=jsonb_set(coalesce(settings,'{}'::jsonb),'{voice_enabled}','false'::jsonb,true) where not (coalesce(settings,'{}'::jsonb) ? 'voice_enabled');
 
 create table if not exists public.watch_room_participants (
   id uuid primary key default gen_random_uuid(),

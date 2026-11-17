@@ -1,3 +1,6 @@
+alter table public.watch_rooms alter column settings set default '{"locked":false,"chat_enabled":true,"reactions_enabled":true,"guests_can_change_episode":false,"voice_enabled":false,"expiry_minutes":30}'::jsonb;
+update public.watch_rooms set settings=jsonb_set(coalesce(settings,'{}'::jsonb),'{voice_enabled}','false'::jsonb,true) where not (coalesce(settings,'{}'::jsonb) ? 'voice_enabled');
+
 -- OpenVidu v3 voice authorization for Watch Together.
 -- The OpenVidu API secret stays on the Vercel server; this RPC only validates room membership.
 -- Secure OpenVidu token authorization. The browser never receives the API secret.
