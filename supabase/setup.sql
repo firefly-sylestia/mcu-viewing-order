@@ -307,9 +307,9 @@ begin
   select * into r from public.watch_rooms where code=upper(trim(p_code)) and closed_at is null and expires_at > now();
   if not found then raise exception 'Room not found or expired.'; end if;
   if coalesce((r.settings->>'locked')::boolean,false) and not exists(select 1 from public.watch_room_participants where room_id=r.id and token_hash=encode(sha256(convert_to(p_token,'UTF8')),'hex')) then raise exception 'This room is locked by the host.'; end if;
-  if (select count(*) from public.watch_room_participants where room_id=r.id and last_seen_at > now()-interval '45 seconds') >= 12
+  if (select count(*) from public.watch_room_participants where room_id=r.id and last_seen_at > now()-interval '45 seconds') >= 29
      and not exists (select 1 from public.watch_room_participants where room_id=r.id and token_hash=encode(sha256(convert_to(p_token,'UTF8')),'hex'))
-  then raise exception 'This room is full (12 viewers maximum).'; end if;
+  then raise exception 'This room is full (29 viewers maximum).'; end if;
   insert into public.watch_room_participants(room_id, token_hash, display_name, avatar_url, user_id)
   values (r.id, encode(sha256(convert_to(p_token,'UTF8')),'hex'), left(trim(p_name),32), left(coalesce(p_avatar,''),1000), auth.uid())
   on conflict(room_id,token_hash) do update set display_name=excluded.display_name, avatar_url=excluded.avatar_url, last_seen_at=now(), user_id=coalesce(public.watch_room_participants.user_id,excluded.user_id)
@@ -815,3 +815,50 @@ begin
 end $$;
 revoke all on function public.watch_room_voice_access(text,text) from public;
 grant execute on function public.watch_room_voice_access(text,text) to anon,authenticated;
+
+
+-- Experimental WebRTC signaling for optional peer-to-peer video and voice.
+create table if not exists public.watch_room_p2p_signals (
+  id bigint generated always as identity primary key,
+  room_id uuid not null references public.watch_rooms(id) on delete cascade,
+  from_participant_id uuid not null references public.watch_room_participants(id) on delete cascade,
+  to_participant_id uuid not null references public.watch_room_participants(id) on delete cascade,
+  payload jsonb not null,
+  created_at timestamptz not null default now()
+);
+create index if not exists watch_room_p2p_signals_target_idx on public.watch_room_p2p_signals(room_id,to_participant_id,id);
+alter table public.watch_room_p2p_signals enable row level security;
+revoke all on public.watch_room_p2p_signals from anon, authenticated;
+create or replace function public.watch_room_p2p_send(p_code text,p_token text,p_to uuid,p_payload jsonb)
+returns bigint language plpgsql security definer set search_path=pg_catalog,public,pg_temp as $$
+declare r public.watch_rooms; sender public.watch_room_participants; target public.watch_room_participants; signal_id bigint;
+begin
+ select * into r from public.watch_rooms where code=upper(trim(p_code)) and closed_at is null and expires_at>now();
+ if not found then raise exception 'Room not found or expired.'; end if;
+ select * into sender from public.watch_room_participants where room_id=r.id and token_hash=encode(sha256(convert_to(p_token,'UTF8')),'hex') and last_seen_at>now()-interval '60 seconds';
+ if not found then raise exception 'You are not an active room participant.'; end if;
+ select * into target from public.watch_room_participants where id=p_to and room_id=r.id and last_seen_at>now()-interval '60 seconds';
+ if not found then raise exception 'P2P target is no longer in this room.'; end if;
+ if jsonb_typeof(p_payload)<>'object' or length(p_payload::text)>12000 then raise exception 'Invalid P2P signal.'; end if;
+ insert into public.watch_room_p2p_signals(room_id,from_participant_id,to_participant_id,payload)
+ values(r.id,sender.id,target.id,p_payload) returning id into signal_id;
+ return signal_id;
+end $$;
+create or replace function public.watch_room_p2p_poll(p_code text,p_token text,p_after bigint default 0)
+returns jsonb language plpgsql security definer set search_path=pg_catalog,public,pg_temp as $$
+declare r public.watch_rooms; receiver public.watch_room_participants; result jsonb;
+begin
+ select * into r from public.watch_rooms where code=upper(trim(p_code)) and closed_at is null and expires_at>now();
+ if not found then raise exception 'Room not found or expired.'; end if;
+ select * into receiver from public.watch_room_participants where room_id=r.id and token_hash=encode(sha256(convert_to(p_token,'UTF8')),'hex') and last_seen_at>now()-interval '60 seconds';
+ if not found then raise exception 'You are not an active room participant.'; end if;
+ select coalesce(jsonb_agg(jsonb_build_object('id',s.id,'from_participant_id',s.from_participant_id,'payload',s.payload) order by s.id),'[]'::jsonb)
+ into result from public.watch_room_p2p_signals s
+ where s.room_id=r.id and s.to_participant_id=receiver.id and s.id>coalesce(p_after,0);
+ delete from public.watch_room_p2p_signals where room_id=r.id and created_at<now()-interval '10 minutes';
+ return result;
+end $$;
+revoke all on function public.watch_room_p2p_send(text,text,uuid,jsonb) from public;
+revoke all on function public.watch_room_p2p_poll(text,text,bigint) from public;
+grant execute on function public.watch_room_p2p_send(text,text,uuid,jsonb) to anon,authenticated;
+grant execute on function public.watch_room_p2p_poll(text,text,bigint) to anon,authenticated;
