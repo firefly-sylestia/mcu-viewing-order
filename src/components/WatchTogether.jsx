@@ -837,7 +837,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       if (r && p) rpc('watch_room_heartbeat', { p_code: r.code, p_token: p.token, p_position: currentTimeRef.current, p_duration: durationRef.current }).catch(() => {});
     }, 4000);
     return () => { window.clearInterval(pollRef.current); window.clearInterval(playbackPollRef.current); window.clearInterval(heartbeatRef.current); };
-  }, [room?.id, participant?.id, refreshRoom, refreshPlayback, rpc]);
+  }, [room?.id, room?.media?.kind, participant?.id, refreshRoom, refreshPlayback, rpc]);
 
   const publishPlayback = useCallback(async (next, force = false) => {
     const r = roomRef.current, p = participantRef.current;
