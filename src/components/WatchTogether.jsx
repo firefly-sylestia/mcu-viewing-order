@@ -74,20 +74,29 @@ const roomCode = () => {
 };
 const blobatar = name => `https://blobatar.dev/avatar/${encodeURIComponent(name || 'Viewer')}?size=96&background=squircle&gen=2`;
 
-const getVoiceIceServers = () => {
-  const fallback = [
-    { urls: 'stun:stun.l.google.com:19302' },
-    { urls: 'stun:stun.cloudflare.com:3478' },
-    { urls: 'stun:stun1.l.google.com:19302' },
-  ];
-  try {
-    const configured = import.meta.env?.VITE_WEBRTC_ICE_SERVERS;
-    if (!configured) return fallback;
-    const parsed = JSON.parse(configured);
-    return Array.isArray(parsed) && parsed.length ? parsed : fallback;
-  } catch {
-    return fallback;
+let openViduClientPromise = null;
+const loadOpenViduClient = () => {
+  if (typeof window === 'undefined') return Promise.reject(new Error('Voice chat is only available in a browser.'));
+  if (window.LivekitClient?.Room) return Promise.resolve(window.LivekitClient);
+  if (!openViduClientPromise) {
+    openViduClientPromise = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/livekit-client@2.24.1/dist/livekit-client.umd.min.js';
+      script.async = true;
+      script.crossOrigin = 'anonymous';
+      script.dataset.openviduClient = 'true';
+      script.onload = () => {
+        if (window.LivekitClient?.Room && window.LivekitClient?.RoomEvent) resolve(window.LivekitClient);
+        else reject(new Error('The OpenVidu browser SDK loaded, but its client API was unavailable.'));
+      };
+      script.onerror = () => reject(new Error('Could not load the OpenVidu voice SDK. Check your connection and try again.'));
+      document.head.appendChild(script);
+    }).catch(error => {
+      openViduClientPromise = null;
+      throw error;
+    });
   }
+  return openViduClientPromise;
 };
 
 const makeAccountIdentity = (user, profileName, profileAvatar) => {
@@ -100,7 +109,7 @@ const makeAccountIdentity = (user, profileName, profileAvatar) => {
 };
 
 
-export default function WatchTogether({ item, tmdbId, mediaType, season = 1, episode = 1, playerUrl, onEpisodeChange, onBeforeOpen, onWatchTogether, onRoomStateChange, onClose, startOpen = false, launchOnly = false, user, profileName, profileAvatar, voiceChatDefault = true, selectableItems = [], requireMediaSelection = false }) {
+export default function WatchTogether({ item, tmdbId, mediaType, season = 1, episode = 1, playerUrl, onEpisodeChange, onBeforeOpen, onWatchTogether, onRoomStateChange, onClose, startOpen = false, launchOnly = false, user, profileName, profileAvatar, selectableItems = [], requireMediaSelection = false }) {
   const [guestNameOverride, setGuestNameOverride] = useState('');
   const guest = useMemo(() => { const identity=user?.id?makeAccountIdentity(user,profileName,profileAvatar):{...makeGuest(),isGuest:true}; if(!user?.id&&guestNameOverride){identity.name=guestNameOverride;identity.avatar=blobatar(guestNameOverride);} return identity; }, [user?.id,user?.displayName,user?.email,user?.user_metadata?.display_name,user?.user_metadata?.full_name,user?.user_metadata?.avatar_url,user?.user_metadata?.picture,profileName,profileAvatar,guestNameOverride]);
   const [open, setOpen] = useState(startOpen);
@@ -119,17 +128,12 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const [controlsExpanded, setControlsExpanded] = useState(false);
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
   const [voiceMuted, setVoiceMuted] = useState(false);
+  const [voiceLoading, setVoiceLoading] = useState(false);
   const [voiceError, setVoiceError] = useState('');
   const [voicePeerCount, setVoicePeerCount] = useState(0);
+  const voiceRoomRef = useRef(null);
   const voiceStreamRef = useRef(null);
-  const voicePeersRef = useRef(new Map());
-  const voiceAudioRef = useRef(new Map());
-  const voiceAudioContextRef = useRef(null);
-  const voiceAudioNodesRef = useRef(new Map());
-  const voiceMixersRef = useRef(new Map());
-  const voiceRemoteSourcesRef = useRef(new Map());
-  const voiceSignalCursorRef = useRef(0);
-  const voiceMembersRef = useRef([]);
+  const voiceRemoteAudioElementsRef = useRef(new Set());
   const [ownedRooms, setOwnedRooms] = useState([]);
   const [roomsLoading, setRoomsLoading] = useState(false);
   const [localPlaybackOverride, setLocalPlaybackOverride] = useState(false);
@@ -261,215 +265,155 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     return supabasePublicRequest(`${RPC}${name}`, options);
   }, [user?.id]);
 
-  useEffect(()=>{voiceMembersRef.current=members;},[members]);
-  const sendVoiceSignal=useCallback(async(to,payload)=>{const r=roomRef.current,p=participantRef.current;if(!r||!p)return;try{await rpc('send_watch_room_voice_signal',{p_code:r.code,p_token:p.token,p_to_participant_id:to,p_payload:payload});}catch(e){setVoiceError(e.message||'Voice connection signalling failed.');}},[rpc]);
-  const startVoice=async()=>{
-    if(voiceEnabled){setVoiceEnabled(false);setVoiceMuted(false);return;}
-    setVoiceError('');
-    try{
-      if(!navigator.mediaDevices?.getUserMedia)throw new Error('Microphone access is not available in this browser.');
-      const AudioContextClass=window.AudioContext||window.webkitAudioContext;
-      if(!AudioContextClass)throw new Error('This browser does not support the audio mixing needed for host voice rooms.');
-      let context=voiceAudioContextRef.current;
-      if(!context||context.state==='closed'){context=new AudioContextClass();voiceAudioContextRef.current=context;}
-      await context.resume();
-      const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:false});
-      voiceStreamRef.current=stream;
-      setVoiceEnabled(true);
-      setVoiceMuted(false);
-    }catch(e){setVoiceError(e.name==='NotAllowedError'?'Allow microphone access to join voice chat.':e.message||'Could not start voice chat.');}
-  };
-  useEffect(()=>{
-    if(!voiceEnabled||!room||!participant)return undefined;
-    let active=true,polling=false;
-    const peers=voicePeersRef.current;
-    const isHost=Boolean(participant.is_host||participant.role==='host');
-    const context=voiceAudioContextRef.current;
-    const cleanupAudio=(remoteId)=>{
-      const audio=voiceAudioRef.current.get(remoteId);
-      if(audio){audio.pause();audio.srcObject=null;voiceAudioRef.current.delete(remoteId);}
-      const node=voiceAudioNodesRef.current.get(remoteId);
-      try{node?.source?.disconnect();node?.gain?.disconnect();}catch{}
-      voiceAudioNodesRef.current.delete(remoteId);
-    };
-    const removePeer=(remoteId)=>{
-      const pc=peers.get(remoteId);
-      if(pc){peers.delete(remoteId);pc.onconnectionstatechange=null;pc.close();}
-      cleanupAudio(remoteId);
-      if(isHost){
-        const remote=voiceRemoteSourcesRef.current.get(remoteId);
-        try{remote?.source?.disconnect();}catch{}
-        voiceRemoteSourcesRef.current.delete(remoteId);
-        const mixer=voiceMixersRef.current.get(remoteId);
-        try{mixer?.micSource?.disconnect();mixer?.destination?.disconnect?.();}catch{}
-        voiceMixersRef.current.delete(remoteId);
-      }
-      setVoicePeerCount([...peers.values()].filter(peer=>peer.connectionState==='connected').length);
-    };
-    const createHostMixer=(remoteId)=>{
-      if(voiceMixersRef.current.has(remoteId))return voiceMixersRef.current.get(remoteId);
-      if(!context||context.state!=='running'||!voiceStreamRef.current)throw new Error('Audio mixer is not ready. Rejoin voice chat.');
-      const destination=context.createMediaStreamDestination();
-      const micSource=context.createMediaStreamSource(voiceStreamRef.current);
-      micSource.connect(destination);
-      for(const [sourceId,remote] of voiceRemoteSourcesRef.current){if(sourceId!==remoteId)remote.source.connect(destination);}
-      const mixer={destination,micSource};
-      voiceMixersRef.current.set(remoteId,mixer);
-      return mixer;
-    };
-    const playIncoming=(remoteId,stream)=>{
-      if(context&&context.state==='running'){
-        try{
-          const source=context.createMediaStreamSource(stream);
-          const gain=context.createGain();
-          gain.gain.value=1;
-          source.connect(gain);
-          gain.connect(context.destination);
-          voiceAudioNodesRef.current.set(remoteId,{source,gain});
-          return source;
-        }catch{}
-      }
-      let audio=voiceAudioRef.current.get(remoteId);
-      if(!audio){audio=new Audio();audio.autoplay=true;audio.playsInline=true;audio.setAttribute('playsinline','');audio.volume=1;voiceAudioRef.current.set(remoteId,audio);}
-      audio.srcObject=stream;
-      audio.play().catch(()=>setVoiceError('Audio playback is blocked. Tap Voice chat again and check your media volume.'));
-      return null;
-    };
-    const makePeer=(remoteId)=>{
-      if(peers.has(remoteId))return peers.get(remoteId);
-      const pc=new RTCPeerConnection({iceServers:getVoiceIceServers(),iceTransportPolicy:'all',bundlePolicy:'max-bundle'});
-      if(isHost){
-        const mixer=createHostMixer(remoteId);
-        const mixedTrack=mixer.destination.stream.getAudioTracks()[0];
-        if(mixedTrack)pc.addTrack(mixedTrack,mixer.destination.stream);
-      }else{
-        voiceStreamRef.current?.getAudioTracks().forEach(track=>pc.addTrack(track,voiceStreamRef.current));
-      }
-      pc.__pendingIce=[];
-      pc.__queuedIce=[];
-      pc.__localDescriptionSent=false;
-      pc.onicecandidate=e=>{if(!e.candidate)return;const candidate=e.candidate.toJSON();if(!pc.__localDescriptionSent)pc.__queuedIce.push(candidate);else sendVoiceSignal(remoteId,{type:'ice',candidate});};
-      pc.ontrack=async e=>{
-        const stream=e.streams?.[0]||(e.track?new MediaStream([e.track]):null);
-        if(!stream||!context)return;
-        if(context.state!=='running'){try{await context.resume();}catch{}}
-        const old=voiceRemoteSourcesRef.current.get(remoteId);
-        if(isHost&&old?.stream===stream)return;
-        if(old){try{old.source.disconnect();}catch{}}
-        const source=playIncoming(remoteId,stream);
-        if(isHost&&source){
-          voiceRemoteSourcesRef.current.set(remoteId,{source,stream});
-          for(const [targetId,mixer] of voiceMixersRef.current){if(targetId!==remoteId){try{source.connect(mixer.destination);}catch{}}}
-        }
-      };
-      pc.onconnectionstatechange=()=>{
-        const connected=[...peers.values()].filter(peer=>peer.connectionState==='connected').length;
-        setVoicePeerCount(connected);
-        if(pc.connectionState==='failed')setVoiceError('Direct voice connection failed. This network may require a TURN relay.');
-        if(['failed','closed'].includes(pc.connectionState))removePeer(remoteId);
-      };
-      peers.set(remoteId,pc);
-      return pc;
-    };
-    const createOffers=async()=>{
-      if(!isHost)return;
-      for(const member of voiceMembersRef.current){
-        if(!active)break;
-        if(!member?.id||member.id===participant.id||peers.has(member.id))continue;
-        try{
-          const pc=makePeer(member.id);
-          const offer=await pc.createOffer();
-          await pc.setLocalDescription(offer);
-          await sendVoiceSignal(member.id,{type:'offer',description:pc.localDescription.toJSON()});
-          pc.__localDescriptionSent=true;
-          for(const candidate of pc.__queuedIce.splice(0))await sendVoiceSignal(member.id,{type:'ice',candidate});
-        }catch(e){removePeer(member.id);setVoiceError(e.message||'Could not connect a voice participant.');}
-      }
-    };
-    const poll=async()=>{
-      if(!active||polling)return;
-      polling=true;
-      try{
-        const rows=await rpc('poll_watch_room_voice_signals',{p_code:room.code,p_token:participant.token,p_after_id:voiceSignalCursorRef.current});
-        const signals=Array.isArray(rows)?rows:[];
-        for(const signal of signals){
-          if(!active)break;
-          voiceSignalCursorRef.current=Math.max(voiceSignalCursorRef.current,Number(signal.id)||0);
-          const sender=signal.sender_id,payload=signal.payload||{};
-          if(!sender||sender===participant.id)continue;
-          try{
-            if(payload.type==='offer'){
-              if(isHost)continue;
-              const hostMember=voiceMembersRef.current.find(member=>member.is_host||member.role==='host');
-              if(hostMember?.id&&sender!==hostMember.id)continue;
-              const pc=makePeer(sender);
-              await pc.setRemoteDescription(new RTCSessionDescription(payload.description));
-              for(const candidate of pc.__pendingIce.splice(0))await pc.addIceCandidate(new RTCIceCandidate(candidate));
-              const answer=await pc.createAnswer();
-              await pc.setLocalDescription(answer);
-              await sendVoiceSignal(sender,{type:'answer',description:pc.localDescription.toJSON()});
-              pc.__localDescriptionSent=true;
-              for(const candidate of pc.__queuedIce.splice(0))await sendVoiceSignal(sender,{type:'ice',candidate});
-            }else if(payload.type==='answer'&&isHost){
-              const pc=peers.get(sender);
-              if(pc&&pc.signalingState!=='stable'){
-                await pc.setRemoteDescription(new RTCSessionDescription(payload.description));
-                for(const candidate of pc.__pendingIce.splice(0))await pc.addIceCandidate(new RTCIceCandidate(candidate));
-              }
-            }else if(payload.type==='ice'&&payload.candidate){
-              const pc=peers.get(sender);
-              if(!pc)continue;
-              if(pc.remoteDescription)await pc.addIceCandidate(new RTCIceCandidate(payload.candidate));
-              else pc.__pendingIce.push(payload.candidate);
-            }else if(payload.type==='bye'){
-              removePeer(sender);
-            }
-          }catch(e){setVoiceError(e.message||'Voice connection could not be established.');}
-        }
-      }catch(e){if(active)setVoiceError(e.message||'Voice signalling temporarily unavailable.');}
-      finally{polling=false;}
-    };
-    createOffers();
-    const timer=window.setInterval(()=>{createOffers();poll();},700);
-    poll();
-    return()=>{
-      active=false;
-      window.clearInterval(timer);
-      for(const remoteId of peers.keys())sendVoiceSignal(remoteId,{type:'bye'});
-      peers.forEach(pc=>pc.close());
-      peers.clear();
-      voiceMixersRef.current.forEach(mixer=>{try{mixer.micSource?.disconnect();mixer.destination?.disconnect?.();}catch{}});
-      voiceMixersRef.current.clear();
-      voiceRemoteSourcesRef.current.forEach(remote=>{try{remote.source?.disconnect();}catch{}});
-      voiceRemoteSourcesRef.current.clear();
-      voiceAudioNodesRef.current.forEach(node=>{try{node.source?.disconnect();node.gain?.disconnect();}catch{}});
-      voiceAudioNodesRef.current.clear();
-      voiceAudioRef.current.forEach(audio=>{audio.pause();audio.srcObject=null;});
-      voiceAudioRef.current.clear();
-      setVoicePeerCount(0);
-    };
-  },[voiceEnabled,room?.id,participant?.id,participant?.is_host,participant?.role,rpc,sendVoiceSignal]);
-  useEffect(()=>{
-    if(!voiceEnabled){
-      voiceStreamRef.current?.getTracks().forEach(track=>track.stop());
-      voiceStreamRef.current=null;
-      voicePeersRef.current.forEach(pc=>pc.close());
-      voicePeersRef.current.clear();
-      voiceMixersRef.current.forEach(mixer=>{try{mixer.micSource?.disconnect();mixer.destination?.disconnect?.();}catch{}});
-      voiceMixersRef.current.clear();
-      voiceRemoteSourcesRef.current.forEach(remote=>{try{remote.source?.disconnect();}catch{}});
-      voiceRemoteSourcesRef.current.clear();
-      voiceAudioNodesRef.current.forEach(node=>{try{node.source?.disconnect();node.gain?.disconnect();}catch{}});
-      voiceAudioNodesRef.current.clear();
-      voiceAudioRef.current.forEach(audio=>{audio.pause();audio.srcObject=null;});
-      voiceAudioRef.current.clear();
-      if(voiceAudioContextRef.current&&voiceAudioContextRef.current.state!=='closed')voiceAudioContextRef.current.close().catch(()=>{});
-      voiceAudioContextRef.current=null;
-      setVoicePeerCount(0);
+  const leaveVoice = useCallback(async () => {
+    const activeRoom = voiceRoomRef.current;
+    voiceRoomRef.current = null;
+    if (activeRoom) {
+      try { await activeRoom.disconnect(); } catch {}
+    }
+    voiceStreamRef.current?.getTracks().forEach(track => track.stop());
+    voiceStreamRef.current = null;
+    voiceRemoteAudioElementsRef.current.forEach(element => {
+      try { element.pause(); element.srcObject = null; element.remove(); } catch {}
+    });
+    voiceRemoteAudioElementsRef.current.clear();
+    setVoiceEnabled(false);
+    setVoiceMuted(false);
+    setVoicePeerCount(0);
+    setVoiceLoading(false);
+  }, []);
+
+  const startVoice = async () => {
+    if (voiceEnabled || voiceRoomRef.current) {
+      await leaveVoice();
       return;
     }
-    if(voiceStreamRef.current)voiceStreamRef.current.getAudioTracks().forEach(track=>{track.enabled=!voiceMuted;});
-  },[voiceEnabled,voiceMuted]);
+    if (!room?.code || !participant?.token) {
+      setVoiceError('Join the screening room before starting voice chat.');
+      return;
+    }
+    if (room.settings?.voice_enabled !== true) {
+      setVoiceError('The host has not enabled voice chat for this room.');
+      return;
+    }
+    setVoiceLoading(true);
+    setVoiceError('');
+    let stream = null;
+    let liveRoom = null;
+    try {
+      if (!navigator.mediaDevices?.getUserMedia) throw new Error('Microphone access is not available. Open this room over HTTPS and allow microphone access.');
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+        video: false,
+      });
+      voiceStreamRef.current = stream;
+
+      const sdk = await loadOpenViduClient();
+      const response = await fetch('/api/openvidu/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: room.code, participantToken: participant.token }),
+      });
+      const tokenData = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(tokenData.error || 'Could not authorize this voice session.');
+
+      liveRoom = new sdk.Room({ adaptiveStream: false, dynacast: false });
+      voiceRoomRef.current = liveRoom;
+      const updatePeerCount = () => setVoicePeerCount(liveRoom.remoteParticipants.size);
+      liveRoom
+        .on(sdk.RoomEvent.ParticipantConnected, updatePeerCount)
+        .on(sdk.RoomEvent.ParticipantDisconnected, updatePeerCount)
+        .on(sdk.RoomEvent.TrackSubscribed, (track) => {
+          if (track.kind !== 'audio') return;
+          const element = track.attach();
+          element.autoplay = true;
+          element.playsInline = true;
+          element.setAttribute('playsinline', '');
+          element.style.position = 'fixed';
+          element.style.width = '1px';
+          element.style.height = '1px';
+          element.style.opacity = '0';
+          element.style.pointerEvents = 'none';
+          element.style.left = '-10px';
+          element.setAttribute('aria-hidden', 'true');
+          document.body.appendChild(element);
+          voiceRemoteAudioElementsRef.current.add(element);
+          element.play().catch(() => setVoiceError('Voice is connected, but incoming audio is blocked. Tap the page once and try again.'));
+        })
+        .on(sdk.RoomEvent.TrackUnsubscribed, (track) => {
+          track.detach().forEach(element => {
+            try { element.pause(); element.srcObject = null; element.remove(); } catch {}
+            voiceRemoteAudioElementsRef.current.delete(element);
+          });
+        })
+        .on(sdk.RoomEvent.AudioPlaybackStatusChanged, () => {
+          if (!liveRoom.canPlaybackAudio) setVoiceError('Voice is connected. Tap the page once to allow incoming audio.');
+          else setVoiceError('');
+        })
+        .on(sdk.RoomEvent.Disconnected, () => {
+          if (voiceRoomRef.current !== liveRoom) return;
+          voiceRoomRef.current = null;
+          voiceStreamRef.current?.getTracks().forEach(track => track.stop());
+          voiceStreamRef.current = null;
+          voiceRemoteAudioElementsRef.current.forEach(element => {
+            try { element.pause(); element.srcObject = null; element.remove(); } catch {}
+          });
+          voiceRemoteAudioElementsRef.current.clear();
+          setVoiceEnabled(false);
+          setVoiceMuted(false);
+          setVoicePeerCount(0);
+        });
+
+      await liveRoom.connect(tokenData.url, tokenData.token);
+      const microphoneTrack = stream.getAudioTracks()[0];
+      if (!microphoneTrack) throw new Error('No microphone track was created. Check your device permissions.');
+      await liveRoom.localParticipant.publishTrack(microphoneTrack, {
+        name: 'microphone',
+        source: sdk.Track.Source.Microphone,
+      });
+      try { await liveRoom.startAudio(); } catch {}
+      setVoiceEnabled(true);
+      setVoiceMuted(false);
+      setVoicePeerCount(liveRoom.remoteParticipants.size);
+      if (!liveRoom.canPlaybackAudio) setVoiceError('Connected. Tap the page once if you cannot hear other participants.');
+    } catch (error) {
+      if (liveRoom) {
+        voiceRoomRef.current = null;
+        try { await liveRoom.disconnect(); } catch {}
+      }
+      stream?.getTracks().forEach(track => track.stop());
+      voiceStreamRef.current = null;
+      voiceRemoteAudioElementsRef.current.forEach(element => {
+        try { element.pause(); element.srcObject = null; element.remove(); } catch {}
+      });
+      voiceRemoteAudioElementsRef.current.clear();
+      setVoiceEnabled(false);
+      setVoicePeerCount(0);
+      setVoiceError(error.name === 'NotAllowedError' ? 'Allow microphone access to join voice chat.' : error.message || 'Could not start OpenVidu voice chat.');
+    } finally {
+      setVoiceLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    voiceStreamRef.current?.getAudioTracks().forEach(track => { track.enabled = !voiceMuted; });
+  }, [voiceMuted]);
+
+  useEffect(() => {
+    if (room && room.settings?.voice_enabled !== true && voiceRoomRef.current) leaveVoice();
+  }, [room?.id, room?.settings?.voice_enabled, leaveVoice]);
+
+  useEffect(() => () => {
+    const activeRoom = voiceRoomRef.current;
+    voiceRoomRef.current = null;
+    if (activeRoom) activeRoom.disconnect().catch(() => {});
+    voiceStreamRef.current?.getTracks().forEach(track => track.stop());
+    voiceStreamRef.current = null;
+    voiceRemoteAudioElementsRef.current.forEach(element => {
+      try { element.pause(); element.srcObject = null; element.remove(); } catch {}
+    });
+    voiceRemoteAudioElementsRef.current.clear();
+  }, [room?.id]);
 
   useEffect(() => { if(!room||!participant)return;let active=true;const ping=async()=>{if(!navigator.onLine){setNetworkState('offline');return;}const start=performance.now();try{await rpc('watch_room_playback_snapshot',{p_code:room.code,p_token:participant.token});if(active){setNetworkLatency(Math.round(performance.now()-start));setNetworkState('online');}}catch{if(active)setNetworkState('reconnecting');}};ping();const timer=window.setInterval(ping,15000);return()=>{active=false;window.clearInterval(timer);};},[room?.id,participant?.id,rpc]);
 
@@ -642,12 +586,6 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
         p_avatar: guest.avatar,
         p_media: roomType==='local'?{kind:'local_file',title:localFile.name.replace(/\.[^.]+$/,'')||'Local video',fileName:localFile.name,fileSize:localFile.size,mimeType:videoFileMime(localFile),fileExtension:videoFileExtension(localFile),fileFingerprint:localFileFingerprint,mediaType:'local',season:1,episode:1}:itemMedia,
       });
-      if (voiceChatDefault) {
-        const savedSettings = await rpc('update_watch_room_settings', {
-          p_code: code, p_token: guest.token, p_settings: { voice_enabled: true },
-        });
-        if (result.room) result.room.settings = savedSettings;
-      }
       setParticipant(result.participant);
       applyRoomSnapshot(result);
       const roomMedia=roomType==='local'?{kind:'local_file',title:localFile.name.replace(/\.[^.]+$/,'')||'Local video',fileName:localFile.name,fileSize:localFile.size,mimeType:videoFileMime(localFile),fileExtension:videoFileExtension(localFile),fileFingerprint:localFileFingerprint,mediaType:'local'}:itemMedia;saveActiveRoom(code,guest,roomMedia);
@@ -662,7 +600,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       return true;
     } catch (e) { setError(e.message || 'Could not create the room.'); return false; }
     finally { setBusy(false); }
-  }, [rpc, guest, itemMedia, applyRoomSnapshot, loadOwnedRooms, voiceChatDefault, roomType, localFile, localFileFingerprint]);
+  }, [rpc, guest, itemMedia, applyRoomSnapshot, loadOwnedRooms, roomType, localFile, localFileFingerprint]);
 
   useEffect(() => {
     if (restoreAttemptedRef.current || roomRef.current) return;
@@ -1236,7 +1174,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
             </div>
           </div> : <div className="wt-content">
             <div className="wt-main">
-              <div className="wt-room-title"><div><span>NOW SCREENING</span><h2>{room.media?.title || itemMedia.title}</h2><small>{members.length} {members.length === 1 ? 'viewer' : 'viewers'} · {participant.is_host ? 'Host' : (participant.role || 'viewer').replace(/^./, c => c.toUpperCase())}</small></div><div className="wt-room-actions">{room.settings?.voice_enabled===true&&<><button type="button" className={`wt-copy wt-voice-toggle${voiceEnabled?' active':''}`} onClick={startVoice} title={voiceEnabled?'Leave voice chat':'Join voice chat'}>{voiceEnabled?<Mic size={14}/>:<Headphones size={14}/>} {voiceEnabled?`Voice · ${voicePeerCount} connected`:'Join voice'}</button>{voiceEnabled&&<button type="button" className="wt-copy" onClick={()=>setVoiceMuted(v=>!v)} title={voiceMuted?'Unmute microphone':'Mute microphone'}>{voiceMuted?<MicOff size={14}/>:<Mic size={14}/>} {voiceMuted?'Muted':'Mic on'}</button>}</>}{guest.isGuest&&<button type="button" className="wt-copy" onClick={()=>setEditingGuestName(value=>!value)}><Pencil size={14}/> Name</button>}{participant.is_host&&<button type="button" className="wt-copy" onClick={()=>{localSelectionBeforeChangeRef.current={file:localFile,fingerprint:localFileFingerprint};setIsChangingMedia(true);setRoomType(room.media?.kind==='local_file'?'local':'movie');if(room.media?.kind!=='local_file')setSelectedMedia({title:room.media?.title||'',tmdbId:room.media?.tmdbId,mediaType:room.media?.mediaType||'movie',type:room.media?.mediaType==='tv'?'series':'film',poster:room.media?.poster||'',year:room.media?.year||''});setError('');setSetupDialog(true);}}><ArrowRightLeft size={14}/> Change media</button>}{participant.is_host&&<button type="button" className="wt-copy" onClick={()=>setHostPanelOpen(true)}><Settings2 size={14}/> Host controls</button>}{participant.is_host&&<button type="button" className="wt-copy wt-end-room" onClick={()=>setConfirmAction({type:'close'})}>End room</button>}<button className="wt-copy" onClick={copyLink}>{copied ? <Check size={15}/> : <Copy size={15}/ >}{copied ? 'Copied' : 'Invite'}</button></div></div>
+              <div className="wt-room-title"><div><span>NOW SCREENING</span><h2>{room.media?.title || itemMedia.title}</h2><small>{members.length} {members.length === 1 ? 'viewer' : 'viewers'} · {participant.is_host ? 'Host' : (participant.role || 'viewer').replace(/^./, c => c.toUpperCase())}</small></div><div className="wt-room-actions">{room.settings?.voice_enabled===true&&<><button type="button" className={`wt-copy wt-voice-toggle${voiceEnabled?' active':''}`} onClick={startVoice} disabled={voiceLoading} title={voiceEnabled?'Leave voice chat':'Join OpenVidu voice chat'}>{voiceEnabled?<Mic size={14}/>:<Headphones size={14}/>} {voiceLoading?'Connecting…':voiceEnabled?`Voice · ${voicePeerCount} connected`:'Join voice'}</button>{voiceEnabled&&<button type="button" className="wt-copy" onClick={()=>setVoiceMuted(v=>!v)} title={voiceMuted?'Unmute microphone':'Mute microphone'}>{voiceMuted?<MicOff size={14}/>:<Mic size={14}/>} {voiceMuted?'Muted':'Mic on'}</button>}</>}{guest.isGuest&&<button type="button" className="wt-copy" onClick={()=>setEditingGuestName(value=>!value)}><Pencil size={14}/> Name</button>}{participant.is_host&&<button type="button" className="wt-copy" onClick={()=>{localSelectionBeforeChangeRef.current={file:localFile,fingerprint:localFileFingerprint};setIsChangingMedia(true);setRoomType(room.media?.kind==='local_file'?'local':'movie');if(room.media?.kind!=='local_file')setSelectedMedia({title:room.media?.title||'',tmdbId:room.media?.tmdbId,mediaType:room.media?.mediaType||'movie',type:room.media?.mediaType==='tv'?'series':'film',poster:room.media?.poster||'',year:room.media?.year||''});setError('');setSetupDialog(true);}}><ArrowRightLeft size={14}/> Change media</button>}{participant.is_host&&<button type="button" className="wt-copy" onClick={()=>setHostPanelOpen(true)}><Settings2 size={14}/> Host controls</button>}{participant.is_host&&<button type="button" className="wt-copy wt-end-room" onClick={()=>setConfirmAction({type:'close'})}>End room</button>}<button className="wt-copy" onClick={copyLink}>{copied ? <Check size={15}/> : <Copy size={15}/ >}{copied ? 'Copied' : 'Invite'}</button></div></div>
               {guest.isGuest&&editingGuestName&&<form className="wt-guest-name-form wt-room-rename" onSubmit={event=>{event.preventDefault();updateGuestName(guestNameDraft);}}><input value={guestNameDraft} onChange={event=>setGuestNameDraft(event.target.value)} maxLength={32} aria-label="Guest name"/><button type="submit" disabled={busy||!guestNameDraft.trim()}>Save name</button></form>}
               {showPlaybackNotice && <div className="wt-playback-tip" role="status"><span><strong>Playback tip</strong> If autoplay is blocked, tap Play once. A reputable ad blocker can help reduce pop-ups and redirects.</span><button type="button" onClick={() => setShowPlaybackNotice(false)} aria-label="Dismiss playback tip"><X size={15}/></button></div>}
               <div className="wt-room-tools" aria-label="Room tools"><span className={`wt-network ${networkState}`} title={networkState==='online'?'Room connection is active':networkState==='offline'?'You are offline':'Trying to reconnect'}><i/><span>{networkState==='online'?'Connected':networkState==='offline'?'Offline':'Reconnecting'}</span>{networkLatency!=null&&networkState==='online'&&<small>{networkLatency} ms</small>}</span>{voiceError&&<span className="wt-voice-error" role="status">{voiceError}</span>}<div className="wt-room-tool-actions"><button type="button" onClick={()=>refreshRoom()} title="Reconnect to room" aria-label="Reconnect to room"><RefreshCw size={16}/></button><button type="button" onClick={copyTimestamp} title="Copy current timestamp" aria-label="Copy current timestamp"><Clock3 size={16}/></button><button type="button" onClick={()=>setTheatreMode(v=>!v)} title={theatreMode?'Exit theatre mode':'Theatre mode'} aria-label={theatreMode?'Exit theatre mode':'Theatre mode'}><Theater size={16}/></button><button type="button" className="wt-theatre-chat-launch" onClick={()=>{setChatCollapsed(false);setTheatreChatOpen(value=>!value);}} title="Open room chat" aria-label="Open room chat"><MessageCircle size={16}/></button><button type="button" onClick={()=>setQrDialogOpen(true)} title="Show room QR code" aria-label="Show room QR code"><QrCode size={16}/></button></div></div>
@@ -1333,7 +1271,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                         hevc:probe.canPlayType('video/mp4; codecs="hvc1.1.6.L93.B0, mp4a.40.2"')||'no',
                         vp9:probe.canPlayType('video/webm; codecs="vp9, opus"')||'no'
                       });
-                      setLocalVideoError('The browser’s built-in decoder could not play this file. MKV is a container; H.264/AVC and H.265/HEVC are codecs. Support depends on the browser and device.');
+                      setLocalVideoError('This browser cannot decode this file. MKV, AVI and MOV are containers, not codecs. If the video is H.264/AVC with AAC audio, remux it to MP4 without re-encoding. If it is H.265/HEVC or another unsupported codec, convert it to H.264 video with AAC audio. This player does not convert files yet.');
                     }}
                     onLoadedData={()=>setLocalVideoError('')}
                   />
@@ -1441,7 +1379,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
               </section>
             </div>,document.body
           )}
-          {hostPanelOpen && typeof document !== 'undefined' && createPortal(<div className="wt-create-backdrop" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)setHostPanelOpen(false);}}><section className="wt-create-dialog wt-host-panel" role="dialog" aria-modal="true" aria-label="Host control panel"><header><div><span>ROOM MANAGEMENT</span><h2>Host control panel</h2><p>Manage access, permissions and your screening.</p></div><button type="button" onClick={()=>setHostPanelOpen(false)} aria-label="Close"><X size={18}/></button></header><div className="wt-host-settings"><label><span><b>Voice chat</b><small>Allow participants to start host-relayed voice chat.</small></span><input type="checkbox" checked={room.settings?.voice_enabled===true} onChange={e=>{if(!e.target.checked&&voiceEnabled){setVoiceEnabled(false);setVoiceMuted(false);}updateRoomSettings({voice_enabled:e.target.checked});}}/></label><label><span><b>Lock room</b><small>Only current participants can stay. New joins are blocked.</small></span><input type="checkbox" checked={Boolean(room.settings?.locked)} onChange={e=>updateRoomSettings({locked:e.target.checked})}/></label><label><span><b>Reactions</b><small>Allow quick emoji reactions in chat.</small></span><input type="checkbox" checked={room.settings?.reactions_enabled!==false} onChange={e=>updateRoomSettings({reactions_enabled:e.target.checked})}/></label><label><span><b>Room chat</b><small>Allow participants to send messages.</small></span><input type="checkbox" checked={room.settings?.chat_enabled!==false} onChange={e=>updateRoomSettings({chat_enabled:e.target.checked})}/></label><label><span><b>Guest episode changes</b><small>Let viewers change the shared episode.</small></span><input type="checkbox" checked={Boolean(room.settings?.guests_can_change_episode)} onChange={e=>updateRoomSettings({guests_can_change_episode:e.target.checked})}/></label><label><span><b>Room expiry</b><small>Choose how long the room can remain active.</small></span><select value={room.settings?.expiry_minutes||30} onChange={e=>updateRoomSettings({expiry_minutes:Number(e.target.value)})}><option value="30">30 minutes inactive</option><option value="60">1 hour inactive</option><option value="180">3 hours inactive</option><option value="480">8 hours inactive</option><option value="1440">24 hours inactive</option></select></label></div><div className="wt-host-people"><strong>Participants</strong>{members.filter(m=>!m.is_host).map(member=><div key={member.id}><span><b>{member.display_name}</b><small>{member.role==='operator'?'Operator':'Viewer'}</small></span><button type="button" disabled={busy||member.role==='operator'} onClick={()=>grantOperator(member)}>Make operator</button><button type="button" disabled={busy} onClick={()=>setConfirmAction({type:'remove',member})}><UserMinus size={14}/></button><button type="button" disabled={busy} onClick={()=>setConfirmAction({type:'transfer',member})}><ArrowRightLeft size={14}/></button></div>)}</div><div className="wt-host-danger"><div className="wt-host-danger-copy"><span className="wt-host-danger-icon"><LogOut size={16}/></span><span><b>End room</b><small>Disconnect everyone and permanently close this screening.</small></span></div><button type="button" onClick={()=>setConfirmAction({type:'close'})}><LogOut size={14}/>End room</button></div></section></div>,document.body)}
+          {hostPanelOpen && typeof document !== 'undefined' && createPortal(<div className="wt-create-backdrop" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)setHostPanelOpen(false);}}><section className="wt-create-dialog wt-host-panel" role="dialog" aria-modal="true" aria-label="Host control panel"><header><div><span>ROOM MANAGEMENT</span><h2>Host control panel</h2><p>Manage access, permissions and your screening.</p></div><button type="button" onClick={()=>setHostPanelOpen(false)} aria-label="Close"><X size={18}/></button></header><div className="wt-host-settings"><label><span><b>Voice chat</b><small>Allow participants to join OpenVidu voice chat. Off by default.</small></span><input type="checkbox" checked={room.settings?.voice_enabled===true} onChange={e=>{if(!e.target.checked&&voiceEnabled)leaveVoice();updateRoomSettings({voice_enabled:e.target.checked});}}/></label><label><span><b>Lock room</b><small>Only current participants can stay. New joins are blocked.</small></span><input type="checkbox" checked={Boolean(room.settings?.locked)} onChange={e=>updateRoomSettings({locked:e.target.checked})}/></label><label><span><b>Reactions</b><small>Allow quick emoji reactions in chat.</small></span><input type="checkbox" checked={room.settings?.reactions_enabled!==false} onChange={e=>updateRoomSettings({reactions_enabled:e.target.checked})}/></label><label><span><b>Room chat</b><small>Allow participants to send messages.</small></span><input type="checkbox" checked={room.settings?.chat_enabled!==false} onChange={e=>updateRoomSettings({chat_enabled:e.target.checked})}/></label><label><span><b>Guest episode changes</b><small>Let viewers change the shared episode.</small></span><input type="checkbox" checked={Boolean(room.settings?.guests_can_change_episode)} onChange={e=>updateRoomSettings({guests_can_change_episode:e.target.checked})}/></label><label><span><b>Room expiry</b><small>Choose how long the room can remain active.</small></span><select value={room.settings?.expiry_minutes||30} onChange={e=>updateRoomSettings({expiry_minutes:Number(e.target.value)})}><option value="30">30 minutes inactive</option><option value="60">1 hour inactive</option><option value="180">3 hours inactive</option><option value="480">8 hours inactive</option><option value="1440">24 hours inactive</option></select></label></div><div className="wt-host-people"><strong>Participants</strong>{members.filter(m=>!m.is_host).map(member=><div key={member.id}><span><b>{member.display_name}</b><small>{member.role==='operator'?'Operator':'Viewer'}</small></span><button type="button" disabled={busy||member.role==='operator'} onClick={()=>grantOperator(member)}>Make operator</button><button type="button" disabled={busy} onClick={()=>setConfirmAction({type:'remove',member})}><UserMinus size={14}/></button><button type="button" disabled={busy} onClick={()=>setConfirmAction({type:'transfer',member})}><ArrowRightLeft size={14}/></button></div>)}</div><div className="wt-host-danger"><div className="wt-host-danger-copy"><span className="wt-host-danger-icon"><LogOut size={16}/></span><span><b>End room</b><small>Disconnect everyone and permanently close this screening.</small></span></div><button type="button" onClick={()=>setConfirmAction({type:'close'})}><LogOut size={14}/>End room</button></div></section></div>,document.body)}
           {confirmAction && typeof document !== 'undefined' && createPortal(<div className="wt-create-backdrop wt-confirm-backdrop" role="presentation"><section className={"wt-create-dialog wt-confirm-dialog " + (confirmAction.type==='close'||confirmAction.type==='remove'?'is-danger':'')} role="alertdialog" aria-modal="true"><div className={"wt-confirm-icon " + (confirmAction.type==='transfer'?'is-transfer':'')}>{confirmAction.type==='transfer'?<ArrowRightLeft size={21}/>:confirmAction.type==='remove'?<UserMinus size={21}/>:<LogOut size={21}/>}</div><header><div><span>{confirmAction.type==='transfer'?'HOST TRANSFER':confirmAction.type==='remove'?'PARTICIPANT ACCESS':'END SCREENING'}</span><h2>{confirmAction.type==='transfer'?'Transfer host privileges?':confirmAction.type==='remove'?'Remove participant?':'End this room?'}</h2><p>{confirmAction.type==='transfer'?confirmAction.member.display_name+' will become the host. You will become a viewer.':confirmAction.type==='remove'?confirmAction.member.display_name+' will be removed from this screening.':'Everyone will be disconnected and this room will be permanently closed.'}</p></div></header><div className="wt-confirm-actions"><button type="button" className="wt-confirm-cancel" onClick={()=>setConfirmAction(null)}>Cancel</button><button type="button" className={"wt-confirm-primary " + (confirmAction.type==='transfer'?'is-transfer':'')} disabled={busy} onClick={async()=>{const action=confirmAction; if(action.type==='transfer')await transferHost(action.member);else if(action.type==='remove')await removeMember(action.member);else{setConfirmAction(null);await leaveRoom();}}}>{busy?'Working…':confirmAction.type==='close'?'End room':confirmAction.type==='remove'?'Remove participant':'Transfer host'}</button></div></section></div>,document.body)}
           {joinPreviewOpen && typeof document !== 'undefined' && createPortal(
             <div className="wt-create-backdrop wt-join-file-backdrop" role="presentation" onMouseDown={event => {

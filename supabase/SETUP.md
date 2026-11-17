@@ -75,3 +75,18 @@ The same master `setup.sql` creates the request queue and its RPC permissions wi
 ### Playback responsiveness update
 
 The room now checks a lightweight playback-state RPC roughly every 450 ms, while full room/chat/member refreshes happen less frequently. This reduces command propagation delay without repeatedly downloading the full chat history. Re-run the complete `setup.sql` after this update to add the playback snapshot RPC.
+
+
+## OpenVidu voice chat
+
+Watch Together uses OpenVidu Platform v3 for voice media. The voice option is disabled in new rooms by default. The host can enable it from Host controls; participants then explicitly choose Join voice and grant microphone access.
+
+Before voice chat can connect, deploy an OpenVidu Platform v3 server and configure these server-side Vercel environment variables:
+
+- OPENVIDU_URL: the public WebSocket URL, such as wss://rtc.example.com.
+- LIVEKIT_API_KEY: the API key from the OpenVidu deployment.
+- LIVEKIT_API_SECRET: the API secret from the OpenVidu deployment. Keep it private; never use a VITE_* prefix.
+
+The app's existing VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY must also be configured in Vercel so the serverless token endpoint can validate room membership. Run the latest complete supabase/setup.sql once in Supabase SQL Editor (or apply migrations/20261117_openvidu_voice.sql) to add the membership/host-permission check.
+
+OpenVidu deployment instructions: https://openvidu.io/latest/docs/self-hosting/ . The voice token is minted by /api/openvidu/token only after Supabase confirms that the participant belongs to the room and the host has enabled voice chat.
