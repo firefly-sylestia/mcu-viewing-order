@@ -506,22 +506,6 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const beginJoin=useCallback(async code=>{setBusy(true);setError('');try{const preview=await rpc('preview_watch_room',{p_code:code.trim().toUpperCase()});if(preview?.media?.kind==='local_file'){setPendingJoinCode(code.trim().toUpperCase());joinFileInputRef.current?.click();}else await joinExisting(code);}catch(e){setError(e.message||'Could not find this room.');}finally{setBusy(false);}},[rpc,joinExisting]);
   const handleLocalFile=useCallback(async file=>{if(!file)return '';setLocalFileBusy(true);setError('');try{if(!file.type.startsWith('video/'))throw new Error('Please choose a video file.');const fingerprint=await fingerprintLocalVideo(file);setLocalFile(file);setLocalFileFingerprint(fingerprint);const url=URL.createObjectURL(file);setLocalVideoUrl(previous=>{if(previous)URL.revokeObjectURL(previous);return url;});return fingerprint;}catch(e){setError(e.message||'Could not read the video file.');return '';}finally{setLocalFileBusy(false);}},[]);
 
-    setBusy(true); setError(''); lastVersionRef.current = 0; watchSecondsRef.current=0; localHistoryFlushRef.current=0; remoteHistoryFlushRef.current=0;
-    try {
-      const result = await rpc('join_watch_room', {
-        p_code: code.trim().toUpperCase(),
-        p_token: identity.token,
-        p_name: identity.name,
-        p_avatar: identity.avatar,
-      });
-      setParticipant(result.participant);
-      applyRoomSnapshot(result);
-      if (identity?.token) saveActiveRoom(code.trim().toUpperCase(), identity, result.room?.media || null);
-      setOpen(true);
-      setRoomLink(window.location.origin + '/watch-room/' + code.trim().toUpperCase());
-    } catch (e) { setError(e.message || 'Could not join this room.'); }
-    finally { setBusy(false); }
-  }, [rpc, guest, applyRoomSnapshot]);
 
   const createRoom = useCallback(async () => {
     if(roomType==='local'&&(!localFile||!localFileFingerprint)){setError('Choose a video file first.');return false;}
