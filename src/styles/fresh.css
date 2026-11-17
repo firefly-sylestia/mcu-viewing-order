@@ -14828,3 +14828,23 @@
 
 :root .wt-page .wt-theatre-chat-launch {display:none!important}
 :root .wt-page.wt-theatre-mode .wt-theatre-chat-launch {display:inline-flex!important}
+
+
+/* Ensure the theatre chat drawer is anchored to the theatre viewport,
+   not laid out as a row item beneath the player. */
+:root .wt-page.wt-theatre-mode .wt-content,
+:root .wt-page.wt-theatre-mode .wt-main {overflow:visible!important}
+:root .wt-page.wt-theatre-mode .wt-chat.wt-theatre-chat-open {
+ position:fixed!important;inset:calc(58px + env(safe-area-inset-top)) 14px calc(14px + env(safe-area-inset-bottom)) auto!important;
+ display:flex!important;float:none!important;clear:none!important;
+ width:min(390px,calc(100vw - 28px))!important;height:auto!important;
+ max-height:none!important;min-height:0!important;max-width:calc(100vw - 28px)!important;
+ margin:0!important;transform:none!important;align-self:auto!important;
+ z-index:20020!important;box-sizing:border-box!important;
+}
+@media(max-width:760px) {
+ :root .wt-page.wt-theatre-mode .wt-chat.wt-theatre-chat-open {
+  inset:calc(54px + env(safe-area-inset-top)) 9px calc(9px + env(safe-area-inset-bottom)) auto!important;
+  width:min(390px,calc(100vw - 18px))!important;max-width:calc(100vw - 18px)!important;
+ }
+}
