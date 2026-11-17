@@ -15140,3 +15140,34 @@
     grid-template-columns: 1fr !important;
   }
 }
+
+
+/* Clear in-player feedback when a browser cannot decode a local container/codec. */
+:root .wt-local-video-player {
+  position: relative !important;
+}
+:root .wt-local-playback-error {
+  position: absolute !important;
+  inset: 12px !important;
+  z-index: 5 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 9px !important;
+  padding: 24px !important;
+  border-radius: 16px !important;
+  color: #fff !important;
+  text-align: center !important;
+  background: rgba(8, 10, 15, .94) !important;
+}
+:root .wt-local-playback-error strong {
+  font-size: 15px !important;
+  font-weight: 800 !important;
+}
+:root .wt-local-playback-error span {
+  max-width: 460px !important;
+  color: rgba(255,255,255,.72) !important;
+  font-size: 12px !important;
+  line-height: 1.6 !important;
+}

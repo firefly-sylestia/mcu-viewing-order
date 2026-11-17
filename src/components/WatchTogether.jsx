@@ -4,7 +4,38 @@ import { ChevronDown, ChevronUp, Copy, Check, Users, MessageCircle, Play, Pause,
 import { supabasePublicRequest, supabaseDataRequest } from '../supabase';
 
 const RPC = '/rest/v1/rpc/';
-const fingerprintLocalVideo = async file => { if(!file||!file.size)throw new Error('Choose a non-empty video file.');const size=1024*1024;const starts=[...new Set([0,Math.max(0,Math.floor(file.size/2)-size/2),Math.max(0,file.size-size)])];const chunks=await Promise.all(starts.map(start=>file.slice(start,Math.min(file.size,start+size)).arrayBuffer()));const header=new TextEncoder().encode([file.size,file.type||'video/unknown'].join('|'));const bytes=new Uint8Array(header.byteLength+chunks.reduce((n,c)=>n+c.byteLength,0));bytes.set(header);let offset=header.byteLength;chunks.forEach(c=>{bytes.set(new Uint8Array(c),offset);offset+=c.byteLength;});const digest=await crypto.subtle.digest('SHA-256',bytes);return Array.from(new Uint8Array(digest),v=>v.toString(16).padStart(2,'0')).join('');};
+const VIDEO_FILE_ACCEPT = 'video/*,.mkv,.avi,.mov,.wmv,.flv,.mpg,.mpeg,.m4v,.3gp,.3g2,.ts,.mts,.m2ts,.vob,.ogv,.mxf,.asf,.divx,.f4v,.rm,.rmvb,.dv,.mod,.tod,.nut,.nuv,.y4m,.m2v,.m1v';
+const VIDEO_FILE_EXTENSIONS = new Set(VIDEO_FILE_ACCEPT.split(',').filter(value => value.startsWith('.')).map(value => value.slice(1)));
+const videoFileExtension = file => String(file?.name || '').split('.').pop().toLowerCase();
+const isSupportedVideoFile = file => Boolean(file && (String(file.type || '').startsWith('video/') || VIDEO_FILE_EXTENSIONS.has(videoFileExtension(file))));
+const videoFileMime = file => {
+  if (file?.type && file.type !== 'application/octet-stream') return file.type;
+  return ({
+    mkv:'video/x-matroska', mk3d:'video/x-matroska', mp4:'video/mp4', m4v:'video/mp4',
+    webm:'video/webm', mov:'video/quicktime', qt:'video/quicktime', avi:'video/x-msvideo',
+    wmv:'video/x-ms-wmv', flv:'video/x-flv', mpg:'video/mpeg', mpeg:'video/mpeg',
+    mpe:'video/mpeg', ogv:'video/ogg', ogg:'video/ogg', '3gp':'video/3gpp',
+    '3g2':'video/3gpp2', ts:'video/mp2t', mts:'video/mp2t', m2ts:'video/mp2t',
+    vob:'video/dvd', asf:'video/x-ms-asf', divx:'video/divx', f4v:'video/mp4',
+    rm:'application/vnd.rn-realmedia', rmvb:'application/vnd.rn-realmedia-vbr',
+    mxf:'application/mxf', dv:'video/dv', mod:'video/mpeg', tod:'video/mpeg',
+    m2v:'video/mpeg', m1v:'video/mpeg', nut:'video/x-nut', y4m:'video/x-raw'
+  })[videoFileExtension(file)] || 'video/unknown';
+};
+const fingerprintLocalVideo = async file => {
+  if (!file || !file.size) throw new Error('Choose a non-empty video file.');
+  const size = 1024 * 1024;
+  const starts = [...new Set([0, Math.max(0, Math.floor(file.size / 2) - size / 2), Math.max(0, file.size - size)])];
+  const chunks = await Promise.all(starts.map(start => file.slice(start, Math.min(file.size, start + size)).arrayBuffer()));
+  // Do not include browser MIME metadata: Android and desktop can report different MIME types for the same file.
+  const header = new TextEncoder().encode(String(file.size));
+  const bytes = new Uint8Array(header.byteLength + chunks.reduce((n, chunk) => n + chunk.byteLength, 0));
+  bytes.set(header);
+  let offset = header.byteLength;
+  chunks.forEach(chunk => { bytes.set(new Uint8Array(chunk), offset); offset += chunk.byteLength; });
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(digest), value => value.toString(16).padStart(2, '0')).join('');
+};
 
 const HISTORY_KEY = 'mcu-watch-together-history-v1';
 const ACTIVE_ROOM_KEY = 'mcu-watch-together-active-room-v1';
@@ -107,7 +138,8 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const [canReturnLocal, setCanReturnLocal] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState(item || null);
   const [localVideoAspectRatio,setLocalVideoAspectRatio]=useState('16 / 9');
-  const [roomType,setRoomType]=useState('movie');const [localFile,setLocalFile]=useState(null);const [localFileFingerprint,setLocalFileFingerprint]=useState('');const [localFileBusy,setLocalFileBusy]=useState(false);const [pendingJoinCode,setPendingJoinCode]=useState('');const [pendingJoinIdentity,setPendingJoinIdentity]=useState(null);const [pendingJoinMedia,setPendingJoinMedia]=useState(null);const [joinPreviewOpen,setJoinPreviewOpen]=useState(false);const [localVideoUrl,setLocalVideoUrl]=useState('');const localFileInputRef=useRef(null);const joinFileInputRef=useRef(null);const localVideoRef=useRef(null);
+  const [localVideoError,setLocalVideoError]=useState('');
+  const [roomType,setRoomType]=useState('movie');const [localFile,setLocalFile]=useState(null);const [localFileFingerprint,setLocalFileFingerprint]=useState('');const [localFileBusy,setLocalFileBusy]=useState(false);const [pendingJoinCode,setPendingJoinCode]=useState('');const [pendingJoinIdentity,setPendingJoinIdentity]=useState(null);const [pendingJoinMedia,setPendingJoinMedia]=useState(null);const [joinPreviewOpen,setJoinPreviewOpen]=useState(false);const [isChangingMedia,setIsChangingMedia]=useState(false);const [localVideoUrl,setLocalVideoUrl]=useState('');const localSelectionBeforeChangeRef=useRef(null);const localFileInputRef=useRef(null);const joinFileInputRef=useRef(null);const localVideoRef=useRef(null);
   const [mediaQuery, setMediaQuery] = useState('');
   const [tmdbMediaItems, setTmdbMediaItems] = useState([]);
   const [tmdbSearchLoading, setTmdbSearchLoading] = useState(false);
@@ -185,8 +217,8 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const itemMedia = useMemo(() => ({
     title: selectedMedia?.title || 'Untitled',
     poster: selectedMedia?.poster || '',
-    tmdbId: Number(tmdbId || selectedMedia?.tmdbId || 0),
-    mediaType: mediaType || selectedMedia?.mediaType || (selectedMedia?.type === 'series' ? 'tv' : 'movie'),
+    tmdbId: Number(selectedMedia?.tmdbId || tmdbId || 0),
+    mediaType: selectedMedia?.mediaType || (selectedMedia?.type === 'series' ? 'tv' : null) || mediaType || 'movie',
     season: Number(selectedMedia?.season || season || 1),
     episode: Number(selectedMedia?.epStart || selectedMedia?.episode || episode || 1),
     accent: selectedMedia?.accent || '#da1e37',
@@ -555,7 +587,31 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       setBusy(false);
     }
   }, [rpc, joinExisting, guest]);
-  const handleLocalFile=useCallback(async file=>{if(!file)return '';setLocalFileBusy(true);setError('');try{if(!file.type.startsWith('video/'))throw new Error('Please choose a video file.');const fingerprint=await fingerprintLocalVideo(file);setLocalFile(file);setLocalFileFingerprint(fingerprint);const url=URL.createObjectURL(file);setLocalVideoUrl(previous=>{if(previous)URL.revokeObjectURL(previous);return url;});return fingerprint;}catch(e){setError(e.message||'Could not read the video file.');return '';}finally{setLocalFileBusy(false);}},[]);
+  const handleLocalFile = useCallback(async (file, expectedFingerprint = '', activate = true) => {
+    if (!file) return '';
+    setLocalFileBusy(true);
+    setError('');
+    try {
+      if (!isSupportedVideoFile(file)) throw new Error('Choose a supported video file. Common formats include MP4, MKV, WebM, MOV, AVI, WMV and MPEG.');
+      const fingerprint = await fingerprintLocalVideo(file);
+      if (expectedFingerprint && fingerprint !== expectedFingerprint) {
+        throw new Error('This is not the same video file the room is using. Choose the exact matching copy.');
+      }
+      setLocalFile(file);
+      setLocalFileFingerprint(fingerprint);
+      if (activate) {
+        const url = URL.createObjectURL(file);
+        setLocalVideoUrl(previous => { if (previous) URL.revokeObjectURL(previous); return url; });
+        setLocalVideoError('');
+      }
+      return fingerprint;
+    } catch (e) {
+      setError(e.message || 'Could not read the video file.');
+      return '';
+    } finally {
+      setLocalFileBusy(false);
+    }
+  }, []);
 
 
   const createRoom = useCallback(async () => {
@@ -569,7 +625,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
         p_token: guest.token,
         p_name: guest.name,
         p_avatar: guest.avatar,
-        p_media: roomType==='local'?{kind:'local_file',title:localFile.name.replace(/\.[^.]+$/,'')||'Local video',fileName:localFile.name,fileSize:localFile.size,mimeType:localFile.type||'video/mp4',fileFingerprint:localFileFingerprint,mediaType:'local',season:1,episode:1}:itemMedia,
+        p_media: roomType==='local'?{kind:'local_file',title:localFile.name.replace(/\.[^.]+$/,'')||'Local video',fileName:localFile.name,fileSize:localFile.size,mimeType:videoFileMime(localFile),fileExtension:videoFileExtension(localFile),fileFingerprint:localFileFingerprint,mediaType:'local',season:1,episode:1}:itemMedia,
       });
       if (voiceChatDefault) {
         const savedSettings = await rpc('update_watch_room_settings', {
@@ -579,7 +635,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       }
       setParticipant(result.participant);
       applyRoomSnapshot(result);
-      const roomMedia=roomType==='local'?{kind:'local_file',title:localFile.name.replace(/\.[^.]+$/,'')||'Local video',fileName:localFile.name,fileSize:localFile.size,mimeType:localFile.type||'video/mp4',fileFingerprint:localFileFingerprint,mediaType:'local'}:itemMedia;saveActiveRoom(code,guest,roomMedia);
+      const roomMedia=roomType==='local'?{kind:'local_file',title:localFile.name.replace(/\.[^.]+$/,'')||'Local video',fileName:localFile.name,fileSize:localFile.size,mimeType:videoFileMime(localFile),fileExtension:videoFileExtension(localFile),fileFingerprint:localFileFingerprint,mediaType:'local'}:itemMedia;saveActiveRoom(code,guest,roomMedia);
       // Room creation is already complete; refresh the room list in the background
       // so a slow history/list request cannot leave the create button spinning.
       loadOwnedRooms().catch(() => {});
@@ -599,7 +655,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     const sharePathCode = pathCode[0] === 'watch-room' ? pathCode[1] : null;
     let saved = null;
     try { saved = JSON.parse(localStorage.getItem(ACTIVE_ROOM_KEY) || 'null'); } catch {}
-    const code = new URLSearchParams(window.location.search).get('room') || sharePathCode || saved?.code;
+    const code = new URLSearchParams(window.location.search).get('room') || sharePathCode;
     if (!code) return;
     restoreAttemptedRef.current = true;
     onBeforeOpenRef.current?.();
@@ -624,6 +680,79 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       }
     } finally { pollInFlightRef.current = false; }
   }, [rpc, applyRoomSnapshot]);
+
+  const changeRoomMedia = useCallback(async () => {
+    if (!room || !participant?.is_host || busy) return false;
+    if (roomType === 'local' && (!localFile || !localFileFingerprint)) {
+      setError('Choose the new video file first.');
+      return false;
+    }
+    if (roomType !== 'local' && !Number(selectedMedia?.tmdbId)) {
+      setError('Choose a movie or series with a valid TMDB ID.');
+      return false;
+    }
+    setBusy(true);
+    setError('');
+    try {
+      const nextMedia = roomType === 'local'
+        ? {
+            kind: 'local_file',
+            title: localFile.name.replace(/\.[^.]+$/, '') || 'Local video',
+            fileName: localFile.name,
+            fileSize: localFile.size,
+            mimeType: videoFileMime(localFile),
+            fileExtension: videoFileExtension(localFile),
+            fileFingerprint: localFileFingerprint,
+            mediaType: 'local',
+            season: 1,
+            episode: 1,
+          }
+        : { ...itemMedia, title: selectedMedia.title, poster: selectedMedia.poster || '', tmdbId: Number(selectedMedia.tmdbId), mediaType: selectedMedia.mediaType || (selectedMedia.type === 'series' ? 'tv' : 'movie'), season: 1, episode: 1 };
+      await rpc('change_watch_room_media', {
+        p_code: room.code,
+        p_token: participant.token,
+        p_media: nextMedia,
+      });
+      if (roomType === 'local') {
+        const nextUrl = URL.createObjectURL(localFile);
+        setLocalVideoUrl(previous => { if (previous) URL.revokeObjectURL(previous); return nextUrl; });
+        setLocalVideoError('');
+      }
+      setPlayerReady(false);
+      playerReadyRef.current = false;
+      setDuration(0);
+      durationRef.current = 0;
+      setCurrentTime(0);
+      currentTimeRef.current = 0;
+      setPaused(true);
+      pausedRef.current = true;
+      const snapshot = await rpc('watch_room_snapshot', { p_code: room.code, p_token: participant.token });
+      applyRoomSnapshot(snapshot);
+      setSetupDialog(false);
+      setIsChangingMedia(false);
+      localSelectionBeforeChangeRef.current = null;
+      return true;
+    } catch (e) {
+      setError(e.message || 'Could not change the room media.');
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  }, [room, participant?.token, participant?.is_host, busy, roomType, localFile, localFileFingerprint, selectedMedia, itemMedia, rpc, applyRoomSnapshot]);
+
+  useEffect(() => {
+    if (!room || !participant || room.media?.kind !== 'local_file') {
+      if (room && room.media?.kind !== 'local_file' && !pendingJoinCode) setJoinPreviewOpen(false);
+      return;
+    }
+    if (setupDialog && isChangingMedia) return;
+    if (room.media.fileFingerprint && localFileFingerprint !== room.media.fileFingerprint) {
+      setPendingJoinCode('');
+      setPendingJoinIdentity(null);
+      setPendingJoinMedia(room.media);
+      setJoinPreviewOpen(true);
+    }
+  }, [room?.id, room?.media?.kind, room?.media?.fileFingerprint, participant?.id, localFileFingerprint, setupDialog, isChangingMedia, pendingJoinCode]);
 
   const refreshPlayback = useCallback(async () => {
     const activeRoom = roomRef.current;
@@ -939,23 +1068,33 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                 <button disabled={busy || joinCode.length !== 8}>{busy ? 'Joining…' : 'Join room'}<ChevronRight size={16}/></button>
               </form>
               <div className="wt-or"><span />OR<span /></div>
-              <button type="button" className="wt-create" onClick={() => { setSetupDialog(true); setRoomType('movie'); setSelectedMedia(item || null); setLocalFile(null); setLocalFileFingerprint(''); setError(''); }}><span><strong>Create a new room</strong><small>Choose a movie, series or your own video file</small></span><Link2 size={18}/></button><input ref={joinFileInputRef} type="file" accept="video/*" hidden onChange={async event => {
+              <button type="button" className="wt-create" onClick={() => { setSetupDialog(true); setIsChangingMedia(false); setRoomType('movie'); setSelectedMedia(item || null); setLocalFile(null); setLocalFileFingerprint(''); setError(''); }}><span><strong>Create a new room</strong><small>Choose a movie, series or your own video file</small></span><Link2 size={18}/></button><input ref={joinFileInputRef} type="file" accept={VIDEO_FILE_ACCEPT} hidden onChange={async event => {
                  const file = event.target.files?.[0];
                  event.target.value = '';
-                 if (!file || !pendingJoinCode) return;
-                 setError('');
-                 const fingerprint = await handleLocalFile(file);
+                 if (!file) return;
+                 const changingRoomFile = !pendingJoinCode && roomRef.current?.media?.kind === 'local_file';
+                 const expectedFingerprint = pendingJoinCode
+                   ? pendingJoinMedia?.fileFingerprint
+                   : changingRoomFile ? roomRef.current?.media?.fileFingerprint : '';
+                 const fingerprint = await handleLocalFile(file, expectedFingerprint, true);
                  if (!fingerprint) return;
-                 if (pendingJoinMedia?.fileFingerprint && fingerprint !== pendingJoinMedia.fileFingerprint) {
-                   setError('This video does not match the host’s file. Choose the exact same video file.');
-                   return;
-                 }
-                 const joined = await joinExisting(pendingJoinCode, pendingJoinIdentity || guest, fingerprint);
-                 if (joined) {
+                 if (pendingJoinCode) {
+                   const joined = await joinExisting(pendingJoinCode, pendingJoinIdentity || guest, fingerprint);
+                   if (joined) {
+                     setJoinPreviewOpen(false);
+                     setPendingJoinCode('');
+                     setPendingJoinIdentity(null);
+                     setPendingJoinMedia(null);
+                   }
+                 } else if (changingRoomFile) {
                    setJoinPreviewOpen(false);
-                   setPendingJoinCode('');
                    setPendingJoinIdentity(null);
                    setPendingJoinMedia(null);
+                   setPlayerReady(false);
+                   playerReadyRef.current = false;
+                   setLocalVideoError('');
+                   setCurrentTime(0);
+                   currentTimeRef.current = 0;
                  }
                }}/>
               <div className="wt-identity"><img src={guest.avatar} alt="" /><div><small>YOU'RE JOINING AS</small><strong>{guest.name}</strong><span>{guest.isGuest ? 'Guest · no account needed' : 'Signed in · profile identity'}</span></div>{guest.isGuest&&<button type="button" onClick={()=>setEditingGuestName(value=>!value)} title="Change guest name"><Pencil size={16}/></button>}</div>
@@ -969,7 +1108,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
             </div>
           </div> : <div className="wt-content">
             <div className="wt-main">
-              <div className="wt-room-title"><div><span>NOW SCREENING</span><h2>{room.media?.title || itemMedia.title}</h2><small>{members.length} {members.length === 1 ? 'viewer' : 'viewers'} · {participant.is_host ? 'Host' : (participant.role || 'viewer').replace(/^./, c => c.toUpperCase())}</small></div><div className="wt-room-actions">{room.settings?.voice_enabled===true&&<><button type="button" className={`wt-copy wt-voice-toggle${voiceEnabled?' active':''}`} onClick={startVoice} title={voiceEnabled?'Leave voice chat':'Join voice chat'}>{voiceEnabled?<Mic size={14}/>:<Headphones size={14}/>} {voiceEnabled?`Voice · ${voicePeerCount} connected`:'Join voice'}</button>{voiceEnabled&&<button type="button" className="wt-copy" onClick={()=>setVoiceMuted(v=>!v)} title={voiceMuted?'Unmute microphone':'Mute microphone'}>{voiceMuted?<MicOff size={14}/>:<Mic size={14}/>} {voiceMuted?'Muted':'Mic on'}</button>}</>}{guest.isGuest&&<button type="button" className="wt-copy" onClick={()=>setEditingGuestName(value=>!value)}><Pencil size={14}/> Name</button>}{participant.is_host&&<button type="button" className="wt-copy" onClick={()=>setHostPanelOpen(true)}><Settings2 size={14}/> Host controls</button>}{participant.is_host&&<button type="button" className="wt-copy wt-end-room" onClick={()=>setConfirmAction({type:'close'})}>End room</button>}<button className="wt-copy" onClick={copyLink}>{copied ? <Check size={15}/> : <Copy size={15}/ >}{copied ? 'Copied' : 'Invite'}</button></div></div>
+              <div className="wt-room-title"><div><span>NOW SCREENING</span><h2>{room.media?.title || itemMedia.title}</h2><small>{members.length} {members.length === 1 ? 'viewer' : 'viewers'} · {participant.is_host ? 'Host' : (participant.role || 'viewer').replace(/^./, c => c.toUpperCase())}</small></div><div className="wt-room-actions">{room.settings?.voice_enabled===true&&<><button type="button" className={`wt-copy wt-voice-toggle${voiceEnabled?' active':''}`} onClick={startVoice} title={voiceEnabled?'Leave voice chat':'Join voice chat'}>{voiceEnabled?<Mic size={14}/>:<Headphones size={14}/>} {voiceEnabled?`Voice · ${voicePeerCount} connected`:'Join voice'}</button>{voiceEnabled&&<button type="button" className="wt-copy" onClick={()=>setVoiceMuted(v=>!v)} title={voiceMuted?'Unmute microphone':'Mute microphone'}>{voiceMuted?<MicOff size={14}/>:<Mic size={14}/>} {voiceMuted?'Muted':'Mic on'}</button>}</>}{guest.isGuest&&<button type="button" className="wt-copy" onClick={()=>setEditingGuestName(value=>!value)}><Pencil size={14}/> Name</button>}{participant.is_host&&<button type="button" className="wt-copy" onClick={()=>{localSelectionBeforeChangeRef.current={file:localFile,fingerprint:localFileFingerprint};setIsChangingMedia(true);setRoomType(room.media?.kind==='local_file'?'local':'movie');if(room.media?.kind!=='local_file')setSelectedMedia({title:room.media?.title||'',tmdbId:room.media?.tmdbId,mediaType:room.media?.mediaType||'movie',type:room.media?.mediaType==='tv'?'series':'film',poster:room.media?.poster||'',year:room.media?.year||''});setError('');setSetupDialog(true);}}><ArrowRightLeft size={14}/> Change media</button>}{participant.is_host&&<button type="button" className="wt-copy" onClick={()=>setHostPanelOpen(true)}><Settings2 size={14}/> Host controls</button>}{participant.is_host&&<button type="button" className="wt-copy wt-end-room" onClick={()=>setConfirmAction({type:'close'})}>End room</button>}<button className="wt-copy" onClick={copyLink}>{copied ? <Check size={15}/> : <Copy size={15}/ >}{copied ? 'Copied' : 'Invite'}</button></div></div>
               {guest.isGuest&&editingGuestName&&<form className="wt-guest-name-form wt-room-rename" onSubmit={event=>{event.preventDefault();updateGuestName(guestNameDraft);}}><input value={guestNameDraft} onChange={event=>setGuestNameDraft(event.target.value)} maxLength={32} aria-label="Guest name"/><button type="submit" disabled={busy||!guestNameDraft.trim()}>Save name</button></form>}
               {showPlaybackNotice && <div className="wt-playback-tip" role="status"><span><strong>Playback tip</strong> If autoplay is blocked, tap Play once. A reputable ad blocker can help reduce pop-ups and redirects.</span><button type="button" onClick={() => setShowPlaybackNotice(false)} aria-label="Dismiss playback tip"><X size={15}/></button></div>}
               <div className="wt-room-tools" aria-label="Room tools"><span className={`wt-network ${networkState}`} title={networkState==='online'?'Room connection is active':networkState==='offline'?'You are offline':'Trying to reconnect'}><i/><span>{networkState==='online'?'Connected':networkState==='offline'?'Offline':'Reconnecting'}</span>{networkLatency!=null&&networkState==='online'&&<small>{networkLatency} ms</small>}</span>{voiceError&&<span className="wt-voice-error" role="status">{voiceError}</span>}<div className="wt-room-tool-actions"><button type="button" onClick={()=>refreshRoom()} title="Reconnect to room" aria-label="Reconnect to room"><RefreshCw size={16}/></button><button type="button" onClick={copyTimestamp} title="Copy current timestamp" aria-label="Copy current timestamp"><Clock3 size={16}/></button><button type="button" onClick={()=>setTheatreMode(v=>!v)} title={theatreMode?'Exit theatre mode':'Theatre mode'} aria-label={theatreMode?'Exit theatre mode':'Theatre mode'}><Theater size={16}/></button><button type="button" className="wt-theatre-chat-launch" onClick={()=>{setChatCollapsed(false);setTheatreChatOpen(value=>!value);}} title="Open room chat" aria-label="Open room chat"><MessageCircle size={16}/></button><button type="button" onClick={()=>setQrDialogOpen(true)} title="Show room QR code" aria-label="Show room QR code"><QrCode size={16}/></button></div></div>
@@ -983,7 +1122,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
               </section>}
               <div className="wt-user-progress" aria-label="Participant playback progress">{members.map(member=>{const pct=Number(member.playback_duration)>0?Math.max(0,Math.min(100,Math.round(Number(member.playback_position||0)/Number(member.playback_duration)*100))):0;const pausedHere=Boolean(room.playback?.paused&&room.playback?.actor===member.id);return <span className="wt-progress-pill" key={member.id}><img src={member.avatar_url||blobatar(member.display_name)} alt=""/><b>{member.display_name}</b><i>{Number(member.playback_duration)>0?pct+"%":timeText(member.playback_position||0)}</i>{pausedHere&&<Pause className="wt-progress-paused" size={11} aria-label="Paused here"/>}</span>;})}</div>
               {pendingEpisode && <div className="wt-episode-transition"><div><strong>Next episode is ready</strong><span>Everyone can move to S{pendingEpisode.season} · E{pendingEpisode.episode}. Viewers who are behind can finish first.</span></div><button type="button" onClick={()=>setPendingEpisode(null)}>Finish current</button><button type="button" onClick={()=>{const next=pendingEpisode;setPendingEpisode(null);onEpisodeChangeRef.current?.(next.episode);setRoom(old=>old?{...old,playback:{...(old.playback||{}),position:0,paused:false,season:next.season,episode:next.episode}}:old);publishPlayback({position:0,paused:false,season:next.season,episode:next.episode},true);}}>Go now</button></div>}
-              <div className={room.media?.kind==='local_file'?"wt-player wt-local-video-player":"wt-player"} style={room.media?.kind==='local_file'?{aspectRatio:localVideoAspectRatio}:undefined}>{room.media?.kind==='local_file'?<video ref={localVideoRef} src={localVideoUrl} playsInline preload="metadata" onLoadedMetadata={event=>{const v=event.currentTarget;setLocalVideoAspectRatio(`${v.videoWidth||16} / ${v.videoHeight||9}`);setControlsExpanded(true);setDuration(v.duration||0);durationRef.current=v.duration||0;setPlayerReady(true);playerReadyRef.current=true;const playback=roomRef.current?.playback;if(playback){const target=Math.max(0,Number(playback.position)||0);v.currentTime=target;setCurrentTime(target);currentTimeRef.current=target;setPaused(Boolean(playback.paused));pausedRef.current=Boolean(playback.paused);if(!playback.paused)v.play().catch(()=>{});}}} onTimeUpdate={event=>{const v=event.currentTarget;setCurrentTime(v.currentTime);currentTimeRef.current=v.currentTime;if(!applyingRemoteRef.current&&canControl&&!v.paused&&Date.now()-lastHostTimePushRef.current>1800){lastHostTimePushRef.current=Date.now();publishPlayback({position:v.currentTime,paused:false});}}} onPlay={()=>{setPaused(false);pausedRef.current=false;if(!applyingRemoteRef.current)publishPlayback({position:localVideoRef.current?.currentTime||0,paused:false},true);}} onPause={()=>{setPaused(true);pausedRef.current=true;if(!applyingRemoteRef.current)publishPlayback({position:localVideoRef.current?.currentTime||0,paused:true},true);}} onSeeked={()=>{const t=localVideoRef.current?.currentTime||0;setCurrentTime(t);currentTimeRef.current=t;if(!applyingRemoteRef.current)publishPlayback({position:t,paused:localVideoRef.current?.paused??true},true);}}/>:<iframe ref={iframeRef} src={sharedPlayerUrl} title={`Watch together: ${room.media?.title || itemMedia.title}`} allow="autoplay; fullscreen; encrypted-media" allowFullScreen disablePictureInPicture/>}</div>
+              <div className={room.media?.kind==='local_file'?"wt-player wt-local-video-player":"wt-player"} style={room.media?.kind==='local_file'?{aspectRatio:localVideoAspectRatio}:undefined}>{room.media?.kind==='local_file'?<><video key={room.media?.fileFingerprint||room.id} ref={localVideoRef} src={localVideoUrl} playsInline preload="auto" onLoadedMetadata={event=>{const v=event.currentTarget;setLocalVideoError('');setLocalVideoAspectRatio(`${v.videoWidth||16} / ${v.videoHeight||9}`);setControlsExpanded(true);setDuration(v.duration||0);durationRef.current=v.duration||0;setPlayerReady(true);playerReadyRef.current=true;const playback=roomRef.current?.playback;if(playback){const target=Math.max(0,Number(playback.position)||0);v.currentTime=target;setCurrentTime(target);currentTimeRef.current=target;setPaused(Boolean(playback.paused));pausedRef.current=Boolean(playback.paused);if(!playback.paused)v.play().catch(()=>{});}}} onTimeUpdate={event=>{const v=event.currentTarget;setCurrentTime(v.currentTime);currentTimeRef.current=v.currentTime;if(!applyingRemoteRef.current&&canControl&&!v.paused&&Date.now()-lastHostTimePushRef.current>1800){lastHostTimePushRef.current=Date.now();publishPlayback({position:v.currentTime,paused:false});}}} onPlay={()=>{setPaused(false);pausedRef.current=false;if(!applyingRemoteRef.current)publishPlayback({position:localVideoRef.current?.currentTime||0,paused:false},true);}} onPause={()=>{setPaused(true);pausedRef.current=true;if(!applyingRemoteRef.current)publishPlayback({position:localVideoRef.current?.currentTime||0,paused:true},true);}} onSeeked={()=>{const t=localVideoRef.current?.currentTime||0;setCurrentTime(t);currentTimeRef.current=t;if(!applyingRemoteRef.current)publishPlayback({position:t,paused:localVideoRef.current?.paused??true},true);}} onError={()=>{setPlayerReady(false);playerReadyRef.current=false;setLocalVideoError('This browser cannot decode this file’s container or video codec. Some MKV, AVI and MOV files need an H.264/AAC MP4 copy to play in the browser.');}} onLoadedData={()=>setLocalVideoError('')}/>{localVideoError&&<div className="wt-local-playback-error"><strong>Can’t play this video here</strong><span>{localVideoError}</span></div>}</>:<iframe ref={iframeRef} src={sharedPlayerUrl} title={`Watch together: ${room.media?.title || itemMedia.title}`} allow="autoplay; fullscreen; encrypted-media" allowFullScreen disablePictureInPicture/>}</div>
               {theatreMode && theatreToast && <button type="button" className="wt-theatre-message-toast" onClick={()=>{setChatCollapsed(false);setTheatreChatOpen(true);setTheatreToast(null);}}><img src={theatreToast.avatar_url || blobatar(theatreToast.display_name)} alt=""/><span><strong>{theatreToast.display_name}</strong><small>{theatreToast.body}</small></span><X size={14} onClick={event=>{event.stopPropagation();setTheatreToast(null);}}/></button>}
               {!canControl && <div className="wt-role-banner"><ShieldCheck size={16}/><span>You’re a Viewer. Request Operator access to control playback, or ask for individual skips.</span><button type="button" onClick={() => requestAccess('operator')} disabled={busy}>Request Operator</button></div>}
               <div className="wt-control-dock">
@@ -1043,9 +1182,9 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
               <section className="wt-create-dialog wt-join-file-dialog" role="dialog" aria-modal="true" aria-labelledby="wt-join-file-title">
                 <header>
                   <div>
-                    <span>LOCAL FILE SCREENING</span>
-                    <h2 id="wt-join-file-title">Join this room?</h2>
-                    <p>The host is sharing a video stored on their device.</p>
+                    <span>{pendingJoinCode ? 'LOCAL FILE SCREENING' : 'MEDIA UPDATED'}</span>
+                    <h2 id="wt-join-file-title">{pendingJoinCode ? 'Join this room?' : 'The host changed the video'}</h2>
+                    <p>{pendingJoinCode ? 'The host is sharing a video stored on their device.' : 'Choose the new matching file to continue watching with everyone.'}</p>
                   </div>
                   <button type="button" onClick={() => {
                     setJoinPreviewOpen(false);
@@ -1062,7 +1201,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                     <small>{pendingJoinMedia?.fileSize ? (Number(pendingJoinMedia.fileSize) / 1024 / 1024).toFixed(1) + ' MB' : 'Video file'} · {pendingJoinMedia?.mimeType || 'Video'}</small>
                   </span>
                 </div>
-                <p className="wt-join-file-note"><ShieldCheck size={15}/> Choose your own copy of this exact video. The file stays on your device and is checked locally before you join.</p>
+                <p className="wt-join-file-note"><ShieldCheck size={15}/> {pendingJoinCode ? 'Choose your own copy of this exact video. The file stays on your device and is checked locally before you join.' : 'The file stays on your device. Playback will resume with the room after the matching file is selected.'}</p>
                 {error && <p className="wt-error">{error}</p>}
                 <div className="wt-join-file-actions">
                   <button type="button" className="wt-join-file-cancel" onClick={() => {
@@ -1081,16 +1220,16 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
             </div>,
             document.body
           )}
-          {setupDialog && typeof document !== 'undefined' && createPortal(<div className="wt-create-backdrop" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)setSetupDialog(false);}}>
+          {setupDialog && typeof document !== 'undefined' && createPortal(<div className="wt-create-backdrop" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget){setSetupDialog(false);if(isChangingMedia){setLocalFile(localSelectionBeforeChangeRef.current?.file||null);setLocalFileFingerprint(localSelectionBeforeChangeRef.current?.fingerprint||'');}setIsChangingMedia(false);localSelectionBeforeChangeRef.current=null;}}}>
             <section className="wt-create-dialog" role="dialog" aria-modal="true" aria-label="Create a screening room">
-              <header><div><span>NEW SCREENING</span><h2>Choose your title</h2><p>Everyone joining this room will open this movie or series.</p></div><button type="button" onClick={()=>setSetupDialog(false)} aria-label="Close"><X size={18}/></button></header>
+              <header><div><span>{isChangingMedia ? 'ROOM UPDATE' : 'NEW SCREENING'}</span><h2>{isChangingMedia ? 'Change what everyone is watching' : 'Choose your title'}</h2><p>{isChangingMedia ? 'The new movie or file will be switched for everyone in this room.' : 'Everyone joining this room will open this movie or series.'}</p></div><button type="button" onClick={()=>{setSetupDialog(false);if(isChangingMedia){setLocalFile(localSelectionBeforeChangeRef.current?.file||null);setLocalFileFingerprint(localSelectionBeforeChangeRef.current?.fingerprint||'');}setIsChangingMedia(false);localSelectionBeforeChangeRef.current=null;}} aria-label="Close"><X size={18}/></button></header>
               <div className="wt-room-type-pills" role="group" aria-label="Room type"><button type="button" className={roomType==='movie'?'active':''} onClick={()=>{setRoomType('movie');setError('');}}><Play size={14}/> Movie / Series</button><button type="button" className={roomType==='local'?'active':''} onClick={()=>{setRoomType('local');setError('');}}><Users size={14}/> Local File</button></div>
-              {roomType==='local'?<div className="wt-local-file-picker"><input ref={localFileInputRef} type="file" accept="video/*" hidden onChange={event=>{const file=event.target.files?.[0];event.target.value='';handleLocalFile(file);}}/><button type="button" className="wt-local-file-drop" onClick={()=>localFileInputRef.current?.click()} disabled={localFileBusy}><span className="wt-local-file-icon"><Radio size={22}/></span><strong>{localFileBusy?'Checking video…':localFile?'Change video file':'Choose a video file'}</strong><small>{localFile?localFile.name:'Select a video stored on this device'}</small><em>{localFile?((localFile.size/1024/1024).toFixed(1)+' MB · Never uploaded'): 'Everyone joining must select their own copy of the same file.'}</em></button>{localFile&&<div className="wt-local-file-match"><Check size={15}/><span><strong>File fingerprint ready</strong><small>Participants are checked against this video before joining.</small></span><badge>Verified locally</badge></div>}</div>:<><label className="wt-picker-search"><Search size={16}/><input value={mediaQuery} onChange={event=>setMediaQuery(event.target.value)} placeholder="Search any movie or series…"/></label>
+              {roomType==='local'?<div className="wt-local-file-picker"><input ref={localFileInputRef} type="file" accept={VIDEO_FILE_ACCEPT} hidden onChange={event=>{const file=event.target.files?.[0];event.target.value='';handleLocalFile(file, '', !isChangingMedia);}}/><button type="button" className="wt-local-file-drop" onClick={()=>localFileInputRef.current?.click()} disabled={localFileBusy}><span className="wt-local-file-icon"><Radio size={22}/></span><strong>{localFileBusy?'Checking video…':localFile?'Change video file':'Choose a video file'}</strong><small>{localFile?localFile.name:'Select a video stored on this device'}</small><em>{localFile?((localFile.size/1024/1024).toFixed(1)+' MB · Never uploaded'): 'Everyone joining must select their own copy of the same file.'}</em></button>{localFile&&<div className="wt-local-file-match"><Check size={15}/><span><strong>File fingerprint ready</strong><small>Participants are checked against this video before joining.</small></span><badge>Verified locally</badge></div>}</div>:<><label className="wt-picker-search"><Search size={16}/><input value={mediaQuery} onChange={event=>setMediaQuery(event.target.value)} placeholder="Search any movie or series…"/></label>
               {roomType==='movie'&&<div className="wt-picker-grid">{tmdbSearchLoading && <p className="wt-picker-empty">Searching your library and TMDB…</p>}{filteredMediaItems.length?filteredMediaItems.map((candidate,index)=><button type="button" key={`${candidate.tmdbId || candidate.id}-${index}`} onClick={()=>{setSelectedMedia(candidate);setError('');}} className={selectedMedia?.tmdbId===candidate.tmdbId?'selected':''}>{candidate.poster ? <img src={candidate.poster} alt="" loading={index<9?'eager':'lazy'} decoding="async" onError={event=>{event.currentTarget.style.visibility='hidden';event.currentTarget.parentElement.classList.add('poster-unavailable');}}/> : <span className="wt-poster-placeholder" aria-hidden="true">No poster</span>}<span className="wt-picker-copy"><strong title={candidate.title}>{candidate.title}</strong><small className="wt-picker-rating-row"><span>{candidate.year || '—'} · {candidate.type==='series'||candidate.mediaType==='tv'?'Series':'Movie'}</span><b>{(candidate.rating || candidate.imdbRating || candidate.voteAverage) ? `★ ${Number(candidate.rating || candidate.imdbRating || candidate.voteAverage).toFixed(1)}` : 'Rating unavailable'}</b></small></span><i>{selectedMedia?.tmdbId===candidate.tmdbId?<Check size={15}/>:null}</i></button>):<p className="wt-picker-empty">No titles found. Try another title or spelling.</p>}</div>}
               {roomType==='movie'&&selectedMedia && <div className="wt-dialog-selected"><img src={selectedMedia.poster || guest.avatar} alt=""/><span className="wt-dialog-selected-meta"><strong title={selectedMedia.title}>{selectedMedia.title}</strong><small>{selectedMedia.year || '—'} · {selectedMedia.type==='series'||selectedMedia.mediaType==='tv'?'Series':'Movie'}</small><small className="wt-dialog-rating">{(selectedMedia.rating || selectedMedia.imdbRating || selectedMedia.voteAverage) ? `★ ${Number(selectedMedia.rating || selectedMedia.imdbRating || selectedMedia.voteAverage).toFixed(1)} rating` : 'Rating unavailable'}</small></span></div>}
               </>}
               {error && <p className="wt-error">{error}</p>}
-              <button className="wt-create" disabled={busy||localFileBusy||(roomType==='local'?!localFile:(!selectedMedia||!Number(selectedMedia.tmdbId)))} onClick={async()=>{const created=await createRoom();if(created)setSetupDialog(false);}}>{busy?'Creating room…':roomType==='local'?'Create local file room':'Create screening room'}<Link2 size={17}/></button>
+              <button className="wt-create" disabled={busy||localFileBusy||(roomType==='local'?!localFile:(!selectedMedia||!Number(selectedMedia.tmdbId)))} onClick={async()=>{const saved=isChangingMedia?await changeRoomMedia():await createRoom();if(saved){setSetupDialog(false);setIsChangingMedia(false);}}}>{busy?(isChangingMedia?'Updating room…':'Creating room…'):isChangingMedia?'Change for everyone':roomType==='local'?'Create local file room':'Create screening room'}<Link2 size={17}/></button>
             </section>
           </div>, document.body)}
 
