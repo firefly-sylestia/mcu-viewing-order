@@ -600,7 +600,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       setLocalFile(file);
       setLocalFileFingerprint(fingerprint);
       if (activate) {
-        const url = URL.createObjectURL(file);
+        const url = URL.createObjectURL(new Blob([file], { type: videoFileMime(file) }));
         setLocalVideoUrl(previous => { if (previous) URL.revokeObjectURL(previous); return url; });
         setLocalVideoError('');
       }
@@ -714,7 +714,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
         p_media: nextMedia,
       });
       if (roomType === 'local') {
-        const nextUrl = URL.createObjectURL(localFile);
+        const nextUrl = URL.createObjectURL(new Blob([localFile], { type: videoFileMime(localFile) }));
         setLocalVideoUrl(previous => { if (previous) URL.revokeObjectURL(previous); return nextUrl; });
         setLocalVideoError('');
       }
