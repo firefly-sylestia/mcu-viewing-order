@@ -137,7 +137,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const [savedLocalPaused, setSavedLocalPaused] = useState(true);
   const [canReturnLocal, setCanReturnLocal] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState(item || null);
-  const [localVideoAspectRatio,setLocalVideoAspectRatio]=useState('16 / 9');
+  
   const [localVideoError,setLocalVideoError]=useState('');
   const [isLocalFullscreen,setIsLocalFullscreen]=useState(false);
   const [roomType,setRoomType]=useState('movie');const [localFile,setLocalFile]=useState(null);const [localFileFingerprint,setLocalFileFingerprint]=useState('');const [localFileBusy,setLocalFileBusy]=useState(false);const [pendingJoinCode,setPendingJoinCode]=useState('');const [pendingJoinIdentity,setPendingJoinIdentity]=useState(null);const [pendingJoinMedia,setPendingJoinMedia]=useState(null);const [joinPreviewOpen,setJoinPreviewOpen]=useState(false);const [isChangingMedia,setIsChangingMedia]=useState(false);const [localVideoUrl,setLocalVideoUrl]=useState('');const localSelectionBeforeChangeRef=useRef(null);const localFileInputRef=useRef(null);const joinFileInputRef=useRef(null);const localVideoRef=useRef(null);
@@ -1193,7 +1193,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
               </section>}
               <div className="wt-user-progress" aria-label="Participant playback progress">{members.map(member=>{const pct=Number(member.playback_duration)>0?Math.max(0,Math.min(100,Math.round(Number(member.playback_position||0)/Number(member.playback_duration)*100))):0;const pausedHere=Boolean(room.playback?.paused&&room.playback?.actor===member.id);return <span className="wt-progress-pill" key={member.id}><img src={member.avatar_url||blobatar(member.display_name)} alt=""/><b>{member.display_name}</b><i>{Number(member.playback_duration)>0?pct+"%":timeText(member.playback_position||0)}</i>{pausedHere&&<Pause className="wt-progress-paused" size={11} aria-label="Paused here"/>}</span>;})}</div>
               {pendingEpisode && <div className="wt-episode-transition"><div><strong>Next episode is ready</strong><span>Everyone can move to S{pendingEpisode.season} · E{pendingEpisode.episode}. Viewers who are behind can finish first.</span></div><button type="button" onClick={()=>setPendingEpisode(null)}>Finish current</button><button type="button" onClick={()=>{const next=pendingEpisode;setPendingEpisode(null);onEpisodeChangeRef.current?.(next.episode);setRoom(old=>old?{...old,playback:{...(old.playback||{}),position:0,paused:false,season:next.season,episode:next.episode}}:old);publishPlayback({position:0,paused:false,season:next.season,episode:next.episode},true);}}>Go now</button></div>}
-              <div className={room.media?.kind==='local_file'?"wt-player wt-local-video-player":"wt-player"} style={room.media?.kind==='local_file'?{aspectRatio:localVideoAspectRatio}:undefined}>
+              <div className={room.media?.kind==='local_file'?"wt-player wt-local-video-player":"wt-player"}>
                 {room.media?.kind==='local_file' ? <>
                   <video
                     key={room.media?.fileFingerprint||room.id}
@@ -1204,7 +1204,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                     onLoadedMetadata={event=>{
                       const video=event.currentTarget;
                       setLocalVideoError('');
-                      setLocalVideoAspectRatio((video.videoWidth||16) + ' / ' + (video.videoHeight||9));
+                      
                       setControlsExpanded(true);
                       setDuration(video.duration||0);
                       durationRef.current=video.duration||0;
