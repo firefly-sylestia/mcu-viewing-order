@@ -145,6 +145,13 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const [localAdjustmentsOpen,setLocalAdjustmentsOpen]=useState(false);
   const [localContrast,setLocalContrast]=useState(100);
   const [localSaturation,setLocalSaturation]=useState(100);
+  const [localExposure,setLocalExposure]=useState(0);
+  const [localTemperature,setLocalTemperature]=useState(0);
+  const [localTint,setLocalTint]=useState(0);
+  const [localHue,setLocalHue]=useState(0);
+  const [localGradeColor,setLocalGradeColor]=useState('#000000');
+  const [localGradeColorStrength,setLocalGradeColorStrength]=useState(0);
+  const [localCodecDiagnostics,setLocalCodecDiagnostics]=useState(null);
   const localControlsLockedRef=useRef(false);
   const localControlsHideTimerRef=useRef(null);
   const [roomType,setRoomType]=useState('movie');const [localFile,setLocalFile]=useState(null);const [localFileFingerprint,setLocalFileFingerprint]=useState('');const [localFileBusy,setLocalFileBusy]=useState(false);const [pendingJoinCode,setPendingJoinCode]=useState('');const [pendingJoinIdentity,setPendingJoinIdentity]=useState(null);const [pendingJoinMedia,setPendingJoinMedia]=useState(null);const [joinPreviewOpen,setJoinPreviewOpen]=useState(false);const [isChangingMedia,setIsChangingMedia]=useState(false);const [localVideoUrl,setLocalVideoUrl]=useState('');const localSelectionBeforeChangeRef=useRef(null);const localFileInputRef=useRef(null);const joinFileInputRef=useRef(null);const localVideoRef=useRef(null);
@@ -175,15 +182,15 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const theatreSeenMessageIdRef = useRef(0);
   useEffect(() => { if (!theatreToast) return undefined; const timer=window.setTimeout(()=>setTheatreToast(null),5200); return ()=>window.clearTimeout(timer); }, [theatreToast]);
   useEffect(() => {
-    if (!theatreMode) { setTheatreChatOpen(false); setTheatreToast(null); return; }
-    if (!messages.length) return;
+    if (!theatreMode && !isLocalFullscreen) { setTheatreChatOpen(false); setTheatreToast(null); return; }
+    if (!theatreMode || !messages.length) return;
     const newestId=Math.max(...messages.map(message=>Number(message.id)||0));
     if (theatreSeenMessageIdRef.current > 0 && newestId > theatreSeenMessageIdRef.current && theatrePreviewsEnabled) {
       const incoming=messages.filter(message=>Number(message.id)>theatreSeenMessageIdRef.current&&message.participant_id!==participant?.id);
       if(incoming.length)setTheatreToast(incoming[incoming.length-1]);
     }
     theatreSeenMessageIdRef.current=newestId;
-  }, [messages,theatreMode,theatrePreviewsEnabled,participant?.id]);
+  }, [messages,theatreMode,isLocalFullscreen,theatrePreviewsEnabled,participant?.id]);
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const compact = window.matchMedia('(max-width: 760px)');
@@ -916,9 +923,9 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
 
   const scheduleLocalControlsHide = useCallback(() => {
     if (localControlsHideTimerRef.current) window.clearTimeout(localControlsHideTimerRef.current);
-    if (!isLocalFullscreen || paused) return;
+    if (!localVideoRef.current || paused || localAdjustmentsOpen) return;
     localControlsHideTimerRef.current = window.setTimeout(() => setLocalControlsVisible(false), 2400);
-  }, [isLocalFullscreen, paused]);
+  }, [paused, localAdjustmentsOpen]);
 
   const revealLocalControls = useCallback(() => {
     setLocalControlsVisible(true);
@@ -937,10 +944,12 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   useEffect(() => {
     if (localControlsHideTimerRef.current) window.clearTimeout(localControlsHideTimerRef.current);
     if (!isLocalFullscreen) {
-      setLocalControlsVisible(true);
       setLocalAdjustmentsOpen(false);
       localControlsLockedRef.current = false;
       setLocalControlsLocked(false);
+    }
+    if (!localVideoRef.current || paused) {
+      setLocalControlsVisible(true);
       return undefined;
     }
     setLocalControlsVisible(true);
@@ -948,7 +957,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     return () => {
       if (localControlsHideTimerRef.current) window.clearTimeout(localControlsHideTimerRef.current);
     };
-  }, [isLocalFullscreen, paused, scheduleLocalControlsHide]);
+  }, [isLocalFullscreen, paused, localVideoUrl, scheduleLocalControlsHide]);
 
   const toggleLocalFullscreen = useCallback(async () => {
     const video = localVideoRef.current;
@@ -1242,10 +1251,10 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
               {pendingEpisode && <div className="wt-episode-transition"><div><strong>Next episode is ready</strong><span>Everyone can move to S{pendingEpisode.season} · E{pendingEpisode.episode}. Viewers who are behind can finish first.</span></div><button type="button" onClick={()=>setPendingEpisode(null)}>Finish current</button><button type="button" onClick={()=>{const next=pendingEpisode;setPendingEpisode(null);onEpisodeChangeRef.current?.(next.episode);setRoom(old=>old?{...old,playback:{...(old.playback||{}),position:0,paused:false,season:next.season,episode:next.episode}}:old);publishPlayback({position:0,paused:false,season:next.season,episode:next.episode},true);}}>Go now</button></div>}
               <div
                 className={"wt-player"+(room.media?.kind==='local_file'?" wt-local-video-player"+(isLocalFullscreen?" is-fullscreen":"")+(localControlsVisible?"":" is-controls-hidden")+(localControlsLocked?" is-controls-locked":""):"")}
-                onPointerMove={room.media?.kind==='local_file'&&isLocalFullscreen?revealLocalControls:undefined}
-                onPointerEnter={room.media?.kind==='local_file'&&isLocalFullscreen?revealLocalControls:undefined}
-                onPointerDown={room.media?.kind==='local_file'&&isLocalFullscreen?revealLocalControls:undefined}
-                onPointerLeave={room.media?.kind==='local_file'&&isLocalFullscreen?scheduleLocalControlsHide:undefined}
+                onPointerMove={room.media?.kind==='local_file'?revealLocalControls:undefined}
+                onPointerEnter={room.media?.kind==='local_file'?revealLocalControls:undefined}
+                onPointerDown={room.media?.kind==='local_file'?revealLocalControls:undefined}
+                onPointerLeave={room.media?.kind==='local_file'?scheduleLocalControlsHide:undefined}
               >
                 {room.media?.kind==='local_file' ? <>
                   <video
@@ -1254,15 +1263,24 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                     src={localVideoUrl}
                     playsInline
                     preload="auto"
-                    style={{filter:`contrast(${localContrast}%) saturate(${localSaturation}%)`}}
+                    style={{
+                      filter:`brightness(${Math.round(Math.pow(2,localExposure)*100)}%) contrast(${localContrast}%) saturate(${localSaturation}%) hue-rotate(${localHue}deg)`,
+                      '--wt-grade-temp-color':localTemperature>=0?'#ff9d55':'#579dff',
+                      '--wt-grade-temp-opacity':String(Math.abs(localTemperature)/500),
+                      '--wt-grade-tint-color':localTint>=0?'#ff55ad':'#4cdb91',
+                      '--wt-grade-tint-opacity':String(Math.abs(localTint)/650),
+                      '--wt-grade-custom-color':/^#[0-9a-fA-F]{6}$/.test(localGradeColor)?localGradeColor:'#000000',
+                      '--wt-grade-custom-opacity':String(localGradeColorStrength/100)
+                    }}
                     onClick={event=>{
                       if(event.target!==event.currentTarget||localControlsLockedRef.current)return;
                       sendPlayerCommand(paused?'play':'pause');
-                      if(isLocalFullscreen)revealLocalControls();
+                      revealLocalControls();
                     }}
                     onLoadedMetadata={event=>{
                       const video=event.currentTarget;
                       setLocalVideoError('');
+                      setLocalCodecDiagnostics(null);
                       
                       setControlsExpanded(true);
                       setDuration(video.duration||0);
@@ -1307,19 +1325,45 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                     }}
                     onError={()=>{
                       setPlayerReady(false);playerReadyRef.current=false;
-                      setLocalVideoError('This browser cannot decode this file’s container or video codec. Some MKV, AVI and MOV files need an H.264/AAC MP4 copy to play in the browser.');
+                      const probe=document.createElement('video');
+                      setLocalCodecDiagnostics({
+                        fileName:localFile?.name||'Selected local video',
+                        mime:videoFileMime(localFile),
+                        h264:probe.canPlayType('video/mp4; codecs="avc1.42E01E, mp4a.40.2"')||'no',
+                        hevc:probe.canPlayType('video/mp4; codecs="hvc1.1.6.L93.B0, mp4a.40.2"')||'no',
+                        vp9:probe.canPlayType('video/webm; codecs="vp9, opus"')||'no'
+                      });
+                      setLocalVideoError('The browser’s built-in decoder could not play this file. MKV is a container; H.264/AVC and H.265/HEVC are codecs. Support depends on the browser and device.');
                     }}
                     onLoadedData={()=>setLocalVideoError('')}
                   />
+                  <div className="wt-local-grade-overlays" aria-hidden="true">
+                    <span className="wt-grade-temperature"/>
+                    <span className="wt-grade-tint"/>
+                    <span className="wt-grade-custom"/>
+                  </div>
                   <div className="wt-local-overlay-tools" onClick={event=>event.stopPropagation()}>
                     <button type="button" className="wt-local-lock" onClick={toggleLocalControlsLock} aria-label={localControlsLocked?'Unlock player controls':'Lock player controls'} title={localControlsLocked?'Unlock controls':'Lock controls'}>{localControlsLocked?<Unlock size={17}/>:<Lock size={17}/>}</button>
                     <button type="button" onClick={()=>{setLocalAdjustmentsOpen(value=>!value);revealLocalControls();}} aria-expanded={localAdjustmentsOpen} aria-label="Adjust picture" title="Picture adjustments"><SlidersHorizontal size={17}/></button>
                     <button type="button" onClick={()=>{setChatCollapsed(false);setTheatreChatOpen(value=>!value);}} aria-expanded={theatreChatOpen} aria-label={theatreChatOpen?'Close room chat':'Open room chat'} title="Room chat"><MessageCircle size={17}/></button>
                   </div>
                   {localAdjustmentsOpen && <div className="wt-local-adjustments" onClick={event=>event.stopPropagation()}>
-                    <header><strong>Picture</strong><button type="button" onClick={()=>{setLocalContrast(100);setLocalSaturation(100);}} title="Reset picture"><RefreshCw size={14}/> Reset</button></header>
-                    <label><span>Contrast <output>{localContrast}%</output></span><input type="range" min="50" max="150" step="1" value={localContrast} onChange={event=>setLocalContrast(Number(event.target.value))}/></label>
+                    <header><strong>Color grading</strong><button type="button" onClick={()=>{setLocalExposure(0);setLocalContrast(100);setLocalSaturation(100);setLocalTemperature(0);setLocalTint(0);setLocalHue(0);setLocalGradeColor('#000000');setLocalGradeColorStrength(0);}} title="Reset all grading"><RefreshCw size={14}/> Reset</button></header>
+                    <div className="wt-grade-presets">
+                      <button type="button" onClick={()=>{setLocalExposure(-0.2);setLocalContrast(112);setLocalSaturation(92);setLocalTemperature(12);setLocalTint(2);setLocalHue(0);setLocalGradeColor('#17243a');setLocalGradeColorStrength(10);}}>Cinema</button>
+                      <button type="button" onClick={()=>{setLocalExposure(0.15);setLocalContrast(105);setLocalSaturation(115);setLocalTemperature(38);setLocalTint(12);setLocalHue(-4);setLocalGradeColor('#ff9a4a');setLocalGradeColorStrength(12);}}>Warm</button>
+                      <button type="button" onClick={()=>{setLocalExposure(0);setLocalContrast(110);setLocalSaturation(90);setLocalTemperature(-35);setLocalTint(-8);setLocalHue(4);setLocalGradeColor('#3e7ab5');setLocalGradeColorStrength(13);}}>Cool</button>
+                      <button type="button" onClick={()=>{setLocalExposure(0);setLocalContrast(115);setLocalSaturation(0);setLocalTemperature(0);setLocalTint(0);setLocalHue(0);setLocalGradeColor('#000000');setLocalGradeColorStrength(0);}}>Mono</button>
+                      <button type="button" onClick={()=>{setLocalExposure(0.1);setLocalContrast(110);setLocalSaturation(145);setLocalTemperature(0);setLocalTint(0);setLocalHue(0);setLocalGradeColor('#000000');setLocalGradeColorStrength(0);}}>Vivid</button>
+                    </div>
+                    <label><span>Exposure <output>{localExposure>0?'+':''}{localExposure.toFixed(1)} EV</output></span><input type="range" min="-2" max="2" step="0.1" value={localExposure} onChange={event=>setLocalExposure(Number(event.target.value))}/></label>
+                    <label><span>Contrast <output>{localContrast}%</output></span><input type="range" min="50" max="160" step="1" value={localContrast} onChange={event=>setLocalContrast(Number(event.target.value))}/></label>
                     <label><span>Saturation <output>{localSaturation}%</output></span><input type="range" min="0" max="200" step="1" value={localSaturation} onChange={event=>setLocalSaturation(Number(event.target.value))}/></label>
+                    <label><span>Temperature <output>{localTemperature>0?'+':''}{localTemperature}</output></span><input type="range" min="-100" max="100" step="1" value={localTemperature} onChange={event=>setLocalTemperature(Number(event.target.value))}/></label>
+                    <label><span>Tint <output>{localTint>0?'+':''}{localTint}</output></span><input type="range" min="-100" max="100" step="1" value={localTint} onChange={event=>setLocalTint(Number(event.target.value))}/></label>
+                    <label><span>Hue <output>{localHue>0?'+':''}{localHue}°</output></span><input type="range" min="-180" max="180" step="1" value={localHue} onChange={event=>setLocalHue(Number(event.target.value))}/></label>
+                    <div className="wt-grade-color-row"><span>Color wash</span><input type="color" value={/^#[0-9a-fA-F]{6}$/.test(localGradeColor)?localGradeColor:'#000000'} onChange={event=>setLocalGradeColor(event.target.value)}/><input type="text" value={localGradeColor} maxLength={7} spellCheck={false} aria-label="Color hex code" placeholder="#RRGGBB" onChange={event=>setLocalGradeColor(event.target.value)} onBlur={()=>{if(!/^#[0-9a-fA-F]{6}$/.test(localGradeColor))setLocalGradeColor('#000000');}}/></div>
+                    <label><span>Color wash strength <output>{localGradeColorStrength}%</output></span><input type="range" min="0" max="40" step="1" value={localGradeColorStrength} onChange={event=>setLocalGradeColorStrength(Number(event.target.value))}/></label>
                   </div>}
                   <div className="wt-local-controls" role="group" aria-label="Local video controls" onClick={event=>event.stopPropagation()}>
                     <div className="wt-local-control-row">
@@ -1345,7 +1389,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                       />
                     </div>
                   </div>
-                  {localVideoError&&<div className="wt-local-playback-error"><strong>Can’t play this video here</strong><span>{localVideoError}</span></div>}
+                  {localVideoError&&<div className="wt-local-playback-error"><strong>Can’t play this video here</strong><span>{localVideoError}</span>{localCodecDiagnostics&&<small className="wt-codec-diagnostics"><b>{localCodecDiagnostics.fileName}</b><br/>Container MIME: {localCodecDiagnostics.mime}<br/>H.264 MP4: {localCodecDiagnostics.h264} · H.265/HEVC MP4: {localCodecDiagnostics.hevc} · VP9 WebM: {localCodecDiagnostics.vp9}<br/>Most widely compatible target: MP4 · H.264 video · AAC audio</small>}</div>}
                 </> : <iframe ref={iframeRef} src={sharedPlayerUrl} title={"Watch together: " + (room.media?.title || itemMedia.title)} allow="autoplay; fullscreen; encrypted-media" allowFullScreen disablePictureInPicture/>}
                 {(localPlaybackOverride || canReturnLocal) && <div className="wt-sync-floating" role="status">
                   <span className="wt-sync-indicator"><i/>{localPlaybackOverride?'Playing independently':'Room playback'}</span>
