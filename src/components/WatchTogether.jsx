@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronDown, ChevronUp, Copy, Check, Users, MessageCircle, Play, Pause, SkipBack, SkipForward, X, Link2, Radio, Crown, Send, LogOut, RefreshCw, Volume2, VolumeX, Clock3, ShieldCheck, Search, ChevronRight, Pencil, PanelRightClose, PanelRightOpen, ArrowLeft, Settings2, UserMinus, Eye, EyeOff, Lock, Unlock, QrCode, Theater, Wifi, WifiOff, ArrowRightLeft, Timer, Smile, Mic, MicOff, Headphones } from 'lucide-react';
+import { ChevronDown, ChevronUp, Copy, Check, Users, MessageCircle, Play, Pause, SkipBack, SkipForward, X, Link2, Radio, Crown, Send, LogOut, RefreshCw, Volume2, VolumeX, Clock3, ShieldCheck, Search, ChevronRight, Pencil, PanelRightClose, PanelRightOpen, ArrowLeft, Settings2, UserMinus, Eye, EyeOff, Lock, Unlock, QrCode, Theater, Wifi, WifiOff, ArrowRightLeft, Timer, Smile, Mic, MicOff, Headphones, Maximize2, Minimize2 } from 'lucide-react';
 import { supabasePublicRequest, supabaseDataRequest } from '../supabase';
 
 const RPC = '/rest/v1/rpc/';
@@ -139,6 +139,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const [selectedMedia, setSelectedMedia] = useState(item || null);
   const [localVideoAspectRatio,setLocalVideoAspectRatio]=useState('16 / 9');
   const [localVideoError,setLocalVideoError]=useState('');
+  const [isLocalFullscreen,setIsLocalFullscreen]=useState(false);
   const [roomType,setRoomType]=useState('movie');const [localFile,setLocalFile]=useState(null);const [localFileFingerprint,setLocalFileFingerprint]=useState('');const [localFileBusy,setLocalFileBusy]=useState(false);const [pendingJoinCode,setPendingJoinCode]=useState('');const [pendingJoinIdentity,setPendingJoinIdentity]=useState(null);const [pendingJoinMedia,setPendingJoinMedia]=useState(null);const [joinPreviewOpen,setJoinPreviewOpen]=useState(false);const [isChangingMedia,setIsChangingMedia]=useState(false);const [localVideoUrl,setLocalVideoUrl]=useState('');const localSelectionBeforeChangeRef=useRef(null);const localFileInputRef=useRef(null);const joinFileInputRef=useRef(null);const localVideoRef=useRef(null);
   const [mediaQuery, setMediaQuery] = useState('');
   const [tmdbMediaItems, setTmdbMediaItems] = useState([]);
@@ -764,33 +765,73 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       const version = Number(state?.state_version || 0);
       const playback = state?.playback || {};
       if (version > lastVersionRef.current) {
-        lastVersionRef.current = version;
-        setRoom(previous => previous ? { ...previous, state_version: version, playback } : previous);
-        if (!localPlaybackOverrideRef.current) { setPaused(Boolean(playback.paused)); pausedRef.current=Boolean(playback.paused); }
+        // Capture the old values before updating refs. Comparing after updating
+        // pausedRef made remote play/pause transitions invisible.
         const previousTime = currentTimeRef.current;
         const previousPaused = pausedRef.current;
-        const target = Math.max(0, Number(playback.position) + (playback.paused ? 0 : Math.max(0, (Date.now() - Date.parse(playback.updated_at || state.updated_at || new Date().toISOString())) / 1000)));
-        if (!localPlaybackOverrideRef.current) { setCurrentTime(target); currentTimeRef.current=target; }
-        if (playback.actor !== activeParticipant.id && playerReadyRef.current && !applyingRemoteRef.current && !localPlaybackOverrideRef.current) {
-          const operatorSkip = Math.abs(previousTime - target) > 2.5;
-          applyingRemoteRef.current = true;
-          const frame = iframeRef.current;
-          const send = (command, args = []) => frame?.contentWindow?.postMessage({ type: 'cinesrc:command', command, args }, 'https://cinesrc.st');
-          if (operatorSkip) send('seek', [target]);
-          if (previousPaused !== Boolean(playback.paused)) send(playback.paused ? 'pause' : 'play');
-          setTimeout(() => { applyingRemoteRef.current = false; }, 900);
+        const nextPaused = Boolean(playback.paused);
+        const target = Math.max(
+          0,
+          Number(playback.position) +
+            (nextPaused ? 0 : Math.max(0, (Date.now() - Date.parse(playback.updated_at || state.updated_at || new Date().toISOString())) / 1000))
+        );
+
+        lastVersionRef.current = version;
+        setRoom(previous => previous ? { ...previous, state_version: version, playback } : previous);
+
+        if (!localPlaybackOverrideRef.current) {
+          setPaused(nextPaused);
+          pausedRef.current = nextPaused;
+          setCurrentTime(target);
+          currentTimeRef.current = target;
+        }
+
+        if (
+          playback.actor !== activeParticipant.id &&
+          playerReadyRef.current &&
+          !applyingRemoteRef.current &&
+          !localPlaybackOverrideRef.current
+        ) {
+          if (activeRoom.media?.kind === 'local_file') {
+            const video = localVideoRef.current;
+            if (video) {
+              const drift = target - (Number(video.currentTime) || 0);
+              applyingRemoteRef.current = true;
+              // Small drift is left alone; larger drift (including explicit
+              // skips) is corrected immediately instead of waiting for timeupdate.
+              if (Math.abs(drift) > 0.55) {
+                try { video.currentTime = target; } catch {}
+              }
+              if (nextPaused) {
+                if (!video.paused) video.pause();
+              } else if (video.paused) {
+                video.play().catch(() => setError('Tap Play once on this device to allow synchronized video playback.'));
+              }
+              window.setTimeout(() => { applyingRemoteRef.current = false; }, 420);
+            }
+          } else {
+            const operatorSkip = Math.abs(previousTime - target) > 2.5;
+            const frame = iframeRef.current;
+            const send = (command, args = []) => frame?.contentWindow?.postMessage({ type: 'cinesrc:command', command, args }, 'https://cinesrc.st');
+            applyingRemoteRef.current = true;
+            if (operatorSkip) send('seek', [target]);
+            if (previousPaused !== nextPaused) send(nextPaused ? 'pause' : 'play');
+            window.setTimeout(() => { applyingRemoteRef.current = false; }, 420);
+          }
         }
       }
     } catch (error) {
       if (/expired|closed|not found|not a member/i.test(error.message || '')) setError('This room has ended or expired.');
-    } finally { playbackPollInFlightRef.current = false; }
+    } finally {
+      playbackPollInFlightRef.current = false;
+    }
   }, [rpc]);
   useEffect(() => {
     if (!room || !participant) return undefined;
     refreshRoom();
     refreshPlayback();
     pollRef.current = window.setInterval(refreshRoom, 4200);
-    playbackPollRef.current = window.setInterval(refreshPlayback, 350);
+    playbackPollRef.current = window.setInterval(refreshPlayback, roomRef.current?.media?.kind === 'local_file' ? 220 : 350);
     heartbeatRef.current = window.setInterval(() => {
       const r = roomRef.current, p = participantRef.current;
       if (r && p) rpc('watch_room_heartbeat', { p_code: r.code, p_token: p.token, p_position: currentTimeRef.current, p_duration: durationRef.current }).catch(() => {});
@@ -865,6 +906,28 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     if (command === 'pause') { setPaused(true); pausedRef.current = true; publishPlayback({ position: currentTimeRef.current, paused: true }); }
     if (command === 'seek') { const position = Math.max(0, Number(args[0]) || 0); setCurrentTime(position); currentTimeRef.current = position; publishPlayback({ position, paused: pausedRef.current }, true); }
   }, [publishPlayback, canControl, postPlayerCommand]);
+
+  const toggleLocalFullscreen = useCallback(async () => {
+    const video = localVideoRef.current;
+    const player = video?.parentElement;
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      } else if (player?.requestFullscreen) {
+        await player.requestFullscreen();
+      } else if (video?.webkitEnterFullscreen) {
+        video.webkitEnterFullscreen();
+      }
+    } catch {
+      setError('Fullscreen is not available in this browser.');
+    }
+  }, []);
+
+  useEffect(() => {
+    const updateFullscreen = () => setIsLocalFullscreen(Boolean(document.fullscreenElement));
+    document.addEventListener('fullscreenchange', updateFullscreen);
+    return () => document.removeEventListener('fullscreenchange', updateFullscreen);
+  }, []);
 
   const syncToRoom = useCallback(() => {
     if (!room?.playback || !playerReadyRef.current) return;
@@ -1112,7 +1175,6 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
               {guest.isGuest&&editingGuestName&&<form className="wt-guest-name-form wt-room-rename" onSubmit={event=>{event.preventDefault();updateGuestName(guestNameDraft);}}><input value={guestNameDraft} onChange={event=>setGuestNameDraft(event.target.value)} maxLength={32} aria-label="Guest name"/><button type="submit" disabled={busy||!guestNameDraft.trim()}>Save name</button></form>}
               {showPlaybackNotice && <div className="wt-playback-tip" role="status"><span><strong>Playback tip</strong> If autoplay is blocked, tap Play once. A reputable ad blocker can help reduce pop-ups and redirects.</span><button type="button" onClick={() => setShowPlaybackNotice(false)} aria-label="Dismiss playback tip"><X size={15}/></button></div>}
               <div className="wt-room-tools" aria-label="Room tools"><span className={`wt-network ${networkState}`} title={networkState==='online'?'Room connection is active':networkState==='offline'?'You are offline':'Trying to reconnect'}><i/><span>{networkState==='online'?'Connected':networkState==='offline'?'Offline':'Reconnecting'}</span>{networkLatency!=null&&networkState==='online'&&<small>{networkLatency} ms</small>}</span>{voiceError&&<span className="wt-voice-error" role="status">{voiceError}</span>}<div className="wt-room-tool-actions"><button type="button" onClick={()=>refreshRoom()} title="Reconnect to room" aria-label="Reconnect to room"><RefreshCw size={16}/></button><button type="button" onClick={copyTimestamp} title="Copy current timestamp" aria-label="Copy current timestamp"><Clock3 size={16}/></button><button type="button" onClick={()=>setTheatreMode(v=>!v)} title={theatreMode?'Exit theatre mode':'Theatre mode'} aria-label={theatreMode?'Exit theatre mode':'Theatre mode'}><Theater size={16}/></button><button type="button" className="wt-theatre-chat-launch" onClick={()=>{setChatCollapsed(false);setTheatreChatOpen(value=>!value);}} title="Open room chat" aria-label="Open room chat"><MessageCircle size={16}/></button><button type="button" onClick={()=>setQrDialogOpen(true)} title="Show room QR code" aria-label="Show room QR code"><QrCode size={16}/></button></div></div>
-              {(localPlaybackOverride || canReturnLocal) && <div className="wt-local-playback wt-playback-actions"><span>{localPlaybackOverride ? 'Independent playback' : 'Room playback'}</span>{localPlaybackOverride&&<button type="button" onClick={syncToRoom} disabled={!playerReady} title="Sync your player with the room">Sync with room</button>}{canReturnLocal&&<button type="button" onClick={returnToLocalPosition} disabled={!playerReady} title="Return to your saved playback position">Return to my spot</button>}</div>}
               {room.media?.mediaType === "tv" && <section className="wt-episode-picker" aria-label="Choose season and episode">
                 <div className="wt-episode-picker-head"><strong>SEASONS</strong><small>{seasonLoading ? "Loading seasons…" : availableSeasons.length + " available"}</small></div>
                 <div className="wt-season-row">{availableSeasons.map(s=><button type="button" key={s.season_number} disabled={!canControl&&!room.settings?.guests_can_change_episode} className={activeSeason===Number(s.season_number)?"active":""} onClick={()=>changeRoomEpisode(s.season_number,1)}>{s.season_number===0?"Specials":"S"+s.season_number}</button>)}</div>
@@ -1122,7 +1184,97 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
               </section>}
               <div className="wt-user-progress" aria-label="Participant playback progress">{members.map(member=>{const pct=Number(member.playback_duration)>0?Math.max(0,Math.min(100,Math.round(Number(member.playback_position||0)/Number(member.playback_duration)*100))):0;const pausedHere=Boolean(room.playback?.paused&&room.playback?.actor===member.id);return <span className="wt-progress-pill" key={member.id}><img src={member.avatar_url||blobatar(member.display_name)} alt=""/><b>{member.display_name}</b><i>{Number(member.playback_duration)>0?pct+"%":timeText(member.playback_position||0)}</i>{pausedHere&&<Pause className="wt-progress-paused" size={11} aria-label="Paused here"/>}</span>;})}</div>
               {pendingEpisode && <div className="wt-episode-transition"><div><strong>Next episode is ready</strong><span>Everyone can move to S{pendingEpisode.season} · E{pendingEpisode.episode}. Viewers who are behind can finish first.</span></div><button type="button" onClick={()=>setPendingEpisode(null)}>Finish current</button><button type="button" onClick={()=>{const next=pendingEpisode;setPendingEpisode(null);onEpisodeChangeRef.current?.(next.episode);setRoom(old=>old?{...old,playback:{...(old.playback||{}),position:0,paused:false,season:next.season,episode:next.episode}}:old);publishPlayback({position:0,paused:false,season:next.season,episode:next.episode},true);}}>Go now</button></div>}
-              <div className={room.media?.kind==='local_file'?"wt-player wt-local-video-player":"wt-player"} style={room.media?.kind==='local_file'?{aspectRatio:localVideoAspectRatio}:undefined}>{room.media?.kind==='local_file'?<><video key={room.media?.fileFingerprint||room.id} ref={localVideoRef} src={localVideoUrl} playsInline preload="auto" onLoadedMetadata={event=>{const v=event.currentTarget;setLocalVideoError('');setLocalVideoAspectRatio(`${v.videoWidth||16} / ${v.videoHeight||9}`);setControlsExpanded(true);setDuration(v.duration||0);durationRef.current=v.duration||0;setPlayerReady(true);playerReadyRef.current=true;const playback=roomRef.current?.playback;if(playback){const target=Math.max(0,Number(playback.position)||0);v.currentTime=target;setCurrentTime(target);currentTimeRef.current=target;setPaused(Boolean(playback.paused));pausedRef.current=Boolean(playback.paused);if(!playback.paused)v.play().catch(()=>{});}}} onTimeUpdate={event=>{const v=event.currentTarget;setCurrentTime(v.currentTime);currentTimeRef.current=v.currentTime;if(!applyingRemoteRef.current&&canControl&&!v.paused&&Date.now()-lastHostTimePushRef.current>1800){lastHostTimePushRef.current=Date.now();publishPlayback({position:v.currentTime,paused:false});}}} onPlay={()=>{setPaused(false);pausedRef.current=false;if(!applyingRemoteRef.current)publishPlayback({position:localVideoRef.current?.currentTime||0,paused:false},true);}} onPause={()=>{setPaused(true);pausedRef.current=true;if(!applyingRemoteRef.current)publishPlayback({position:localVideoRef.current?.currentTime||0,paused:true},true);}} onSeeked={()=>{const t=localVideoRef.current?.currentTime||0;setCurrentTime(t);currentTimeRef.current=t;if(!applyingRemoteRef.current)publishPlayback({position:t,paused:localVideoRef.current?.paused??true},true);}} onError={()=>{setPlayerReady(false);playerReadyRef.current=false;setLocalVideoError('This browser cannot decode this file’s container or video codec. Some MKV, AVI and MOV files need an H.264/AAC MP4 copy to play in the browser.');}} onLoadedData={()=>setLocalVideoError('')}/>{localVideoError&&<div className="wt-local-playback-error"><strong>Can’t play this video here</strong><span>{localVideoError}</span></div>}</>:<iframe ref={iframeRef} src={sharedPlayerUrl} title={`Watch together: ${room.media?.title || itemMedia.title}`} allow="autoplay; fullscreen; encrypted-media" allowFullScreen disablePictureInPicture/>}</div>
+              <div className={room.media?.kind==='local_file'?"wt-player wt-local-video-player":"wt-player"} style={room.media?.kind==='local_file'?{aspectRatio:localVideoAspectRatio}:undefined}>
+                {room.media?.kind==='local_file' ? <>
+                  <video
+                    key={room.media?.fileFingerprint||room.id}
+                    ref={localVideoRef}
+                    src={localVideoUrl}
+                    playsInline
+                    preload="auto"
+                    onLoadedMetadata={event=>{
+                      const video=event.currentTarget;
+                      setLocalVideoError('');
+                      setLocalVideoAspectRatio(\`\${video.videoWidth||16} / \${video.videoHeight||9}\`);
+                      setControlsExpanded(true);
+                      setDuration(video.duration||0);
+                      durationRef.current=video.duration||0;
+                      setPlayerReady(true);
+                      playerReadyRef.current=true;
+                      const playback=roomRef.current?.playback;
+                      if(playback){
+                        const target=Math.max(0,Number(playback.position)||0)+(playback.paused?0:Math.max(0,(Date.now()-Date.parse(playback.updated_at||roomRef.current?.updated_at||new Date().toISOString()))/1000));
+                        applyingRemoteRef.current=true;
+                        try { video.currentTime=target; } catch {}
+                        setCurrentTime(target);
+                        currentTimeRef.current=target;
+                        setPaused(Boolean(playback.paused));
+                        pausedRef.current=Boolean(playback.paused);
+                        if(!playback.paused)video.play().catch(()=>setError('Tap Play once on this device to allow synchronized video playback.'));
+                        window.setTimeout(()=>{applyingRemoteRef.current=false;},420);
+                      }
+                    }}
+                    onDurationChange={event=>{setDuration(event.currentTarget.duration||0);durationRef.current=event.currentTarget.duration||0;}}
+                    onTimeUpdate={event=>{
+                      const video=event.currentTarget;
+                      setCurrentTime(video.currentTime);
+                      currentTimeRef.current=video.currentTime;
+                      if(!applyingRemoteRef.current&&canControl&&!video.paused&&Date.now()-lastHostTimePushRef.current>1500){
+                        lastHostTimePushRef.current=Date.now();
+                        publishPlayback({position:video.currentTime,paused:false});
+                      }
+                    }}
+                    onPlay={()=>{
+                      setPaused(false);pausedRef.current=false;
+                      if(!applyingRemoteRef.current)publishPlayback({position:localVideoRef.current?.currentTime||0,paused:false},true);
+                    }}
+                    onPause={()=>{
+                      setPaused(true);pausedRef.current=true;
+                      if(!applyingRemoteRef.current)publishPlayback({position:localVideoRef.current?.currentTime||0,paused:true},true);
+                    }}
+                    onSeeked={()=>{
+                      const time=localVideoRef.current?.currentTime||0;
+                      setCurrentTime(time);currentTimeRef.current=time;
+                      if(!applyingRemoteRef.current)publishPlayback({position:time,paused:localVideoRef.current?.paused??true},true);
+                    }}
+                    onError={()=>{
+                      setPlayerReady(false);playerReadyRef.current=false;
+                      setLocalVideoError('This browser cannot decode this file’s container or video codec. Some MKV, AVI and MOV files need an H.264/AAC MP4 copy to play in the browser.');
+                    }}
+                    onLoadedData={()=>setLocalVideoError('')}
+                  />
+                  <div className="wt-local-controls" role="group" aria-label="Local video controls">
+                    <div className="wt-local-control-row">
+                      <button type="button" onClick={()=>sendPlayerCommand('seek',[Math.max(0,currentTimeRef.current-10)])} disabled={!playerReady} aria-label="Back 10 seconds" title="Back 10 seconds"><SkipBack size={17}/><small>10</small></button>
+                      <button type="button" className="wt-local-play" onClick={()=>sendPlayerCommand(paused?'play':'pause')} disabled={!playerReady} aria-label={paused?'Play video':'Pause video'} title={paused?'Play':'Pause'}>{paused?<Play size={19} fill="currentColor"/>:<Pause size={19} fill="currentColor"/>}</button>
+                      <button type="button" onClick={()=>sendPlayerCommand('seek',[Math.min(duration||Infinity,currentTimeRef.current+10)])} disabled={!playerReady} aria-label="Forward 10 seconds" title="Forward 10 seconds"><SkipForward size={17}/><small>10</small></button>
+                      <span className="wt-local-time">{timeText(currentTime)} <i>/</i> {timeText(duration)}</span>
+                      <button type="button" onClick={()=>{sendPlayerCommand('setMuted',[!muted]);setMuted(!muted);}} aria-label={muted?'Unmute video':'Mute video'} title={muted?'Unmute':'Mute'}>{muted?<VolumeX size={17}/>:<Volume2 size={17}/>}</button>
+                      <button type="button" onClick={toggleLocalFullscreen} aria-label={isLocalFullscreen?'Exit fullscreen':'Enter fullscreen'} title={isLocalFullscreen?'Exit fullscreen':'Fullscreen'}>{isLocalFullscreen?<Minimize2 size={17}/>:<Maximize2 size={17}/>}</button>
+                    </div>
+                    <div className="wt-local-seek">
+                      <input
+                        type="range"
+                        min="0"
+                        max={Math.max(1,duration||1)}
+                        step="0.25"
+                        value={Math.min(currentTime,duration||currentTime)}
+                        disabled={!playerReady}
+                        onChange={event=>setCurrentTime(Number(event.target.value))}
+                        onPointerUp={event=>sendPlayerCommand('seek',[Number(event.currentTarget.value)])}
+                        onKeyUp={event=>{if(event.key.startsWith('Arrow'))sendPlayerCommand('seek',[Number(event.currentTarget.value)]);}}
+                        aria-label="Seek local video"
+                      />
+                    </div>
+                  </div>
+                  {localVideoError&&<div className="wt-local-playback-error"><strong>Can’t play this video here</strong><span>{localVideoError}</span></div>}
+                </> : <iframe ref={iframeRef} src={sharedPlayerUrl} title={\`Watch together: \${room.media?.title || itemMedia.title}\`} allow="autoplay; fullscreen; encrypted-media" allowFullScreen disablePictureInPicture/>}
+                {(localPlaybackOverride || canReturnLocal) && <div className="wt-sync-floating" role="status">
+                  <span className="wt-sync-indicator"><i/>{localPlaybackOverride?'Playing independently':'Room playback'}</span>
+                  {localPlaybackOverride&&<button type="button" onClick={syncToRoom} disabled={!playerReady} title="Jump back to the room’s current position"><Radio size={14}/> Sync with room</button>}
+                  {canReturnLocal&&<button type="button" onClick={returnToLocalPosition} disabled={!playerReady} title="Return to your saved playback position">Return to my spot</button>}
+                </div>}
+              </div>
               {theatreMode && theatreToast && <button type="button" className="wt-theatre-message-toast" onClick={()=>{setChatCollapsed(false);setTheatreChatOpen(true);setTheatreToast(null);}}><img src={theatreToast.avatar_url || blobatar(theatreToast.display_name)} alt=""/><span><strong>{theatreToast.display_name}</strong><small>{theatreToast.body}</small></span><X size={14} onClick={event=>{event.stopPropagation();setTheatreToast(null);}}/></button>}
               {!canControl && <div className="wt-role-banner"><ShieldCheck size={16}/><span>You’re a Viewer. Request Operator access to control playback, or ask for individual skips.</span><button type="button" onClick={() => requestAccess('operator')} disabled={busy}>Request Operator</button></div>}
               <div className="wt-control-dock">
