@@ -915,6 +915,9 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
         await document.exitFullscreen();
       } else if (player?.requestFullscreen) {
         await player.requestFullscreen();
+        // Wide movies look much better in landscape on phones. Browsers that
+        // don't support orientation locking simply keep their current layout.
+        try { await screen.orientation?.lock?.('landscape'); } catch {}
       } else if (video?.webkitEnterFullscreen) {
         video.webkitEnterFullscreen();
       }
@@ -924,7 +927,13 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   }, []);
 
   useEffect(() => {
-    const updateFullscreen = () => setIsLocalFullscreen(Boolean(document.fullscreenElement));
+    const updateFullscreen = () => {
+      const active = Boolean(document.fullscreenElement);
+      setIsLocalFullscreen(active);
+      if (!active) {
+        try { screen.orientation?.unlock?.(); } catch {}
+      }
+    };
     document.addEventListener('fullscreenchange', updateFullscreen);
     return () => document.removeEventListener('fullscreenchange', updateFullscreen);
   }, []);
