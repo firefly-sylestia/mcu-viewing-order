@@ -15983,3 +15983,63 @@
 :root .movie-site.page-watch-together .wt-page.wt-theatre-mode .wt-local-video-player > video {
   background:var(--wt-player-background,#000000)!important;
 }
+
+
+/* Local player safe area and optional tablet canvas. */
+:root .movie-site.page-watch-together .wt-content:has(.wt-local-video-player) > .wt-main {
+  padding-top:clamp(14px,2.4vw,30px)!important;
+}
+:root .movie-site.page-watch-together .wt-local-video-player.is-tablet-ratio:not(:fullscreen) {
+  aspect-ratio:16/10!important;height:auto!important;
+  max-height:min(78dvh,calc((100vw - 40px)*.625))!important;overflow:hidden!important;
+  background:var(--wt-player-background,#000)!important;
+}
+:root .movie-site.page-watch-together .wt-local-video-player.is-tablet-ratio:not(:fullscreen) > video {
+  position:absolute!important;inset:0!important;width:100%!important;height:100%!important;
+  max-height:100%!important;object-fit:contain!important;
+}
+:root .movie-site.page-watch-together .wt-local-video-player .wt-local-overlay-tools {
+  display:flex!important;position:absolute!important;z-index:16!important;
+  top:max(10px,env(safe-area-inset-top))!important;right:12px!important;
+  align-items:center!important;gap:7px!important;pointer-events:auto!important;
+}
+:root .movie-site.page-watch-together .wt-local-video-player .wt-local-overlay-tools button {
+  min-width:38px!important;height:36px!important;padding:0 9px!important;
+  border:1px solid rgba(255,255,255,.18)!important;border-radius:11px!important;
+  color:#fff!important;background:rgba(8,12,19,.62)!important;
+  -webkit-backdrop-filter:blur(16px)!important;backdrop-filter:blur(16px)!important;
+}
+:root .movie-site.page-watch-together .wt-local-video-player .wt-local-overlay-tools .wt-local-ratio {
+  width:auto!important;font-size:10px!important;font-weight:750!important;
+}
+:root .movie-site.page-watch-together .wt-local-video-player .wt-local-overlay-tools .wt-local-ratio[aria-pressed="true"] {
+  background:rgba(255,255,255,.2)!important;border-color:rgba(255,255,255,.36)!important;
+}
+:root .movie-site.page-watch-together .wt-local-video-player video,
+:root .movie-site.page-watch-together .wt-local-video-player,
+:root .movie-site.page-watch-together .wt-local-video-player * {
+  -webkit-tap-highlight-color:transparent!important;
+}
+:root .movie-site.page-watch-together .wt-local-video-player video {
+  user-select:none!important;-webkit-user-select:none!important;outline:none!important;
+}
+:root .movie-site.page-watch-together .wt-local-video-player.is-controls-hidden .wt-local-overlay-tools button:not(.wt-local-lock) {
+  opacity:0!important;visibility:hidden!important;pointer-events:none!important;
+}
+:root .movie-site.page-watch-together .wt-local-video-player .wt-local-overlay-tools button {
+  transition:opacity .2s ease,visibility .2s ease!important;
+}
+@media(max-width:760px) {
+  :root .movie-site.page-watch-together .wt-content:has(.wt-local-video-player) > .wt-main {
+    padding-top:calc(12px + env(safe-area-inset-top))!important;
+  }
+  :root .movie-site.page-watch-together .wt-local-video-player.is-tablet-ratio:not(:fullscreen) {
+    max-height:min(68dvh,calc((100vw - 24px)*.625))!important;
+  }
+  :root .movie-site.page-watch-together .wt-local-video-player .wt-local-overlay-tools {
+    top:8px!important;right:8px!important;gap:5px!important;
+  }
+  :root .movie-site.page-watch-together .wt-local-video-player .wt-local-overlay-tools button {
+    min-width:34px!important;height:34px!important;border-radius:10px!important;
+  }
+}

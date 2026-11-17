@@ -147,6 +147,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const [localControlsVisible,setLocalControlsVisible]=useState(true);
   const [localControlsLocked,setLocalControlsLocked]=useState(false);
   const [localAdjustmentsOpen,setLocalAdjustmentsOpen]=useState(false);
+  const [localTabletRatio,setLocalTabletRatio]=useState(false);
   const [localBrightness,setLocalBrightness]=useState(100);
   const [localContrast,setLocalContrast]=useState(100);
   const [localSaturation,setLocalSaturation]=useState(100);
@@ -1197,7 +1198,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
               <div className="wt-user-progress" aria-label="Participant playback progress">{members.map(member=>{const pct=Number(member.playback_duration)>0?Math.max(0,Math.min(100,Math.round(Number(member.playback_position||0)/Number(member.playback_duration)*100))):0;const pausedHere=Boolean(room.playback?.paused&&room.playback?.actor===member.id);return <span className="wt-progress-pill" key={member.id}><img src={member.avatar_url||blobatar(member.display_name)} alt=""/><b>{member.display_name}</b><i>{Number(member.playback_duration)>0?pct+"%":timeText(member.playback_position||0)}</i>{pausedHere&&<Pause className="wt-progress-paused" size={11} aria-label="Paused here"/>}</span>;})}</div>
               {pendingEpisode && <div className="wt-episode-transition"><div><strong>Next episode is ready</strong><span>Everyone can move to S{pendingEpisode.season} · E{pendingEpisode.episode}. Viewers who are behind can finish first.</span></div><button type="button" onClick={()=>setPendingEpisode(null)}>Finish current</button><button type="button" onClick={()=>{const next=pendingEpisode;setPendingEpisode(null);onEpisodeChangeRef.current?.(next.episode);setRoom(old=>old?{...old,playback:{...(old.playback||{}),position:0,paused:false,season:next.season,episode:next.episode}}:old);publishPlayback({position:0,paused:false,season:next.season,episode:next.episode},true);}}>Go now</button></div>}
               <div
-                className={"wt-player"+(room.media?.kind==='local_file'?" wt-local-video-player"+(isLocalFullscreen?" is-fullscreen":"")+(localControlsVisible?"":" is-controls-hidden")+(localControlsLocked?" is-controls-locked":""):"")}
+                className={"wt-player"+(room.media?.kind==='local_file'?" wt-local-video-player"+(isLocalFullscreen?" is-fullscreen":"")+(localControlsVisible?"":" is-controls-hidden")+(localControlsLocked?" is-controls-locked":"")+(localTabletRatio?" is-tablet-ratio":""):"")}
                 style={room.media?.kind==='local_file'?{
                   '--wt-grade-temp-color':localTemperature>=0?'#ff9d55':'#579dff',
                   '--wt-grade-temp-opacity':String(Math.abs(localTemperature)/500),
@@ -1224,9 +1225,13 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                     preload="auto"
                     style={{filter:`brightness(${Math.round(localBrightness*Math.pow(2,localExposure))}%) contrast(${localContrast}%) saturate(${localSaturation}%) hue-rotate(${localHue}deg)`,backgroundColor:localBackgroundColor}}
                     onClick={event=>{
-                      if(event.target!==event.currentTarget||localControlsLockedRef.current)return;
-                      sendPlayerCommand(paused?'play':'pause');
-                      revealLocalControls();
+                      if(event.target!==event.currentTarget)return;
+                      if(window.matchMedia?.('(pointer: coarse)').matches){
+                        if(localControlsHideTimerRef.current)window.clearTimeout(localControlsHideTimerRef.current);
+                        if(localControlsLockedRef.current){setLocalControlsVisible(false);return;}
+                        setLocalControlsVisible(value=>!value);
+                        if(!localControlsVisible)scheduleLocalControlsHide();
+                      }else revealLocalControls();
                     }}
                     onLoadedMetadata={event=>{
                       const video=event.currentTarget;
@@ -1296,6 +1301,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                   </div>
                   <div className="wt-local-overlay-tools" onClick={event=>event.stopPropagation()}>
                     <button type="button" className="wt-local-lock" onClick={toggleLocalControlsLock} aria-label={localControlsLocked?'Unlock player controls':'Lock player controls'} title={localControlsLocked?'Unlock controls':'Lock controls'}>{localControlsLocked?<Unlock size={17}/>:<Lock size={17}/>}</button>
+                    {!isLocalFullscreen&&<button type="button" className="wt-local-ratio" onClick={()=>setLocalTabletRatio(value=>!value)} aria-pressed={localTabletRatio} aria-label={localTabletRatio?'Use original video ratio':'Use tablet 16 by 10 ratio'} title={localTabletRatio?'Original ratio':'Tablet ratio 16:10'}>{localTabletRatio?'Auto':'16:10'}</button>}
                     <button type="button" onClick={()=>{setLocalAdjustmentsOpen(value=>!value);revealLocalControls();}} aria-expanded={localAdjustmentsOpen} aria-label="Adjust picture" title="Picture adjustments"><SlidersHorizontal size={17}/></button>
                     <button type="button" onClick={()=>{setChatCollapsed(false);setTheatreChatOpen(value=>!value);}} aria-expanded={theatreChatOpen} aria-label={theatreChatOpen?'Close room chat':'Open room chat'} title="Room chat"><MessageCircle size={17}/></button>
                   </div>
