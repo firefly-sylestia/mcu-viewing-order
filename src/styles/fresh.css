@@ -14825,3 +14825,6 @@
  :root .wt-page.wt-theatre-mode .wt-chat.wt-theatre-chat-open {top:calc(54px + env(safe-area-inset-top))!important;right:9px!important;bottom:calc(9px + env(safe-area-inset-bottom))!important;width:min(390px,calc(100vw - 18px))!important}
  :root .wt-page.wt-theatre-mode .wt-theatre-message-toast {left:9px!important;bottom:calc(78px + env(safe-area-inset-bottom))!important;width:min(330px,calc(100vw - 18px))!important}
 }
+
+:root .wt-page .wt-theatre-chat-launch {display:none!important}
+:root .wt-page.wt-theatre-mode .wt-theatre-chat-launch {display:inline-flex!important}
