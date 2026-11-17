@@ -14720,3 +14720,42 @@
   :root .movie-site.page-watch-together .wt-chat-form button[type="submit"] { width:40px!important; height:40px!important; flex:0 0 40px!important; display:grid!important; place-items:center!important; }
   :root .movie-site.page-watch-together .wt-chat.is-collapsed .wt-chat-form { margin-top:auto!important; }
 }
+
+
+/* Keep the expand control visible in the narrow collapsed desktop chat rail. */
+@media (min-width:761px) {
+  :root .movie-site.page-watch-together .wt-chat.is-collapsed .wt-chat-form {
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    width:100%!important;
+    min-width:0!important;
+    padding:10px 0!important;
+    margin-top:auto!important;
+    overflow:visible!important;
+  }
+  :root .movie-site.page-watch-together .wt-chat.is-collapsed .wt-chat-form .wt-chat-toggle {
+    display:grid!important;
+    visibility:visible!important;
+    opacity:1!important;
+    position:relative!important;
+    z-index:2!important;
+    width:40px!important;
+    min-width:40px!important;
+    height:40px!important;
+    flex:0 0 40px!important;
+    padding:0!important;
+    color:var(--fx-text,#10141b)!important;
+    background:var(--fx-surface-2,#f6f8fc)!important;
+    border:1px solid color-mix(in srgb,var(--fx-muted) 30%,transparent)!important;
+    border-radius:11px!important;
+  }
+  :root .movie-site.page-watch-together .wt-chat.is-collapsed .wt-chat-form .wt-chat-toggle svg {
+    display:block!important;
+    width:19px!important;
+    height:19px!important;
+    opacity:1!important;
+    visibility:visible!important;
+    stroke:currentColor!important;
+  }
+}
