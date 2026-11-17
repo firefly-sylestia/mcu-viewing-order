@@ -15010,3 +15010,32 @@
  :root .wt-create-backdrop .wt-confirm-actions{gap:8px}
  :root .wt-create-backdrop .wt-confirm-actions>button{min-width:0;flex:1}
 }
+
+
+/* Local-file playback uses the video's real dimensions, not the stream iframe's 16:9 frame. */
+:root .movie-site.page-watch-together .wt-local-video-player{
+  display:grid!important;place-items:center!important;
+  width:100%!important;height:auto!important;min-height:0!important;
+  max-height:78dvh!important;overflow:hidden!important;
+  background:#000!important;border-radius:14px!important;
+}
+:root .movie-site.page-watch-together .wt-local-video-player video{
+  display:block!important;width:100%!important;height:100%!important;
+  min-width:0!important;min-height:0!important;max-width:100%!important;max-height:78dvh!important;
+  margin:0!important;padding:0!important;object-fit:contain!important;
+  object-position:center center!important;background:#000!important;
+  vertical-align:top!important;
+}
+:root .wt-page.wt-theatre-mode .wt-local-video-player{
+  display:grid!important;place-items:center!important;
+  width:100%!important;height:100dvh!important;min-height:0!important;max-height:100dvh!important;
+  aspect-ratio:auto!important;border-radius:0!important;background:#000!important;
+}
+:root .wt-page.wt-theatre-mode .wt-local-video-player video{
+  width:100%!important;height:100%!important;max-width:100%!important;max-height:100dvh!important;
+  object-fit:contain!important;object-position:center!important;
+}
+@media(max-width:760px){
+  :root .movie-site.page-watch-together .wt-local-video-player{max-height:72dvh!important;border-radius:11px!important}
+  :root .movie-site.page-watch-together .wt-local-video-player video{max-height:72dvh!important}
+}
