@@ -14810,7 +14810,7 @@
  color:rgba(255,255,255,.68);font-size:10px
 }
 :root .wt-page.wt-theatre-mode .wt-theatre-message-toast {
- position:absolute!important;z-index:17!important;left:16px!important;bottom:calc(88px + env(safe-area-inset-bottom))!important;
+ position:absolute!important;z-index:17!important;left:16px!important;top:calc(76px + env(safe-area-inset-top))!important;bottom:auto!important;
  display:flex!important;align-items:center!important;gap:10px!important;width:min(330px,calc(100vw - 32px))!important;
  min-width:0!important;padding:10px 12px!important;border:1px solid rgba(255,255,255,.16)!important;
  border-radius:16px!important;background:rgba(12,15,22,.76)!important;color:#fff!important;text-align:left!important;
@@ -14823,7 +14823,7 @@
 :root .wt-page.wt-theatre-mode .wt-theatre-message-toast>svg {flex:0 0 auto;color:rgba(255,255,255,.5)}
 @media(max-width:760px) {
  :root .wt-page.wt-theatre-mode .wt-chat.wt-theatre-chat-open {top:calc(54px + env(safe-area-inset-top))!important;right:9px!important;bottom:calc(9px + env(safe-area-inset-bottom))!important;width:min(390px,calc(100vw - 18px))!important}
- :root .wt-page.wt-theatre-mode .wt-theatre-message-toast {left:9px!important;bottom:calc(78px + env(safe-area-inset-bottom))!important;width:min(330px,calc(100vw - 18px))!important}
+ :root .wt-page.wt-theatre-mode .wt-theatre-message-toast {left:9px!important;top:calc(66px + env(safe-area-inset-top))!important;bottom:auto!important;width:min(330px,calc(100vw - 18px))!important}
 }
 
 :root .wt-page .wt-theatre-chat-launch {display:none!important}
