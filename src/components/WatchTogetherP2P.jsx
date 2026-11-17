@@ -4,6 +4,9 @@ const ICE_SERVERS = [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stu
 
 export default function WatchTogetherP2P({ room, participant, members = [], localVideoRef, videoEnabled, voiceEnabled, rpc }) {
   const peers = useRef(new Map());
+  const membersRef = useRef(members);
+  membersRef.current = members;
+  const memberKey = members.map(member => member.id).sort().join('|');
   const localMic = useRef(null);
   const seenSignal = useRef(0);
   const [connections, setConnections] = useState({});
@@ -64,10 +67,10 @@ export default function WatchTogetherP2P({ room, participant, members = [], loca
       }
     };
     const syncPeers = async () => {
-      for (const member of members) {
+      for (const member of membersRef.current) {
         if (member.id !== participant.id && !peers.current.has(member.id)) await makePeer(member);
       }
-      const live = new Set(members.map(member => member.id));
+      const live = new Set(membersRef.current.map(member => member.id));
       for (const [id, entry] of peers.current) if (!live.has(id)) { entry.pc.close(); peers.current.delete(id); }
     };
     const poll = async () => {
@@ -78,7 +81,7 @@ export default function WatchTogetherP2P({ room, participant, members = [], loca
         for (const signal of rows || []) {
           seenSignal.current = Math.max(seenSignal.current, Number(signal.id) || 0);
           const from = signal.from_participant_id;
-          const member = members.find(item => item.id === from);
+          const member = membersRef.current.find(item => item.id === from);
           if (!member) continue;
           if (!peers.current.has(from)) await makePeer(member);
           const entry = peers.current.get(from);
@@ -111,7 +114,7 @@ export default function WatchTogetherP2P({ room, participant, members = [], loca
       setRemoteStreams({});
       setConnections({});
     };
-  }, [active, room?.code, participant?.id, participant?.token, participant?.is_host, members, videoEnabled, voiceEnabled, rpc, localVideoRef]);
+  }, [active, room?.code, participant?.id, participant?.token, participant?.is_host, memberKey, videoEnabled, voiceEnabled, rpc, localVideoRef]);
 
   if (!active) return null;
   const states = Object.values(connections);
