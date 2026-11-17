@@ -13698,6 +13698,40 @@
 }
 
 
+/* Normal Watch Together page: keep the chat in document flow. The old sticky
+   composer was sticking to the viewport and could sit over the site footer/nav. */
+@media(max-width:760px) {
+  :root .movie-site.page-watch-together .wt-page:not(.wt-theatre-mode) {
+    position:relative!important;
+    height:auto!important;min-height:0!important;max-height:none!important;
+    overflow:visible!important;
+    padding-bottom:calc(32px + env(safe-area-inset-bottom))!important;
+  }
+  :root .movie-site.page-watch-together .wt-page:not(.wt-theatre-mode) .wt-content {
+    height:auto!important;min-height:0!important;overflow:visible!important;
+    padding-bottom:24px!important;
+  }
+  :root .movie-site.page-watch-together .wt-page:not(.wt-theatre-mode) .wt-chat {
+    position:relative!important;inset:auto!important;display:flex!important;
+    flex-direction:column!important;height:auto!important;min-height:0!important;
+    max-height:none!important;overflow:visible!important;
+    margin:12px 0 30px!important;padding:0 0 12px!important;
+  }
+  :root .movie-site.page-watch-together .wt-page:not(.wt-theatre-mode) .wt-chat-messages {
+    flex:0 1 auto!important;min-height:110px!important;
+    max-height:34dvh!important;height:auto!important;overflow-y:auto!important;
+    overscroll-behavior:contain!important;-webkit-overflow-scrolling:touch!important;
+  }
+  :root .movie-site.page-watch-together .wt-page:not(.wt-theatre-mode) .wt-chat-form {
+    position:relative!important;inset:auto!important;bottom:auto!important;
+    z-index:1!important;flex:0 0 auto!important;
+    margin:10px 12px 0!important;
+  }
+  :root .movie-site.page-watch-together .wt-page:not(.wt-theatre-mode) .wt-chat-foot {
+    position:relative!important;inset:auto!important;flex:0 0 auto!important;
+    margin:8px 12px 0!important;padding:8px 0 10px!important;
+  }
+}
 /* Theatre mode is a self-contained full-screen surface: hide the site footer
    and app navigation so neither can slide into or overlap the player/chat. */
 :root:has(.wt-page.wt-theatre-mode) .site-footer,
