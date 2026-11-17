@@ -1251,6 +1251,14 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
               {pendingEpisode && <div className="wt-episode-transition"><div><strong>Next episode is ready</strong><span>Everyone can move to S{pendingEpisode.season} · E{pendingEpisode.episode}. Viewers who are behind can finish first.</span></div><button type="button" onClick={()=>setPendingEpisode(null)}>Finish current</button><button type="button" onClick={()=>{const next=pendingEpisode;setPendingEpisode(null);onEpisodeChangeRef.current?.(next.episode);setRoom(old=>old?{...old,playback:{...(old.playback||{}),position:0,paused:false,season:next.season,episode:next.episode}}:old);publishPlayback({position:0,paused:false,season:next.season,episode:next.episode},true);}}>Go now</button></div>}
               <div
                 className={"wt-player"+(room.media?.kind==='local_file'?" wt-local-video-player"+(isLocalFullscreen?" is-fullscreen":"")+(localControlsVisible?"":" is-controls-hidden")+(localControlsLocked?" is-controls-locked":""):"")}
+                style={room.media?.kind==='local_file'?{
+                  '--wt-grade-temp-color':localTemperature>=0?'#ff9d55':'#579dff',
+                  '--wt-grade-temp-opacity':String(Math.abs(localTemperature)/500),
+                  '--wt-grade-tint-color':localTint>=0?'#ff55ad':'#4cdb91',
+                  '--wt-grade-tint-opacity':String(Math.abs(localTint)/650),
+                  '--wt-grade-custom-color':/^#[0-9a-fA-F]{6}$/.test(localGradeColor)?localGradeColor:'#000000',
+                  '--wt-grade-custom-opacity':String(localGradeColorStrength/100)
+                }:undefined}
                 onPointerMove={room.media?.kind==='local_file'?revealLocalControls:undefined}
                 onPointerEnter={room.media?.kind==='local_file'?revealLocalControls:undefined}
                 onPointerDown={room.media?.kind==='local_file'?revealLocalControls:undefined}
@@ -1263,15 +1271,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                     src={localVideoUrl}
                     playsInline
                     preload="auto"
-                    style={{
-                      filter:`brightness(${Math.round(Math.pow(2,localExposure)*100)}%) contrast(${localContrast}%) saturate(${localSaturation}%) hue-rotate(${localHue}deg)`,
-                      '--wt-grade-temp-color':localTemperature>=0?'#ff9d55':'#579dff',
-                      '--wt-grade-temp-opacity':String(Math.abs(localTemperature)/500),
-                      '--wt-grade-tint-color':localTint>=0?'#ff55ad':'#4cdb91',
-                      '--wt-grade-tint-opacity':String(Math.abs(localTint)/650),
-                      '--wt-grade-custom-color':/^#[0-9a-fA-F]{6}$/.test(localGradeColor)?localGradeColor:'#000000',
-                      '--wt-grade-custom-opacity':String(localGradeColorStrength/100)
-                    }}
+                    style={{filter:`brightness(${Math.round(Math.pow(2,localExposure)*100)}%) contrast(${localContrast}%) saturate(${localSaturation}%) hue-rotate(${localHue}deg)`}}
                     onClick={event=>{
                       if(event.target!==event.currentTarget||localControlsLockedRef.current)return;
                       sendPlayerCommand(paused?'play':'pause');
