@@ -147,6 +147,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const [localControlsVisible,setLocalControlsVisible]=useState(true);
   const [localControlsLocked,setLocalControlsLocked]=useState(false);
   const [localAdjustmentsOpen,setLocalAdjustmentsOpen]=useState(false);
+  const [localBrightness,setLocalBrightness]=useState(100);
   const [localContrast,setLocalContrast]=useState(100);
   const [localSaturation,setLocalSaturation]=useState(100);
   const [localExposure,setLocalExposure]=useState(0);
@@ -155,6 +156,10 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const [localHue,setLocalHue]=useState(0);
   const [localGradeColor,setLocalGradeColor]=useState('#000000');
   const [localGradeColorStrength,setLocalGradeColorStrength]=useState(0);
+  const [localGradeHighlightColor,setLocalGradeHighlightColor]=useState('#f2d6ae');
+  const [localGradeShadowColor,setLocalGradeShadowColor]=useState('#26364a');
+  const [localGradeSplitStrength,setLocalGradeSplitStrength]=useState(0);
+  const [localBackgroundColor,setLocalBackgroundColor]=useState('#000000');
   const [localCodecDiagnostics,setLocalCodecDiagnostics]=useState(null);
   const localControlsLockedRef=useRef(false);
   const localControlsHideTimerRef=useRef(null);
@@ -1199,7 +1204,11 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                   '--wt-grade-tint-color':localTint>=0?'#ff55ad':'#4cdb91',
                   '--wt-grade-tint-opacity':String(Math.abs(localTint)/650),
                   '--wt-grade-custom-color':/^#[0-9a-fA-F]{6}$/.test(localGradeColor)?localGradeColor:'#000000',
-                  '--wt-grade-custom-opacity':String(localGradeColorStrength/100)
+                  '--wt-grade-custom-opacity':String(localGradeColorStrength/100),
+                  '--wt-grade-highlight-color':/^#[0-9a-fA-F]{6}$/.test(localGradeHighlightColor)?localGradeHighlightColor:'#f2d6ae',
+                  '--wt-grade-shadow-color':/^#[0-9a-fA-F]{6}$/.test(localGradeShadowColor)?localGradeShadowColor:'#26364a',
+                  '--wt-grade-split-opacity':String(localGradeSplitStrength/100),
+                  '--wt-player-background':/^#[0-9a-fA-F]{6}$/.test(localBackgroundColor)?localBackgroundColor:'#000000'
                 }:undefined}
                 onPointerMove={room.media?.kind==='local_file'?revealLocalControls:undefined}
                 onPointerEnter={room.media?.kind==='local_file'?revealLocalControls:undefined}
@@ -1213,7 +1222,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                     src={localVideoUrl}
                     playsInline
                     preload="auto"
-                    style={{filter:`brightness(${Math.round(Math.pow(2,localExposure)*100)}%) contrast(${localContrast}%) saturate(${localSaturation}%) hue-rotate(${localHue}deg)`}}
+                    style={{filter:`brightness(${Math.round(localBrightness*Math.pow(2,localExposure))}%) contrast(${localContrast}%) saturate(${localSaturation}%) hue-rotate(${localHue}deg)`,backgroundColor:localBackgroundColor}}
                     onClick={event=>{
                       if(event.target!==event.currentTarget||localControlsLockedRef.current)return;
                       sendPlayerCommand(paused?'play':'pause');
@@ -1282,6 +1291,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                   <div className="wt-local-grade-overlays" aria-hidden="true">
                     <span className="wt-grade-temperature"/>
                     <span className="wt-grade-tint"/>
+                    <span className="wt-grade-split-tone"/>
                     <span className="wt-grade-custom"/>
                   </div>
                   <div className="wt-local-overlay-tools" onClick={event=>event.stopPropagation()}>
@@ -1290,22 +1300,27 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                     <button type="button" onClick={()=>{setChatCollapsed(false);setTheatreChatOpen(value=>!value);}} aria-expanded={theatreChatOpen} aria-label={theatreChatOpen?'Close room chat':'Open room chat'} title="Room chat"><MessageCircle size={17}/></button>
                   </div>
                   {localAdjustmentsOpen && <div className="wt-local-adjustments" onClick={event=>event.stopPropagation()}>
-                    <header><strong>Color grading</strong><button type="button" onClick={()=>{setLocalExposure(0);setLocalContrast(100);setLocalSaturation(100);setLocalTemperature(0);setLocalTint(0);setLocalHue(0);setLocalGradeColor('#000000');setLocalGradeColorStrength(0);}} title="Reset all grading"><RefreshCw size={14}/> Reset</button></header>
+                    <header><strong>Picture &amp; color</strong><button type="button" onClick={()=>{setLocalBrightness(100);setLocalExposure(0);setLocalContrast(100);setLocalSaturation(100);setLocalTemperature(0);setLocalTint(0);setLocalHue(0);setLocalGradeColor('#000000');setLocalGradeColorStrength(0);setLocalGradeHighlightColor('#f2d6ae');setLocalGradeShadowColor('#26364a');setLocalGradeSplitStrength(0);setLocalBackgroundColor('#000000');}} title="Reset all picture adjustments"><RefreshCw size={14}/> Reset</button></header>
                     <div className="wt-grade-presets">
-                      <button type="button" onClick={()=>{setLocalExposure(-0.2);setLocalContrast(112);setLocalSaturation(92);setLocalTemperature(12);setLocalTint(2);setLocalHue(0);setLocalGradeColor('#17243a');setLocalGradeColorStrength(10);}}>Cinema</button>
-                      <button type="button" onClick={()=>{setLocalExposure(0.15);setLocalContrast(105);setLocalSaturation(115);setLocalTemperature(38);setLocalTint(12);setLocalHue(-4);setLocalGradeColor('#ff9a4a');setLocalGradeColorStrength(12);}}>Warm</button>
-                      <button type="button" onClick={()=>{setLocalExposure(0);setLocalContrast(110);setLocalSaturation(90);setLocalTemperature(-35);setLocalTint(-8);setLocalHue(4);setLocalGradeColor('#3e7ab5');setLocalGradeColorStrength(13);}}>Cool</button>
-                      <button type="button" onClick={()=>{setLocalExposure(0);setLocalContrast(115);setLocalSaturation(0);setLocalTemperature(0);setLocalTint(0);setLocalHue(0);setLocalGradeColor('#000000');setLocalGradeColorStrength(0);}}>Mono</button>
-                      <button type="button" onClick={()=>{setLocalExposure(0.1);setLocalContrast(110);setLocalSaturation(145);setLocalTemperature(0);setLocalTint(0);setLocalHue(0);setLocalGradeColor('#000000');setLocalGradeColorStrength(0);}}>Vivid</button>
+                      <button type="button" onClick={()=>{setLocalBrightness(100);setLocalExposure(0);setLocalContrast(102);setLocalSaturation(98);setLocalTemperature(0);setLocalTint(0);setLocalHue(0);setLocalGradeColor('#000000');setLocalGradeColorStrength(0);setLocalGradeHighlightColor('#f2d6ae');setLocalGradeShadowColor('#26364a');setLocalGradeSplitStrength(0);}}>Natural</button>
+                      <button type="button" onClick={()=>{setLocalBrightness(100);setLocalExposure(-0.1);setLocalContrast(108);setLocalSaturation(94);setLocalTemperature(7);setLocalTint(2);setLocalHue(0);setLocalGradeColor('#000000');setLocalGradeColorStrength(0);setLocalGradeHighlightColor('#e7bd8e');setLocalGradeShadowColor('#15283a');setLocalGradeSplitStrength(9);}}>Cinema</button>
+                      <button type="button" onClick={()=>{setLocalBrightness(101);setLocalExposure(0);setLocalContrast(105);setLocalSaturation(96);setLocalTemperature(14);setLocalTint(3);setLocalHue(0);setLocalGradeColor('#000000');setLocalGradeColorStrength(0);setLocalGradeHighlightColor('#f6c98f');setLocalGradeShadowColor('#4a3140');setLocalGradeSplitStrength(8);}}>Warm film</button>
+                      <button type="button" onClick={()=>{setLocalBrightness(98);setLocalExposure(-0.15);setLocalContrast(108);setLocalSaturation(90);setLocalTemperature(-14);setLocalTint(-3);setLocalHue(0);setLocalGradeColor('#000000');setLocalGradeColorStrength(0);setLocalGradeHighlightColor('#a6c7e8');setLocalGradeShadowColor('#14253f');setLocalGradeSplitStrength(10);}}>Cool night</button>
+                      <button type="button" onClick={()=>{setLocalBrightness(100);setLocalExposure(0);setLocalContrast(112);setLocalSaturation(0);setLocalTemperature(0);setLocalTint(0);setLocalHue(0);setLocalGradeColor('#000000');setLocalGradeColorStrength(0);setLocalGradeSplitStrength(0);}}>Mono</button>
+                      <button type="button" onClick={()=>{setLocalBrightness(100);setLocalExposure(0);setLocalContrast(105);setLocalSaturation(112);setLocalTemperature(0);setLocalTint(0);setLocalHue(0);setLocalGradeColor('#000000');setLocalGradeColorStrength(0);setLocalGradeSplitStrength(0);}}>Vivid</button>
                     </div>
+                    <label><span>Brightness <output>{localBrightness}%</output></span><input type="range" min="50" max="150" step="1" value={localBrightness} onChange={event=>setLocalBrightness(Number(event.target.value))}/></label>
                     <label><span>Exposure <output>{localExposure>0?'+':''}{localExposure.toFixed(1)} EV</output></span><input type="range" min="-2" max="2" step="0.1" value={localExposure} onChange={event=>setLocalExposure(Number(event.target.value))}/></label>
                     <label><span>Contrast <output>{localContrast}%</output></span><input type="range" min="50" max="160" step="1" value={localContrast} onChange={event=>setLocalContrast(Number(event.target.value))}/></label>
-                    <label><span>Saturation <output>{localSaturation}%</output></span><input type="range" min="0" max="200" step="1" value={localSaturation} onChange={event=>setLocalSaturation(Number(event.target.value))}/></label>
+                    <label><span>Saturation <output>{localSaturation}%</output></span><input type="range" min="0" max="160" step="1" value={localSaturation} onChange={event=>setLocalSaturation(Number(event.target.value))}/></label>
                     <label><span>Temperature <output>{localTemperature>0?'+':''}{localTemperature}</output></span><input type="range" min="-100" max="100" step="1" value={localTemperature} onChange={event=>setLocalTemperature(Number(event.target.value))}/></label>
                     <label><span>Tint <output>{localTint>0?'+':''}{localTint}</output></span><input type="range" min="-100" max="100" step="1" value={localTint} onChange={event=>setLocalTint(Number(event.target.value))}/></label>
                     <label><span>Hue <output>{localHue>0?'+':''}{localHue}°</output></span><input type="range" min="-180" max="180" step="1" value={localHue} onChange={event=>setLocalHue(Number(event.target.value))}/></label>
+                    <div className="wt-grade-split-row"><span>Split tone</span><label><small>Highlights</small><input type="color" value={localGradeHighlightColor} onChange={event=>setLocalGradeHighlightColor(event.target.value)}/></label><label><small>Shadows</small><input type="color" value={localGradeShadowColor} onChange={event=>setLocalGradeShadowColor(event.target.value)}/></label></div>
+                    <label><span>Split tone strength <output>{localGradeSplitStrength}%</output></span><input type="range" min="0" max="20" step="1" value={localGradeSplitStrength} onChange={event=>setLocalGradeSplitStrength(Number(event.target.value))}/></label>
                     <div className="wt-grade-color-row"><span>Color wash</span><input type="color" value={/^#[0-9a-fA-F]{6}$/.test(localGradeColor)?localGradeColor:'#000000'} onChange={event=>setLocalGradeColor(event.target.value)}/><input type="text" value={localGradeColor} maxLength={7} spellCheck={false} aria-label="Color hex code" placeholder="#RRGGBB" onChange={event=>setLocalGradeColor(event.target.value)} onBlur={()=>{if(!/^#[0-9a-fA-F]{6}$/.test(localGradeColor))setLocalGradeColor('#000000');}}/></div>
                     <label><span>Color wash strength <output>{localGradeColorStrength}%</output></span><input type="range" min="0" max="40" step="1" value={localGradeColorStrength} onChange={event=>setLocalGradeColorStrength(Number(event.target.value))}/></label>
+                    <div className="wt-grade-background-row"><span>Video background</span><div className="wt-grade-background-swatches">{[{label:'Black',value:'#000000'},{label:'Charcoal',value:'#111827'},{label:'Navy',value:'#101d32'},{label:'Plum',value:'#24172f'},{label:'Forest',value:'#14251f'},{label:'Slate',value:'#26313d'}].map(color=><button key={color.value} type="button" title={color.label} aria-label={color.label+' video background'} aria-pressed={localBackgroundColor===color.value} style={{backgroundColor:color.value}} onClick={()=>setLocalBackgroundColor(color.value)}/>)}</div><input type="color" value={/^#[0-9a-fA-F]{6}$/.test(localBackgroundColor)?localBackgroundColor:'#000000'} aria-label="Custom video background color" onChange={event=>setLocalBackgroundColor(event.target.value)}/></div>
                   </div>}
                   <div className="wt-local-controls" role="group" aria-label="Local video controls" onClick={event=>event.stopPropagation()}>
                     <div className="wt-local-control-row">

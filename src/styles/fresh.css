@@ -15850,3 +15850,111 @@
 .wt-theatre-chat-portal .wt-chat.wt-theatre-chat-open .wt-chat-messages article.mine {
   background:rgba(255,255,255,.10) !important;border-color:rgba(255,255,255,.16) !important;
 }
+
+
+/* Picture controls: natural split-toning, a real brightness control, and a
+   user-selectable matte color for the letterbox around local video. */
+:root .movie-site.page-watch-together .wt-local-video-player .wt-grade-split-tone {
+  background:linear-gradient(180deg,var(--wt-grade-highlight-color,#f2d6ae) 0%,transparent 48%,var(--wt-grade-shadow-color,#26364a) 100%)!important;
+  opacity:var(--wt-grade-split-opacity,0)!important;
+  mix-blend-mode:soft-light!important;
+}
+:root .movie-site.page-watch-together .wt-local-video-player,
+:root .movie-site.page-watch-together .wt-local-video-player > video,
+:root .wt-page.wt-theatre-mode .wt-local-video-player,
+:root .wt-page.wt-theatre-mode .wt-local-video-player > video,
+:root .wt-local-video-player:fullscreen,
+:root .wt-local-video-player:fullscreen > video {
+  background:var(--wt-player-background,#000000)!important;
+}
+:root .wt-grade-split-row {
+  display:grid!important;grid-template-columns:minmax(0,1fr) 1fr 1fr!important;
+  align-items:center!important;gap:8px!important;color:rgba(255,255,255,.78)!important;font-size:11px!important;
+}
+:root .wt-grade-split-row label {display:grid!important;gap:5px!important;min-width:0!important}
+:root .wt-grade-split-row label small {color:rgba(255,255,255,.62)!important;font-size:9px!important}
+:root .wt-grade-split-row input[type="color"] {
+  width:100%!important;height:30px!important;min-width:0!important;padding:2px!important;
+  border:1px solid rgba(255,255,255,.2)!important;border-radius:8px!important;background:rgba(255,255,255,.08)!important;
+}
+:root .wt-grade-background-row {
+  display:grid!important;grid-template-columns:1fr auto 36px!important;align-items:center!important;
+  gap:9px!important;color:rgba(255,255,255,.78)!important;font-size:11px!important;
+}
+:root .wt-grade-background-swatches {display:flex!important;align-items:center!important;gap:5px!important;flex-wrap:wrap!important}
+:root .wt-grade-background-swatches button {
+  width:19px!important;height:19px!important;padding:0!important;border:1px solid rgba(255,255,255,.4)!important;
+  border-radius:50%!important;box-shadow:0 0 0 1px rgba(0,0,0,.18)!important;cursor:pointer!important;
+}
+:root .wt-grade-background-swatches button[aria-pressed="true"] {outline:2px solid #fff!important;outline-offset:2px!important}
+:root .wt-grade-background-row input[type="color"] {
+  width:36px!important;height:32px!important;padding:2px!important;border:1px solid rgba(255,255,255,.2)!important;
+  border-radius:8px!important;background:rgba(255,255,255,.08)!important;cursor:pointer!important;
+}
+
+/* Theatre sizing uses the viewport's actual containing block. Earlier rules
+   mixed 100vw children with a padded parent, which let the stage escape right. */
+:root .wt-page.wt-theatre-mode {
+  position:fixed!important;inset:0!important;box-sizing:border-box!important;
+  width:100%!important;max-width:100%!important;height:100dvh!important;min-height:100dvh!important;
+  margin:0!important;padding:0!important;overflow:hidden!important;
+}
+:root .wt-page.wt-theatre-mode .wt-content {
+  display:block!important;position:relative!important;box-sizing:border-box!important;
+  width:100%!important;max-width:100%!important;height:100dvh!important;min-height:100dvh!important;
+  margin:0!important;padding:0!important;overflow:hidden!important;
+}
+:root .wt-page.wt-theatre-mode .wt-main {
+  display:flex!important;position:relative!important;flex-direction:column!important;box-sizing:border-box!important;
+  width:100%!important;max-width:100%!important;height:100dvh!important;min-height:100dvh!important;
+  min-width:0!important;margin:0!important;padding:0!important;overflow:hidden!important;
+}
+:root .wt-page.wt-theatre-mode .wt-player {
+  position:relative!important;display:block!important;flex:1 1 auto!important;box-sizing:border-box!important;
+  width:100%!important;max-width:100%!important;height:100dvh!important;min-height:0!important;max-height:none!important;
+  margin:0!important;aspect-ratio:auto!important;overflow:hidden!important;border-radius:0!important;
+}
+:root:has(.wt-page.wt-theatre-mode) .wt-page.wt-theatre-mode .wt-player iframe {
+  display:block!important;position:absolute!important;top:0!important;left:0!important;
+  width:200%!important;height:200%!important;max-width:none!important;max-height:none!important;
+  transform:scale(.5)!important;transform-origin:top left!important;
+}
+
+/* Local-file picture tools are available in theatre mode as well as browser
+   fullscreen, without changing the embedded-stream control layout. */
+:root .wt-page.wt-theatre-mode .wt-local-video-player .wt-local-overlay-tools {
+  position:absolute!important;z-index:16!important;top:max(14px,env(safe-area-inset-top))!important;
+  right:16px!important;display:flex!important;align-items:center!important;gap:8px!important;
+}
+:root .wt-page.wt-theatre-mode .wt-local-video-player .wt-local-overlay-tools button {
+  display:grid!important;place-items:center!important;width:40px!important;height:40px!important;padding:0!important;
+  border:1px solid rgba(255,255,255,.18)!important;border-radius:14px!important;color:#fff!important;
+  background:rgba(10,13,20,.58)!important;box-shadow:0 8px 28px rgba(0,0,0,.22)!important;
+  -webkit-backdrop-filter:blur(20px) saturate(1.2)!important;backdrop-filter:blur(20px) saturate(1.2)!important;
+}
+:root .wt-page.wt-theatre-mode .wt-local-video-player .wt-local-adjustments {
+  position:absolute!important;z-index:17!important;top:max(64px,calc(54px + env(safe-area-inset-top)))!important;
+  right:16px!important;display:grid!important;gap:13px!important;width:min(340px,calc(100vw - 24px))!important;
+  box-sizing:border-box!important;padding:15px!important;border:1px solid rgba(255,255,255,.16)!important;
+  border-radius:18px!important;color:#fff!important;background:rgba(10,13,20,.84)!important;
+  box-shadow:0 18px 55px rgba(0,0,0,.38)!important;
+  -webkit-backdrop-filter:blur(28px) saturate(1.3)!important;backdrop-filter:blur(28px) saturate(1.3)!important;
+}
+:root .wt-page.wt-theatre-mode .wt-local-video-player.is-controls-hidden .wt-local-adjustments,
+:root .wt-page.wt-theatre-mode .wt-local-video-player.is-controls-locked .wt-local-adjustments {
+  opacity:0!important;visibility:hidden!important;pointer-events:none!important;
+}
+@media(max-width:760px) {
+  :root .wt-page.wt-theatre-mode .wt-local-video-player .wt-local-overlay-tools {
+    top:max(8px,env(safe-area-inset-top))!important;right:8px!important;gap:5px!important;
+  }
+  :root .wt-page.wt-theatre-mode .wt-local-video-player .wt-local-overlay-tools button {
+    width:36px!important;height:36px!important;border-radius:12px!important;
+  }
+  :root .wt-page.wt-theatre-mode .wt-local-video-player .wt-local-adjustments {
+    top:max(54px,calc(48px + env(safe-area-inset-top)))!important;right:8px!important;
+    width:min(340px,calc(100vw - 16px))!important;padding:12px!important;gap:11px!important;
+  }
+  :root .wt-grade-background-row {grid-template-columns:1fr auto!important}
+  :root .wt-grade-background-row>span {grid-column:1/-1!important}
+}
