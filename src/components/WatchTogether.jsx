@@ -1195,7 +1195,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                     onLoadedMetadata={event=>{
                       const video=event.currentTarget;
                       setLocalVideoError('');
-                      setLocalVideoAspectRatio(\`\${video.videoWidth||16} / \${video.videoHeight||9}\`);
+                      setLocalVideoAspectRatio((video.videoWidth||16) + ' / ' + (video.videoHeight||9));
                       setControlsExpanded(true);
                       setDuration(video.duration||0);
                       durationRef.current=video.duration||0;
@@ -1268,7 +1268,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                     </div>
                   </div>
                   {localVideoError&&<div className="wt-local-playback-error"><strong>Can’t play this video here</strong><span>{localVideoError}</span></div>}
-                </> : <iframe ref={iframeRef} src={sharedPlayerUrl} title={\`Watch together: \${room.media?.title || itemMedia.title}\`} allow="autoplay; fullscreen; encrypted-media" allowFullScreen disablePictureInPicture/>}
+                </> : <iframe ref={iframeRef} src={sharedPlayerUrl} title={"Watch together: " + (room.media?.title || itemMedia.title)} allow="autoplay; fullscreen; encrypted-media" allowFullScreen disablePictureInPicture/>}
                 {(localPlaybackOverride || canReturnLocal) && <div className="wt-sync-floating" role="status">
                   <span className="wt-sync-indicator"><i/>{localPlaybackOverride?'Playing independently':'Room playback'}</span>
                   {localPlaybackOverride&&<button type="button" onClick={syncToRoom} disabled={!playerReady} title="Jump back to the room’s current position"><Radio size={14}/> Sync with room</button>}
