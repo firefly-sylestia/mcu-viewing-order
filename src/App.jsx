@@ -522,43 +522,53 @@ export default function App() {
 
   const [navHidden, setNavHidden] = useState(false);
   const navIdleTimer = useRef(null);
+  const navScrollStopTimer = useRef(null);
   useEffect(() => {
     const isWatchSurface = section === 'watch';
     let lastScrollY = window.scrollY || document.documentElement.scrollTop || 0;
     let frame = 0;
-    const clearIdleTimer = () => {
-      if (navIdleTimer.current) {
-        window.clearTimeout(navIdleTimer.current);
-        navIdleTimer.current = null;
+    const clearTimer = (ref) => {
+      if (ref.current) {
+        window.clearTimeout(ref.current);
+        ref.current = null;
       }
     };
-    const scheduleIdleHide = () => {
+    const scheduleWatchIdleHide = () => {
       if (!isWatchSurface) return;
-      clearIdleTimer();
-      navIdleTimer.current = window.setTimeout(() => setNavHidden(true), 2400);
-    };
-    const revealOnActivity = () => {
-      if (!isWatchSurface) return;
-      setNavHidden(false);
-      scheduleIdleHide();
+      clearTimer(navIdleTimer);
+      navIdleTimer.current = window.setTimeout(() => setNavHidden(true), 3600);
     };
     const onScroll = () => {
       if (frame) return;
       frame = window.requestAnimationFrame(() => {
         frame = 0;
         const currentY = Math.max(0, window.scrollY || document.documentElement.scrollTop || 0);
-        if (currentY <= 12) {
+        const movingDown = currentY > lastScrollY + 2;
+        const movingUp = currentY < lastScrollY - 2;
+        if (currentY <= 12 || movingUp) {
           setNavHidden(false);
-        } else if (currentY > lastScrollY + 6) {
+        } else if (movingDown) {
           setNavHidden(true);
         }
         lastScrollY = currentY;
-        scheduleIdleHide();
+
+        // Scrolling down tucks the bar away; once scrolling actually stops,
+        // bring it back so it never stays lost below the fold.
+        clearTimer(navScrollStopTimer);
+        navScrollStopTimer.current = window.setTimeout(() => {
+          setNavHidden(false);
+          scheduleWatchIdleHide();
+        }, 650);
       });
     };
-    const onActivity = () => revealOnActivity();
+    const onActivity = () => {
+      setNavHidden(false);
+      scheduleWatchIdleHide();
+    };
     setNavHidden(false);
-    if (isWatchSurface) scheduleIdleHide();
+    clearTimer(navIdleTimer);
+    clearTimer(navScrollStopTimer);
+    if (isWatchSurface) scheduleWatchIdleHide();
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('pointerdown', onActivity, { passive: true });
     window.addEventListener('touchstart', onActivity, { passive: true });
@@ -571,7 +581,8 @@ export default function App() {
       window.removeEventListener('keydown', onActivity);
       window.removeEventListener('wheel', onActivity);
       if (frame) window.cancelAnimationFrame(frame);
-      clearIdleTimer();
+      clearTimer(navIdleTimer);
+      clearTimer(navScrollStopTimer);
     };
   }, [section]);
   useLayoutEffect(() => {
