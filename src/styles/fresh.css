@@ -14974,3 +14974,39 @@
 .wt-room-type-pills button{display:flex;align-items:center;justify-content:center;gap:8px;flex:1;min-height:40px;padding:9px 14px;border:1px solid transparent;border-radius:999px;background:transparent;color:var(--text-secondary,inherit);font:inherit;font-size:12px;font-weight:650;cursor:pointer}
 .wt-room-type-pills button.active{background:var(--surface,rgba(128,128,128,.13));border-color:var(--line,rgba(128,128,128,.2));color:var(--text,inherit);box-shadow:0 3px 14px rgba(0,0,0,.07)}
 .wt-local-file-picker{display:grid;gap:12px;margin:10px 0 16px}.wt-local-file-drop{display:flex;min-height:190px;flex-direction:column;align-items:center;justify-content:center;gap:9px;padding:22px;border:1px dashed var(--line-strong,rgba(128,128,128,.38));border-radius:20px;background:var(--surface-soft,rgba(128,128,128,.06));color:var(--text,inherit);text-align:center;cursor:pointer}.wt-local-file-icon{display:grid;place-items:center;width:48px;height:48px;border-radius:15px;background:var(--surface,rgba(128,128,128,.12))}.wt-local-file-drop strong{font-size:14px}.wt-local-file-drop small,.wt-local-file-drop em{max-width:100%;overflow-wrap:anywhere;color:var(--text-secondary,inherit);font-size:11px}.wt-local-file-drop em{font-style:normal}.wt-local-file-match{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid rgba(55,160,110,.22);border-radius:14px;background:rgba(55,160,110,.07)}.wt-local-file-match>span{display:grid;flex:1;gap:3px}.wt-local-file-match strong{font-size:12px}.wt-local-file-match small{font-size:10px;color:var(--text-secondary,inherit)}.wt-local-file-match badge{padding:5px 9px;border-radius:999px;background:rgba(55,160,110,.12);font-size:10px;white-space:nowrap}.wt-player video{display:block;width:100%;height:100%;max-height:78vh;background:#000;object-fit:contain}
+
+
+/* Watch Together: clear, consistent end-room and confirmation actions */
+:root .wt-create-backdrop .wt-host-danger{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:16px!important;margin:20px 22px 22px!important;padding:17px!important;border:1px solid color-mix(in srgb,#d34b59 22%,transparent)!important;border-radius:16px!important;background:color-mix(in srgb,#d34b59 5%,var(--fx-surface))!important}
+:root .wt-create-backdrop .wt-host-danger-copy{display:flex;align-items:center;gap:11px;min-width:0}
+:root .wt-create-backdrop .wt-host-danger-icon{display:grid;place-items:center;width:36px;height:36px;flex:0 0 36px;border-radius:12px;background:color-mix(in srgb,#d34b59 12%,transparent);color:#d34b59}
+:root .wt-create-backdrop .wt-host-danger-copy>span:last-child{display:grid;gap:4px;min-width:0}
+:root .wt-create-backdrop .wt-host-danger-copy b{color:var(--fx-text);font-size:12px;font-weight:780}
+:root .wt-create-backdrop .wt-host-danger-copy small{color:var(--fx-muted);font-size:10px;line-height:1.45}
+:root .wt-create-backdrop .wt-host-danger>button{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:38px;flex:0 0 auto;padding:0 13px!important;border:1px solid color-mix(in srgb,#d34b59 38%,transparent)!important;border-radius:11px!important;background:color-mix(in srgb,#d34b59 10%,var(--fx-surface))!important;color:#c83f4d!important;font-size:11px!important;font-weight:780!important;white-space:nowrap}
+:root .wt-create-backdrop .wt-host-danger>button:hover{background:color-mix(in srgb,#d34b59 17%,var(--fx-surface))!important}
+:root .wt-create-backdrop .wt-confirm-dialog{position:relative!important;width:min(420px,calc(100vw - 32px))!important;max-width:420px!important;padding:26px!important;border-radius:23px!important;overflow:hidden!important}
+:root .wt-create-backdrop .wt-confirm-dialog .wt-confirm-icon{display:grid;place-items:center;width:46px;height:46px;margin:0 0 17px;border-radius:15px;background:color-mix(in srgb,var(--fx-accent) 12%,var(--fx-surface-2));color:var(--fx-accent)}
+:root .wt-create-backdrop .wt-confirm-dialog.is-danger .wt-confirm-icon{background:color-mix(in srgb,#d34b59 12%,var(--fx-surface-2));color:#d34b59}
+:root .wt-create-backdrop .wt-confirm-dialog>header{margin:0 0 24px!important}
+:root .wt-create-backdrop .wt-confirm-dialog>header span{font-size:9px!important;letter-spacing:.16em!important;font-weight:850!important;color:var(--fx-muted)!important}
+:root .wt-create-backdrop .wt-confirm-dialog>header h2{margin:6px 0 8px!important;font-size:23px!important;line-height:1.16!important;letter-spacing:-.045em!important;color:var(--fx-text)!important}
+:root .wt-create-backdrop .wt-confirm-dialog>header p{max-width:340px;margin:0!important;font-size:12px!important;line-height:1.6!important;color:var(--fx-muted)!important}
+:root .wt-create-backdrop .wt-confirm-actions{display:flex;justify-content:flex-end;gap:9px;padding-top:17px;border-top:1px solid color-mix(in srgb,var(--fx-muted) 14%,transparent)}
+:root .wt-create-backdrop .wt-confirm-actions>button{display:inline-flex;align-items:center;justify-content:center;min-width:104px;min-height:40px;padding:0 15px!important;border:1px solid color-mix(in srgb,var(--fx-muted) 22%,transparent)!important;border-radius:12px!important;font:inherit!important;font-size:11px!important;font-weight:780!important;transition:background .18s ease,border-color .18s ease,transform .18s ease}
+:root .wt-create-backdrop .wt-confirm-actions>.wt-confirm-cancel{background:var(--fx-surface-2)!important;color:var(--fx-text)!important}
+:root .wt-create-backdrop .wt-confirm-actions>.wt-confirm-cancel:hover{border-color:color-mix(in srgb,var(--fx-text) 32%,transparent)!important;background:color-mix(in srgb,var(--fx-muted) 12%,var(--fx-surface-2))!important}
+:root .wt-create-backdrop .wt-confirm-actions>.wt-confirm-primary{border-color:color-mix(in srgb,var(--fx-accent) 35%,transparent)!important;background:var(--fx-accent)!important;color:white!important}
+:root .wt-create-backdrop .wt-confirm-dialog.is-danger .wt-confirm-actions>.wt-confirm-primary{border-color:#c83f4d!important;background:#c83f4d!important;color:#fff!important}
+:root .wt-create-backdrop .wt-confirm-actions>.wt-confirm-primary.is-transfer{background:var(--fx-accent)!important;color:white!important}
+:root .wt-create-backdrop .wt-confirm-actions>button:hover:not(:disabled){transform:translateY(-1px)}
+:root .wt-create-backdrop .wt-confirm-actions>button:disabled{opacity:.55;cursor:wait}
+@media(max-width:620px){
+ :root .wt-create-backdrop .wt-host-danger{margin:15px 14px 16px!important;padding:13px!important;align-items:flex-start!important}
+ :root .wt-create-backdrop .wt-host-danger-copy small{max-width:190px}
+ :root .wt-create-backdrop .wt-host-danger>button{min-height:36px;padding:0 10px!important}
+ :root .wt-create-backdrop .wt-confirm-dialog{width:min(100%,420px)!important;padding:21px!important;border-radius:20px!important}
+ :root .wt-create-backdrop .wt-confirm-dialog>header h2{font-size:21px!important}
+ :root .wt-create-backdrop .wt-confirm-actions{gap:8px}
+ :root .wt-create-backdrop .wt-confirm-actions>button{min-width:0;flex:1}
+}
