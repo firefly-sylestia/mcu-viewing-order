@@ -107,7 +107,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const [canReturnLocal, setCanReturnLocal] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState(item || null);
   const [localVideoAspectRatio,setLocalVideoAspectRatio]=useState('16 / 9');
-  const [roomType,setRoomType]=useState('movie');const [localFile,setLocalFile]=useState(null);const [localFileFingerprint,setLocalFileFingerprint]=useState('');const [localFileBusy,setLocalFileBusy]=useState(false);const [pendingJoinCode,setPendingJoinCode]=useState('');const [pendingJoinIdentity,setPendingJoinIdentity]=useState(null);const [localVideoUrl,setLocalVideoUrl]=useState('');const localFileInputRef=useRef(null);const joinFileInputRef=useRef(null);const localVideoRef=useRef(null);
+  const [roomType,setRoomType]=useState('movie');const [localFile,setLocalFile]=useState(null);const [localFileFingerprint,setLocalFileFingerprint]=useState('');const [localFileBusy,setLocalFileBusy]=useState(false);const [pendingJoinCode,setPendingJoinCode]=useState('');const [pendingJoinIdentity,setPendingJoinIdentity]=useState(null);const [pendingJoinMedia,setPendingJoinMedia]=useState(null);const [joinPreviewOpen,setJoinPreviewOpen]=useState(false);const [localVideoUrl,setLocalVideoUrl]=useState('');const localFileInputRef=useRef(null);const joinFileInputRef=useRef(null);const localVideoRef=useRef(null);
   const [mediaQuery, setMediaQuery] = useState('');
   const [tmdbMediaItems, setTmdbMediaItems] = useState([]);
   const [tmdbSearchLoading, setTmdbSearchLoading] = useState(false);
@@ -503,8 +503,58 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     return()=>window.clearInterval(timer);
   }, [open, room?.id, loadOwnedRooms]);
 
-  const joinExisting = useCallback(async (code, identity = guest, verifiedFingerprint = localFileFingerprint) => { setBusy(true);setError('');lastVersionRef.current=0;watchSecondsRef.current=0;localHistoryFlushRef.current=0;remoteHistoryFlushRef.current=0;try{const result=await rpc('join_watch_room',{p_code:code.trim().toUpperCase(),p_token:identity.token,p_name:identity.name,p_avatar:identity.avatar});if(result.room?.media?.kind==='local_file'&&result.room.media.fileFingerprint!==verifiedFingerprint)throw new Error('That file does not match this room. Select the exact same video file.');setParticipant(result.participant);applyRoomSnapshot(result);if(identity?.token)saveActiveRoom(code.trim().toUpperCase(),identity,result.room?.media||null);setOpen(true);setRoomLink(window.location.origin+'/watch-room/'+code.trim().toUpperCase());}catch(e){setError(e.message||'Could not join this room.');}finally{setBusy(false);}},[rpc,guest,applyRoomSnapshot,localFileFingerprint]);
-  const beginJoin=useCallback(async(code,identity=guest)=>{setBusy(true);setError('');try{const preview=await rpc('preview_watch_room',{p_code:code.trim().toUpperCase()});if(preview?.media?.kind==='local_file'){setPendingJoinCode(code.trim().toUpperCase());setPendingJoinIdentity(identity);joinFileInputRef.current?.click();}else await joinExisting(code,identity);}catch(e){setError(e.message||'Could not find this room.');}finally{setBusy(false);}},[rpc,joinExisting,guest]);
+  const joinExisting = useCallback(async (code, identity = guest, verifiedFingerprint = localFileFingerprint) => {
+    setBusy(true);
+    setError('');
+    lastVersionRef.current = 0;
+    watchSecondsRef.current = 0;
+    localHistoryFlushRef.current = 0;
+    remoteHistoryFlushRef.current = 0;
+    const normalizedCode = code.trim().toUpperCase();
+    try {
+      const result = await rpc('join_watch_room', {
+        p_code: normalizedCode,
+        p_token: identity.token,
+        p_name: identity.name,
+        p_avatar: identity.avatar,
+      });
+      if (result.room?.media?.kind === 'local_file' && result.room.media.fileFingerprint !== verifiedFingerprint) {
+        throw new Error('That file does not match this room. Select the exact same video file.');
+      }
+      setParticipant(result.participant);
+      applyRoomSnapshot(result);
+      if (identity?.token) saveActiveRoom(normalizedCode, identity, result.room?.media || null);
+      setOpen(true);
+      setRoomLink(window.location.origin + '/watch-room/' + normalizedCode);
+      return true;
+    } catch (e) {
+      setError(e.message || 'Could not join this room.');
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  }, [rpc, guest, applyRoomSnapshot, localFileFingerprint]);
+  const beginJoin = useCallback(async (code, identity = guest) => {
+    const normalizedCode = code.trim().toUpperCase();
+    if (!normalizedCode) return;
+    setBusy(true);
+    setError('');
+    try {
+      const preview = await rpc('preview_watch_room', { p_code: normalizedCode });
+      if (preview?.media?.kind === 'local_file') {
+        setPendingJoinCode(normalizedCode);
+        setPendingJoinIdentity(identity);
+        setPendingJoinMedia(preview.media);
+        setJoinPreviewOpen(true);
+      } else {
+        await joinExisting(normalizedCode, identity);
+      }
+    } catch (e) {
+      setError(e.message || 'Could not find this room.');
+    } finally {
+      setBusy(false);
+    }
+  }, [rpc, joinExisting, guest]);
   const handleLocalFile=useCallback(async file=>{if(!file)return '';setLocalFileBusy(true);setError('');try{if(!file.type.startsWith('video/'))throw new Error('Please choose a video file.');const fingerprint=await fingerprintLocalVideo(file);setLocalFile(file);setLocalFileFingerprint(fingerprint);const url=URL.createObjectURL(file);setLocalVideoUrl(previous=>{if(previous)URL.revokeObjectURL(previous);return url;});return fingerprint;}catch(e){setError(e.message||'Could not read the video file.');return '';}finally{setLocalFileBusy(false);}},[]);
 
 
@@ -889,14 +939,32 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                 <button disabled={busy || joinCode.length !== 8}>{busy ? 'Joining…' : 'Join room'}<ChevronRight size={16}/></button>
               </form>
               <div className="wt-or"><span />OR<span /></div>
-              <button type="button" className="wt-create" onClick={() => { setSetupDialog(true); setRoomType('movie'); setSelectedMedia(item || null); setLocalFile(null); setLocalFileFingerprint(''); setError(''); }}><span><strong>Create a new room</strong><small>Choose a movie, series or your own video file</small></span><Link2 size={18}/></button><input ref={joinFileInputRef} type="file" accept="video/*" hidden onChange={async event=>{const file=event.target.files?.[0];event.target.value='';if(!file)return;const fingerprint=await handleLocalFile(file);if(fingerprint&&pendingJoinCode){setLocalFileFingerprint(fingerprint);await joinExisting(pendingJoinCode,pendingJoinIdentity||guest,fingerprint);setPendingJoinCode('');setPendingJoinIdentity(null);}}}/>
+              <button type="button" className="wt-create" onClick={() => { setSetupDialog(true); setRoomType('movie'); setSelectedMedia(item || null); setLocalFile(null); setLocalFileFingerprint(''); setError(''); }}><span><strong>Create a new room</strong><small>Choose a movie, series or your own video file</small></span><Link2 size={18}/></button><input ref={joinFileInputRef} type="file" accept="video/*" hidden onChange={async event => {
+                 const file = event.target.files?.[0];
+                 event.target.value = '';
+                 if (!file || !pendingJoinCode) return;
+                 setError('');
+                 const fingerprint = await handleLocalFile(file);
+                 if (!fingerprint) return;
+                 if (pendingJoinMedia?.fileFingerprint && fingerprint !== pendingJoinMedia.fileFingerprint) {
+                   setError('This video does not match the host’s file. Choose the exact same video file.');
+                   return;
+                 }
+                 const joined = await joinExisting(pendingJoinCode, pendingJoinIdentity || guest, fingerprint);
+                 if (joined) {
+                   setJoinPreviewOpen(false);
+                   setPendingJoinCode('');
+                   setPendingJoinIdentity(null);
+                   setPendingJoinMedia(null);
+                 }
+               }}/>
               <div className="wt-identity"><img src={guest.avatar} alt="" /><div><small>YOU'RE JOINING AS</small><strong>{guest.name}</strong><span>{guest.isGuest ? 'Guest · no account needed' : 'Signed in · profile identity'}</span></div>{guest.isGuest&&<button type="button" onClick={()=>setEditingGuestName(value=>!value)} title="Change guest name"><Pencil size={16}/></button>}</div>
               {guest.isGuest&&editingGuestName&&<form className="wt-guest-name-form" onSubmit={event=>{event.preventDefault();updateGuestName(guestNameDraft);}}><input value={guestNameDraft} onChange={event=>setGuestNameDraft(event.target.value)} maxLength={32} placeholder="Choose a guest name" aria-label="Guest name"/><button type="submit" disabled={busy||!guestNameDraft.trim()}>Save name</button></form>}
               {error && <p className="wt-error">{error}</p>}
               <p className="wt-privacy"><ShieldCheck size={14}/> Private room links are hard to guess. Guests can join without signing in.</p>
               <section className="wt-owned-rooms">
                 <header><div><small>ROOM MANAGEMENT</small><strong>Your created rooms</strong></div><button type="button" onClick={loadOwnedRooms} disabled={roomsLoading} aria-label="Refresh rooms"><RefreshCw size={14}/></button></header>
-                {roomsLoading ? <p className="wt-owned-empty">Loading your rooms…</p> : ownedRooms.length ? <div className="wt-owned-list">{ownedRooms.map(saved=><article className="wt-owned-room" key={saved.id}><div className="wt-owned-poster">{saved.media?.poster?<img src={saved.media.poster} alt=""/>:<Radio size={17}/>}</div><div className="wt-owned-copy"><strong>{saved.media?.title || 'Screening room'}</strong><small>{saved.code} · {saved.is_active ? `${saved.viewer_count || 0} online` : 'Inactive'}</small><small>{saved.is_active ? 'Active now' : `Auto-delete in ${Math.max(0,Math.ceil((Date.parse(saved.expires_at)-Date.now())/60000))} min`}</small></div><button type="button" className="wt-owned-open" onClick={()=>joinExisting(saved.code,guest)} disabled={busy} aria-label={`Open room ${saved.code}`}><Play size={13}/><span>Open</span></button><button type="button" className="wt-owned-delete" onClick={()=>deleteOwnedRoom(saved.code)} disabled={busy} aria-label={`Delete room ${saved.code}`}><X size={16}/></button></article>)}</div> : <p className="wt-owned-empty">No rooms created with this identity yet.</p>}
+                {roomsLoading ? <p className="wt-owned-empty">Loading your rooms…</p> : ownedRooms.length ? <div className="wt-owned-list">{ownedRooms.map(saved=><article className="wt-owned-room" key={saved.id}><div className="wt-owned-poster">{saved.media?.poster?<img src={saved.media.poster} alt=""/>:<Radio size={17}/>}</div><div className="wt-owned-copy"><strong>{saved.media?.title || 'Screening room'}</strong><small>{saved.code} · {saved.is_active ? `${saved.viewer_count || 0} online` : 'Inactive'}</small><small>{saved.is_active ? 'Active now' : `Auto-delete in ${Math.max(0,Math.ceil((Date.parse(saved.expires_at)-Date.now())/60000))} min`}</small></div><button type="button" className="wt-owned-open" onClick={()=>beginJoin(saved.code,guest)} disabled={busy} aria-label={`Open room ${saved.code}`}><Play size={13}/><span>Open</span></button><button type="button" className="wt-owned-delete" onClick={()=>deleteOwnedRoom(saved.code)} disabled={busy} aria-label={`Delete room ${saved.code}`}><X size={16}/></button></article>)}</div> : <p className="wt-owned-empty">No rooms created with this identity yet.</p>}
               </section>
             </div>
           </div> : <div className="wt-content">
@@ -962,6 +1030,57 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
           )}
           {hostPanelOpen && typeof document !== 'undefined' && createPortal(<div className="wt-create-backdrop" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)setHostPanelOpen(false);}}><section className="wt-create-dialog wt-host-panel" role="dialog" aria-modal="true" aria-label="Host control panel"><header><div><span>ROOM MANAGEMENT</span><h2>Host control panel</h2><p>Manage access, permissions and your screening.</p></div><button type="button" onClick={()=>setHostPanelOpen(false)} aria-label="Close"><X size={18}/></button></header><div className="wt-host-settings"><label><span><b>Voice chat</b><small>Allow participants to start host-relayed voice chat.</small></span><input type="checkbox" checked={room.settings?.voice_enabled===true} onChange={e=>{if(!e.target.checked&&voiceEnabled){setVoiceEnabled(false);setVoiceMuted(false);}updateRoomSettings({voice_enabled:e.target.checked});}}/></label><label><span><b>Lock room</b><small>Only current participants can stay. New joins are blocked.</small></span><input type="checkbox" checked={Boolean(room.settings?.locked)} onChange={e=>updateRoomSettings({locked:e.target.checked})}/></label><label><span><b>Reactions</b><small>Allow quick emoji reactions in chat.</small></span><input type="checkbox" checked={room.settings?.reactions_enabled!==false} onChange={e=>updateRoomSettings({reactions_enabled:e.target.checked})}/></label><label><span><b>Room chat</b><small>Allow participants to send messages.</small></span><input type="checkbox" checked={room.settings?.chat_enabled!==false} onChange={e=>updateRoomSettings({chat_enabled:e.target.checked})}/></label><label><span><b>Guest episode changes</b><small>Let viewers change the shared episode.</small></span><input type="checkbox" checked={Boolean(room.settings?.guests_can_change_episode)} onChange={e=>updateRoomSettings({guests_can_change_episode:e.target.checked})}/></label><label><span><b>Room expiry</b><small>Choose how long the room can remain active.</small></span><select value={room.settings?.expiry_minutes||30} onChange={e=>updateRoomSettings({expiry_minutes:Number(e.target.value)})}><option value="30">30 minutes inactive</option><option value="60">1 hour inactive</option><option value="180">3 hours inactive</option><option value="480">8 hours inactive</option><option value="1440">24 hours inactive</option></select></label></div><div className="wt-host-people"><strong>Participants</strong>{members.filter(m=>!m.is_host).map(member=><div key={member.id}><span><b>{member.display_name}</b><small>{member.role==='operator'?'Operator':'Viewer'}</small></span><button type="button" disabled={busy||member.role==='operator'} onClick={()=>grantOperator(member)}>Make operator</button><button type="button" disabled={busy} onClick={()=>setConfirmAction({type:'remove',member})}><UserMinus size={14}/></button><button type="button" disabled={busy} onClick={()=>setConfirmAction({type:'transfer',member})}><ArrowRightLeft size={14}/></button></div>)}</div><div className="wt-host-danger"><div className="wt-host-danger-copy"><span className="wt-host-danger-icon"><LogOut size={16}/></span><span><b>End room</b><small>Disconnect everyone and permanently close this screening.</small></span></div><button type="button" onClick={()=>setConfirmAction({type:'close'})}><LogOut size={14}/>End room</button></div></section></div>,document.body)}
           {confirmAction && typeof document !== 'undefined' && createPortal(<div className="wt-create-backdrop wt-confirm-backdrop" role="presentation"><section className={"wt-create-dialog wt-confirm-dialog " + (confirmAction.type==='close'||confirmAction.type==='remove'?'is-danger':'')} role="alertdialog" aria-modal="true"><div className={"wt-confirm-icon " + (confirmAction.type==='transfer'?'is-transfer':'')}>{confirmAction.type==='transfer'?<ArrowRightLeft size={21}/>:confirmAction.type==='remove'?<UserMinus size={21}/>:<LogOut size={21}/>}</div><header><div><span>{confirmAction.type==='transfer'?'HOST TRANSFER':confirmAction.type==='remove'?'PARTICIPANT ACCESS':'END SCREENING'}</span><h2>{confirmAction.type==='transfer'?'Transfer host privileges?':confirmAction.type==='remove'?'Remove participant?':'End this room?'}</h2><p>{confirmAction.type==='transfer'?confirmAction.member.display_name+' will become the host. You will become a viewer.':confirmAction.type==='remove'?confirmAction.member.display_name+' will be removed from this screening.':'Everyone will be disconnected and this room will be permanently closed.'}</p></div></header><div className="wt-confirm-actions"><button type="button" className="wt-confirm-cancel" onClick={()=>setConfirmAction(null)}>Cancel</button><button type="button" className={"wt-confirm-primary " + (confirmAction.type==='transfer'?'is-transfer':'')} disabled={busy} onClick={async()=>{const action=confirmAction; if(action.type==='transfer')await transferHost(action.member);else if(action.type==='remove')await removeMember(action.member);else{setConfirmAction(null);await leaveRoom();}}}>{busy?'Working…':confirmAction.type==='close'?'End room':confirmAction.type==='remove'?'Remove participant':'Transfer host'}</button></div></section></div>,document.body)}
+          {joinPreviewOpen && typeof document !== 'undefined' && createPortal(
+            <div className="wt-create-backdrop wt-join-file-backdrop" role="presentation" onMouseDown={event => {
+              if (event.target === event.currentTarget) {
+                setJoinPreviewOpen(false);
+                setPendingJoinCode('');
+                setPendingJoinIdentity(null);
+                setPendingJoinMedia(null);
+                setError('');
+              }
+            }}>
+              <section className="wt-create-dialog wt-join-file-dialog" role="dialog" aria-modal="true" aria-labelledby="wt-join-file-title">
+                <header>
+                  <div>
+                    <span>LOCAL FILE SCREENING</span>
+                    <h2 id="wt-join-file-title">Join this room?</h2>
+                    <p>The host is sharing a video stored on their device.</p>
+                  </div>
+                  <button type="button" onClick={() => {
+                    setJoinPreviewOpen(false);
+                    setPendingJoinCode('');
+                    setPendingJoinIdentity(null);
+                    setPendingJoinMedia(null);
+                    setError('');
+                  }} aria-label="Cancel joining"><X size={18}/></button>
+                </header>
+                <div className="wt-join-file-preview">
+                  <span className="wt-join-file-preview-icon"><Radio size={23}/></span>
+                  <span className="wt-join-file-preview-copy">
+                    <strong title={pendingJoinMedia?.fileName || pendingJoinMedia?.title || 'Video file'}>{pendingJoinMedia?.fileName || pendingJoinMedia?.title || 'Video file'}</strong>
+                    <small>{pendingJoinMedia?.fileSize ? (Number(pendingJoinMedia.fileSize) / 1024 / 1024).toFixed(1) + ' MB' : 'Video file'} · {pendingJoinMedia?.mimeType || 'Video'}</small>
+                  </span>
+                </div>
+                <p className="wt-join-file-note"><ShieldCheck size={15}/> Choose your own copy of this exact video. The file stays on your device and is checked locally before you join.</p>
+                {error && <p className="wt-error">{error}</p>}
+                <div className="wt-join-file-actions">
+                  <button type="button" className="wt-join-file-cancel" onClick={() => {
+                    setJoinPreviewOpen(false);
+                    setPendingJoinCode('');
+                    setPendingJoinIdentity(null);
+                    setPendingJoinMedia(null);
+                    setError('');
+                  }}>Cancel</button>
+                  <button type="button" className="wt-join-file-primary" disabled={busy || localFileBusy} onClick={() => {
+                    setError('');
+                    joinFileInputRef.current?.click();
+                  }}>{localFileBusy ? 'Checking video…' : busy ? 'Joining…' : 'Choose matching video'}</button>
+                </div>
+              </section>
+            </div>,
+            document.body
+          )}
           {setupDialog && typeof document !== 'undefined' && createPortal(<div className="wt-create-backdrop" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)setSetupDialog(false);}}>
             <section className="wt-create-dialog" role="dialog" aria-modal="true" aria-label="Create a screening room">
               <header><div><span>NEW SCREENING</span><h2>Choose your title</h2><p>Everyone joining this room will open this movie or series.</p></div><button type="button" onClick={()=>setSetupDialog(false)} aria-label="Close"><X size={18}/></button></header>

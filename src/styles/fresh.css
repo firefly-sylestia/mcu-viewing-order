@@ -15039,3 +15039,104 @@
   :root .movie-site.page-watch-together .wt-local-video-player{max-height:72dvh!important;border-radius:11px!important}
   :root .movie-site.page-watch-together .wt-local-video-player video{max-height:72dvh!important}
 }
+
+
+/* Local-file room invitations: show the room details before opening the device picker. */
+:root .wt-join-file-dialog {
+  width: min(480px, 100%) !important;
+}
+:root .wt-join-file-preview {
+  display: flex !important;
+  align-items: center !important;
+  gap: 13px !important;
+  min-width: 0 !important;
+  margin: 18px 0 12px !important;
+  padding: 14px !important;
+  border: 1px solid color-mix(in srgb, var(--fx-muted) 18%, transparent) !important;
+  border-radius: 16px !important;
+  background: color-mix(in srgb, var(--fx-muted) 7%, transparent) !important;
+}
+:root .wt-join-file-preview-icon {
+  display: grid !important;
+  place-items: center !important;
+  flex: 0 0 44px !important;
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 13px !important;
+  color: var(--fx-accent) !important;
+  background: color-mix(in srgb, var(--fx-accent) 11%, transparent) !important;
+}
+:root .wt-join-file-preview-copy {
+  display: grid !important;
+  gap: 5px !important;
+  min-width: 0 !important;
+}
+:root .wt-join-file-preview-copy strong {
+  overflow-wrap: anywhere !important;
+  color: var(--fx-text) !important;
+  font-size: 13px !important;
+  line-height: 1.4 !important;
+}
+:root .wt-join-file-preview-copy small {
+  color: var(--fx-muted) !important;
+  font-size: 10px !important;
+}
+:root .wt-join-file-note {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 8px !important;
+  margin: 12px 0 18px !important;
+  color: var(--fx-muted) !important;
+  font-size: 11px !important;
+  line-height: 1.55 !important;
+}
+:root .wt-join-file-note svg {
+  flex: 0 0 auto !important;
+  margin-top: 1px !important;
+  color: var(--fx-accent) !important;
+}
+:root .wt-join-file-actions {
+  display: grid !important;
+  grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr) !important;
+  gap: 9px !important;
+  margin-top: 16px !important;
+}
+:root .wt-join-file-actions button {
+  min-height: 46px !important;
+  padding: 10px 14px !important;
+  border: 0 !important;
+  border-radius: 13px !important;
+  font: inherit !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  cursor: pointer !important;
+}
+:root .wt-join-file-cancel {
+  color: var(--fx-text) !important;
+  background: var(--fx-surface-2) !important;
+}
+:root .wt-join-file-primary {
+  color: #fff !important;
+  background: var(--fx-accent) !important;
+}
+:root .wt-join-file-primary:disabled {
+  opacity: .55 !important;
+  cursor: wait !important;
+}
+@media (max-width: 760px) {
+  :root .wt-create-backdrop .wt-join-file-dialog {
+    width: min(100%, 480px) !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: calc(100dvh - 36px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+    padding: 19px !important;
+    border: 1px solid color-mix(in srgb, var(--fx-muted) 22%, transparent) !important;
+    border-radius: 22px !important;
+    overflow-y: auto !important;
+  }
+}
+@media (max-width: 420px) {
+  :root .wt-join-file-actions {
+    grid-template-columns: 1fr !important;
+  }
+}
