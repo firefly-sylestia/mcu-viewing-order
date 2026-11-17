@@ -519,6 +519,61 @@ export default function App() {
     const target = NAV_VISIBLE[index];
     if (target) navigateSection(target);
   };
+
+  const [navHidden, setNavHidden] = useState(false);
+  const navIdleTimer = useRef(null);
+  useEffect(() => {
+    const isWatchSurface = section === 'watch';
+    let lastScrollY = window.scrollY || document.documentElement.scrollTop || 0;
+    let frame = 0;
+    const clearIdleTimer = () => {
+      if (navIdleTimer.current) {
+        window.clearTimeout(navIdleTimer.current);
+        navIdleTimer.current = null;
+      }
+    };
+    const scheduleIdleHide = () => {
+      if (!isWatchSurface) return;
+      clearIdleTimer();
+      navIdleTimer.current = window.setTimeout(() => setNavHidden(true), 2400);
+    };
+    const revealOnActivity = () => {
+      if (!isWatchSurface) return;
+      setNavHidden(false);
+      scheduleIdleHide();
+    };
+    const onScroll = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(() => {
+        frame = 0;
+        const currentY = Math.max(0, window.scrollY || document.documentElement.scrollTop || 0);
+        if (currentY <= 12) {
+          setNavHidden(false);
+        } else if (currentY > lastScrollY + 6) {
+          setNavHidden(true);
+        }
+        lastScrollY = currentY;
+        scheduleIdleHide();
+      });
+    };
+    const onActivity = () => revealOnActivity();
+    setNavHidden(false);
+    if (isWatchSurface) scheduleIdleHide();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('pointerdown', onActivity, { passive: true });
+    window.addEventListener('touchstart', onActivity, { passive: true });
+    window.addEventListener('keydown', onActivity);
+    window.addEventListener('wheel', onActivity, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('pointerdown', onActivity);
+      window.removeEventListener('touchstart', onActivity);
+      window.removeEventListener('keydown', onActivity);
+      window.removeEventListener('wheel', onActivity);
+      if (frame) window.cancelAnimationFrame(frame);
+      clearIdleTimer();
+    };
+  }, [section]);
   useLayoutEffect(() => {
     const scroller = document.scrollingElement;
     if (scroller) scroller.scrollTop = 0;
@@ -1572,7 +1627,7 @@ export default function App() {
       {warningToast && <div className="app-warning-toast" role="status"><ShieldAlert size={16} /><span>{warningToast}</span><button onClick={() => setWarningToast('')} aria-label="Dismiss warning"><X size={14} /></button></div>}
       <nav
         ref={navRef}
-        className="bottom-nav"
+        className={`bottom-nav${navHidden ? ' nav-auto-hidden' : ''}`}
         data-liquid-glass="false"
         aria-label="Primary"
         data-holding={navHolding ? 'true' : 'false'}
