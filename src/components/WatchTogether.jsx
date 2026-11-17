@@ -1311,7 +1311,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                     onLoadedData={()=>setLocalVideoError('')}
                   />
                   <div className="wt-local-overlay-tools" onClick={event=>event.stopPropagation()}>
-                    <button type="button" className="wt-local-lock" onClick={toggleLocalControlsLock} aria-label={localControlsLocked?'Unlock player controls':'Lock player controls'} title={localControlsLocked?'Unlock controls':'Lock controls'}>{localControlsLocked?<Lock size={17}/>:<Unlock size={17}/>}</button>
+                    <button type="button" className="wt-local-lock" onClick={toggleLocalControlsLock} aria-label={localControlsLocked?'Unlock player controls':'Lock player controls'} title={localControlsLocked?'Unlock controls':'Lock controls'}>{localControlsLocked?<Unlock size={17}/>:<Lock size={17}/>}</button>
                     <button type="button" onClick={()=>{setLocalAdjustmentsOpen(value=>!value);revealLocalControls();}} aria-expanded={localAdjustmentsOpen} aria-label="Adjust picture" title="Picture adjustments"><SlidersHorizontal size={17}/></button>
                     <button type="button" onClick={()=>{setChatCollapsed(false);setTheatreChatOpen(value=>!value);}} aria-expanded={theatreChatOpen} aria-label={theatreChatOpen?'Close room chat':'Open room chat'} title="Room chat"><MessageCircle size={17}/></button>
                   </div>

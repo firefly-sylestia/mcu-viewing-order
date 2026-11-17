@@ -15608,3 +15608,8 @@
   :root .wt-local-video-player:fullscreen .wt-local-overlay-tools button {width:36px !important;height:36px !important;border-radius:12px !important}
   :root .wt-local-video-player:fullscreen .wt-local-adjustments {top:max(54px,calc(48px + env(safe-area-inset-top))) !important;right:8px !important}
 }
+
+:root .wt-local-video-player:fullscreen.is-controls-hidden .wt-local-adjustments,
+:root .wt-local-video-player:fullscreen.is-controls-locked .wt-local-adjustments {
+  opacity:0 !important;visibility:hidden !important;pointer-events:none !important;
+}
