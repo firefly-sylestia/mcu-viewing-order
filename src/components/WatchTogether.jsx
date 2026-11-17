@@ -996,7 +996,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
               {room.settings?.chat_enabled !== false ? <form className="wt-chat-form" onSubmit={sendChat}><input value={draft} onChange={e=>setDraft(e.target.value.slice(0,500))} placeholder="Say something…" maxLength={500}/><button type="button" className="wt-chat-toggle" onClick={()=>setChatCollapsed(value=>!value)} aria-label={chatCollapsed?"Expand room chat":"Collapse room chat"} title={chatCollapsed?"Expand chat":"Collapse chat"}>{chatCollapsed?<PanelRightOpen size={17}/>:<PanelRightClose size={17}/>}</button><button type="submit" disabled={!draft.trim()||busy} aria-label="Send message"><Send size={17}/></button></form> : <div className="wt-chat-disabled">The host has disabled room chat.</div>}
               {error && <p className="wt-error wt-chat-error">{error}</p>}
               <div className="wt-chat-foot"><Clock3 size={13}/> Chat and room expire automatically after inactivity.</div>
-        
+            </aside>
       </div>, document.body
     )}
 
