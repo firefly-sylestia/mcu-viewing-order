@@ -16,7 +16,7 @@ const getIceServers = () => {
   }
 };
 
-export default function WatchTogetherP2P({ room, participant, members = [], localVideoRef, videoEnabled, voiceEnabled, rpc }) {
+export default function WatchTogetherP2P({ room, participant, members = [], localVideoRef, videoEnabled, voiceEnabled, onRemoteMuted, rpc }) {
   const peers = useRef(new Map());
   const membersRef = useRef(members);
   membersRef.current = members;
@@ -96,6 +96,7 @@ export default function WatchTogetherP2P({ room, participant, members = [], loca
             // Muted autoplay is permitted by mobile browsers; the viewer can tap
             // the video once to enable the host video's audio.
             player.muted = true;
+            onRemoteMuted?.();
           }
           const startRemotePlayback = () => {
             player.play?.().catch(error => {
