@@ -1162,8 +1162,9 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     }
     try { const saved = JSON.parse(localStorage.getItem(ACTIVE_ROOM_KEY) || 'null'); if (saved?.code === r?.code) localStorage.removeItem(ACTIVE_ROOM_KEY); } catch {}
     window.clearInterval(pollRef.current); window.clearInterval(playbackPollRef.current); window.clearInterval(heartbeatRef.current);
-    setRoom(null); setParticipant(null); setMembers([]); setMessages([]); setRequests([]); setPlayerReady(false); lastVersionRef.current = 0; setLocalPlaybackOverride(false);localPlaybackOverrideRef.current=false;setCanReturnLocal(false);setOpen(false);setSetupDialog(false); onClose?.();
+    setRoom(null); setParticipant(null); setMembers([]); setMessages([]); setRequests([]); setPlayerReady(false); lastVersionRef.current = 0; setLocalPlaybackOverride(false);localPlaybackOverrideRef.current=false;setCanReturnLocal(false);setOpen(false);setSetupDialog(false);
     const url = new URL(window.location.href); url.searchParams.delete('room'); window.history.replaceState({}, '', url.toString());
+    onClose?.();
   };
 
   useEffect(() => {
@@ -1530,7 +1531,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
               </div>
               <div className="wt-members">{members.map(member=><button type="button" className={"wt-member"+(participant?.is_host&&!member.is_host?" wt-member-manage":"")} key={member.id} onClick={()=>participant?.is_host&&!member.is_host&&grantOperator(member)} disabled={!participant?.is_host||member.is_host||member.role==="operator"||busy} title={member.is_host?"Room host":member.role==="operator"?"Already an operator":participant?.is_host?"Make this participant an operator":"Room participant"}><span className="wt-member-avatar"><img src={member.avatar_url||blobatar(member.display_name)} alt=""/></span><span>{member.display_name}</span>{(member.role==="host"||member.is_host)?<Crown size={13}/>:member.role==="operator"?<ShieldCheck size={13}/>:participant?.is_host?<span className="wt-promote-hint">+ Operator</span>:null}</button>)}</div>
             </div>
-            {!theatreMode && <aside className={"wt-chat"+(chatCollapsed?" is-collapsed":"")} style={{alignSelf:'center', marginTop:18}}>
+            {!theatreMode && <aside className={"wt-chat"+(chatCollapsed?" is-collapsed":"")}>
               <div className="wt-chat-head"><div><MessageCircle size={17}/><strong>Room chat</strong><span className="wt-theatre-online">{members.length} online</span></div></div>
               {participant?.is_host && requests.length>0 && <div className="wt-requests"><strong>Access requests <small>{requests.length}</small></strong>{requests.map(req=><div className="wt-request" key={req.id}><span><b>{req.display_name}</b><small>{({operator:'Operator access',skip_forward:'Skip forward 10s',skip_back:'Skip back 10s',seek:'Seek request'})[req.request_type] || req.request_type}</small></span><button onClick={()=>resolveRequest(req.id,true)} disabled={busy}>Allow</button><button onClick={()=>resolveRequest(req.id,false)} disabled={busy}>Deny</button></div>)}</div>}
               <div className="wt-chat-messages">{messages.map(message=><article className={message.participant_id===participant.id?'mine':''} key={message.id}><img src={message.avatar_url || blobatar(message.display_name)} alt=""/><div><div className="wt-message-meta"><b>{message.display_name}</b><time>{new Date(message.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</time></div><p>{message.body}</p></div></article>)}</div>
