@@ -39,6 +39,40 @@ const fingerprintLocalVideo = async file => {
   return Array.from(new Uint8Array(digest), value => value.toString(16).padStart(2, '0')).join('');
 };
 
+const LOCAL_VIDEO_DB = 'mcu-watch-local-video-v1';
+const LOCAL_VIDEO_STORE = 'videos';
+const openLocalVideoDb = () => new Promise((resolve, reject) => {
+  if (!('indexedDB' in window)) return reject(new Error('Local video storage is unavailable.'));
+  const request = indexedDB.open(LOCAL_VIDEO_DB, 1);
+  request.onupgradeneeded = () => {
+    if (!request.result.objectStoreNames.contains(LOCAL_VIDEO_STORE)) request.result.createObjectStore(LOCAL_VIDEO_STORE);
+  };
+  request.onsuccess = () => resolve(request.result);
+  request.onerror = () => reject(request.error || new Error('Could not open local video storage.'));
+});
+const storeLocalVideo = async (fingerprint, file) => {
+  const db = await openLocalVideoDb();
+  try {
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(LOCAL_VIDEO_STORE, 'readwrite');
+      tx.objectStore(LOCAL_VIDEO_STORE).put({ blob: file, name: file.name, type: file.type || '', lastModified: file.lastModified || Date.now() }, fingerprint);
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error || new Error('Could not save the local video.'));
+      tx.onabort = () => reject(tx.error || new Error('Local video storage was interrupted.'));
+    });
+  } finally { db.close(); }
+};
+const readLocalVideo = async fingerprint => {
+  const db = await openLocalVideoDb();
+  try {
+    return await new Promise((resolve, reject) => {
+      const request = db.transaction(LOCAL_VIDEO_STORE, 'readonly').objectStore(LOCAL_VIDEO_STORE).get(fingerprint);
+      request.onsuccess = () => resolve(request.result || null);
+      request.onerror = () => reject(request.error || new Error('Could not restore the local video.'));
+    });
+  } finally { db.close(); }
+};
+
 const HISTORY_KEY = 'mcu-watch-together-history-v1';
 const ACTIVE_ROOM_KEY = 'mcu-watch-together-active-room-v1';
 const saveActiveRoom = (code, identity, media) => {
@@ -589,6 +623,9 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       }
       setLocalFile(file);
       setLocalFileFingerprint(fingerprint);
+      // Keep a local browser copy so a refresh can restore the host's video
+      // without uploading it or asking the user to pick it again.
+      storeLocalVideo(fingerprint, file).catch(() => {});
       if (activate) {
         const url = URL.createObjectURL(new Blob([file], { type: videoFileMime(file) }));
         setLocalVideoUrl(previous => { if (previous) URL.revokeObjectURL(previous); return url; });
@@ -724,19 +761,45 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     }
   }, [room, participant?.token, participant?.is_host, busy, roomType, localFile, localFileFingerprint, selectedMedia, itemMedia, rpc, applyRoomSnapshot]);
 
+  const localVideoRestoreRef = useRef('');
   useEffect(() => {
     if (!room || !participant || room.media?.kind !== 'local_file') {
       if (room && room.media?.kind !== 'local_file' && !pendingJoinCode) setJoinPreviewOpen(false);
       return;
     }
     if (setupDialog && isChangingMedia) return;
-    if (room.media.fileFingerprint && localFileFingerprint !== room.media.fileFingerprint) {
+    const fingerprint = room.media.fileFingerprint;
+    if (!fingerprint || localFileFingerprint === fingerprint || localVideoRestoreRef.current === fingerprint) return;
+    let cancelled = false;
+    localVideoRestoreRef.current = fingerprint;
+    (async () => {
+      try {
+        const saved = await readLocalVideo(fingerprint);
+        if (cancelled) return;
+        if (saved?.blob && saved.blob.size === Number(room.media.fileSize || saved.blob.size)) {
+          const restored = new File([saved.blob], saved.name || room.media.fileName || 'local-video', {
+            type: saved.type || room.media.mimeType || 'video/mp4',
+            lastModified: saved.lastModified || Date.now(),
+          });
+          const verified = await handleLocalFile(restored, fingerprint, true);
+          if (cancelled) return;
+          if (verified) {
+            setJoinPreviewOpen(false);
+            setPendingJoinCode('');
+            setPendingJoinIdentity(null);
+            setPendingJoinMedia(null);
+            return;
+          }
+        }
+      } catch {}
+      if (cancelled) return;
       setPendingJoinCode('');
       setPendingJoinIdentity(null);
       setPendingJoinMedia(room.media);
       setJoinPreviewOpen(true);
-    }
-  }, [room?.id, room?.media?.kind, room?.media?.fileFingerprint, participant?.id, localFileFingerprint, setupDialog, isChangingMedia, pendingJoinCode]);
+    })();
+    return () => { cancelled = true; };
+  }, [room?.id, room?.media?.kind, room?.media?.fileFingerprint, room?.media?.fileSize, room?.media?.fileName, room?.media?.mimeType, participant?.id, localFileFingerprint, setupDialog, isChangingMedia, pendingJoinCode, handleLocalFile]);
 
   const refreshPlayback = useCallback(async () => {
     const activeRoom = roomRef.current;
@@ -1481,7 +1544,10 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                   }}>Cancel</button>
                   <button type="button" className="wt-join-file-primary" disabled={busy || localFileBusy} onClick={() => {
                     setError('');
-                    joinFileInputRef.current?.click();
+                    const picker = joinFileInputRef.current;
+                    if (!picker) { setError('The video picker is unavailable. Close this dialog and try again.'); return; }
+                    try { if (typeof picker.showPicker === 'function') picker.showPicker(); else picker.click(); }
+                    catch { picker.click(); }
                   }}>{localFileBusy ? 'Checking video…' : busy ? 'Joining…' : 'Choose matching video'}</button>
                 </div>
               </section>
