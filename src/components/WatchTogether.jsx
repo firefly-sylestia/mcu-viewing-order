@@ -1248,7 +1248,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                    currentTimeRef.current = 0;
                  }
                }}/>}
-    {(open || room) && <section className={`wt-page${room ? ' wt-room-active' : ''}${theatreMode ? ' wt-theatre-mode' : ''}${!open ? ' wt-minimized' : ''}${soloMode ? ' wt-solo-mode' : ''}`} aria-label="Watch Party">
+    {(open || room) && <section className={`wt-page${room ? ' wt-room-active' : ''}${theatreMode ? ' wt-theatre-mode' : ''}${!open ? ' wt-minimized' : ''}${soloMode ? ' wt-solo-mode' : ''}${standaloneLocal ? ' wt-solo-local' : ''}`} aria-label="Watch Party">
           {room && !theatreMode && <button type="button" className="wt-page-back" onClick={()=>setConfirmAction({type:'leave'})} aria-label="Leave room"><ArrowLeft size={17}/><span>Leave</span></button>}
           {!room ? <div className={`wt-entry wt-connect-page${publicRoomsView ? " wt-public-directory-open" : ""}`}>
             <div className="wt-entry-art wt-connect-hero"><div><span>PRIVATE SCREENING ROOM</span><h2>Host a Watch Party.</h2><p>Join your friends with a room code, or create a party and invite everyone with a private link.</p></div></div>
