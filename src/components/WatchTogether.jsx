@@ -202,6 +202,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const [ownedRooms, setOwnedRooms] = useState([]);
   const [roomsLoading, setRoomsLoading] = useState(false);
   const [publicRooms, setPublicRooms] = useState([]);
+  const [publicRoomsView, setPublicRoomsView] = useState(false);
   const [publicRoomEnabled, setPublicRoomEnabled] = useState(false);
   const [mediaSelectorExpanded, setMediaSelectorExpanded] = useState(false);
   const [localPlaybackOverride, setLocalPlaybackOverride] = useState(false);
@@ -1223,8 +1224,8 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                  }
                }}/>}
     {(open || room) && <section className={`wt-page${room ? ' wt-room-active' : ''}${theatreMode ? ' wt-theatre-mode' : ''}${!open ? ' wt-minimized' : ''}`} aria-label="Watch Party">
-          {!theatreMode && <button type="button" className="wt-page-back" onClick={()=>setConfirmAction({type:'leave'})} aria-label="Leave room"><ArrowLeft size={18}/><span>Leave room</span></button>}
-          {!room ? <div className="wt-entry wt-connect-page">
+          {room && !theatreMode && <button type="button" className="wt-page-back" onClick={()=>setConfirmAction({type:'leave'})} aria-label="Leave room"><ArrowLeft size={17}/><span>Leave</span></button>}
+          {!room ? <div className={`wt-entry wt-connect-page${publicRoomsView ? " wt-public-directory-open" : ""}`}>
             <div className="wt-entry-art wt-connect-hero"><div><span>PRIVATE SCREENING ROOM</span><h2>Host a Watch Party.</h2><p>Join your friends with a room code, or create a party and invite everyone with a private link.</p></div></div>
             <div className="wt-connect-card">
               <div className="wt-picker-heading"><span>JOIN A SCREENING</span><h2>Have a room code?</h2><p>Enter the 8-character code shared by your host.</p></div>
@@ -1238,15 +1239,23 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
               {guest.isGuest&&editingGuestName&&<form className="wt-guest-name-form" onSubmit={event=>{event.preventDefault();updateGuestName(guestNameDraft);}}><input value={guestNameDraft} onChange={event=>setGuestNameDraft(event.target.value)} maxLength={32} placeholder="Choose a guest name" aria-label="Guest name"/><button type="submit" disabled={busy||!guestNameDraft.trim()}>Save name</button></form>}
               {error && <p className="wt-error">{error}</p>}
               <p className="wt-privacy"><ShieldCheck size={14}/> Private party links are hard to guess. Guests can join without signing in.</p>
-              <section className="wt-owned-rooms wt-public-rooms">
-                <header><div><small>OPEN TO EVERYONE</small><strong>Public rooms <span className="wt-public-count">{publicRooms.length}</span></strong></div><button type="button" onClick={loadPublicRooms} aria-label="Refresh public rooms"><RefreshCw size={14}/></button></header>
-                {publicRooms.length ? <div className="wt-owned-list">{publicRooms.map(saved=><article className="wt-owned-room" key={saved.id}><div className="wt-owned-poster">{saved.poster?<img src={saved.poster} alt=""/>:<Radio size={17}/>}</div><div className="wt-owned-copy"><strong>{saved.title || 'Screening room'}</strong><small>{saved.host_name || 'Host'} · {saved.viewer_count || 0} online</small><small>{saved.media_type==='tv'?'Series':'Movie'} · Public screening</small></div><button type="button" className="wt-owned-open" onClick={()=>beginJoin(saved.code,guest)} disabled={busy}><Play size={13}/><span>Join</span></button></article>)}</div> : <p className="wt-owned-empty">{roomsLoading?'Finding public screenings…':'No public rooms are live right now.'}</p>}
-              </section>
+              <button type="button" className="wt-public-browse-link" onClick={()=>{setPublicRoomsView(true);loadPublicRooms();}}><span><Radio size={17}/><span><strong>Browse public screenings</strong><small>{publicRooms.length} live {publicRooms.length===1?'room':'rooms'} · Anyone can join</small></span></span><ChevronRight size={17}/></button>
               <section className="wt-owned-rooms">
                 <header><div><small>ROOM MANAGEMENT</small><strong>Your created rooms</strong></div><button type="button" onClick={loadOwnedRooms} disabled={roomsLoading} aria-label="Refresh rooms"><RefreshCw size={14}/></button></header>
                 {roomsLoading ? <p className="wt-owned-empty">Loading your rooms…</p> : ownedRooms.length ? <div className="wt-owned-list">{ownedRooms.map(saved=><article className="wt-owned-room" key={saved.id}><div className="wt-owned-poster">{saved.media?.poster?<img src={saved.media.poster} alt=""/>:<Radio size={17}/>}</div><div className="wt-owned-copy"><strong>{saved.media?.title || 'Screening room'}</strong><small>{saved.code} · {saved.is_active ? `${saved.viewer_count || 0} online` : 'Inactive'}</small><small>{saved.is_active ? 'Active now' : `Auto-delete in ${Math.max(0,Math.ceil((Date.parse(saved.expires_at)-Date.now())/60000))} min`}</small></div><button type="button" className="wt-owned-open" onClick={()=>beginJoin(saved.code,guest)} disabled={busy} aria-label={`Open room ${saved.code}`}><Play size={13}/><span>Open</span></button><button type="button" className="wt-owned-delete" onClick={()=>deleteOwnedRoom(saved.code)} disabled={busy} aria-label={`Delete room ${saved.code}`}><X size={16}/></button></article>)}</div> : <p className="wt-owned-empty">No rooms created with this identity yet.</p>}
               </section>
             </div>
+            {publicRoomsView && <section className="wt-public-directory">
+              <header className="wt-public-directory-head">
+                <button type="button" onClick={()=>setPublicRoomsView(false)}><ArrowLeft size={16}/> Back</button>
+                <div><span>OPEN TO EVERYONE</span><h2>Public screenings</h2><p>Live rooms hosted by people who are online right now.</p></div>
+                <button type="button" onClick={loadPublicRooms} disabled={roomsLoading} aria-label="Refresh public screenings"><RefreshCw size={16}/></button>
+              </header>
+              {roomsLoading ? <p className="wt-owned-empty">Finding live screenings…</p> : publicRooms.length ? <div className="wt-public-directory-grid">{publicRooms.map(saved=><article className="wt-public-screening" key={saved.id}>
+                <div className="wt-public-screening-poster">{saved.poster?<img src={saved.poster} alt=""/>:<Radio size={24}/>}<span><i/> LIVE</span></div>
+                <div className="wt-public-screening-info"><strong>{saved.title || 'Screening room'}</strong><small>{saved.media_type==='tv'?'Series':'Movie'} · Hosted by {saved.host_name || 'Guest'}</small><span>{saved.viewer_count || 0} online now</span><button type="button" onClick={()=>beginJoin(saved.code,guest)} disabled={busy}><Play size={14}/> Join screening</button></div>
+              </article>)}</div> : <div className="wt-public-directory-empty"><Radio size={28}/><strong>No public screenings right now</strong><p>When someone starts a public room, it will appear here while they're online.</p></div>}
+            </section>}
           </div> : <div className="wt-content">
             <div className="wt-main">
               <div className="wt-room-title"><div><span>NOW SCREENING</span><h2>{room.media?.title || itemMedia.title}</h2><small>{members.length} / 29 online · {participant.is_host ? 'Host' : (participant.role || 'viewer').replace(/^./, c => c.toUpperCase())}</small></div><div className="wt-room-actions">{guest.isGuest&&<button type="button" className="wt-copy" onClick={()=>setEditingGuestName(value=>!value)}><Pencil size={14}/> Name</button>}{participant.is_host&&<button type="button" className="wt-copy" onClick={()=>{localSelectionBeforeChangeRef.current={file:localFile,fingerprint:localFileFingerprint};setIsChangingMedia(true);setRoomType(room.media?.kind==='local_file'?'local':'movie');if(room.media?.kind!=='local_file')setSelectedMedia({title:room.media?.title||'',tmdbId:room.media?.tmdbId,mediaType:room.media?.mediaType||'movie',type:room.media?.mediaType==='tv'?'series':'film',poster:room.media?.poster||'',year:room.media?.year||''});setError('');setMediaQuery('');setMediaSelectorExpanded(true);setSetupDialog(true);}}><ArrowRightLeft size={14}/> Change media</button>}{participant.is_host&&<button type="button" className="wt-copy" onClick={()=>setHostPanelOpen(true)}><Settings2 size={14}/> Host controls</button>}<button type="button" className="wt-copy wt-end-room" onClick={()=>setConfirmAction({type:participant.is_host?'close':'leave'})}><LogOut size={14}/>{participant.is_host?'End room':'Leave room'}</button><button className="wt-copy" onClick={copyLink}>{copied ? <Check size={15}/> : <Copy size={15}/ >}{copied ? 'Copied' : 'Invite'}</button></div></div>
