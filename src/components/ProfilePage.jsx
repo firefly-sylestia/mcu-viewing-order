@@ -26,22 +26,38 @@ function applyBrowserTheme(theme) {
 
 export const getGuestIdentity = () => {
   const key = 'mcu-watch-guest-identity-v1';
+  const first = [
+    'Amber','Arctic','Ashen','Astral','Autumn','Azure','Brave','Bright','Calm','Cedar',
+    'Cinder','Clever','Cloud','Copper','Coral','Cosmic','Crimson','Daring','Dawn','Deep',
+    'Dream','Dusky','Echo','Ember','Evergreen','Fable','Fern','Frost','Golden','Hidden',
+    'Indigo','Ivory','Jade','Juniper','Kindred','Lunar','Maple','Mellow','Midnight','Misty',
+    'Mossy','Noble','Nova','Ocean','Olive','Onyx','Opal','Quiet','Radiant','River',
+    'Sable','Silver','Solar','Starry','Velvet','Wild','Willow','Winter','Wistful','Zephyr'
+  ];
+  const second = [
+    'Alchemist','Archer','Atlas','Aurora','Beacon','Bloom','Comet','Compass','Dancer','Drifter',
+    'Dreamer','Echo','Falcon','Fable','Firefly','Fox','Gardener','Harbor','Horizon','Keeper',
+    'Lantern','Lark','Legend','Lighthouse','Mariner','Meadow','Meteor','Monarch','Navigator','Nomad',
+    'Orbit','Orchid','Otter','Pioneer','Poet','Ranger','Raven','Reverie','Sailor','Scribe',
+    'Seeker','Sentinel','Skylark','Sparrow','Stargazer','Summit','Thistle','Trailblazer','Voyager','Wanderer',
+    'Whisper','Wildling','Willow','Wren','Zephyr'
+  ];
+  const random = (max) => {
+    try { return crypto.getRandomValues(new Uint32Array(1))[0] % max; }
+    catch { return Math.floor(Math.random() * max); }
+  };
+  const makeIdentity = () => {
+    const name = `${first[random(first.length)]} ${second[random(second.length)]}`;
+    return { name, avatar: `https://blobatar.dev/avatar/${encodeURIComponent(name)}?size=128&gen=2&background=squircle` };
+  };
   try {
     const saved = JSON.parse(localStorage.getItem(key) || 'null');
-    if (saved?.name && saved?.avatar) return saved;
-    const first = ['Cosmic', 'Velvet', 'Starlit', 'Neon', 'Lunar', 'Hidden', 'Silver', 'Crimson', 'Quiet', 'Golden'];
-    const second = ['Ranger', 'Comet', 'Voyager', 'Fox', 'Phantom', 'Pilot', 'Wanderer', 'Nova', 'Sparrow', 'Orbit'];
-    const random = (max) => {
-      try { return crypto.getRandomValues(new Uint32Array(1))[0] % max; }
-      catch { return Math.floor(Math.random() * max); }
-    };
-    const name = `${first[random(first.length)]}${second[random(second.length)]}${String(100 + random(900))}`;
-    const identity = { name, avatar: `https://blobatar.dev/avatar/${encodeURIComponent(name)}?size=128&gen=2&background=squircle` };
+    if (saved?.name && saved?.avatar && saved.name.includes(' ')) return saved;
+    const identity = makeIdentity();
     localStorage.setItem(key, JSON.stringify(identity));
     return identity;
   } catch {
-    const name = 'StarlitVoyager';
-    return { name, avatar: `https://blobatar.dev/avatar/${name}?size=128&gen=2&background=squircle` };
+    return makeIdentity();
   }
 };
 
@@ -638,33 +654,39 @@ function AnalyticsPanel({ stats, activeItems = [] }) {
   activeItems.filter(item => item.userStatus === 'watched').forEach(item => (Array.isArray(item.genres) ? item.genres : []).forEach(genre => genreCounts.set(genre, (genreCounts.get(genre) || 0) + 1)));
   const topGenres = [...genreCounts.entries()].sort((a,b) => b[1]-a[1]).slice(0,3);
   const metrics = [
-    { label: 'Watching', value: watching, icon: <Play size={16}/> },
-    { label: 'Saved', value: saved, icon: <Bookmark size={16}/> },
-    { label: 'Dropped', value: dropped, icon: <X size={16}/> },
-    { label: 'Watch time', value: stats.watchedTime || '0m', icon: <Clock size={16}/> },
+    { label: 'Watching', value: watching, icon: <Play size={15}/> },
+    { label: 'Saved', value: saved, icon: <Bookmark size={15}/> },
+    { label: 'Dropped', value: dropped, icon: <X size={15}/> },
+    { label: 'Watch time', value: stats.watchedTime || '0m', icon: <Clock size={15}/> },
   ];
-  return <section className="analytics-panel profile-analytics profile-insights-v2">
-    <div className="profile-insights-v2-head">
-      <div>
-        <span className="profile-insights-v2-kicker">YOUR LIBRARY</span>
+  return <section className="analytics-panel profile-analytics profile-insights-v3">
+    <header className="profile-insights-v3-header">
+      <div className="profile-insights-v3-title">
+        <span>YOUR LIBRARY</span>
         <h2>Viewing overview</h2>
-        <p>A snapshot of the titles you have tracked.</p>
       </div>
-      <div className="profile-insights-v2-total"><strong>{watched.toLocaleString()}</strong><span>of {total.toLocaleString()} watched</span></div>
+      <div className="profile-insights-v3-completion">
+        <strong>{watched.toLocaleString()}</strong>
+        <span>/ {total.toLocaleString()} watched</span>
+      </div>
+    </header>
+    <div className="profile-insights-v3-progress-row">
+      <div className="profile-insights-v3-progress"><span style={{width:`${percent}%`}}/></div>
+      <strong>{percent}%</strong>
+      <small>complete</small>
     </div>
-    <div className="profile-insights-v2-progress" role="progressbar" aria-label="Collection completion" aria-valuenow={percent} aria-valuemin="0" aria-valuemax="100"><span style={{width:`${percent}%`}}/></div>
-    <div className="profile-insights-v2-progress-label"><span>{percent}% complete</span><span>{Math.max(0,total-watched).toLocaleString()} remaining</span></div>
-    <div className="profile-insights-v2-metrics">
-      {metrics.map(metric => <div className="profile-insights-v2-metric" key={metric.label}>
-        <span className="profile-insights-v2-icon">{metric.icon}</span>
-        <span className="profile-insights-v2-label">{metric.label}</span>
+    <div className="profile-insights-v3-metrics">
+      {metrics.map(metric => <div className="profile-insights-v3-metric" key={metric.label}>
+        <span className="profile-insights-v3-icon">{metric.icon}</span>
+        <span className="profile-insights-v3-label">{metric.label}</span>
         <strong>{typeof metric.value === 'number' ? metric.value.toLocaleString() : metric.value}</strong>
       </div>)}
     </div>
-    <div className="profile-insights-v2-foot">
-      <span>{films.toLocaleString()} films</span><i/><span>{series.toLocaleString()} series</span>
-      <span className="profile-insights-v2-genres">{topGenres.length ? `Top genres · ${topGenres.map(([genre])=>genre).join(' · ')}` : 'Genres appear as you mark titles watched'}</span>
-    </div>
+    <footer className="profile-insights-v3-footer">
+      <span>{films.toLocaleString()} films</span>
+      <span>{series.toLocaleString()} series</span>
+      <span className="profile-insights-v3-genres">{topGenres.length ? topGenres.map(([genre]) => genre).join(' · ') : 'Genres appear as you mark titles watched'}</span>
+    </footer>
   </section>;
 }
 
