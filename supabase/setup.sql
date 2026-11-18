@@ -253,7 +253,12 @@ declare
 begin
   perform public.cleanup_expired_watch_rooms();
 
-  select media
+  select jsonb_build_object(
+    'media', media,
+    'settings', jsonb_build_object(
+      'p2p_video_enabled', coalesce((settings->>'p2p_video_enabled')::boolean, false)
+    )
+  )
   into room_media
   from public.watch_rooms
   where code = upper(trim(p_code))

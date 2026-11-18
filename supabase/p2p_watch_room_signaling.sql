@@ -72,3 +72,26 @@ begin
 end $$;
 revoke all on function public.update_watch_room_settings(text,text,jsonb) from public;
 grant execute on function public.update_watch_room_settings(text,text,jsonb) to anon,authenticated;
+
+
+-- Expose only the local-video sharing switch in room previews. This lets viewers
+-- join a P2P local-file room without selecting a duplicate copy of the host's file.
+create or replace function public.preview_watch_room(p_code text)
+returns jsonb language plpgsql security definer set search_path=pg_catalog,public,pg_temp as $$
+declare result jsonb;
+begin
+  perform public.cleanup_expired_watch_rooms();
+  select jsonb_build_object(
+    'media', media,
+    'settings', jsonb_build_object(
+      'p2p_video_enabled', coalesce((settings->>'p2p_video_enabled')::boolean, false)
+    )
+  )
+  into result
+  from public.watch_rooms
+  where code=upper(trim(p_code)) and closed_at is null and expires_at>now();
+  if not found then raise exception 'Room not found or expired.'; end if;
+  return result;
+end $$;
+revoke all on function public.preview_watch_room(text) from public;
+grant execute on function public.preview_watch_room(text) to anon,authenticated;
