@@ -859,9 +859,9 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
 
   const scheduleLocalControlsHide = useCallback(() => {
     if (localControlsHideTimerRef.current) window.clearTimeout(localControlsHideTimerRef.current);
-    if (!localVideoRef.current || paused || localAdjustmentsOpen) return;
+    if (!localVideoRef.current || paused || localAdjustmentsOpen || localTracksOpen) return;
     localControlsHideTimerRef.current = window.setTimeout(() => setLocalControlsVisible(false), 2400);
-  }, [paused, localAdjustmentsOpen]);
+  }, [paused, localAdjustmentsOpen, localTracksOpen]);
 
   const revealLocalControls = useCallback(() => {
     setLocalControlsVisible(true);
