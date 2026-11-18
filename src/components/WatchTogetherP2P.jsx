@@ -49,10 +49,10 @@ export default function WatchTogetherP2P({ room, participant, members = [], loca
     const ensureCapture = () => {
       if (!videoEnabled || !participant.is_host || captureStream.current) return Boolean(captureStream.current);
       const video = localVideoRef?.current;
-      const capture = video?.captureStream || video?.mozCaptureStream;
+      const capture = video?.captureStream || video?.webkitCaptureStream || video?.mozCaptureStream;
       if (!video || video.readyState < 2 || video.paused || video.ended) return false;
       if (!capture) {
-        setError('This browser cannot share a local video stream. Try the latest Chrome or Edge.');
+        setError('This browser cannot capture video for P2P. On phones, use the latest Chrome on Android; iPhone/iPad Safari may not expose video capture for this file.');
         return false;
       }
       try {
@@ -111,8 +111,13 @@ export default function WatchTogetherP2P({ room, participant, members = [], loca
             player.pause?.();
             player.removeAttribute('src');
             player.srcObject = stream;
-            // Muted autoplay is permitted by mobile browsers; the viewer can tap
-            // the video once to enable the host video's audio.
+            // Mobile browsers require inline playback and generally allow
+            // autoplay only while muted. Audio is enabled by the viewer's tap.
+            player.autoplay = true;
+            player.playsInline = true;
+            player.setAttribute('autoplay', '');
+            player.setAttribute('playsinline', '');
+            player.setAttribute('webkit-playsinline', '');
             player.muted = true;
             onRemoteMuted?.();
           }
@@ -134,7 +139,19 @@ export default function WatchTogetherP2P({ room, participant, members = [], loca
       // already in the SDP. Streaming rooms never enter this video path.
       const shouldOffer = videoEnabled ? Boolean(participant.is_host) : String(participant.id) < String(member.id);
       if (hostStreamActive && participant.is_host && captureStream.current) {
-        captureStream.current.getTracks().forEach(track => pc.addTrack(track, captureStream.current));
+        captureStream.current.getTracks().forEach(track => {
+          const sender = pc.addTrack(track, captureStream.current);
+          if (track.kind === 'video' && sender.getParameters && sender.setParameters) {
+            const parameters = sender.getParameters();
+            parameters.encodings = parameters.encodings?.length ? parameters.encodings : [{}];
+            // Keep phone uploads and mobile receivers from being overwhelmed by
+            // the source file's full 4K/high-bitrate stream.
+            parameters.encodings[0].maxBitrate = 1800000;
+            parameters.encodings[0].maxFramerate = 30;
+            parameters.degradationPreference = 'maintain-framerate';
+            sender.setParameters(parameters).catch(() => {});
+          }
+        });
       }
       if (voiceEnabled) {
         if (!localMic.current) {
