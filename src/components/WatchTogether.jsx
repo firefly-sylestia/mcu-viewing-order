@@ -861,17 +861,32 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     }
   }, [rpc]);
   useEffect(() => {
-    if (!room || !participant || soloMode) return undefined;
-    refreshRoom();
-    refreshPlayback();
-    pollRef.current = window.setInterval(refreshRoom, 4200);
-    playbackPollRef.current = window.setInterval(refreshPlayback, roomRef.current?.media?.kind === 'local_file' ? 220 : 350);
-    heartbeatRef.current = window.setInterval(() => {
-      const r = roomRef.current, p = participantRef.current;
-      if (r && p) rpc('watch_room_heartbeat', { p_code: r.code, p_token: p.token, p_position: currentTimeRef.current, p_duration: durationRef.current, p_paused: pausedRef.current }).catch(() => {});
-    }, 4000);
-    return () => { window.clearInterval(pollRef.current); window.clearInterval(playbackPollRef.current); window.clearInterval(heartbeatRef.current); };
-  }, [room?.id, room?.media?.kind, participant?.id, soloMode, refreshRoom, refreshPlayback, rpc]);
+    if (!room || !participant) return undefined;
+    if (!soloMode) {
+      refreshRoom();
+      refreshPlayback();
+      pollRef.current = window.setInterval(refreshRoom, 4200);
+      playbackPollRef.current = window.setInterval(refreshPlayback, roomRef.current?.media?.kind === 'local_file' ? 220 : 350);
+    }
+    // Independent playback still counts as an active viewer until it is paused.
+    // Standalone local files have no server room and therefore send no heartbeat.
+    if (!standaloneLocal && !roomDeleted) {
+      heartbeatRef.current = window.setInterval(() => {
+        const r = roomRef.current, p = participantRef.current;
+        if (r && p?.token) rpc('watch_room_heartbeat', {
+          p_code: r.code, p_token: p.token,
+          p_position: currentTimeRef.current,
+          p_duration: durationRef.current,
+          p_paused: pausedRef.current,
+        }).catch(() => {});
+      }, 4000);
+    }
+    return () => {
+      window.clearInterval(pollRef.current);
+      window.clearInterval(playbackPollRef.current);
+      window.clearInterval(heartbeatRef.current);
+    };
+  }, [room?.id, room?.media?.kind, participant?.id, soloMode, standaloneLocal, roomDeleted, refreshRoom, refreshPlayback, rpc]);
 
   const publishPlayback = useCallback(async (next, force = false) => {
     const r = roomRef.current, p = participantRef.current;
