@@ -5,6 +5,13 @@ import { supabasePublicRequest, supabaseDataRequest } from '../supabase';
 
 
 const RPC = '/rest/v1/rpc/';
+const SUBTITLE_FILE_ACCEPT = '.srt,.vtt,text/vtt,application/x-subrip';
+const subtitleToVtt = text => {
+  const normalized = String(text || '').replace(/^\\uFEFF/, '').replace(/\\r/g, '').trim();
+  if (/^WEBVTT(?:\\s|$)/i.test(normalized)) return normalized;
+  const body = normalized.replace(/(\\d{2}:\\d{2}:\\d{2}),(\\d{3})/g, '$1.$2');
+  return `WEBVTT\\n\\n${body}`;
+};
 const VIDEO_FILE_ACCEPT = 'video/*,.mkv,.avi,.mov,.wmv,.flv,.mpg,.mpeg,.m4v,.3gp,.3g2,.ts,.mts,.m2ts,.vob,.ogv,.mxf,.asf,.divx,.f4v,.rm,.rmvb,.dv,.mod,.tod,.nut,.nuv,.y4m,.m2v,.m1v';
 const VIDEO_FILE_EXTENSIONS = new Set(VIDEO_FILE_ACCEPT.split(',').filter(value => value.startsWith('.')).map(value => value.slice(1)));
 const videoFileExtension = file => String(file?.name || '').split('.').pop().toLowerCase();
@@ -148,6 +155,12 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const [selectedMedia, setSelectedMedia] = useState(item || null);
   
   const [localVideoError,setLocalVideoError]=useState('');
+  const [localSubtitleUrl,setLocalSubtitleUrl]=useState('');
+  const [localSubtitleName,setLocalSubtitleName]=useState('');
+  const [localSubtitleEnabled,setLocalSubtitleEnabled]=useState(true);
+  const [localAudioTracks,setLocalAudioTracks]=useState([]);
+  const [localAudioTrackIndex,setLocalAudioTrackIndex]=useState(-1);
+  const subtitleFileInputRef=useRef(null);
   const [isLocalFullscreen,setIsLocalFullscreen]=useState(false);
   const [localControlsVisible,setLocalControlsVisible]=useState(true);
   const [localControlsLocked,setLocalControlsLocked]=useState(false);
@@ -261,6 +274,29 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   },[mediaQuery]);
   const filteredMediaItems=useMemo(()=>{const term=mediaQuery.trim().toLowerCase(),seen=new Set();return [...selectableItems,...tmdbMediaItems].filter(candidate=>{const id=Number(candidate.tmdbId),key=(candidate.mediaType||candidate.type)+':'+id;if(!id||seen.has(key))return false;seen.add(key);return !term||(candidate.title+' '+(candidate.year||'')+' '+(candidate.type||'')).toLowerCase().includes(term);}).slice(0,36);},[selectableItems,tmdbMediaItems,mediaQuery]);
   useEffect(() => { roomRef.current = room; }, [room]);
+  useEffect(() => () => { if (localSubtitleUrl) URL.revokeObjectURL(localSubtitleUrl); }, [localSubtitleUrl]);
+  useEffect(() => {
+    const video = localVideoRef.current;
+    if (!video) return;
+    const syncTracks = () => {
+      const tracks = video.audioTracks;
+      if (!tracks) { setLocalAudioTracks([]); setLocalAudioTrackIndex(-1); return; }
+      const list = Array.from({ length: tracks.length }, (_, index) => ({ index, label: tracks[index].label || tracks[index].language || `Audio ${index + 1}`, language: tracks[index].language || '' }));
+      setLocalAudioTracks(list);
+      const active = list.find(track => tracks[track.index].enabled)?.index ?? (list[0]?.index ?? -1);
+      setLocalAudioTrackIndex(active);
+      if (active >= 0 && !tracks[active].enabled) tracks[active].enabled = true;
+    };
+    syncTracks();
+    video.addEventListener('loadedmetadata', syncTracks);
+    video.addEventListener('loadeddata', syncTracks);
+    return () => { video.removeEventListener('loadedmetadata', syncTracks); video.removeEventListener('loadeddata', syncTracks); };
+  }, [localVideoUrl, room?.media?.fileFingerprint]);
+  useEffect(() => {
+    const video = localVideoRef.current;
+    if (!video?.textTracks) return;
+    Array.from(video.textTracks).forEach(track => { track.mode = localSubtitleEnabled && localSubtitleUrl ? 'showing' : 'disabled'; });
+  }, [localSubtitleEnabled, localSubtitleUrl, localVideoUrl]);
   useEffect(() => { onBeforeOpenRef.current = onBeforeOpen; }, [onBeforeOpen]);
   useEffect(() => { onEpisodeChangeRef.current = onEpisodeChange; }, [onEpisodeChange]);
   useEffect(() => { participantRef.current = participant; }, [participant]);
@@ -1219,6 +1255,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                     }}
                     onLoadedData={()=>setLocalVideoError('')}
                   />
+                  {localSubtitleUrl && <track key={localSubtitleUrl} kind="subtitles" src={localSubtitleUrl} srcLang="und" label={localSubtitleName || 'External subtitles'} default={localSubtitleEnabled} />}
                   <div className="wt-local-grade-overlays" aria-hidden="true">
                     <span className="wt-grade-temperature"/>
                     <span className="wt-grade-tint"/>
@@ -1258,6 +1295,10 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                   </div>}
                   <div className="wt-local-controls" role="group" aria-label="Local video controls" onClick={event=>event.stopPropagation()}>
                     <div className="wt-local-control-row">
+                      <input ref={subtitleFileInputRef} type="file" accept={SUBTITLE_FILE_ACCEPT} hidden onChange={async event => { const file=event.target.files?.[0]; event.target.value=''; if(!file)return; try { const raw=await file.text(); const blob=new Blob([subtitleToVtt(raw)],{type:'text/vtt'}); const url=URL.createObjectURL(blob); setLocalSubtitleUrl(previous=>{if(previous)URL.revokeObjectURL(previous);return url;}); setLocalSubtitleName(file.name); setLocalSubtitleEnabled(true); revealLocalControls(); } catch { setError('Could not read this subtitle file. Choose an SRT or VTT file.'); } }} />
+                      <button type="button" className="wt-local-track-button" onClick={()=>subtitleFileInputRef.current?.click()} title="Load subtitles" aria-label="Load subtitles">CC</button>
+                      {localSubtitleUrl && <button type="button" className="wt-local-track-button" onClick={()=>setLocalSubtitleEnabled(value=>!value)} aria-pressed={localSubtitleEnabled} title={localSubtitleEnabled?'Turn subtitles off':'Turn subtitles on'}>{localSubtitleEnabled?'CC on':'CC off'}</button>}
+                      {localAudioTracks.length>1 && <select className="wt-local-track-select" value={localAudioTrackIndex} onChange={event=>{const next=Number(event.target.value);const tracks=localVideoRef.current?.audioTracks;if(!tracks)return;Array.from({length:tracks.length},(_,index)=>{tracks[index].enabled=index===next;});setLocalAudioTrackIndex(next);}} aria-label="Audio track">{localAudioTracks.map(track=><option key={track.index} value={track.index}>{track.label}</option>)}</select>}
                       <button type="button" onClick={()=>sendPlayerCommand('seek',[Math.max(0,currentTimeRef.current-10)])} disabled={!playerReady} aria-label="Back 10 seconds" title="Back 10 seconds"><SkipBack size={17}/><small>10</small></button>
                       <button type="button" className="wt-local-play" onClick={()=>sendPlayerCommand(paused?'play':'pause')} disabled={!playerReady} aria-label={paused?'Play video':'Pause video'} title={paused?'Play':'Pause'}>{paused?<Play size={19} fill="currentColor"/>:<Pause size={19} fill="currentColor"/>}</button>
                       <button type="button" onClick={()=>sendPlayerCommand('seek',[Math.min(duration||Infinity,currentTimeRef.current+10)])} disabled={!playerReady} aria-label="Forward 10 seconds" title="Forward 10 seconds"><SkipForward size={17}/><small>10</small></button>
