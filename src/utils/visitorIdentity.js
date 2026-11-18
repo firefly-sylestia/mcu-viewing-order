@@ -21,4 +21,4 @@ export function getOrCreateTemporaryVisitor() {
   };
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(identity)); } catch {}
   return identity;
-}
+};
