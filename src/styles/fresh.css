@@ -17740,3 +17740,41 @@
   :root .wt-page .wt-public-directory-head>button {padding:0 9px!important;font-size:10px!important}
   :root .wt-page .wt-public-screening {grid-template-columns:86px minmax(0,1fr)!important;gap:11px!important;padding:9px!important}
 }
+
+
+/* Public/private choice is a first-class, visible setting in the create dialog. */
+:root .wt-create-backdrop .wt-create-dialog .wt-create-public-toggle {
+  display:flex!important;visibility:visible!important;opacity:1!important;
+  align-items:center!important;justify-content:space-between!important;gap:14px!important;
+  width:100%!important;min-height:58px!important;box-sizing:border-box!important;
+  margin:12px 0 14px!important;padding:12px 14px!important;
+  border:1px solid color-mix(in srgb,var(--fx-muted) 22%,transparent)!important;
+  border-radius:14px!important;background:var(--fx-surface-2)!important;
+}
+:root .wt-create-backdrop .wt-create-dialog .wt-create-public-toggle>span {
+  display:grid!important;gap:4px!important;min-width:0!important;
+}
+:root .wt-create-backdrop .wt-create-dialog .wt-create-public-toggle strong {
+  display:block!important;color:var(--fx-text)!important;font-size:12px!important;font-weight:800!important;
+}
+:root .wt-create-backdrop .wt-create-dialog .wt-create-public-toggle small {
+  display:block!important;color:var(--fx-muted)!important;font-size:10px!important;line-height:1.35!important;white-space:normal!important;
+}
+:root .wt-create-backdrop .wt-create-dialog .wt-create-public-toggle>button[role="switch"] {
+  position:relative!important;display:block!important;width:46px!important;height:27px!important;
+  min-width:46px!important;max-width:46px!important;flex:0 0 46px!important;
+  padding:3px!important;border:0!important;border-radius:999px!important;
+  background:color-mix(in srgb,var(--fx-muted) 38%,transparent)!important;
+  cursor:pointer!important;transition:background .18s ease!important;
+}
+:root .wt-create-backdrop .wt-create-dialog .wt-create-public-toggle>button[role="switch"] i {
+  display:block!important;width:21px!important;height:21px!important;border-radius:50%!important;
+  background:#fff!important;box-shadow:0 1px 4px #0003!important;transform:translateX(0)!important;
+  transition:transform .18s ease!important;
+}
+:root .wt-create-backdrop .wt-create-dialog .wt-create-public-toggle>button[role="switch"].is-on {
+  background:var(--fx-accent)!important;
+}
+:root .wt-create-backdrop .wt-create-dialog .wt-create-public-toggle>button[role="switch"].is-on i {
+  transform:translateX(19px)!important;
+}
