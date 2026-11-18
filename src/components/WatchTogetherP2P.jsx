@@ -103,6 +103,7 @@ export default function WatchTogetherP2P({ room, participant, members = [], loca
               setError(error?.message || 'Tap the video to start the shared stream.');
             });
           };
+          event.track.addEventListener?.('unmute', startRemotePlayback, { once: true });
           if (player.readyState >= 1) startRemotePlayback();
           else player.addEventListener('loadedmetadata', startRemotePlayback, { once: true });
         }
