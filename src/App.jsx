@@ -1623,6 +1623,10 @@ export default function App() {
         {externalSearchLoading && (
           <p className="empty-state">Searching TMDB…</p>
         )}
+        <section className="home-watch-party-cta">
+          <div className="home-watch-party-copy"><span>MAKE IT A GROUP NIGHT</span><h2>Good stories are better together.</h2><p>Host a Watch Party, invite your friends and keep everyone watching in sync.</p></div>
+          <button type="button" onClick={() => { try { sessionStorage.setItem('mcu-watch-together-return', '#home'); } catch {} navigateSection('watch-together'); }}><Users size={17}/><span>Try Watch Party</span><ChevronRight size={16}/></button>
+        </section>
       </>}
 
       {section === 'list' && <ListSection items={activeItems} sortBy={sortBy} sortDirection={sortDirection} sortKey={`${sortBy}-${sortDirection}`} externalResults={externalSearchResults} externalLoading={externalSearchLoading} query="" setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} onPlayExternal={onPlayExternal} onWarning={showWarningToast} />}
@@ -2962,9 +2966,9 @@ function WatchBrowse({ activeItems, externalResults = [], externalLoading = fals
       </section>
 
       {savedWatchRoom?.code && (
-        <section className="wh3-room-resume" aria-label="Your created Watch Together room">
+        <section className="wh3-room-resume" aria-label="Your created Watch Party">
           <div className="wh3-room-resume-art">{savedWatchRoom.media?.poster ? <img src={savedWatchRoom.media.poster} alt="" /> : <Clapperboard size={22} />}</div>
-          <div className="wh3-room-resume-copy"><span className="wh3-overline">YOUR SCREENING ROOM · {savedWatchRoom.code}</span><strong>{savedWatchRoom.media?.title || 'Watch Together room'}</strong><small>Saved room · Pick up where your group left off</small></div>
+          <div className="wh3-room-resume-copy"><span className="wh3-overline">YOUR SCREENING ROOM · {savedWatchRoom.code}</span><strong>{savedWatchRoom.media?.title || 'Watch Party'}</strong><small>Saved room · Pick up where your group left off</small></div>
           <button type="button" className="wh3-room-resume-action" onClick={resumeSavedWatchRoom}><Play size={14} fill="currentColor"/> Continue</button>
         </section>
       )}
