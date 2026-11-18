@@ -30,22 +30,52 @@ const videoFileMime = file => {
     m2v:'video/mpeg', m1v:'video/mpeg', nut:'video/x-nut', y4m:'video/x-raw'
   })[videoFileExtension(file)] || 'video/unknown';
 };
-const readLocalFileChunk = blob => new Promise((resolve, reject) => {
-  // FileReader is more reliable than Blob.arrayBuffer() with some iOS Files/iCloud providers.
-  if (typeof FileReader === 'undefined') {
-    if (typeof blob.arrayBuffer === 'function') {
-      blob.arrayBuffer().then(resolve, reject);
+const readLocalFileChunk = async blob => {
+  const readWithFileReader = () => new Promise((resolve, reject) => {
+    if (typeof FileReader === 'undefined') {
+      reject(new Error('FileReader is unavailable.'));
       return;
     }
-    reject(new Error('This browser cannot read the selected video file.'));
-    return;
+    const reader = new FileReader();
+    reader.onload = () => reader.result instanceof ArrayBuffer
+      ? resolve(reader.result)
+      : reject(new Error('The browser returned an invalid file buffer.'));
+    reader.onerror = () => reject(reader.error || new Error('FileReader could not read this file.'));
+    reader.onabort = () => reject(new Error('File reading was cancelled.'));
+    try {
+      reader.readAsArrayBuffer(blob);
+    } catch (error) {
+      reject(error);
+    }
+  });
+
+  // Try both browser APIs. Some iOS document providers behave differently across the two readers.
+  let fileReaderError;
+  try {
+    return await readWithFileReader();
+  } catch (error) {
+    fileReaderError = error;
   }
-  const reader = new FileReader();
-  reader.onload = () => resolve(reader.result);
-  reader.onerror = () => reject(reader.error || new Error('The selected video could not be read. Try saving it to Files on this iPad first.'));
-  reader.onabort = () => reject(new Error('Reading the selected video was cancelled.'));
-  reader.readAsArrayBuffer(blob);
-});
+
+  if (typeof blob.arrayBuffer === 'function') {
+    try {
+      return await blob.arrayBuffer();
+    } catch (arrayBufferError) {
+      const details = [fileReaderError?.message, arrayBufferError?.message].filter(Boolean).join('; ');
+      throw new Error(`This browser could not read the selected video. If it is in iCloud Drive, download it to this iPad in Files and try again.${details ? ` (Reader errors: ${details})` : ''}`);
+    }
+  }
+
+  throw new Error(fileReaderError?.message || 'This browser cannot read the selected video file.');
+};
+
+const roomRequestError = (operation, error) => {
+  const message = String(error?.message || error || '');
+  if (error instanceof TypeError || /^(load failed|failed to fetch|networkerror|network request failed)$/i.test(message.trim())) {
+    return `${operation} could not reach the room service. Check your connection and try again. (Browser: ${message || 'network error'})`;
+  }
+  return message || `${operation} failed. Please try again.`;
+};
 
 const fingerprintLocalVideo = async file => {
   if (!file || !file.size) throw new Error('Choose a non-empty video file.');
@@ -492,7 +522,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       setRoomLink(window.location.origin + '/watch-room/' + normalizedCode);
       return true;
     } catch (e) {
-      setError(e.message || 'Could not join this room.');
+      setError(roomRequestError('Joining this room', e));
       return false;
     } finally {
       setBusy(false);
@@ -514,7 +544,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
         await joinExisting(normalizedCode, identity);
       }
     } catch (e) {
-      setError(e.message || 'Could not find this room.');
+      setError(roomRequestError('Loading this room', e));
     } finally {
       setBusy(false);
     }
