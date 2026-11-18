@@ -872,7 +872,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   }, []);
 
   const sendPlayerCommand = useCallback((command, args = []) => {
-    if (!canControl && !applyingRemoteRef.current && !['getCurrentTime','getDuration'].includes(command)) {
+    if (!canControl && !applyingRemoteRef.current && !['getCurrentTime','getDuration','setMuted'].includes(command)) {
       if (['play','pause','seek'].includes(command)) {
         setLocalPlaybackOverride(true); localPlaybackOverrideRef.current = true;
         postPlayerCommand(command,args);
@@ -1384,7 +1384,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                   </div>
                   {localVideoError&&<div className="wt-local-playback-error"><strong>Can’t play this video here</strong><span>{localVideoError}</span>{localCodecDiagnostics&&<small className="wt-codec-diagnostics"><b>{localCodecDiagnostics.fileName}</b><br/>Container MIME: {localCodecDiagnostics.mime}<br/>H.264 MP4: {localCodecDiagnostics.h264} · H.265/HEVC MP4: {localCodecDiagnostics.hevc} · VP9 WebM: {localCodecDiagnostics.vp9}<br/>Most widely compatible target: MP4 · H.264 video · AAC audio</small>}</div>}
                 </> : <iframe ref={iframeRef} src={sharedPlayerUrl} title={"Watch together: " + (room.media?.title || itemMedia.title)} allow="autoplay; fullscreen; encrypted-media" allowFullScreen disablePictureInPicture/>}
-                <WatchTogetherP2P room={room} participant={participant} members={members} localVideoRef={localVideoRef} videoEnabled={room.settings?.p2p_video_enabled===true && room.media?.kind==='local_file'} voiceEnabled={room.settings?.p2p_voice_enabled===true} rpc={rpc}/>
+                <WatchTogetherP2P room={room} participant={participant} members={members} localVideoRef={localVideoRef} videoEnabled={room.settings?.p2p_video_enabled===true && room.media?.kind==='local_file'} voiceEnabled={room.settings?.p2p_voice_enabled===true} onRemoteMuted={()=>setMuted(true)} rpc={rpc}/>
                 {(localPlaybackOverride || canReturnLocal) && <div className="wt-sync-floating" role="status">
                   <span className="wt-sync-indicator"><i/>{localPlaybackOverride?'Playing independently':'Room playback'}</span>
                   {localPlaybackOverride&&<button type="button" onClick={syncToRoom} disabled={!playerReady} title="Jump back to the room’s current position"><Radio size={14}/> Sync with room</button>}
