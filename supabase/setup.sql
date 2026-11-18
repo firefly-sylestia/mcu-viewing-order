@@ -683,6 +683,8 @@ begin
   'chat_enabled',case when p_settings ? 'chat_enabled' then (p_settings->>'chat_enabled')::boolean else null end,
   'reactions_enabled',case when p_settings ? 'reactions_enabled' then (p_settings->>'reactions_enabled')::boolean else null end,
   'voice_enabled',case when p_settings ? 'voice_enabled' then (p_settings->>'voice_enabled')::boolean else null end,
+  'p2p_video_enabled',case when p_settings ? 'p2p_video_enabled' then (p_settings->>'p2p_video_enabled')::boolean else null end,
+  'p2p_voice_enabled',case when p_settings ? 'p2p_voice_enabled' then (p_settings->>'p2p_voice_enabled')::boolean else null end,
   'guests_can_change_episode',case when p_settings ? 'guests_can_change_episode' then (p_settings->>'guests_can_change_episode')::boolean else null end,
   'expiry_minutes',case when p_settings ? 'expiry_minutes' then greatest(30,least(1440,(p_settings->>'expiry_minutes')::integer)) else null end
  ));
