@@ -862,14 +862,16 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   }, [rpc]);
   useEffect(() => {
     if (!room || !participant) return undefined;
-    if (!soloMode) {
+    // Keep checking room lifetime while someone watches independently, but do
+    // not pull shared playback over their personal position.
+    if (!standaloneLocal && !roomDeleted) {
       refreshRoom();
-      refreshPlayback();
       pollRef.current = window.setInterval(refreshRoom, 4200);
+    }
+    if (!soloMode && !roomDeleted && !standaloneLocal) {
+      refreshPlayback();
       playbackPollRef.current = window.setInterval(refreshPlayback, roomRef.current?.media?.kind === 'local_file' ? 220 : 350);
     }
-    // Independent playback still counts as an active viewer until it is paused.
-    // Standalone local files have no server room and therefore send no heartbeat.
     if (!standaloneLocal && !roomDeleted) {
       heartbeatRef.current = window.setInterval(() => {
         const r = roomRef.current, p = participantRef.current;
