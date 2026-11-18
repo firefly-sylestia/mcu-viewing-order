@@ -547,22 +547,6 @@ function WatchTogetherHistory({ user }) {
     try { localStorage.setItem('mcu-watch-together-history-v1', JSON.stringify(value)); } catch {}
   };
   const sortEntries = value => [...value].sort((a,b) => new Date(b.last_watched_at || b.watched_at || b.started_at || 0) - new Date(a.last_watched_at || a.watched_at || a.started_at || 0));
-  const loadHistory = async () => {
-    const local = readLocal();
-    setEntries(local);
-    if (!user?.id) { setLoading(false); return; }
-    try {
-      const rows = await supabaseDataRequest('/rest/v1/rpc/get_watch_together_history', { method: 'POST', body: '{}' });
-      const merged = new Map();
-      [...(Array.isArray(rows) ? rows : []), ...local].forEach(entry => {
-        const key = entry.room_code || entry.id || entry.title;
-        const old = merged.get(key);
-        if (!old || Number(entry.duration_seconds || 0) > Number(old.duration_seconds || 0)) merged.set(key, entry);
-      });
-      setEntries(sortEntries([...merged.values()]));
-    } catch { setEntries(sortEntries(local)); }
-    finally { setLoading(false); }
-  };
   useEffect(() => {
     let alive = true;
     const run = async () => {
@@ -574,7 +558,7 @@ function WatchTogetherHistory({ user }) {
         if (!alive) return;
         const merged = new Map();
         [...(Array.isArray(rows) ? rows : []), ...local].forEach(entry => {
-          const key = entry.id || entry.room_code || entry.title;
+          const key = entry.room_code || entry.id || entry.title;
           const old = merged.get(key);
           if (!old || Number(entry.duration_seconds || 0) > Number(old.duration_seconds || 0)) merged.set(key, entry);
         });
