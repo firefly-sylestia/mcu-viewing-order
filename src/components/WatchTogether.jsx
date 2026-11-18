@@ -206,6 +206,8 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const [publicRoomEnabled, setPublicRoomEnabled] = useState(false);
   const [mediaSelectorExpanded, setMediaSelectorExpanded] = useState(false);
   const [localPlaybackOverride, setLocalPlaybackOverride] = useState(false);
+  const [soloMode, setSoloMode] = useState(false);
+  const [roomDeleted, setRoomDeleted] = useState(false);
   const [savedLocalPosition, setSavedLocalPosition] = useState(null);
   const [savedLocalPaused, setSavedLocalPaused] = useState(true);
   const [canReturnLocal, setCanReturnLocal] = useState(false);
@@ -483,7 +485,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     if (!code || busy) return;
     setBusy(true); setError('');
     try { await rpc('delete_watch_room', { p_code: code, p_token: guest.token }); setOwnedRooms(rows => rows.filter(row => row.code !== code)); }
-    catch (e) { setError(e.message || 'Could not delete this room.'); }
+    catch (e) { setError(e.message || 'Could not delete this room. Someone may still be watching.'); }
     finally { setBusy(false); }
   }, [busy, guest?.token, rpc]);
 
@@ -849,21 +851,21 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     }
   }, [rpc]);
   useEffect(() => {
-    if (!room || !participant) return undefined;
+    if (!room || !participant || soloMode) return undefined;
     refreshRoom();
     refreshPlayback();
     pollRef.current = window.setInterval(refreshRoom, 4200);
     playbackPollRef.current = window.setInterval(refreshPlayback, roomRef.current?.media?.kind === 'local_file' ? 220 : 350);
     heartbeatRef.current = window.setInterval(() => {
       const r = roomRef.current, p = participantRef.current;
-      if (r && p) rpc('watch_room_heartbeat', { p_code: r.code, p_token: p.token, p_position: currentTimeRef.current, p_duration: durationRef.current }).catch(() => {});
+      if (r && p) rpc('watch_room_heartbeat', { p_code: r.code, p_token: p.token, p_position: currentTimeRef.current, p_duration: durationRef.current, p_paused: pausedRef.current }).catch(() => {});
     }, 4000);
     return () => { window.clearInterval(pollRef.current); window.clearInterval(playbackPollRef.current); window.clearInterval(heartbeatRef.current); };
-  }, [room?.id, room?.media?.kind, participant?.id, refreshRoom, refreshPlayback, rpc]);
+  }, [room?.id, room?.media?.kind, participant?.id, soloMode, refreshRoom, refreshPlayback, rpc]);
 
   const publishPlayback = useCallback(async (next, force = false) => {
     const r = roomRef.current, p = participantRef.current;
-    if (!r || !p || !['host','operator'].includes(p.role || (p.is_host ? 'host' : 'viewer')) || applyingRemoteRef.current) return;
+    if (!r || !p || soloMode || !['host','operator'].includes(p.role || (p.is_host ? 'host' : 'viewer')) || applyingRemoteRef.current) return;
     const payload = {
       position: Math.max(0, Number(next.position ?? currentTimeRef.current) || 0),
       paused: next.paused ?? pausedRef.current,
@@ -876,7 +878,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       const result = await rpc('set_watch_room_playback', { p_code: r.code, p_token: p.token, p_playback: payload });
       if (result?.state_version) lastVersionRef.current = Math.max(lastVersionRef.current, Number(result.state_version));
     } catch (e) { if (force) setError(e.message || 'Could not sync playback.'); }
-  }, [rpc, season, episode]);
+  }, [rpc, season, episode, soloMode]);
 
   const canControl = Boolean(participant?.is_host || participant?.role === 'host' || participant?.role === 'operator');
   const requestAccess = async (type, payload = {}) => {
@@ -911,6 +913,14 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   }, []);
 
   const sendPlayerCommand = useCallback((command, args = []) => {
+    if (soloMode) {
+      if (roomRef.current?.media?.kind === 'local_file') postPlayerCommand(command,args);
+      else iframeRef.current?.contentWindow?.postMessage({ type: 'cinesrc:command', command, args }, 'https://cinesrc.st');
+      if (command === 'play') { setPaused(false); pausedRef.current = false; }
+      if (command === 'pause') { setPaused(true); pausedRef.current = true; }
+      if (command === 'seek') { const position=Math.max(0,Number(args[0])||0);setCurrentTime(position);currentTimeRef.current=position; }
+      return;
+    }
     if (!canControl && !applyingRemoteRef.current && !['getCurrentTime','getDuration','setMuted'].includes(command)) {
       if (['play','pause','seek'].includes(command)) {
         setLocalPlaybackOverride(true); localPlaybackOverrideRef.current = true;
@@ -927,7 +937,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     if (command === 'play') { setPaused(false); pausedRef.current = false; publishPlayback({ position: currentTimeRef.current, paused: false }); }
     if (command === 'pause') { setPaused(true); pausedRef.current = true; publishPlayback({ position: currentTimeRef.current, paused: true }); }
     if (command === 'seek') { const position = Math.max(0, Number(args[0]) || 0); setCurrentTime(position); currentTimeRef.current = position; publishPlayback({ position, paused: pausedRef.current }, true); }
-  }, [publishPlayback, canControl, postPlayerCommand]);
+  }, [publishPlayback, canControl, postPlayerCommand, soloMode]);
 
   const scheduleLocalControlsHide = useCallback(() => {
     if (localControlsHideTimerRef.current) window.clearTimeout(localControlsHideTimerRef.current);
@@ -1089,12 +1099,14 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     await flushWatchHistory();
     const r = roomRef.current, p = participantRef.current;
     if (r && p) {
-      if (p.is_host) await rpc('close_watch_room', { p_code: r.code, p_token: p.token }).catch(() => {});
-      else await rpc('leave_watch_room', { p_code: r.code, p_token: p.token }).catch(() => {});
+      try {
+        if (p.is_host) await rpc('close_watch_room', { p_code: r.code, p_token: p.token });
+        else await rpc('leave_watch_room', { p_code: r.code, p_token: p.token });
+      } catch (e) { setError(e.message || 'Someone is still watching. Ask everyone to pause before ending the room.'); return; }
     }
     try { const saved = JSON.parse(localStorage.getItem(ACTIVE_ROOM_KEY) || 'null'); if (saved?.code === r?.code) localStorage.removeItem(ACTIVE_ROOM_KEY); } catch {}
     window.clearInterval(pollRef.current); window.clearInterval(playbackPollRef.current); window.clearInterval(heartbeatRef.current);
-    setRoom(null); setParticipant(null); setMembers([]); setMessages([]); setRequests([]); setPlayerReady(false); lastVersionRef.current = 0; setLocalPlaybackOverride(false);localPlaybackOverrideRef.current=false;setCanReturnLocal(false);setOpen(false);setSetupDialog(false);
+    setRoom(null); setParticipant(null); setMembers([]); setMessages([]); setRequests([]); setPlayerReady(false); lastVersionRef.current = 0; setLocalPlaybackOverride(false);localPlaybackOverrideRef.current=false;setCanReturnLocal(false);setSoloMode(false);setRoomDeleted(false);setOpen(false);setSetupDialog(false);
     const url = new URL(window.location.href); url.searchParams.delete('room'); window.history.replaceState({}, '', url.toString());
     onClose?.();
   };
