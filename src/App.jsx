@@ -781,6 +781,7 @@ export default function App() {
     () => universeItems.map(enrichItem),
     [universeItems, enrichItem],
   );
+  const allEnrichedItems = useMemo(() => allItems.map(enrichItem), [allItems, enrichItem]);
 
   const profileSettingsSearch = section === 'profile' && profileTab === 'settings';
   const activeItems = useMemo(() => {
@@ -788,11 +789,12 @@ export default function App() {
     const normalizedQuery = activeQuery.trim().toLowerCase();
     const genreLower = genre.toLowerCase();
     const effectiveRating = (item) => Number(item.rating) || Number(item.imdbRating) || 0;
-    const sorted = enrichedItems.filter(item => {
+    const sourceItems = sortBy === 'doomsday-countdown' || sortBy === 'secret-wars-prep' ? allEnrichedItems : enrichedItems;
+    const sorted = sourceItems.filter(item => {
       if (normalizedQuery && !item.title.toLowerCase().includes(normalizedQuery)) return false;
       if (genre !== 'All' && !item.genres.includes(genre) && item.type !== genreLower) return false;
       if (ageRatingFilter !== 'All' && (item.ageRating || (item.type === 'series' ? 'TV-14' : 'PG-13')) !== ageRatingFilter) return false;
-      if ((section === 'list' || section === 'watch') && phaseFilter !== 'All' && String(item.phase || '') !== String(phaseFilter)) return false;
+      if ((section === 'list' || section === 'watch') && sortBy !== 'doomsday-countdown' && sortBy !== 'secret-wars-prep' && phaseFilter !== 'All' && String(item.phase || '') !== String(phaseFilter)) return false;
       if (typeFilter !== 'All' && (typeFilter === 'Movies' ? item.type !== 'film' : item.type !== 'series')) return false;
       if (sortBy === 'doomsday-countdown' && !DOOMSDAY_COUNTDOWN_TITLES.has(item.title)) return false;
       if (sortBy === 'secret-wars-prep' && !SECRET_WARS_PREP_TITLES.has(item.title)) return false;
@@ -818,7 +820,7 @@ export default function App() {
       return (timelineRank(a) - timelineRank(b)) * dir;
     });
     return sorted;
-  }, [enrichedItems, universe, query, section, genre, rating, ageRatingFilter, sortBy, sortDirection, phaseFilter, typeFilter]);
+  }, [enrichedItems, allEnrichedItems, universe, query, section, genre, rating, ageRatingFilter, sortBy, sortDirection, phaseFilter, typeFilter]);
 
   // Unfiltered items (no search/filter) for WatchPage/WatchBrowse suggestions
   const roadmapItems = useMemo(() => {
