@@ -244,3 +244,10 @@ export function getTitleGuidance(item) {
 }
 
 export const MULTIVERSE_BRANCH_TAGS = { main: ['MCU Sacred Timeline'], whatif: ['What If Branch'], legacy: ['Legacy Universe Branch'] };
+
+
+// Explicit display-order maps keep both curated lists in their intended sequence.
+// Doomsday follows the official Disney+ Countdown playlist; Secret Wars is a
+// broader editorial multiverse preparation path, not a second official playlist.
+export const DOOMSDAY_COUNTDOWN_ORDER = new Map([...DOOMSDAY_COUNTDOWN_TITLES].map((title,index)=>[title,index+1]));
+export const SECRET_WARS_PREP_ORDER = new Map([...SECRET_WARS_PREP_TITLES].map((title,index)=>[title,index+1]));
