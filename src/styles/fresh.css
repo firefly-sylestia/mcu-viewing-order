@@ -17345,3 +17345,98 @@
   .profile-insights-v3-metric { padding:8px; grid-template-columns:23px minmax(0,1fr); gap:2px 6px; }
   .profile-insights-v3-icon { width:23px; height:23px; }
 }
+
+
+/* Watch Together desktop theatre layout: keep the entire playback stack in
+   the left column and the chat as the only right-column sibling. */
+@media (min-width: 761px) {
+  :root .movie-site.page-watch-together .wt-player-layout {
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) clamp(290px,26vw,360px) !important;
+    align-items:stretch !important;
+    gap:0 !important;
+    width:100% !important;
+    min-width:0 !important;
+  }
+  :root .movie-site.page-watch-together .wt-player-column {
+    display:flex !important;
+    flex-direction:column !important;
+    gap:12px !important;
+    min-width:0 !important;
+    width:100% !important;
+  }
+  :root .movie-site.page-watch-together .wt-player-column > .wt-player {
+    width:100% !important;
+    min-width:0 !important;
+    max-width:100% !important;
+    aspect-ratio:16/9;
+  }
+  :root .movie-site.page-watch-together .wt-player-column > .wt-control-dock,
+  :root .movie-site.page-watch-together .wt-player-column > .wt-role-banner,
+  :root .movie-site.page-watch-together .wt-player-column > .wt-members {
+    width:100% !important;
+    min-width:0 !important;
+    box-sizing:border-box !important;
+  }
+  :root .movie-site.page-watch-together .wt-player-layout > .wt-chat {
+    display:flex !important;
+    flex-direction:column !important;
+    width:auto !important;
+    min-width:0 !important;
+    max-width:100% !important;
+    height:100% !important;
+    min-height:0 !important;
+    max-height:none !important;
+    margin:0 !important;
+    align-self:stretch !important;
+    overflow:hidden !important;
+    border:1px solid color-mix(in srgb,var(--fx-muted) 16%,transparent) !important;
+    border-radius:0 16px 16px 0 !important;
+    box-sizing:border-box !important;
+  }
+  :root .movie-site.page-watch-together .wt-player-layout > .wt-chat .wt-chat-messages {
+    flex:1 1 auto !important;
+    min-height:160px !important;
+    max-height:none !important;
+    overflow-y:auto !important;
+    overscroll-behavior:contain;
+  }
+  :root .movie-site.page-watch-together .wt-player-layout > .wt-chat .wt-chat-form {
+    flex:0 0 auto !important;
+    min-width:0 !important;
+  }
+  :root .movie-site.page-watch-together .wt-player-layout > .wt-chat.is-collapsed {
+    width:58px !important;
+    min-width:58px !important;
+  }
+  :root .movie-site.page-watch-together .wt-player-layout:has(> .wt-chat.is-collapsed) {
+    grid-template-columns:minmax(0,1fr) 58px !important;
+  }
+  :root .movie-site.page-watch-together .wt-theatre-mode .wt-player-layout {
+    grid-template-columns:minmax(0,1fr) !important;
+  }
+}
+@media (max-width:760px) {
+  :root .movie-site.page-watch-together .wt-player-layout {
+    display:flex !important;
+    flex-direction:column !important;
+    gap:12px !important;
+    min-width:0 !important;
+  }
+  :root .movie-site.page-watch-together .wt-player-column {
+    display:flex !important;
+    flex-direction:column !important;
+    gap:10px !important;
+    width:100% !important;
+    min-width:0 !important;
+  }
+  :root .movie-site.page-watch-together .wt-player-layout > .wt-chat {
+    width:100% !important;
+    min-width:0 !important;
+    max-width:100% !important;
+    height:min(56vh,520px) !important;
+    min-height:280px !important;
+    margin:0 !important;
+    border-radius:16px !important;
+  }
+}
