@@ -16582,3 +16582,16 @@
   filter: blur(20px) saturate(1.16) !important;
   opacity: .14 !important;
 }
+
+
+/* Header Up Next: use a compact rounded-rectangle silhouette, not a capsule. */
+:root .movie-site .site-header .header-quick-actions .header-status-pill,
+:root[data-header-design="cinematic"] .movie-site .site-header .header-status-pill {
+  border-radius: 12px !important;
+}
+@media (max-width: 720px) {
+  :root .movie-site .site-header .header-quick-actions .header-status-pill,
+  :root[data-header-design="cinematic"] .movie-site .site-header .header-status-pill {
+    border-radius: 11px !important;
+  }
+}
