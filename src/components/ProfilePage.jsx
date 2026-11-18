@@ -569,47 +569,118 @@ function WatchTogetherHistory({ user }) {
   </section>;
 }
 
-function AnalyticsPanel({ stats, activeItems, inProgressItems }) {
+function AnalyticsPanel({ stats, activeItems = [], inProgressItems = [] }) {
+  const total = Math.max(0, Number(stats.total) || 0);
+  const watched = Math.max(0, Number(stats.watched) || 0);
+  const watching = Math.max(0, Number(stats.watching) || 0);
+  const dropped = Math.max(0, Number(stats.dropped) || 0);
+  const saved = Math.max(0, Number(stats.bookmarked) || 0);
+  const percent = Math.max(0, Math.min(100, Number(stats.percent) || 0));
+  const planned = Math.max(0, total - watched - watching - dropped);
+  const segments = [
+    { label: 'Watched', value: watched, tone: 'watched' },
+    { label: 'In progress', value: watching, tone: 'watching' },
+    { label: 'Unstarted', value: planned, tone: 'planned' },
+    { label: 'Dropped', value: dropped, tone: 'dropped' },
+  ];
+  const formatCount = value => value.toLocaleString();
+  const summary = total === 0
+    ? 'Your viewing journey starts here.'
+    : watched === 0
+      ? 'Your collection is ready when you are.'
+      : percent >= 75
+        ? 'You’re getting close to completing your collection.'
+        : percent >= 35
+          ? 'You’ve built a nice rhythm. Keep going.'
+          : 'Every title watched adds to your story.';
   return (
     <section className="analytics-panel profile-analytics">
-      <div className="analytics-header">
-        <p className="eyebrow">Your Progress</p>
-        <h2>{stats.percent}% complete</h2>
-        <div className="progress">
-          <span style={{ width: `${stats.percent}%` }} />
+      <div className="analytics-overview">
+        <div className="analytics-copy">
+          <span className="analytics-kicker"><Sparkles size={14}/> YOUR VIEWING JOURNEY</span>
+          <h2>Your story, <span>in numbers.</span></h2>
+          <p>{summary}</p>
+          <div className="analytics-completion">
+            <div className="analytics-completion-label">
+              <span>Collection completed</span>
+              <strong>{percent}%</strong>
+            </div>
+            <div className="analytics-progress-track" role="progressbar" aria-label="Collection completed" aria-valuenow={percent} aria-valuemin="0" aria-valuemax="100">
+              <span style={{ width: `${percent}%` }} />
+            </div>
+            <small>{formatCount(watched)} of {formatCount(total)} titles watched</small>
+          </div>
+        </div>
+        <div className="analytics-ring-wrap">
+          <div className="analytics-ring" style={{ '--completion': `${percent * 3.6}deg` }}>
+            <div className="analytics-ring-center">
+              <strong>{percent}<small>%</small></strong>
+              <span>complete</span>
+            </div>
+          </div>
+          <span className="analytics-ring-caption">YOUR PROGRESS</span>
         </div>
       </div>
-      <div className="stat-grid">
-        <div>
-          <b>{stats.total}</b>
-          <span>Total</span>
-        </div>
-        <div>
-          <b>{stats.watched}</b>
-          <span>Watched</span>
-        </div>
-        <div>
-          <b>{stats.watching}</b>
-          <span>Watching</span>
-        </div>
-        <div>
-          <b>{stats.dropped}</b>
-          <span>Dropped</span>
-        </div>
-        <div>
-          <b>{stats.bookmarked}</b>
-          <span>Saved</span>
-        </div>
-        <div>
-          <b>{stats.watchedTime}</b>
-          <span>Watch Time</span>
-        </div>
-        {stats.streak > 1 && (
-          <div className="streak-stat">
-            <b><Trophy size={16} /> {stats.streak}</b>
-            <span>Best Streak</span>
+
+      <div className="analytics-stats-grid">
+        <article className="analytics-stat analytics-stat-primary">
+          <span className="analytics-stat-icon"><Clapperboard size={17}/></span>
+          <span className="analytics-stat-label">Titles tracked</span>
+          <strong>{formatCount(total)}</strong>
+          <small>Your collection</small>
+        </article>
+        <article className="analytics-stat">
+          <span className="analytics-stat-icon"><Check size={17}/></span>
+          <span className="analytics-stat-label">Watched</span>
+          <strong>{formatCount(watched)}</strong>
+          <small>Completed titles</small>
+        </article>
+        <article className="analytics-stat">
+          <span className="analytics-stat-icon"><Clock size={17}/></span>
+          <span className="analytics-stat-label">In progress</span>
+          <strong>{formatCount(watching)}</strong>
+          <small>Currently watching</small>
+        </article>
+        <article className="analytics-stat">
+          <span className="analytics-stat-icon"><Bookmark size={17}/></span>
+          <span className="analytics-stat-label">Saved</span>
+          <strong>{formatCount(saved)}</strong>
+          <small>On your watchlist</small>
+        </article>
+        <article className="analytics-stat">
+          <span className="analytics-stat-icon"><Trophy size={17}/></span>
+          <span className="analytics-stat-label">Best streak</span>
+          <strong>{formatCount(Number(stats.streak) || 0)}</strong>
+          <small>{Number(stats.streak) === 1 ? 'day in a row' : 'days in a row'}</small>
+        </article>
+        <article className="analytics-stat">
+          <span className="analytics-stat-icon"><Clock size={17}/></span>
+          <span className="analytics-stat-label">Watch time</span>
+          <strong className="analytics-stat-time">{stats.watchedTime || '0m'}</strong>
+          <small>Time spent watching</small>
+        </article>
+      </div>
+
+      <div className="analytics-breakdown">
+        <div className="analytics-breakdown-heading">
+          <div>
+            <span className="analytics-kicker">AT A GLANCE</span>
+            <h3>Collection breakdown</h3>
           </div>
-        )}
+          <span className="analytics-breakdown-total">{formatCount(total)} titles</span>
+        </div>
+        <div className="analytics-breakdown-bar" aria-label="Viewing status breakdown">
+          {segments.map(segment => <span key={segment.tone} className={`segment-${segment.tone}`} style={{ width: total ? `${segment.value / total * 100}%` : '0%' }} />)}
+        </div>
+        <div className="analytics-breakdown-legend">
+          {segments.map(segment => (
+            <div className="analytics-legend-item" key={segment.tone}>
+              <span className={`analytics-legend-dot segment-${segment.tone}`} />
+              <span>{segment.label}</span>
+              <strong>{formatCount(segment.value)}</strong>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
