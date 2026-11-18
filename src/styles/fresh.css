@@ -17834,3 +17834,10 @@
 :root .wt-page.wt-solo-mode .wt-player-layout{display:block!important;grid-template-columns:minmax(0,1fr)!important}
 :root .wt-page.wt-solo-mode .wt-player-column{width:100%;max-width:none}
 :root .wt-page.wt-solo-mode .wt-solo-return{background:color-mix(in srgb,var(--fx-accent) 16%,var(--fx-surface))!important;color:var(--fx-text)!important}
+
+:root .wt-page.wt-solo-mode .wt-page-back {display:none!important}
+:root .wt-page.wt-solo-mode .wt-chat,:root .wt-page.wt-solo-mode .wt-room-tools,:root .wt-page.wt-solo-mode .wt-user-progress,:root .wt-page.wt-solo-mode .wt-role-banner,:root .wt-page.wt-solo-mode .wt-members,:root .wt-page.wt-solo-mode .wt-episode-picker {display:none!important}
+:root .wt-page.wt-solo-mode .wt-player-layout {display:block!important;grid-template-columns:minmax(0,1fr)!important}
+:root .wt-page.wt-solo-mode .wt-player-column {width:100%;max-width:none}
+:root .wt-page.wt-solo-mode .wt-room-actions > button:not(.wt-solo-return) {display:none!important}
+:root .wt-page.wt-solo-mode .wt-solo-return {background:color-mix(in srgb,var(--fx-accent) 16%,var(--fx-surface))!important;color:var(--fx-text)!important}
