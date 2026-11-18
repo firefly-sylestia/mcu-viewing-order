@@ -117,7 +117,7 @@ function ProfilePage({ pageHeader, setActiveTab, installApp, installAvailable, a
       <div className="profile-tab-content">
         {activeTab === 'insights' && (
           <div id="insights-panel" role="tabpanel" className="profile-panel insights-panel">
-            <AnalyticsPanel stats={stats} activeItems={activeItems} inProgressItems={inProgressItems} profileName={profileName} user={user} />
+            <AnalyticsPanel stats={stats} activeItems={activeItems} />
             <WatchTogetherHistory user={user} />
             {inProgressItems.some(i => !query || i.title.toLowerCase().includes(query.toLowerCase())) && <MovieRail title="In progress" items={inProgressItems.filter(i => !query || i.title.toLowerCase().includes(query.toLowerCase()))} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />}
             {watchedItems.some(i => !query || i.title.toLowerCase().includes(query.toLowerCase())) && <MovieRail title="Watched" items={watchedItems.filter(i => !query || i.title.toLowerCase().includes(query.toLowerCase()))} setSelected={setSelected} cycleStatus={cycleStatus} setStatus={setStatus} toggleBookmark={toggleBookmark} playTrailer={playTrailer} />}
@@ -625,48 +625,79 @@ function WatchTogetherHistory({ user }) {
   </section>;
 }
 
-function AnalyticsPanel({ stats }) {
+function AnalyticsPanel({ stats, activeItems = [] }) {
   const total = Math.max(0, Number(stats.total) || 0);
   const watched = Math.max(0, Number(stats.watched) || 0);
   const watching = Math.max(0, Number(stats.watching) || 0);
   const dropped = Math.max(0, Number(stats.dropped) || 0);
   const saved = Math.max(0, Number(stats.bookmarked) || 0);
   const percent = Math.max(0, Math.min(100, Number(stats.percent) || 0));
-  const planned = Math.max(0, total - watched - watching - dropped);
-  const segments = [
-    { label: 'Watched', value: watched, tone: 'watched' },
-    { label: 'Watching', value: watching, tone: 'watching' },
-    { label: 'Unstarted', value: planned, tone: 'planned' },
-    { label: 'Dropped', value: dropped, tone: 'dropped' },
-  ];
+  const films = activeItems.filter(item => item.type === 'film').length;
+  const series = activeItems.filter(item => item.type === 'series').length;
+  const genreCounts = new Map();
+  activeItems.filter(item => item.userStatus === 'watched').forEach(item => (Array.isArray(item.genres) ? item.genres : []).forEach(genre => genreCounts.set(genre, (genreCounts.get(genre) || 0) + 1)));
+  const topGenres = [...genreCounts.entries()].sort((a,b) => b[1]-a[1]).slice(0,3);
   const metrics = [
-    { label: 'Tracked', value: total, icon: <Clapperboard size={16}/> },
-    { label: 'Watched', value: watched, icon: <Check size={16}/> },
     { label: 'Watching', value: watching, icon: <Play size={16}/> },
     { label: 'Saved', value: saved, icon: <Bookmark size={16}/> },
+    { label: 'Dropped', value: dropped, icon: <X size={16}/> },
     { label: 'Watch time', value: stats.watchedTime || '0m', icon: <Clock size={16}/> },
-    { label: 'Streak', value: Number(stats.streak) || 0, icon: <Trophy size={16}/> },
   ];
   return <section className="analytics-panel profile-analytics profile-analytics-clean">
-    <div className="profile-insights-main">
-      <div className="profile-insights-progress">
-        <div className="profile-insights-ring" style={{ '--completion': `${percent * 3.6}deg` }}>
-          <div><strong>{percent}%</strong><span>complete</span></div>
-        </div>
-        <div className="profile-insights-progress-copy"><strong>{watched.toLocaleString()} <span>/ {total.toLocaleString()}</span></strong><small>titles watched</small></div>
+    <div className="insights-overview">
+      <div className="insights-completion">
+        <span className="insights-eyebrow">YOUR COLLECTION</span>
+        <div className="insights-completion-line"><strong>{watched.toLocaleString()}</strong><span> / {total.toLocaleString()} watched</span></div>
+        <div className="insights-progress-track"><span style={{width:`${percent}%`}}/></div>
+        <small>{percent}% complete</small>
       </div>
-      <div className="profile-insights-metrics">
-        {metrics.map(metric => <div className="profile-insight-metric" key={metric.label}>
-          <span>{metric.icon}</span><small>{metric.label}</small><strong>{typeof metric.value === 'number' ? metric.value.toLocaleString() : metric.value}</strong>
-        </div>)}
+      <div className="insights-metric-grid">
+        {metrics.map(metric => <div className="insights-metric" key={metric.label}><span>{metric.icon}</span><small>{metric.label}</small><strong>{typeof metric.value === 'number' ? metric.value.toLocaleString() : metric.value}</strong></div>)}
       </div>
     </div>
-    <div className="profile-insights-breakdown">
-      <div className="profile-insights-bar" aria-label="Viewing status breakdown">
-        {segments.map(segment => <span key={segment.tone} className={`segment-${segment.tone}`} style={{ width: total ? `${segment.value / total * 100}%` : '0%' }}/>)}
-      </div>
-      <div className="profile-insights-legend">{segments.map(segment => <span key={segment.tone}><i className={`segment-${segment.tone}`}/>{segment.label}<b>{segment.value.toLocaleString()}</b></span>)}</div>
+    <div className="insights-foot">
+      <div className="insights-format-mix"><span>FORMAT</span><strong>{films} films</strong><i/><strong>{series} series</strong></div>
+      <div className="insights-top-genres"><span>TOP GENRES</span>{topGenres.length ? topGenres.map(([genre,count]) => <b key={genre}>{genre} <small>{count}</small></b>) : <em>Mark titles watched to build your mix</em>}</div>
     </div>
+  </section>;
+}
+
+export function WatchTogetherStats({ user }) {
+  const [entries, setEntries] = useState([]);
+  const [loading, setLoading] = useState(Boolean(user?.id));
+  useEffect(() => {
+    let alive = true;
+    const local = (() => { try { const v = JSON.parse(localStorage.getItem('mcu-watch-together-history-v1') || '[]'); return Array.isArray(v) ? v : []; } catch { return []; } })();
+    setEntries(local);
+    if (!user?.id) { setLoading(false); return () => { alive = false; }; }
+    supabaseDataRequest('/rest/v1/rpc/get_watch_together_history', { method:'POST', body:'{}' })
+      .then(rows => {
+        if (!alive) return;
+        const merged = new Map();
+        [...(Array.isArray(rows) ? rows : []), ...local].forEach(entry => {
+          const key = entry.room_code || entry.id || entry.title;
+          const previous = merged.get(key);
+          if (!previous) merged.set(key, entry);
+          else merged.set(key, { ...(Number(entry.duration_seconds || 0) > Number(previous.duration_seconds || 0) ? entry : previous), id: previous.id || entry.id });
+        });
+        setEntries([...merged.values()]);
+      }).catch(() => {}).finally(() => { if (alive) setLoading(false); });
+    return () => { alive = false; };
+  }, [user?.id]);
+  const totalMinutes = entries.reduce((sum,entry) => sum + Math.max(0, Number(entry.duration_seconds) || 0), 0) / 60;
+  const longest = entries.reduce((max,entry) => Math.max(max, Number(entry.duration_seconds) || 0), 0);
+  const rooms = new Set(entries.map(entry => entry.room_code).filter(Boolean)).size;
+  const duration = minutes => minutes >= 60 ? `${Math.floor(minutes/60)}h ${Math.round(minutes%60)}m` : `${Math.round(minutes)}m`;
+  const data = [
+    { label:'Sessions', value:entries.length },
+    { label:'Time together', value:duration(totalMinutes) },
+    { label:'Rooms', value:rooms },
+    { label:'Longest session', value:duration(longest/60) },
+  ];
+  return <section className="wt-stats-panel">
+    <div className="wt-stats-heading"><div><span>WATCH TOGETHER</span><h2>Shared watch activity</h2></div><small>{loading ? 'Syncing…' : `${entries.length} sessions`}</small></div>
+    <div className="wt-stats-grid">{data.map(item => <div className="wt-stats-metric" key={item.label}><small>{item.label}</small><strong>{item.value}</strong></div>)}</div>
+    {entries.length > 0 && <div className="wt-stats-recent"><span>RECENT</span>{entries.slice().sort((a,b)=>new Date(b.last_watched_at||b.watched_at||b.started_at||0)-new Date(a.last_watched_at||a.watched_at||a.started_at||0)).slice(0,3).map((entry,index)=><span key={entry.id||entry.room_code||index}>{entry.title || entry.media?.title || 'Untitled screening'}</span>)}</div>}
   </section>;
 }
 
