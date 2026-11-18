@@ -7,10 +7,10 @@ import { supabasePublicRequest, supabaseDataRequest } from '../supabase';
 const RPC = '/rest/v1/rpc/';
 const SUBTITLE_FILE_ACCEPT = '.srt,.vtt,text/vtt,application/x-subrip';
 const subtitleToVtt = text => {
-  const normalized = String(text || '').replace(/^\\uFEFF/, '').replace(/\\r/g, '').trim();
-  if (/^WEBVTT(?:\\s|$)/i.test(normalized)) return normalized;
-  const body = normalized.replace(/(\\d{2}:\\d{2}:\\d{2}),(\\d{3})/g, '$1.$2');
-  return `WEBVTT\\n\\n${body}`;
+  const normalized = String(text || '').replace(/^\uFEFF/, '').replace(/\r/g, '').trim();
+  if (/^WEBVTT(?:\s|$)/i.test(normalized)) return normalized;
+  const body = normalized.replace(/(\d{2}:\d{2}:\d{2}),(\d{3})/g, '$1.$2');
+  return `WEBVTT\n\n${body}`;
 };
 const VIDEO_FILE_ACCEPT = 'video/*,.mkv,.avi,.mov,.wmv,.flv,.mpg,.mpeg,.m4v,.3gp,.3g2,.ts,.mts,.m2ts,.vob,.ogv,.mxf,.asf,.divx,.f4v,.rm,.rmvb,.dv,.mod,.tod,.nut,.nuv,.y4m,.m2v,.m1v';
 const VIDEO_FILE_EXTENSIONS = new Set(VIDEO_FILE_ACCEPT.split(',').filter(value => value.startsWith('.')).map(value => value.slice(1)));
