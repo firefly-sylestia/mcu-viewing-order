@@ -10,6 +10,7 @@ export default function AuthModal({ onClose, onLogin, onSignup, onResetPassword,
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [busy, setBusy] = useState(false);
+  const [confirmationSent, setConfirmationSent] = useState(false);
 
   useEffect(() => { if (recovery) setMode('update'); }, [recovery]);
 
@@ -32,8 +33,8 @@ export default function AuthModal({ onClose, onLogin, onSignup, onResetPassword,
       } else {
         const result = await onSignup(email, password, displayName.trim());
         if (result?.needsConfirmation) {
-          setSuccess('Check your inbox to confirm your email address, then come back to log in.');
-          setMode('login'); setPassword('');
+          setSuccess('');
+          setConfirmationSent(true); setPassword('');
         } else onClose();
       }
     } catch (err) {
@@ -52,11 +53,8 @@ export default function AuthModal({ onClose, onLogin, onSignup, onResetPassword,
           <div className="auth-icon">{mode === 'signup' ? <UserPlus size={32} /> : mode === 'update' || mode === 'forgot' ? <KeyRound size={32} /> : <LogIn size={32} />}</div>
           <h2>{title}</h2><p>{description}</p>
         </div>
-        {(mode === 'login' || mode === 'signup') && <aside className="auth-email-note" role="note">
-          <span className="auth-email-note-icon" aria-hidden="true">i</span>
-          <div><strong>You don't have to use your personal email.</strong><p>You can use an alternate email address instead. If you use a fake or inaccessible address, remember it exactly: you won't be able to receive a password-reset link if you forget your password. Keep your password safe too.</p></div>
-        </aside>}
-        <form onSubmit={submit} className="auth-form">
+        {(mode === 'login' || mode === 'signup') && <details className="auth-email-note"><summary>Using an alternate email?</summary><p>You can use one, but make sure you can access it for account confirmation and password resets.</p></details>}
+        {confirmationSent ? <div className="auth-confirmation" role="status"><div className="auth-confirmation-mark">✓</div><h3>Check your inbox</h3><p>We sent a confirmation link to <strong>{email}</strong>.</p><button type="button" className="auth-submit" onClick={() => { setConfirmationSent(false); setMode('login'); setSuccess('Email confirmed? Sign in to continue.'); }}>Back to sign in</button><button type="button" className="auth-switch-link" onClick={async () => { setBusy(true); setError(''); try { const result = await onSignup(email, password, displayName.trim()); if (result?.needsConfirmation) setSuccess('A new confirmation email has been sent.'); else onClose(); } catch(err) { setError(err?.message || 'Could not resend confirmation.'); } finally { setBusy(false); } }}>Resend confirmation</button></div> : <form onSubmit={submit} className="auth-form">
           {mode === 'signup' && <label><span>Display name</span><input type="text" value={displayName} onChange={(event) => setDisplayName(event.target.value)} placeholder="How should people see you?" required maxLength={32} autoComplete="nickname" /></label>}
           {mode !== 'update' && <label><span>Email</span><input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" required autoComplete="email" autoFocus /></label>}
           {mode !== 'forgot' && <label><span>{mode === 'update' ? 'New password' : 'Password'}</span><input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="At least 8 characters" required minLength={8} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} /></label>}
@@ -64,8 +62,8 @@ export default function AuthModal({ onClose, onLogin, onSignup, onResetPassword,
           {error && <p className="auth-error" role="alert">{error}</p>}
           {success && <p className="auth-success" role="status">{success}</p>}
           <button type="submit" className="auth-submit" disabled={busy}>{busy ? 'Please wait…' : mode === 'login' ? 'Log in' : mode === 'signup' ? 'Create account' : mode === 'forgot' ? 'Send reset link' : 'Update password'}</button>
-        </form>
-        {mode !== 'update' && <p className="auth-switch">
+        </form>}
+        {!confirmationSent && mode !== 'update' && <p className="auth-switch">
           {mode === 'login' ? <>New here? <button type="button" onClick={() => { setMode('signup'); setError(''); setSuccess(''); }}>Create account</button>{' · '}<button type="button" onClick={() => { setMode('forgot'); setError(''); setSuccess(''); }}>Forgot password?</button></>
             : mode === 'forgot' ? <>Remembered it? <button type="button" onClick={() => { setMode('login'); setError(''); setSuccess(''); }}>Back to login</button></>
               : <>Already have an account? <button type="button" onClick={() => { setMode('login'); setError(''); setSuccess(''); }}>Log in</button></>}
