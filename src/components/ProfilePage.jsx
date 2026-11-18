@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Play, Bookmark, RotateCcw, Clock, Check, X, Edit3 as PencilIcon, Trophy, LogIn, LogOut, Cloud, RefreshCw, Sun, Moon, Settings, Upload, Download, Clapperboard, Sparkles, LayoutGrid, Vibrate, ChevronDown, Maximize2, UserRound, ShieldCheck } from 'lucide-react';
+import { Play, Bookmark, RotateCcw, Clock, Check, X, Edit3 as PencilIcon, Trophy, LogIn, LogOut, Cloud, RefreshCw, Sun, Moon, Settings, Upload, Download, Clapperboard, Sparkles, LayoutGrid, Vibrate, ChevronDown, Maximize2, UserRound, ShieldCheck, Trash2 } from 'lucide-react';
 import { getHapticsEnabled, setHapticsEnabled, hapticsSupported, hapticTap, hapticSuccess } from '../utils/haptics';
 import { supabaseDataRequest } from '../supabase';
 
@@ -536,40 +536,108 @@ function SettingsPanel({ installApp, installAvailable, appInstalled, query = '',
 function WatchTogetherHistory({ user }) {
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(Boolean(user?.id));
+  const [expanded, setExpanded] = useState(false);
+  const [busyId, setBusyId] = useState('');
+  const [notice, setNotice] = useState('');
+  const readLocal = () => {
+    try { const value = JSON.parse(localStorage.getItem('mcu-watch-together-history-v1') || '[]'); return Array.isArray(value) ? value : []; }
+    catch { return []; }
+  };
+  const writeLocal = value => {
+    try { localStorage.setItem('mcu-watch-together-history-v1', JSON.stringify(value)); } catch {}
+  };
+  const sortEntries = value => [...value].sort((a,b) => new Date(b.last_watched_at || b.watched_at || b.started_at || 0) - new Date(a.last_watched_at || a.watched_at || a.started_at || 0));
+  const loadHistory = async () => {
+    const local = readLocal();
+    setEntries(local);
+    if (!user?.id) { setLoading(false); return; }
+    try {
+      const rows = await supabaseDataRequest('/rest/v1/rpc/get_watch_together_history', { method: 'POST', body: '{}' });
+      const merged = new Map();
+      [...(Array.isArray(rows) ? rows : []), ...local].forEach(entry => {
+        const key = entry.id || entry.room_code || entry.title;
+        const old = merged.get(key);
+        if (!old || Number(entry.duration_seconds || 0) > Number(old.duration_seconds || 0)) merged.set(key, entry);
+      });
+      setEntries(sortEntries([...merged.values()]));
+    } catch { setEntries(sortEntries(local)); }
+    finally { setLoading(false); }
+  };
   useEffect(() => {
     let alive = true;
-    let local = [];
-    try { local = JSON.parse(localStorage.getItem('mcu-watch-together-history-v1') || '[]'); } catch {}
-    setEntries(local);
-    if (!user?.id) { setLoading(false); return () => { alive = false; }; }
-    supabaseDataRequest('/rest/v1/rpc/get_watch_together_history', { method: 'POST', body: '{}' })
-      .then(rows => {
+    const run = async () => {
+      const local = readLocal();
+      if (alive) setEntries(local);
+      if (!user?.id) { if (alive) setLoading(false); return; }
+      try {
+        const rows = await supabaseDataRequest('/rest/v1/rpc/get_watch_together_history', { method: 'POST', body: '{}' });
         if (!alive) return;
         const merged = new Map();
         [...(Array.isArray(rows) ? rows : []), ...local].forEach(entry => {
-          const key = entry.room_code || entry.title;
+          const key = entry.id || entry.room_code || entry.title;
           const old = merged.get(key);
           if (!old || Number(entry.duration_seconds || 0) > Number(old.duration_seconds || 0)) merged.set(key, entry);
         });
-        setEntries([...merged.values()].sort((a,b) => new Date(b.last_watched_at || b.watched_at || 0) - new Date(a.last_watched_at || a.watched_at || 0)));
-      }).catch(() => { if (alive) setEntries(local); }).finally(() => { if (alive) setLoading(false); });
+        setEntries(sortEntries([...merged.values()]));
+      } catch { if (alive) setEntries(sortEntries(local)); }
+      finally { if (alive) setLoading(false); }
+    };
+    run();
     return () => { alive = false; };
   }, [user?.id]);
-  const durationLabel = seconds => { const mins=Math.max(0,Math.floor(Number(seconds||0)/60)); return mins<60 ? `${mins} min` : `${Math.floor(mins/60)}h ${mins%60}m`; };
+  const removeEntry = async entry => {
+    const key = entry.id || entry.room_code || entry.title;
+    setBusyId(String(key));
+    setNotice('');
+    try {
+      if (user?.id && entry.id) {
+        await supabaseDataRequest('/rest/v1/rpc/delete_watch_together_history', { method: 'POST', body: JSON.stringify({ p_id: entry.id }) });
+      }
+      const nextLocal = readLocal().filter(item => (item.room_code || item.title) !== (entry.room_code || entry.title));
+      writeLocal(nextLocal);
+      setEntries(current => current.filter(item => (item.id || item.room_code || item.title) !== key && (item.room_code || item.title) !== (entry.room_code || entry.title)));
+    } catch { setNotice('Could not delete this session. Try again.'); }
+    finally { setBusyId(''); }
+  };
+  const clearHistory = async () => {
+    setBusyId('all');
+    setNotice('');
+    try {
+      if (user?.id) await supabaseDataRequest('/rest/v1/rpc/delete_watch_together_history', { method: 'POST', body: JSON.stringify({ p_id: null }) });
+      writeLocal([]);
+      setEntries([]);
+      setExpanded(false);
+    } catch { setNotice('Could not clear history. Try again.'); }
+    finally { setBusyId(''); }
+  };
+  const durationLabel = seconds => {
+    const mins = Math.max(0, Math.floor(Number(seconds || 0) / 60));
+    return mins < 60 ? `${mins}m` : `${Math.floor(mins / 60)}h ${mins % 60}m`;
+  };
+  const visibleEntries = expanded ? entries : entries.slice(0, 5);
   return <section className="wt-history-panel">
-    <div className="wt-history-heading"><div><p className="eyebrow">Shared screenings</p><h2>Watch Together history</h2></div><span>{entries.length} sessions</span></div>
-    {loading ? <p className="wt-history-empty">Loading your screenings…</p> : entries.length ? <div className="wt-history-list">{entries.slice(0,20).map((entry,index)=>{
-      const media=entry.media||{}, title=entry.title||media.title||'Untitled screening', date=entry.last_watched_at||entry.watched_at||entry.started_at;
-      return <article className="wt-history-item" key={entry.room_code||`${title}-${index}`}>
-        <div className="wt-history-poster">{media.poster?<img src={media.poster} alt="" loading="lazy"/>:<Clapperboard size={20}/>}</div>
-        <div className="wt-history-copy"><strong>{title}</strong><small>{media.mediaType==='tv'||media.type==='series'?'Series':'Movie'} · {date?new Date(date).toLocaleDateString():'Recently'}</small></div>
-        <span className="wt-history-duration"><Clock size={13}/>{durationLabel(entry.duration_seconds)}</span>
-      </article>;
-    })}</div> : <p className="wt-history-empty">Your shared screenings will appear here, with the title and time watched.</p>}
+    <div className="wt-history-heading">
+      <div><span className="wt-history-kicker">WATCH TOGETHER</span><h2>History <small>{entries.length}</small></h2></div>
+      {entries.length > 0 && <button className="wt-history-clear" onClick={clearHistory} disabled={busyId !== ''}><Trash2 size={13}/> Clear all</button>}
+    </div>
+    {notice && <p className="wt-history-notice" role="status">{notice}</p>}
+    {loading ? <p className="wt-history-empty">Loading…</p> : entries.length ? <>
+      <div className="wt-history-list">{visibleEntries.map((entry,index) => {
+        const media = entry.media || {}, title = entry.title || media.title || 'Untitled screening';
+        const date = entry.last_watched_at || entry.watched_at || entry.started_at;
+        const key = entry.id || entry.room_code || `${title}-${index}`;
+        return <article className="wt-history-item" key={key}>
+          <div className="wt-history-poster">{media.poster ? <img src={media.poster} alt="" loading="lazy"/> : <Clapperboard size={16}/>}</div>
+          <div className="wt-history-copy"><strong>{title}</strong><small>{date ? new Date(date).toLocaleDateString() : 'Recently'} · {durationLabel(entry.duration_seconds)}</small></div>
+          <button className="wt-history-delete" onClick={() => removeEntry(entry)} disabled={busyId !== ''} aria-label={`Delete ${title} from history`} title="Remove session"><Trash2 size={14}/></button>
+        </article>;
+      })}</div>
+      {entries.length > 5 && <button className="wt-history-expand" onClick={() => setExpanded(value => !value)}>{expanded ? 'Show less' : `Show all ${entries.length}`} <ChevronDown size={14} className={expanded ? 'is-expanded' : ''}/></button>}
+    </> : <p className="wt-history-empty">No shared sessions yet.</p>}
   </section>;
 }
 
-function AnalyticsPanel({ stats, activeItems = [], inProgressItems = [] }) {
+function AnalyticsPanel({ stats }) {
   const total = Math.max(0, Number(stats.total) || 0);
   const watched = Math.max(0, Number(stats.watched) || 0);
   const watching = Math.max(0, Number(stats.watching) || 0);
@@ -579,111 +647,39 @@ function AnalyticsPanel({ stats, activeItems = [], inProgressItems = [] }) {
   const planned = Math.max(0, total - watched - watching - dropped);
   const segments = [
     { label: 'Watched', value: watched, tone: 'watched' },
-    { label: 'In progress', value: watching, tone: 'watching' },
+    { label: 'Watching', value: watching, tone: 'watching' },
     { label: 'Unstarted', value: planned, tone: 'planned' },
     { label: 'Dropped', value: dropped, tone: 'dropped' },
   ];
-  const formatCount = value => value.toLocaleString();
-  const summary = total === 0
-    ? 'Your viewing journey starts here.'
-    : watched === 0
-      ? 'Your collection is ready when you are.'
-      : percent >= 75
-        ? 'You’re getting close to completing your collection.'
-        : percent >= 35
-          ? 'You’ve built a nice rhythm. Keep going.'
-          : 'Every title watched adds to your story.';
-  return (
-    <section className="analytics-panel profile-analytics">
-      <div className="analytics-overview">
-        <div className="analytics-copy">
-          <span className="analytics-kicker"><Sparkles size={14}/> YOUR VIEWING JOURNEY</span>
-          <h2>Your story, <span>in numbers.</span></h2>
-          <p>{summary}</p>
-          <div className="analytics-completion">
-            <div className="analytics-completion-label">
-              <span>Collection completed</span>
-              <strong>{percent}%</strong>
-            </div>
-            <div className="analytics-progress-track" role="progressbar" aria-label="Collection completed" aria-valuenow={percent} aria-valuemin="0" aria-valuemax="100">
-              <span style={{ width: `${percent}%` }} />
-            </div>
-            <small>{formatCount(watched)} of {formatCount(total)} titles watched</small>
-          </div>
+  const metrics = [
+    { label: 'Tracked', value: total, icon: <Clapperboard size={16}/> },
+    { label: 'Watched', value: watched, icon: <Check size={16}/> },
+    { label: 'Watching', value: watching, icon: <Play size={16}/> },
+    { label: 'Saved', value: saved, icon: <Bookmark size={16}/> },
+    { label: 'Watch time', value: stats.watchedTime || '0m', icon: <Clock size={16}/> },
+    { label: 'Streak', value: Number(stats.streak) || 0, icon: <Trophy size={16}/> },
+  ];
+  return <section className="analytics-panel profile-analytics profile-analytics-clean">
+    <div className="profile-insights-main">
+      <div className="profile-insights-progress">
+        <div className="profile-insights-ring" style={{ '--completion': `${percent * 3.6}deg` }}>
+          <div><strong>{percent}%</strong><span>complete</span></div>
         </div>
-        <div className="analytics-ring-wrap">
-          <div className="analytics-ring" style={{ '--completion': `${percent * 3.6}deg` }}>
-            <div className="analytics-ring-center">
-              <strong>{percent}<small>%</small></strong>
-              <span>complete</span>
-            </div>
-          </div>
-          <span className="analytics-ring-caption">YOUR PROGRESS</span>
-        </div>
+        <div className="profile-insights-progress-copy"><strong>{watched.toLocaleString()} <span>/ {total.toLocaleString()}</span></strong><small>titles watched</small></div>
       </div>
-
-      <div className="analytics-stats-grid">
-        <article className="analytics-stat analytics-stat-primary">
-          <span className="analytics-stat-icon"><Clapperboard size={17}/></span>
-          <span className="analytics-stat-label">Titles tracked</span>
-          <strong>{formatCount(total)}</strong>
-          <small>Your collection</small>
-        </article>
-        <article className="analytics-stat">
-          <span className="analytics-stat-icon"><Check size={17}/></span>
-          <span className="analytics-stat-label">Watched</span>
-          <strong>{formatCount(watched)}</strong>
-          <small>Completed titles</small>
-        </article>
-        <article className="analytics-stat">
-          <span className="analytics-stat-icon"><Clock size={17}/></span>
-          <span className="analytics-stat-label">In progress</span>
-          <strong>{formatCount(watching)}</strong>
-          <small>Currently watching</small>
-        </article>
-        <article className="analytics-stat">
-          <span className="analytics-stat-icon"><Bookmark size={17}/></span>
-          <span className="analytics-stat-label">Saved</span>
-          <strong>{formatCount(saved)}</strong>
-          <small>On your watchlist</small>
-        </article>
-        <article className="analytics-stat">
-          <span className="analytics-stat-icon"><Trophy size={17}/></span>
-          <span className="analytics-stat-label">Best streak</span>
-          <strong>{formatCount(Number(stats.streak) || 0)}</strong>
-          <small>{Number(stats.streak) === 1 ? 'day in a row' : 'days in a row'}</small>
-        </article>
-        <article className="analytics-stat">
-          <span className="analytics-stat-icon"><Clock size={17}/></span>
-          <span className="analytics-stat-label">Watch time</span>
-          <strong className="analytics-stat-time">{stats.watchedTime || '0m'}</strong>
-          <small>Time spent watching</small>
-        </article>
+      <div className="profile-insights-metrics">
+        {metrics.map(metric => <div className="profile-insight-metric" key={metric.label}>
+          <span>{metric.icon}</span><small>{metric.label}</small><strong>{typeof metric.value === 'number' ? metric.value.toLocaleString() : metric.value}</strong>
+        </div>)}
       </div>
-
-      <div className="analytics-breakdown">
-        <div className="analytics-breakdown-heading">
-          <div>
-            <span className="analytics-kicker">AT A GLANCE</span>
-            <h3>Collection breakdown</h3>
-          </div>
-          <span className="analytics-breakdown-total">{formatCount(total)} titles</span>
-        </div>
-        <div className="analytics-breakdown-bar" aria-label="Viewing status breakdown">
-          {segments.map(segment => <span key={segment.tone} className={`segment-${segment.tone}`} style={{ width: total ? `${segment.value / total * 100}%` : '0%' }} />)}
-        </div>
-        <div className="analytics-breakdown-legend">
-          {segments.map(segment => (
-            <div className="analytics-legend-item" key={segment.tone}>
-              <span className={`analytics-legend-dot segment-${segment.tone}`} />
-              <span>{segment.label}</span>
-              <strong>{formatCount(segment.value)}</strong>
-            </div>
-          ))}
-        </div>
+    </div>
+    <div className="profile-insights-breakdown">
+      <div className="profile-insights-bar" aria-label="Viewing status breakdown">
+        {segments.map(segment => <span key={segment.tone} className={`segment-${segment.tone}`} style={{ width: total ? `${segment.value / total * 100}%` : '0%' }}/>)}
       </div>
-    </section>
-  );
+      <div className="profile-insights-legend">{segments.map(segment => <span key={segment.tone}><i className={`segment-${segment.tone}`}/>{segment.label}<b>{segment.value.toLocaleString()}</b></span>)}</div>
+    </div>
+  </section>;
 }
 
 function MovieRail({ title, items, setSelected, cycleStatus, setStatus, toggleBookmark, playTrailer, empty }) {
