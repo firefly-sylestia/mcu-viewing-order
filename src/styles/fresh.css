@@ -17906,3 +17906,14 @@
     flex:0 0 46px!important;
   }
 }
+
+/* Personal playback progress and the room-free local player entry. */
+:root .page-watch-together .wt-title-progress {display:grid;gap:5px;margin-top:10px;max-width:420px}
+:root .page-watch-together .wt-title-progress>span {font-size:9px;letter-spacing:.12em;font-weight:850;color:var(--fx-muted)}
+:root .page-watch-together .wt-title-progress>strong {font-size:11px;font-weight:750;color:var(--fx-text)}
+:root .page-watch-together .wt-title-progress>i {display:block;width:100%;height:4px;overflow:hidden;border-radius:99px;background:color-mix(in srgb,var(--fx-muted) 18%,transparent)}
+:root .page-watch-together .wt-title-progress>i>b {display:block;height:100%;border-radius:inherit;background:var(--fx-accent)}
+:root .page-watch-together .wt-play-local-entry {background:color-mix(in srgb,var(--fx-accent) 9%,var(--fx-surface-2))!important;border:1px solid color-mix(in srgb,var(--fx-accent) 24%,transparent)!important;color:var(--fx-text)!important}
+:root .page-watch-together .wt-play-local-entry small {color:var(--fx-muted)!important}
+:root .page-watch-together .wt-solo-local .wt-control-dock {display:none!important}
+:root .page-watch-together .wt-solo-local .wt-local-overlay-tools button[aria-label="Open room chat"] {display:none!important}
