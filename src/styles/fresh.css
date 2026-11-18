@@ -16499,3 +16499,53 @@
     cursor: none !important;
   }
 }
+
+
+/* Home hero: a soft, mirrored poster reflection replaces the full-bleed
+   artwork wash. The page surface remains visible behind the carousel. */
+:root .movie-site.page-home .top-carousel {
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+:root .movie-site.page-home .top-carousel .carousel-backdrops,
+:root .movie-site.page-home .top-carousel .carousel-backdrop-shade {
+  display: none !important;
+}
+:root .movie-site.page-home .top-carousel .smooth-stack .stack-poster.poster-0 {
+  overflow: visible !important;
+}
+:root .movie-site.page-home .top-carousel .hero-poster-reflection {
+  position: absolute !important;
+  z-index: -1 !important;
+  top: calc(100% - 1px) !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 42% !important;
+  display: block !important;
+  object-fit: cover !important;
+  object-position: center top !important;
+  transform: scaleY(-1) !important;
+  transform-origin: center !important;
+  opacity: .34 !important;
+  filter: blur(9px) saturate(.82) !important;
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,.62), transparent 92%) !important;
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,.62), transparent 92%) !important;
+  pointer-events: none !important;
+  user-select: none !important;
+}
+:root .movie-site.page-home .top-carousel .feature-stage,
+:root .movie-site.page-home .top-carousel .poster-stack {
+  overflow: visible !important;
+}
+@media (max-width: 600px) {
+  :root .movie-site.page-home .top-carousel .hero-poster-reflection {
+    height: 34% !important;
+    filter: blur(8px) saturate(.8) !important;
+    opacity: .28 !important;
+  }
+}
+:root.performance-mode .movie-site.page-home .top-carousel .hero-poster-reflection {
+  filter: blur(5px) !important;
+  opacity: .2 !important;
+}
