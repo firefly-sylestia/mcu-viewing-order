@@ -90,10 +90,20 @@ export default function WatchTogetherP2P({ room, participant, members = [], loca
         if (videoEnabled && !participant.is_host && localVideoRef?.current) {
           const player = localVideoRef.current;
           if (player.srcObject !== stream) {
+            player.pause?.();
             player.removeAttribute('src');
             player.srcObject = stream;
-            player.play?.().catch(() => {});
+            // Muted autoplay is permitted by mobile browsers; the viewer can tap
+            // the video once to enable the host video's audio.
+            player.muted = true;
           }
+          const startRemotePlayback = () => {
+            player.play?.().catch(error => {
+              setError(error?.message || 'Tap the video to start the shared stream.');
+            });
+          };
+          if (player.readyState >= 1) startRemotePlayback();
+          else player.addEventListener('loadedmetadata', startRemotePlayback, { once: true });
         }
       };
 
@@ -185,6 +195,7 @@ export default function WatchTogetherP2P({ room, participant, members = [], loca
     if (videoEnabled && participant.is_host && player) {
       player.addEventListener('loadeddata', onPlayerReady);
       player.addEventListener('canplay', onPlayerReady);
+      player.addEventListener('playing', onPlayerReady);
       onPlayerReady();
     }
     syncPeers().catch(e => setError(e.message || 'Could not start P2P connections.'));
@@ -196,6 +207,7 @@ export default function WatchTogetherP2P({ room, participant, members = [], loca
       window.clearInterval(timer);
       player?.removeEventListener('loadeddata', onPlayerReady);
       player?.removeEventListener('canplay', onPlayerReady);
+      player?.removeEventListener('playing', onPlayerReady);
       peers.current.forEach(entry => entry.pc.close());
       peers.current.clear();
       captureStream.current = null;

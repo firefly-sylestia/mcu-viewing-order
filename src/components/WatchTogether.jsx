@@ -506,7 +506,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     return()=>window.clearInterval(timer);
   }, [open, room?.id, loadOwnedRooms]);
 
-  const joinExisting = useCallback(async (code, identity = guest, verifiedFingerprint = localFileFingerprint) => {
+  const joinExisting = useCallback(async (code, identity = guest, verifiedFingerprint = localFileFingerprint, previewFallback = false) => {
     setBusy(true);
     setError('');
     lastVersionRef.current = 0;
@@ -522,6 +522,14 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
         p_avatar: identity.avatar,
       });
       const remoteLocalVideo = result.room?.media?.kind === 'local_file' && result.room?.settings?.p2p_video_enabled === true;
+      if (result.room?.media?.kind === 'local_file' && !remoteLocalVideo && previewFallback && !verifiedFingerprint) {
+        await rpc('leave_watch_room', { p_code: normalizedCode, p_token: identity.token }).catch(() => {});
+        setPendingJoinCode(normalizedCode);
+        setPendingJoinIdentity(identity);
+        setPendingJoinMedia(result.room.media);
+        setJoinPreviewOpen(true);
+        return false;
+      }
       if (result.room?.media?.kind === 'local_file' && !remoteLocalVideo && result.room.media.fileFingerprint !== verifiedFingerprint) {
         throw new Error('That file does not match this room. Select the exact same video file.');
       }
@@ -550,11 +558,16 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     setError('');
     try {
       const preview = await rpc('preview_watch_room', { p_code: normalizedCode });
-      if (preview?.media?.kind === 'local_file' && preview?.settings?.p2p_video_enabled !== true) {
+      if (preview?.media?.kind === 'local_file' && preview?.settings?.p2p_video_enabled === false) {
         setPendingJoinCode(normalizedCode);
         setPendingJoinIdentity(identity);
         setPendingJoinMedia(preview.media);
         setJoinPreviewOpen(true);
+      } else if (preview?.media?.kind === 'local_file' && preview?.settings?.p2p_video_enabled !== true) {
+        // Older deployed preview_watch_room versions don't return settings.
+        // Use the joined room snapshot as the source of truth, then leave cleanly
+        // and show the original file-match dialog only when P2P is actually off.
+        await joinExisting(normalizedCode, identity, '', true);
       } else {
         await joinExisting(normalizedCode, identity);
       }
@@ -1234,6 +1247,13 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                     style={{filter:`brightness(${Math.round(localBrightness*Math.pow(2,localExposure))}%) contrast(${localContrast}%) saturate(${localSaturation}%) hue-rotate(${localHue}deg)`,backgroundColor:localBackgroundColor}}
                     onClick={event=>{
                       if(event.target!==event.currentTarget)return;
+                      const video=event.currentTarget;
+                      if(video.srcObject && video.muted){
+                        video.muted=false;
+                        setMuted(false);
+                        video.play().catch(()=>{});
+                        return;
+                      }
                       if(window.matchMedia?.('(pointer: coarse)').matches){
                         if(localControlsHideTimerRef.current)window.clearTimeout(localControlsHideTimerRef.current);
                         if(localControlsLockedRef.current){setLocalControlsVisible(false);return;}
