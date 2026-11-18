@@ -600,12 +600,18 @@ export default function App() {
   const [warningToast, setWarningToast] = useState('');
   const { user, login, signup, logout: authLogout, resetPassword, updatePassword, configured, recovery } = useAuth();
 
-  // Give every browser a stable anonymous visitor ID. The secret stays in this
-  // browser; Supabase stores only its hash and never exposes visitor records.
+  // Count only browsers that actually interact with the site. Do not create
+  // visitor rows for crawlers, link previews, prerenders or passive page loads.
+  // One registration per app session; the browser identity itself persists.
   useEffect(() => {
     if (!configured) return;
-    let cancelled = false;
-    const registerVisitor = async () => {
+    let registered = false;
+    const eventNames = ['pointerdown', 'keydown', 'touchstart'];
+    const removeListeners = () => eventNames.forEach(name => window.removeEventListener(name, registerOnEngagement, true));
+    const registerOnEngagement = async (event) => {
+      if (registered || !event.isTrusted || document.visibilityState !== 'visible') return;
+      registered = true;
+      removeListeners();
       try {
         const visitor = getOrCreateTemporaryVisitor();
         const guest = getGuestIdentity();
@@ -614,12 +620,12 @@ export default function App() {
           body: JSON.stringify({ p_visitor_id: visitor.id, p_token: visitor.token, p_display_name: guest.name }),
         });
       } catch (error) {
-        if (!cancelled) console.warn('Temporary visitor registration failed:', error?.message || error);
+        console.warn('Temporary visitor registration failed:', error?.message || error);
       }
     };
-    registerVisitor();
-    return () => { cancelled = true; };
-  }, [configured, user?.id]);
+    eventNames.forEach(name => window.addEventListener(name, registerOnEngagement, true));
+    return removeListeners;
+  }, [configured]);
   const { pushToCloud, pushBeforeLogout, lastSynced, syncing, conflict, resolveUseRemote, resolveKeepLocal, resolveMerge, toast } = useCloudSync(user, actions, profileName, setActions, setProfileName, watchItem, setWatchItem, profileAvatar, setProfileAvatar);
   useEffect(() => { try { if (profileAvatar) localStorage.setItem('incursion-profile-avatar', profileAvatar); else localStorage.removeItem('incursion-profile-avatar'); } catch {} }, [profileAvatar]);
   useEffect(() => { if (recovery) setAuthOpen(true); }, [recovery]);
