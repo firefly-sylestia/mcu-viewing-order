@@ -1834,8 +1834,10 @@ function TopCarousel({ items, initialIndex = 0, setSelected }) {
         </div>
       </div>
       <div className="carousel-nav"><button onClick={() => move(-1)} aria-label="Previous title"><ChevronLeft /></button><div className="dots">{Array.from({ length: Math.min(items.length, 6) }, (_, dotIndex) => {
-          const targetIndex = items.length <= 6 ? dotIndex : Math.round(dotIndex * (items.length - 1) / 5);
-          const activeDot = items.length <= 6 ? heroIndex % items.length === dotIndex : Math.round((heroIndex % items.length) * 5 / (items.length - 1)) === dotIndex;
+          const dotCount = Math.min(items.length, 6);
+          const currentIndex = ((heroIndex % items.length) + items.length) % items.length;
+          const targetIndex = items.length <= 6 ? dotIndex : Math.floor(dotIndex * items.length / dotCount);
+          const activeDot = Math.floor(currentIndex * dotCount / items.length) === dotIndex;
           return <button key={dotIndex} aria-label={"Show carousel group " + (dotIndex + 1)} className={activeDot ? 'active' : ''} onClick={() => { hapticSelect(); setHeroIndex(targetIndex); setInlineTrailer(null); }} />;
         })}</div><button onClick={() => move(1)} aria-label="Next title"><ChevronRight /></button></div>
     </>
