@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronDown, ChevronUp, Copy, Check, Users, MessageCircle, Play, Pause, SkipBack, SkipForward, X, Link2, Radio, Crown, Send, LogOut, RefreshCw, Volume2, VolumeX, Clock3, ShieldCheck, Search, ChevronRight, Pencil, PanelRightClose, PanelRightOpen, ArrowLeft, Settings2, UserMinus, Eye, EyeOff, Lock, Unlock, QrCode, Theater, Wifi, WifiOff, ArrowRightLeft, Timer, Smile, Maximize2, Minimize2, SlidersHorizontal } from 'lucide-react';
+import { ChevronDown, ChevronUp, Copy, Check, Users, Captions, MessageCircle, Play, Pause, SkipBack, SkipForward, X, Link2, Radio, Crown, Send, LogOut, RefreshCw, Volume2, VolumeX, Clock3, ShieldCheck, Search, ChevronRight, Pencil, PanelRightClose, PanelRightOpen, ArrowLeft, Settings2, UserMinus, Eye, EyeOff, Lock, Unlock, QrCode, Theater, Wifi, WifiOff, ArrowRightLeft, Timer, Smile, Maximize2, Minimize2, SlidersHorizontal } from 'lucide-react';
 import { supabasePublicRequest, supabaseDataRequest } from '../supabase';
 
 
@@ -160,6 +160,9 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const [localSubtitleEnabled,setLocalSubtitleEnabled]=useState(true);
   const [localAudioTracks,setLocalAudioTracks]=useState([]);
   const [localAudioTrackIndex,setLocalAudioTrackIndex]=useState(-1);
+  const [localTextTracks,setLocalTextTracks]=useState([]);
+  const [localTextTrackIndex,setLocalTextTrackIndex]=useState(-1);
+  const [localTracksOpen,setLocalTracksOpen]=useState(false);
   const subtitleFileInputRef=useRef(null);
   const [isLocalFullscreen,setIsLocalFullscreen]=useState(false);
   const [localControlsVisible,setLocalControlsVisible]=useState(true);
@@ -279,24 +282,57 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     const video = localVideoRef.current;
     if (!video) return;
     const syncTracks = () => {
-      const tracks = video.audioTracks;
-      if (!tracks) { setLocalAudioTracks([]); setLocalAudioTrackIndex(-1); return; }
-      const list = Array.from({ length: tracks.length }, (_, index) => ({ index, label: tracks[index].label || tracks[index].language || `Audio ${index + 1}`, language: tracks[index].language || '' }));
-      setLocalAudioTracks(list);
-      const active = list.find(track => tracks[track.index].enabled)?.index ?? (list[0]?.index ?? -1);
-      setLocalAudioTrackIndex(active);
-      if (active >= 0 && !tracks[active].enabled) tracks[active].enabled = true;
+      const audio = video.audioTracks;
+      if (audio) {
+        const list = Array.from({ length: audio.length }, (_, index) => ({ index, label: audio[index].label || audio[index].language || `Audio ${index + 1}`, language: audio[index].language || '' }));
+        setLocalAudioTracks(list);
+        const active = list.find(track => audio[track.index].enabled)?.index ?? (list[0]?.index ?? -1);
+        setLocalAudioTrackIndex(active);
+        if (active >= 0 && !audio[active].enabled) audio[active].enabled = true;
+      } else { setLocalAudioTracks([]); setLocalAudioTrackIndex(-1); }
+      const text = video.textTracks;
+      if (text) {
+        const list = Array.from({ length: text.length }, (_, index) => ({ index, label: text[index].label || text[index].language || `Subtitle ${index + 1}`, language: text[index].language || '', kind: text[index].kind || 'subtitles' }));
+        setLocalTextTracks(list);
+        const active = list.find(track => text[track.index].mode === 'showing' || text[track.index].mode === 'hidden')?.index ?? -1;
+        setLocalTextTrackIndex(active);
+      } else { setLocalTextTracks([]); setLocalTextTrackIndex(-1); }
     };
     syncTracks();
+    const audio = video.audioTracks;
+    const text = video.textTracks;
+    audio?.addEventListener?.('addtrack', syncTracks);
+    audio?.addEventListener?.('removetrack', syncTracks);
+    text?.addEventListener?.('addtrack', syncTracks);
+    text?.addEventListener?.('removetrack', syncTracks);
     video.addEventListener('loadedmetadata', syncTracks);
     video.addEventListener('loadeddata', syncTracks);
-    return () => { video.removeEventListener('loadedmetadata', syncTracks); video.removeEventListener('loadeddata', syncTracks); };
+    return () => {
+      audio?.removeEventListener?.('addtrack', syncTracks); audio?.removeEventListener?.('removetrack', syncTracks);
+      text?.removeEventListener?.('addtrack', syncTracks); text?.removeEventListener?.('removetrack', syncTracks);
+      video.removeEventListener('loadedmetadata', syncTracks); video.removeEventListener('loadeddata', syncTracks);
+    };
   }, [localVideoUrl, room?.media?.fileFingerprint]);
   useEffect(() => {
     const video = localVideoRef.current;
     if (!video?.textTracks) return;
-    Array.from(video.textTracks).forEach(track => { track.mode = localSubtitleEnabled && localSubtitleUrl ? 'showing' : 'disabled'; });
-  }, [localSubtitleEnabled, localSubtitleUrl, localVideoUrl]);
+    Array.from(video.textTracks).forEach((track, index) => {
+      track.mode = localSubtitleEnabled && localSubtitleUrl && index === Array.from(video.textTracks).length - 1 ? 'showing' : (index === localTextTrackIndex ? 'showing' : 'disabled');
+    });
+  }, [localSubtitleEnabled, localSubtitleUrl, localTextTrackIndex, localVideoUrl]);
+  const selectLocalTextTrack = index => {
+    const tracks = localVideoRef.current?.textTracks;
+    if (!tracks) return;
+    Array.from(tracks).forEach((track, trackIndex) => { track.mode = index === trackIndex ? 'showing' : 'disabled'; });
+    setLocalTextTrackIndex(index);
+    setLocalSubtitleEnabled(index >= 0);
+  };
+  const selectLocalAudioTrack = index => {
+    const tracks = localVideoRef.current?.audioTracks;
+    if (!tracks) return;
+    Array.from({ length: tracks.length }, (_, trackIndex) => { tracks[trackIndex].enabled = trackIndex === index; });
+    setLocalAudioTrackIndex(index);
+  };
   useEffect(() => { onBeforeOpenRef.current = onBeforeOpen; }, [onBeforeOpen]);
   useEffect(() => { onEpisodeChangeRef.current = onEpisodeChange; }, [onEpisodeChange]);
   useEffect(() => { participantRef.current = participant; }, [participant]);
@@ -1255,7 +1291,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                     }}
                     onLoadedData={()=>setLocalVideoError('')}
                   >
-                    {localSubtitleUrl && <track key={localSubtitleUrl} kind="subtitles" src={localSubtitleUrl} srcLang="und" label={localSubtitleName || 'External subtitles'} default={localSubtitleEnabled} />}
+                    {localSubtitleUrl && <track key={localSubtitleUrl} kind="subtitles" src={localSubtitleUrl} srcLang="und" label={localSubtitleName || 'External subtitles'} />}
                   </video>
                   <div className="wt-local-grade-overlays" aria-hidden="true">
                     <span className="wt-grade-temperature"/>
@@ -1267,10 +1303,17 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                     <button type="button" className="wt-local-lock" onClick={toggleLocalControlsLock} aria-label={localControlsLocked?'Unlock player controls':'Lock player controls'} title={localControlsLocked?'Unlock controls':'Lock controls'}>{localControlsLocked?<Unlock size={17}/>:<Lock size={17}/>}</button>
                     {!isLocalFullscreen&&<button type="button" className="wt-local-ratio" onClick={()=>setLocalTabletRatio(value=>!value)} aria-pressed={localTabletRatio} aria-label={localTabletRatio?'Use original video ratio':'Use tablet 16 by 10 ratio'} title={localTabletRatio?'Original ratio':'Tablet ratio 16:10'}>{localTabletRatio?'Auto':'16:10'}</button>}
                     {isLocalFullscreen&&<>
-                      <button type="button" onClick={()=>{setLocalAdjustmentsOpen(value=>!value);revealLocalControls();}} aria-expanded={localAdjustmentsOpen} aria-label="Adjust picture" title="Picture adjustments"><SlidersHorizontal size={17}/></button>
+                      <button type="button" onClick={()=>{setLocalTracksOpen(value=>!value);setLocalAdjustmentsOpen(false);revealLocalControls();}} aria-expanded={localTracksOpen} aria-label="Audio and subtitles" title="Audio & subtitles"><Captions size={17}/></button>
+                      <button type="button" onClick={()=>{setLocalAdjustmentsOpen(value=>!value);setLocalTracksOpen(false);revealLocalControls();}} aria-expanded={localAdjustmentsOpen} aria-label="Adjust picture" title="Picture adjustments"><SlidersHorizontal size={17}/></button>
                       <button type="button" onClick={()=>{setChatCollapsed(false);setTheatreChatOpen(value=>!value);}} aria-expanded={theatreChatOpen} aria-label={theatreChatOpen?'Close room chat':'Open room chat'} title="Room chat"><MessageCircle size={17}/></button>
                     </>}
                   </div>
+                  {localTracksOpen && <div className="wt-local-track-menu" onClick={event=>event.stopPropagation()}>
+                    <header><strong>Audio &amp; subtitles</strong><button type="button" onClick={()=>setLocalTracksOpen(false)} aria-label="Close track menu"><X size={15}/></button></header>
+                    <section><span>Audio track</span>{localAudioTracks.length ? <div className="wt-local-track-options">{localAudioTracks.map(track=><button type="button" key={track.index} className={localAudioTrackIndex===track.index?'active':''} onClick={()=>selectLocalAudioTrack(track.index)}>{track.label}{track.language&&track.label!==track.language?<small>{track.language}</small>:null}</button>)}</div> : <p>Embedded audio track selection is not exposed by this browser.</p>}</section>
+                    <section><span>Subtitles</span><div className="wt-local-track-options"><button type="button" className={localTextTrackIndex===-1?'active':''} onClick={()=>selectLocalTextTrack(-1)}>Off</button>{localTextTracks.map(track=><button type="button" key={track.index} className={localTextTrackIndex===track.index?'active':''} onClick={()=>selectLocalTextTrack(track.index)}>{track.label}{track.language&&track.label!==track.language?<small>{track.language}</small>:null}</button>)}</div>{!localTextTracks.length&&<p>No embedded subtitle tracks were exposed by this browser. Some MKV subtitle formats need a dedicated demuxer.</p>}</section>
+                    <p className="wt-local-track-footnote">Tracks shown here are the ones your browser can read from this file.</p>
+                  </div>}
                   {localAdjustmentsOpen && <div className="wt-local-adjustments" onClick={event=>event.stopPropagation()}>
                     <header><strong>Picture &amp; color</strong><button type="button" onClick={()=>{setLocalBrightness(100);setLocalExposure(0);setLocalContrast(100);setLocalSaturation(100);setLocalTemperature(0);setLocalTint(0);setLocalHue(0);setLocalGradeColor('#000000');setLocalGradeColorStrength(0);setLocalGradeHighlightColor('#f2d6ae');setLocalGradeShadowColor('#26364a');setLocalGradeSplitStrength(0);setLocalBackgroundColor('#000000');}} title="Reset all picture adjustments"><RefreshCw size={14}/> Reset</button></header>
                     <div className="wt-grade-presets">
