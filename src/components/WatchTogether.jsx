@@ -110,31 +110,6 @@ const roomCode = () => {
 };
 const blobatar = name => `https://blobatar.dev/avatar/${encodeURIComponent(name || 'Viewer')}?size=96&background=squircle&gen=2`;
 
-let openViduClientPromise = null;
-const loadOpenViduClient = () => {
-  if (typeof window === 'undefined') return Promise.reject(new Error('Voice chat is only available in a browser.'));
-  if (window.LivekitClient?.Room) return Promise.resolve(window.LivekitClient);
-  if (!openViduClientPromise) {
-    openViduClientPromise = new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/livekit-client@2.24.1/dist/livekit-client.umd.min.js';
-      script.async = true;
-      script.crossOrigin = 'anonymous';
-      script.dataset.openviduClient = 'true';
-      script.onload = () => {
-        if (window.LivekitClient?.Room && window.LivekitClient?.RoomEvent) resolve(window.LivekitClient);
-        else reject(new Error('The OpenVidu browser SDK loaded, but its client API was unavailable.'));
-      };
-      script.onerror = () => reject(new Error('Could not load the OpenVidu voice SDK. Check your connection and try again.'));
-      document.head.appendChild(script);
-    }).catch(error => {
-      openViduClientPromise = null;
-      throw error;
-    });
-  }
-  return openViduClientPromise;
-};
-
 const makeAccountIdentity = (user, profileName, profileAvatar) => {
   const displayName = String(profileName || user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Viewer').trim().slice(0,32);
   const key = `mcu-watch-account-token-v1:${user.id}`;
@@ -160,16 +135,8 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const [networkState, setNetworkState] = useState(typeof navigator !== 'undefined' && navigator.onLine ? 'online' : 'offline');
   const [networkLatency, setNetworkLatency] = useState(null);
   const [pendingEpisode, setPendingEpisode] = useState(null);
-  const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [controlsExpanded, setControlsExpanded] = useState(false);
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
-  const [voiceMuted, setVoiceMuted] = useState(false);
-  const [voiceLoading, setVoiceLoading] = useState(false);
-  const [voiceError, setVoiceError] = useState('');
-  const [voicePeerCount, setVoicePeerCount] = useState(0);
-  const voiceRoomRef = useRef(null);
-  const voiceStreamRef = useRef(null);
-  const voiceRemoteAudioElementsRef = useRef(new Set());
   const [ownedRooms, setOwnedRooms] = useState([]);
   const [roomsLoading, setRoomsLoading] = useState(false);
   const [localPlaybackOverride, setLocalPlaybackOverride] = useState(false);
@@ -308,160 +275,6 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     return supabasePublicRequest(`${RPC}${name}`, options);
   }, [user?.id]);
 
-  const leaveVoice = useCallback(async () => {
-    const activeRoom = voiceRoomRef.current;
-    voiceRoomRef.current = null;
-    if (activeRoom) {
-      try { await activeRoom.disconnect(); } catch {}
-    }
-    voiceStreamRef.current?.getTracks().forEach(track => track.stop());
-    voiceStreamRef.current = null;
-    voiceRemoteAudioElementsRef.current.forEach(element => {
-      try { element.pause(); element.srcObject = null; element.remove(); } catch {}
-    });
-    voiceRemoteAudioElementsRef.current.clear();
-    setVoiceEnabled(false);
-    setVoiceMuted(false);
-    setVoicePeerCount(0);
-    setVoiceLoading(false);
-  }, []);
-
-  const startVoice = async () => {
-    if (voiceEnabled || voiceRoomRef.current) {
-      await leaveVoice();
-      return;
-    }
-    if (!room?.code || !participant?.token) {
-      setVoiceError('Join the screening room before starting voice chat.');
-      return;
-    }
-    if (room.settings?.voice_enabled !== true) {
-      setVoiceError('The host has not enabled voice chat for this room.');
-      return;
-    }
-    setVoiceLoading(true);
-    setVoiceError('');
-    let stream = null;
-    let liveRoom = null;
-    try {
-      if (!navigator.mediaDevices?.getUserMedia) throw new Error('Microphone access is not available. Open this room over HTTPS and allow microphone access.');
-      stream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-        video: false,
-      });
-      voiceStreamRef.current = stream;
-
-      const sdk = await loadOpenViduClient();
-      const response = await fetch('/api/openvidu/token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: room.code, participantToken: participant.token }),
-      });
-      const tokenData = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(tokenData.error || 'Could not authorize this voice session.');
-
-      liveRoom = new sdk.Room({ adaptiveStream: false, dynacast: false });
-      voiceRoomRef.current = liveRoom;
-      const updatePeerCount = () => setVoicePeerCount(liveRoom.remoteParticipants.size);
-      liveRoom
-        .on(sdk.RoomEvent.ParticipantConnected, updatePeerCount)
-        .on(sdk.RoomEvent.ParticipantDisconnected, updatePeerCount)
-        .on(sdk.RoomEvent.TrackSubscribed, (track) => {
-          if (track.kind !== 'audio') return;
-          const element = track.attach();
-          element.autoplay = true;
-          element.playsInline = true;
-          element.setAttribute('playsinline', '');
-          element.style.position = 'fixed';
-          element.style.width = '1px';
-          element.style.height = '1px';
-          element.style.opacity = '0';
-          element.style.pointerEvents = 'none';
-          element.style.left = '-10px';
-          element.setAttribute('aria-hidden', 'true');
-          document.body.appendChild(element);
-          voiceRemoteAudioElementsRef.current.add(element);
-          element.play().catch(() => setVoiceError('Voice is connected, but incoming audio is blocked. Tap the page once and try again.'));
-        })
-        .on(sdk.RoomEvent.TrackUnsubscribed, (track) => {
-          track.detach().forEach(element => {
-            try { element.pause(); element.srcObject = null; element.remove(); } catch {}
-            voiceRemoteAudioElementsRef.current.delete(element);
-          });
-        })
-        .on(sdk.RoomEvent.AudioPlaybackStatusChanged, () => {
-          if (!liveRoom.canPlaybackAudio) setVoiceError('Voice is connected. Tap the page once to allow incoming audio.');
-          else setVoiceError('');
-        })
-        .on(sdk.RoomEvent.Disconnected, () => {
-          if (voiceRoomRef.current !== liveRoom) return;
-          voiceRoomRef.current = null;
-          voiceStreamRef.current?.getTracks().forEach(track => track.stop());
-          voiceStreamRef.current = null;
-          voiceRemoteAudioElementsRef.current.forEach(element => {
-            try { element.pause(); element.srcObject = null; element.remove(); } catch {}
-          });
-          voiceRemoteAudioElementsRef.current.clear();
-          setVoiceEnabled(false);
-          setVoiceMuted(false);
-          setVoicePeerCount(0);
-        });
-
-      await liveRoom.connect(tokenData.url, tokenData.token);
-      const microphoneTrack = stream.getAudioTracks()[0];
-      if (!microphoneTrack) throw new Error('No microphone track was created. Check your device permissions.');
-      await liveRoom.localParticipant.publishTrack(microphoneTrack, {
-        name: 'microphone',
-        source: sdk.Track.Source.Microphone,
-      });
-      try { await liveRoom.startAudio(); } catch {}
-      setVoiceEnabled(true);
-      setVoiceMuted(false);
-      setVoicePeerCount(liveRoom.remoteParticipants.size);
-      if (!liveRoom.canPlaybackAudio) setVoiceError('Connected. Tap the page once if you cannot hear other participants.');
-    } catch (error) {
-      if (liveRoom) {
-        voiceRoomRef.current = null;
-        try { await liveRoom.disconnect(); } catch {}
-      }
-      stream?.getTracks().forEach(track => track.stop());
-      voiceStreamRef.current = null;
-      voiceRemoteAudioElementsRef.current.forEach(element => {
-        try { element.pause(); element.srcObject = null; element.remove(); } catch {}
-      });
-      voiceRemoteAudioElementsRef.current.clear();
-      setVoiceEnabled(false);
-      setVoicePeerCount(0);
-      setVoiceError(error.name === 'NotAllowedError' ? 'Allow microphone access to join voice chat.' : error.message || 'Could not start OpenVidu voice chat.');
-    } finally {
-      setVoiceLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    voiceStreamRef.current?.getAudioTracks().forEach(track => { track.enabled = !voiceMuted; });
-  }, [voiceMuted]);
-
-  useEffect(() => {
-    if (room && room.settings?.voice_enabled !== true && voiceRoomRef.current) leaveVoice();
-  }, [room?.id, room?.settings?.voice_enabled, leaveVoice]);
-
-  useEffect(() => () => {
-    const activeRoom = voiceRoomRef.current;
-    voiceRoomRef.current = null;
-    if (activeRoom) activeRoom.disconnect().catch(() => {});
-    voiceStreamRef.current?.getTracks().forEach(track => track.stop());
-    voiceStreamRef.current = null;
-    voiceRemoteAudioElementsRef.current.forEach(element => {
-      try { element.pause(); element.srcObject = null; element.remove(); } catch {}
-    });
-    voiceRemoteAudioElementsRef.current.clear();
-    setVoiceEnabled(false);
-    setVoiceMuted(false);
-    setVoicePeerCount(0);
-    setVoiceLoading(false);
-  }, [room?.id]);
-
   useEffect(() => { if(!room||!participant)return;let active=true;const ping=async()=>{if(!navigator.onLine){setNetworkState('offline');return;}const start=performance.now();try{await rpc('watch_room_playback_snapshot',{p_code:room.code,p_token:participant.token});if(active){setNetworkLatency(Math.round(performance.now()-start));setNetworkState('online');}}catch{if(active)setNetworkState('reconnecting');}};ping();const timer=window.setInterval(ping,15000);return()=>{active=false;window.clearInterval(timer);};},[room?.id,participant?.id,rpc]);
 
   const applyRoomSnapshot = useCallback((snapshot) => {
@@ -593,16 +406,11 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     setError('');
     try {
       const preview = await rpc('preview_watch_room', { p_code: normalizedCode });
-      if (preview?.media?.kind === 'local_file' && preview?.settings?.p2p_video_enabled === false) {
+      if (preview?.media?.kind === 'local_file') {
         setPendingJoinCode(normalizedCode);
         setPendingJoinIdentity(identity);
         setPendingJoinMedia(preview.media);
         setJoinPreviewOpen(true);
-      } else if (preview?.media?.kind === 'local_file' && preview?.settings?.p2p_video_enabled !== true) {
-        // Older deployed preview_watch_room versions don't return settings.
-        // Use the joined room snapshot as the source of truth, then leave cleanly
-        // and show the original file-match dialog only when P2P is actually off.
-        await joinExisting(normalizedCode, identity, '', true);
       } else {
         await joinExisting(normalizedCode, identity);
       }
@@ -1083,7 +891,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   };
 
   const copyTimestamp = async () => { try { await navigator.clipboard.writeText(`${room?.media?.title || 'Watch Together'} · ${timeText(currentTimeRef.current)} · ${roomLink}`); setCopied(true); window.setTimeout(()=>setCopied(false),1800); } catch { setError('Could not copy timestamp.'); } };
-  const updateRoomSettings = async (patch) => { if(!room||!participant?.is_host||busy)return;if(patch.p2p_video_enabled!==undefined&&room.media?.kind!=='local_file'){setError('Direct video sharing is only available in Local File rooms.');return;}setBusy(true);setError('');try{await rpc('update_watch_room_settings',{p_code:room.code,p_token:participant.token,p_settings:patch});await refreshRoom();}catch(e){setError(e.message||'Could not update room settings.');}finally{setBusy(false);}};
+  const updateRoomSettings = async (patch) => { if(!room||!participant?.is_host||busy)return;setBusy(true);setError('');try{await rpc('update_watch_room_settings',{p_code:room.code,p_token:participant.token,p_settings:patch});await refreshRoom();}catch(e){setError(e.message||'Could not update room settings.');}finally{setBusy(false);}};
   const transferHost = async (member) => {if(!member||!room||!participant?.is_host||busy)return;setBusy(true);setError('');try{await rpc('transfer_watch_room_host',{p_code:room.code,p_token:participant.token,p_participant_id:member.id});setHostPanelOpen(false);await refreshRoom();}catch(e){setError(e.message||'Could not transfer host privileges.');}finally{setBusy(false);}};
   const removeMember = async (member) => {if(!member||!room||!participant?.is_host||busy)return;setBusy(true);setError('');try{await rpc('remove_watch_room_participant',{p_code:room.code,p_token:participant.token,p_participant_id:member.id});setMembers(list=>list.filter(m=>m.id!==member.id));setConfirmAction(null);}catch(e){setError(e.message||'Could not remove participant.');}finally{setBusy(false);}};
   const copyLink = async () => {
@@ -1588,7 +1396,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                 <button type="button" className={roomType==='movie'?'active':''} onClick={()=>{setRoomType('movie');setError('');}}><Play size={14}/> Movie / Series</button>
                 <button type="button" className={roomType==='local'?'active':''} onClick={()=>{setRoomType('local');setError('');}}><Users size={14}/> Local</button>
               </div>
-              {(roomType==='local')?<div className="wt-local-file-picker"><input ref={localFileInputRef} type="file" accept={VIDEO_FILE_ACCEPT} hidden onChange={event=>{const file=event.target.files?.[0];event.target.value='';handleLocalFile(file, '', !isChangingMedia);}}/><button type="button" className="wt-local-file-drop" onClick={()=>localFileInputRef.current?.click()} disabled={localFileBusy}><span className="wt-local-file-icon"><Radio size={22}/></span><strong>{localFileBusy?'Checking video…':localFile?'Change video file':'Choose a video file'}</strong><small>{localFile?localFile.name:'Select a video stored on this device'}</small><em>{localFile?((localFile.size/1024/1024).toFixed(1)+' MB · Never uploaded'): roomType==='p2p'?'Your video is streamed directly from this device to viewers.':'Everyone joining must select their own copy of the same file.'}</em></button>{localFile&&<div className="wt-local-file-match"><Check size={15}/><span><strong>File fingerprint ready</strong><small>Participants are checked against this video before joining.</small></span><badge>Verified locally</badge></div>}</div>:<><label className="wt-picker-search"><Search size={16}/><input value={mediaQuery} onChange={event=>setMediaQuery(event.target.value)} placeholder="Search any movie or series…"/></label>
+              {(roomType==='local')?<div className="wt-local-file-picker"><input ref={localFileInputRef} type="file" accept={VIDEO_FILE_ACCEPT} hidden onChange={event=>{const file=event.target.files?.[0];event.target.value='';handleLocalFile(file, '', !isChangingMedia);}}/><button type="button" className="wt-local-file-drop" onClick={()=>localFileInputRef.current?.click()} disabled={localFileBusy}><span className="wt-local-file-icon"><Radio size={22}/></span><strong>{localFileBusy?'Checking video…':localFile?'Change video file':'Choose a video file'}</strong><small>{localFile?localFile.name:'Select a video stored on this device'}</small><em>{localFile?((localFile.size/1024/1024).toFixed(1)+' MB · Never uploaded'): Everyone joining must select their own copy of the same file.}</em></button>{localFile&&<div className="wt-local-file-match"><Check size={15}/><span><strong>File fingerprint ready</strong><small>Participants are checked against this video before joining.</small></span><badge>Verified locally</badge></div>}</div>:<><label className="wt-picker-search"><Search size={16}/><input value={mediaQuery} onChange={event=>setMediaQuery(event.target.value)} placeholder="Search any movie or series…"/></label>
               {roomType==='movie'&&<div className="wt-picker-grid">{tmdbSearchLoading && <p className="wt-picker-empty">Searching your library and TMDB…</p>}{filteredMediaItems.length?filteredMediaItems.map((candidate,index)=><button type="button" key={`${candidate.tmdbId || candidate.id}-${index}`} onClick={()=>{setSelectedMedia(candidate);setError('');}} className={selectedMedia?.tmdbId===candidate.tmdbId?'selected':''}>{candidate.poster ? <img src={candidate.poster} alt="" loading={index<9?'eager':'lazy'} decoding="async" onError={event=>{event.currentTarget.style.visibility='hidden';event.currentTarget.parentElement.classList.add('poster-unavailable');}}/> : <span className="wt-poster-placeholder" aria-hidden="true">No poster</span>}<span className="wt-picker-copy"><strong title={candidate.title}>{candidate.title}</strong><small className="wt-picker-rating-row"><span>{candidate.year || '—'} · {candidate.type==='series'||candidate.mediaType==='tv'?'Series':'Movie'}</span><b>{(candidate.rating || candidate.imdbRating || candidate.voteAverage) ? `★ ${Number(candidate.rating || candidate.imdbRating || candidate.voteAverage).toFixed(1)}` : 'Rating unavailable'}</b></small></span><i>{selectedMedia?.tmdbId===candidate.tmdbId?<Check size={15}/>:null}</i></button>):<p className="wt-picker-empty">No titles found. Try another title or spelling.</p>}</div>}
               {roomType==='movie'&&selectedMedia && <div className="wt-dialog-selected"><img src={selectedMedia.poster || guest.avatar} alt=""/><span className="wt-dialog-selected-meta"><strong title={selectedMedia.title}>{selectedMedia.title}</strong><small>{selectedMedia.year || '—'} · {selectedMedia.type==='series'||selectedMedia.mediaType==='tv'?'Series':'Movie'}</small><small className="wt-dialog-rating">{(selectedMedia.rating || selectedMedia.imdbRating || selectedMedia.voteAverage) ? `★ ${Number(selectedMedia.rating || selectedMedia.imdbRating || selectedMedia.voteAverage).toFixed(1)} rating` : 'Rating unavailable'}</small></span></div>}
               </>}
