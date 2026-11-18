@@ -1254,8 +1254,9 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                       setLocalVideoError('This browser cannot decode this file. MKV, AVI and MOV are containers, not codecs. If the video is H.264/AVC with AAC audio, remux it to MP4 without re-encoding. If it is H.265/HEVC or another unsupported codec, convert it to H.264 video with AAC audio. This player does not convert files yet.');
                     }}
                     onLoadedData={()=>setLocalVideoError('')}
-                  />
-                  {localSubtitleUrl && <track key={localSubtitleUrl} kind="subtitles" src={localSubtitleUrl} srcLang="und" label={localSubtitleName || 'External subtitles'} default={localSubtitleEnabled} />}
+                  >
+                    {localSubtitleUrl && <track key={localSubtitleUrl} kind="subtitles" src={localSubtitleUrl} srcLang="und" label={localSubtitleName || 'External subtitles'} default={localSubtitleEnabled} />}
+                  </video>
                   <div className="wt-local-grade-overlays" aria-hidden="true">
                     <span className="wt-grade-temperature"/>
                     <span className="wt-grade-tint"/>
