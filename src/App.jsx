@@ -1528,6 +1528,10 @@ export default function App() {
         <section className="hero-layout" key={universe}>
           <TopCarousel items={heroItems} initialIndex={(() => { try { return Number(localStorage.getItem('mcu-home-hero-index')) || saved.heroIndex || 0; } catch { return saved.heroIndex || 0; } })()} setSelected={selectItem} />
         </section>
+        <section className="home-browse-hint" aria-label="Browse the full viewing list">
+          <div className="home-browse-hint-copy"><span>STILL EXPLORING?</span><p>Browse the full list to discover more movies and series.</p></div>
+          <button type="button" onClick={() => { setQuery(''); navigateSection('list'); }}><ListFilter size={15}/><span>Explore the list</span><ChevronRight size={15}/></button>
+        </section>
         {externalTrackedItems.length > 0 && (
           <MovieRail
             title="Your TMDB"
