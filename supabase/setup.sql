@@ -996,7 +996,7 @@ begin
   if p_public and coalesce(r.media->>'kind','')='local_file' then
     raise exception 'Local-file rooms cannot be public.';
   end if;
-  update public.watch_rooms set is_public=coalesce(p_public,false) where id=r.id;
+  update public.watch_rooms set is_public=coalesce(p_public,false), settings=case when coalesce(p_public,false) then jsonb_set(coalesce(settings,'{}'::jsonb),'{locked}','false'::jsonb,true) else settings end where id=r.id;
   return true;
 end $$;
 
