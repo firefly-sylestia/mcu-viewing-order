@@ -905,9 +905,9 @@ revoke all on function public.watch_room_p2p_poll(text,text,bigint) from public,
 -- ---------------------------------------------------------------------------
 -- Temporary anonymous website visitors
 -- ---------------------------------------------------------------------------
--- The browser keeps a random bearer secret. Only its SHA-256 hash is stored.
--- There are deliberately no table grants or read policies: visitors can only
--- register/refresh their own row through the narrowly scoped RPC below.
+-- Only engaged browser sessions are registered by the client. A row expires
+-- seven days after its last genuine visit; inactive rows are purged on the
+-- next registration. No client table access is granted.
 
 create table if not exists public.temporary_visitors (
   id uuid primary key,
@@ -916,9 +916,11 @@ create table if not exists public.temporary_visitors (
   user_id uuid references auth.users(id) on delete set null,
   created_at timestamptz not null default now(),
   last_seen timestamptz not null default now(),
-  expires_at timestamptz not null default now() + interval '30 days'
+  expires_at timestamptz not null default now() + interval '7 days'
 );
 
+alter table public.temporary_visitors
+  alter column expires_at set default (now() + interval '7 days');
 create index if not exists temporary_visitors_expires_idx
   on public.temporary_visitors(expires_at);
 create index if not exists temporary_visitors_last_seen_idx
@@ -950,12 +952,12 @@ begin
   insert into public.temporary_visitors
     (id, token_hash, display_name, user_id, last_seen, expires_at)
   values
-    (p_visitor_id, v_token_hash, trim(p_display_name), auth.uid(), now(), now() + interval '30 days')
+    (p_visitor_id, v_token_hash, trim(p_display_name), auth.uid(), now(), now() + interval '7 days')
   on conflict (id) do update set
     display_name = excluded.display_name,
     user_id = coalesce(temporary_visitors.user_id, excluded.user_id),
     last_seen = now(),
-    expires_at = now() + interval '30 days'
+    expires_at = now() + interval '7 days'
   where temporary_visitors.token_hash = excluded.token_hash
     and (temporary_visitors.user_id is null
          or excluded.user_id is null
@@ -965,8 +967,11 @@ begin
     raise exception 'Temporary visitor identity could not be verified.';
   end if;
 
-  -- Opportunistic cleanup; the index keeps this bounded and no scheduler is required.
-  delete from public.temporary_visitors where expires_at <= now();
+  -- Remove records inactive for seven days, including rows created by the
+  -- previous eager page-load registration behaviour.
+  delete from public.temporary_visitors
+  where last_seen <= now() - interval '7 days'
+     or expires_at <= now();
   return true;
 end;
 $$;
