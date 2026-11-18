@@ -17829,3 +17829,8 @@
   :root .movie-site.page-home .home-browse-hint>button {width:100%;min-height:40px}
   :root .movie-site.page-home .home-watch-party-cta {background:linear-gradient(145deg,color-mix(in srgb,var(--fx-accent) 10%,transparent),color-mix(in srgb,var(--fx-surface) 30%,transparent))!important}
 }
+
+:root .wt-page.wt-solo-mode .wt-chat,:root .wt-page.wt-solo-mode .wt-room-tools,:root .wt-page.wt-solo-mode .wt-user-progress,:root .wt-page.wt-solo-mode .wt-role-banner,:root .wt-page.wt-solo-mode .wt-members,:root .wt-page.wt-solo-mode .wt-episode-picker{display:none!important}
+:root .wt-page.wt-solo-mode .wt-player-layout{display:block!important;grid-template-columns:minmax(0,1fr)!important}
+:root .wt-page.wt-solo-mode .wt-player-column{width:100%;max-width:none}
+:root .wt-page.wt-solo-mode .wt-solo-return{background:color-mix(in srgb,var(--fx-accent) 16%,var(--fx-surface))!important;color:var(--fx-text)!important}
