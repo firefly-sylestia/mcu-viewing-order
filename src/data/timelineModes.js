@@ -174,15 +174,15 @@ export const STORY_ORDER_OVERRIDES = new Map([
   ['Daredevil: Born Again S1', 450], ['Captain America: Brave New World', 460], ['Thunderbolts*', 470], ['Fantastic Four: First Steps', 480], ['Avengers: Doomsday', 490], ['Avengers: Secret Wars', 500],
 ]);
 
-// Disney+ / Marvel's official Countdown to Doomsday playlist. Loki S1 and S2
-// are two seasons within one playlist entry.
+// Disney+ Countdown to Avengers: Doomsday collection, updated November 2026.
+// Loki is split into its two app entries; VisionQuest is the latest addition.
 export const DOOMSDAY_COUNTDOWN_TITLES = new Set([
   'X-Men', 'X2: X-Men United', 'Captain America: The First Avenger', 'The Avengers',
   'Avengers: Infinity War', 'Avengers: Endgame', 'Loki S1', 'Loki S2',
   'Shang-Chi & the Legend of the Ten Rings', 'Spider-Man: No Way Home',
-  'Black Panther: Wakanda Forever', 'Doctor Strange: Multiverse of Madness',
-  'Deadpool & Wolverine', 'Captain America: Brave New World', 'Thunderbolts*',
-  'Fantastic Four: First Steps',
+  'Doctor Strange: Multiverse of Madness', 'Black Panther: Wakanda Forever',
+  'Captain America: Brave New World', 'Deadpool & Wolverine', 'Thunderbolts*',
+  'Fantastic Four: First Steps', 'VisionQuest',
 ]);
 
 // A broader, clearly labelled editorial preparation path for Secret Wars.
