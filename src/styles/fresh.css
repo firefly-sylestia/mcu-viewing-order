@@ -16567,3 +16567,112 @@
 :root .movie-site.page-home .top-carousel .smooth-stack .stack-poster.poster-2 > .fallback-poster {
   opacity: 1 !important;
 }
+
+
+/* Home carousel: exact six-segment progress mapping and a floating glass indicator. */
+:root .movie-site .carousel-nav {
+  position: relative;
+  z-index: 4;
+  width: fit-content;
+  margin: 10px auto 0;
+  padding: 7px 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 1px solid color-mix(in srgb, var(--fx-muted) 20%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--fx-surface) 48%, transparent);
+  -webkit-backdrop-filter: blur(22px) saturate(1.35);
+  backdrop-filter: blur(22px) saturate(1.35);
+  box-shadow: 0 12px 34px -24px rgba(0,0,0,.52), inset 0 1px 0 rgba(255,255,255,.16);
+}
+:root .movie-site .carousel-nav > button {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--fx-text);
+}
+:root .movie-site .carousel-nav > button:hover {
+  background: color-mix(in srgb, var(--fx-text) 9%, transparent);
+  color: var(--fx-text);
+  box-shadow: none;
+}
+:root .movie-site .dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 0;
+}
+:root .movie-site .dots button {
+  width: 6px;
+  height: 6px;
+  min-width: 6px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--fx-text) 30%, transparent);
+  box-shadow: none;
+}
+:root .movie-site .dots button.active {
+  width: 19px;
+  background: var(--fx-text);
+  box-shadow: none;
+}
+@media (min-width: 761px) {
+  :root .movie-site.page-home .carousel-nav {
+    margin-top: 18px;
+  }
+}
+
+/* Keep Watch Together chat level with the actual player, not the room header. */
+@media (min-width: 761px) {
+  :root .movie-site.page-watch-together .wt-content {
+    display: block !important;
+    min-height: 0 !important;
+  }
+  :root .movie-site.page-watch-together .wt-main {
+    padding: 18px !important;
+  }
+  :root .movie-site.page-watch-together .wt-player-layout {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    align-items: stretch;
+    min-width: 0;
+  }
+  :root .movie-site.page-watch-together .wt-player-layout > .wt-chat {
+    width: auto !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    margin: 0 !important;
+    align-self: stretch !important;
+    border-top: 1px solid color-mix(in srgb, var(--fx-muted) 16%, transparent) !important;
+    border-right: 1px solid color-mix(in srgb, var(--fx-muted) 16%, transparent) !important;
+    border-bottom: 1px solid color-mix(in srgb, var(--fx-muted) 16%, transparent) !important;
+    border-left: 1px solid color-mix(in srgb, var(--fx-muted) 16%, transparent) !important;
+    border-radius: 0 16px 16px 0 !important;
+  }
+  :root .movie-site.page-watch-together .wt-player-layout > .wt-chat.is-collapsed {
+    width: 58px !important;
+    min-width: 58px !important;
+  }
+  :root .movie-site.page-watch-together .wt-player-layout:has(.wt-chat.is-collapsed) {
+    grid-template-columns: minmax(0, 1fr) 58px;
+  }
+  :root .movie-site.page-watch-together .wt-theatre-mode .wt-player-layout {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+@media (max-width: 760px) {
+  :root .movie-site.page-watch-together .wt-player-layout {
+    display: block !important;
+    min-width: 0 !important;
+  }
+}
