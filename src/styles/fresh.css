@@ -17623,3 +17623,72 @@
   background: color-mix(in srgb,var(--fx-surface-2) 82%,transparent) !important;
   color: var(--fx-text) !important;
 }
+
+
+/* Keep the selected title, public-room switch and create action reachable
+   when the poster picker is expanded on shorter phone screens. */
+:root .wt-create-backdrop .wt-create-dialog {
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+  scrollbar-width: thin !important;
+}
+:root .wt-create-backdrop .wt-create-dialog .wt-dialog-selected,
+:root .wt-create-backdrop .wt-create-dialog .wt-public-toggle,
+:root .wt-create-backdrop .wt-create-dialog > .wt-create {
+  flex: 0 0 auto !important;
+  min-height: fit-content !important;
+}
+:root .wt-create-backdrop .wt-create-dialog .wt-public-toggle {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  margin: 10px 0 4px !important;
+  padding: 12px 13px !important;
+}
+:root .wt-create-backdrop .wt-create-dialog .wt-public-toggle > span {
+  display: grid !important;
+  min-width: 0 !important;
+  gap: 3px !important;
+}
+:root .wt-create-backdrop .wt-create-dialog .wt-public-toggle strong {
+  color: var(--fx-text) !important;
+}
+:root .wt-create-backdrop .wt-create-dialog .wt-public-toggle small {
+  color: var(--fx-muted) !important;
+  white-space: normal !important;
+}
+:root .wt-create-backdrop .wt-create-dialog .wt-change-title {
+  flex: 0 0 auto !important;
+  padding: 9px 13px !important;
+  border: 1px solid rgba(255,255,255,.16) !important;
+  border-radius: 999px !important;
+  background: #343b49 !important;
+  color: #fff !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+  white-space: nowrap !important;
+  box-shadow: 0 5px 14px rgba(20,27,40,.2) !important;
+}
+:root .wt-create-backdrop .wt-create-dialog .wt-change-title:active {
+  background: #222936 !important;
+}
+@media (max-width:760px) {
+  :root .wt-create-backdrop .wt-create-dialog {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 24px) !important;
+    padding-bottom: 16px !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  :root .wt-create-backdrop .wt-create-dialog .wt-picker-grid {
+    flex: 0 1 auto !important;
+    max-height: min(30dvh, 250px) !important;
+  }
+  :root .wt-create-backdrop .wt-create-dialog .wt-dialog-selected,
+  :root .wt-create-backdrop .wt-create-dialog .wt-public-toggle,
+  :root .wt-create-backdrop .wt-create-dialog > .wt-create {
+    flex-shrink: 0 !important;
+  }
+}
