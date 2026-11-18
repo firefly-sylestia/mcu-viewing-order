@@ -643,21 +643,27 @@ function AnalyticsPanel({ stats, activeItems = [] }) {
     { label: 'Dropped', value: dropped, icon: <X size={16}/> },
     { label: 'Watch time', value: stats.watchedTime || '0m', icon: <Clock size={16}/> },
   ];
-  return <section className="analytics-panel profile-analytics profile-analytics-clean">
-    <div className="insights-overview">
-      <div className="insights-completion">
-        <span className="insights-eyebrow">YOUR COLLECTION</span>
-        <div className="insights-completion-line"><strong>{watched.toLocaleString()}</strong><span> / {total.toLocaleString()} watched</span></div>
-        <div className="insights-progress-track"><span style={{width:`${percent}%`}}/></div>
-        <small>{percent}% complete</small>
+  return <section className="analytics-panel profile-analytics profile-insights-v2">
+    <div className="profile-insights-v2-head">
+      <div>
+        <span className="profile-insights-v2-kicker">YOUR LIBRARY</span>
+        <h2>Viewing overview</h2>
+        <p>A snapshot of the titles you have tracked.</p>
       </div>
-      <div className="insights-metric-grid">
-        {metrics.map(metric => <div className="insights-metric" key={metric.label}><span>{metric.icon}</span><small>{metric.label}</small><strong>{typeof metric.value === 'number' ? metric.value.toLocaleString() : metric.value}</strong></div>)}
-      </div>
+      <div className="profile-insights-v2-total"><strong>{watched.toLocaleString()}</strong><span>of {total.toLocaleString()} watched</span></div>
     </div>
-    <div className="insights-foot">
-      <div className="insights-format-mix"><span>FORMAT</span><strong>{films} films</strong><i/><strong>{series} series</strong></div>
-      <div className="insights-top-genres"><span>TOP GENRES</span>{topGenres.length ? topGenres.map(([genre,count]) => <b key={genre}>{genre} <small>{count}</small></b>) : <em>Mark titles watched to build your mix</em>}</div>
+    <div className="profile-insights-v2-progress" role="progressbar" aria-label="Collection completion" aria-valuenow={percent} aria-valuemin="0" aria-valuemax="100"><span style={{width:`${percent}%`}}/></div>
+    <div className="profile-insights-v2-progress-label"><span>{percent}% complete</span><span>{Math.max(0,total-watched).toLocaleString()} remaining</span></div>
+    <div className="profile-insights-v2-metrics">
+      {metrics.map(metric => <div className="profile-insights-v2-metric" key={metric.label}>
+        <span className="profile-insights-v2-icon">{metric.icon}</span>
+        <span className="profile-insights-v2-label">{metric.label}</span>
+        <strong>{typeof metric.value === 'number' ? metric.value.toLocaleString() : metric.value}</strong>
+      </div>)}
+    </div>
+    <div className="profile-insights-v2-foot">
+      <span>{films.toLocaleString()} films</span><i/><span>{series.toLocaleString()} series</span>
+      <span className="profile-insights-v2-genres">{topGenres.length ? `Top genres · ${topGenres.map(([genre])=>genre).join(' · ')}` : 'Genres appear as you mark titles watched'}</span>
     </div>
   </section>;
 }
