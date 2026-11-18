@@ -597,7 +597,6 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       if (room && room.media?.kind !== 'local_file' && !pendingJoinCode) setJoinPreviewOpen(false);
       return;
     }
-    // P2P viewers receive the host's stream and must never be asked for a local copy.
     if (setupDialog && isChangingMedia) return;
     const fingerprint = room.media.fileFingerprint;
     if (!fingerprint || localFileFingerprint === fingerprint || localVideoRestoreRef.current === fingerprint) return;
