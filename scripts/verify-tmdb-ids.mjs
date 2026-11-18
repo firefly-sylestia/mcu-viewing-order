@@ -1,6 +1,10 @@
 import https from 'https';
 
-const TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI2NWVkYTQ4Y2Y1ODAzZjIyMzA0ZmQyMWY0ZjA2YTM1ZSIsIm5iZiI6MTc3ODY4NTg2My42ODcsInN1YiI6IjZhMDQ5N2E3N2IyZDk3NzQ2MDM3N2E1OSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.XTD8e-B7awrTVIJd5WtD3vZ5FnWjE8sWkSjgYIeauAA';
+const TOKEN = process.env.TMDB_READ_ACCESS_TOKEN;
+if (!TOKEN) {
+  console.error('Set TMDB_READ_ACCESS_TOKEN before running this script.');
+  process.exit(1);
+}
 
 function tmdbFetch(path) {
   return new Promise((resolve, reject) => {
