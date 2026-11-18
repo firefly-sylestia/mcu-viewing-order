@@ -284,7 +284,7 @@ export function ProfileHeader({ universe, stats, profileName, setProfileName, pr
   );
 }
 
-function SettingsPanel({ installApp, installAvailable, appInstalled, query = '', profileName, setProfileName, user, configured, onLogin, onLogout, universe, activeItems, setStatus, toggleBookmark, nativePlayer, setNativePlayer, quietBrowsingOn = false, setQuietBrowsingOn, voiceChatDefault = true, setVoiceChatDefault,   }) {
+function SettingsPanel({ installApp, installAvailable, appInstalled, query = '', profileName, setProfileName, user, configured, onLogin, onLogout, universe, activeItems, setStatus, toggleBookmark, nativePlayer, setNativePlayer, quietBrowsingOn = false, setQuietBrowsingOn, voiceChatDefault = true, setVoiceChatDefault, p2pStreamingEnabled = false, setP2pStreamingEnabled,   }) {
   const search = query.trim().toLowerCase();
   const showGroup = (terms) => !search || terms.includes(search);
   const { theme, setTheme } = useAppTheme();
