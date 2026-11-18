@@ -314,11 +314,13 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     };
   }, [localVideoUrl, room?.media?.fileFingerprint]);
   useEffect(() => {
-    const video = localVideoRef.current;
-    if (!video?.textTracks) return;
-    Array.from(video.textTracks).forEach((track, index) => {
-      track.mode = localSubtitleEnabled && localSubtitleUrl && index === Array.from(video.textTracks).length - 1 ? 'showing' : (index === localTextTrackIndex ? 'showing' : 'disabled');
-    });
+    const tracks = localVideoRef.current?.textTracks;
+    if (!tracks) return;
+    if (localSubtitleUrl && localSubtitleEnabled && localTextTrackIndex < 0 && tracks.length) {
+      setLocalTextTrackIndex(tracks.length - 1);
+      return;
+    }
+    Array.from(tracks).forEach((track, index) => { track.mode = index === localTextTrackIndex ? 'showing' : 'disabled'; });
   }, [localSubtitleEnabled, localSubtitleUrl, localTextTrackIndex, localVideoUrl]);
   const selectLocalTextTrack = index => {
     const tracks = localVideoRef.current?.textTracks;
