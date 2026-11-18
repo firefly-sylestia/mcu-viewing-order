@@ -57,7 +57,7 @@ begin
   returning * into r;
 
   update public.watch_room_participants set last_seen_at = now() where id = p.id;
-  return to_jsonb(r);
+  return to_jsonb(r) - 'owner_token_hash' - 'owner_user_id';
 end;
 $change_watch_room_media$;
 
