@@ -1349,7 +1349,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                   <video
                     key={room.media?.fileFingerprint||room.id}
                     ref={localVideoRef}
-                    src={localVideoUrl}
+                    src={room.settings?.p2p_video_enabled === true && !participant?.is_host ? undefined : localVideoUrl}
                     playsInline
                     preload="auto"
                     style={{filter:`brightness(${Math.round(localBrightness*Math.pow(2,localExposure))}%) contrast(${localContrast}%) saturate(${localSaturation}%) hue-rotate(${localHue}deg)`,backgroundColor:localBackgroundColor}}
@@ -1416,8 +1416,16 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                       setCurrentTime(time);currentTimeRef.current=time;
                       if(!applyingRemoteRef.current)publishPlayback({position:time,paused:localVideoRef.current?.paused??true},true);
                     }}
-                    onError={()=>{
+                    onError={event=>{
                       setPlayerReady(false);playerReadyRef.current=false;
+                      // P2P viewers intentionally have no local file URL. Ignore
+                      // the empty-source error until a remote stream is attached.
+                      if(roomRef.current?.settings?.p2p_video_enabled === true && !participant?.is_host){
+                        const receivingRemoteStream = Boolean(event.currentTarget.srcObject);
+                        setLocalCodecDiagnostics(null);
+                        setLocalVideoError(receivingRemoteStream ? 'The host stream reached the player, but this device could not start playback. Tap the video once and check the P2P connection status.' : '');
+                        return;
+                      }
                       const probe=document.createElement('video');
                       setLocalCodecDiagnostics({
                         fileName:localFile?.name||'Selected local video',
@@ -1522,7 +1530,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
               </div>
               <div className="wt-members">{members.map(member=><button type="button" className={"wt-member"+(participant?.is_host&&!member.is_host?" wt-member-manage":"")} key={member.id} onClick={()=>participant?.is_host&&!member.is_host&&grantOperator(member)} disabled={!participant?.is_host||member.is_host||member.role==="operator"||busy} title={member.is_host?"Room host":member.role==="operator"?"Already an operator":participant?.is_host?"Make this participant an operator":"Room participant"}><span className="wt-member-avatar"><img src={member.avatar_url||blobatar(member.display_name)} alt=""/></span><span>{member.display_name}</span>{(member.role==="host"||member.is_host)?<Crown size={13}/>:member.role==="operator"?<ShieldCheck size={13}/>:participant?.is_host?<span className="wt-promote-hint">+ Operator</span>:null}</button>)}</div>
             </div>
-            {!theatreMode && <aside className={"wt-chat"+(chatCollapsed?" is-collapsed":"")}>
+            {!theatreMode && <aside className={"wt-chat"+(chatCollapsed?" is-collapsed":"")} style={{alignSelf:'center', marginTop:18}}>
               <div className="wt-chat-head"><div><MessageCircle size={17}/><strong>Room chat</strong><span className="wt-theatre-online">{members.length} online</span></div></div>
               {participant?.is_host && requests.length>0 && <div className="wt-requests"><strong>Access requests <small>{requests.length}</small></strong>{requests.map(req=><div className="wt-request" key={req.id}><span><b>{req.display_name}</b><small>{({operator:'Operator access',skip_forward:'Skip forward 10s',skip_back:'Skip back 10s',seek:'Seek request'})[req.request_type] || req.request_type}</small></span><button onClick={()=>resolveRequest(req.id,true)} disabled={busy}>Allow</button><button onClick={()=>resolveRequest(req.id,false)} disabled={busy}>Deny</button></div>)}</div>}
               <div className="wt-chat-messages">{messages.map(message=><article className={message.participant_id===participant.id?'mine':''} key={message.id}><img src={message.avatar_url || blobatar(message.display_name)} alt=""/><div><div className="wt-message-meta"><b>{message.display_name}</b><time>{new Date(message.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</time></div><p>{message.body}</p></div></article>)}</div>
