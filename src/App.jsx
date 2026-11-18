@@ -14,6 +14,8 @@ import SeoHead from './components/SeoHead';
 import NotFoundPage from './components/NotFoundPage';
 import WatchTogether from './components/WatchTogether';
 import { useAuth } from './hooks/useAuth';
+import { supabasePublicRequest } from './supabase';
+import { getOrCreateTemporaryVisitor } from './utils/visitorIdentity';
 import { useCloudSync } from './hooks/useCloudSync';
 import { getFromCache, setCache, clearExpiredCache } from './utils/mediaCache';
 import { buildDownloadUrl, buildPlayerUrl } from './utils/mediaProviders';
@@ -661,6 +663,27 @@ export default function App() {
   const [watchConfirmItem, setWatchConfirmItem] = useState(null); // { item, tmdbId, mediaType, onConfirm }
   const [warningToast, setWarningToast] = useState('');
   const { user, login, signup, logout: authLogout, resetPassword, updatePassword, configured, recovery } = useAuth();
+
+  // Give every browser a stable anonymous visitor ID. The secret stays in this
+  // browser; Supabase stores only its hash and never exposes visitor records.
+  useEffect(() => {
+    if (!configured) return;
+    let cancelled = false;
+    const registerVisitor = async () => {
+      try {
+        const visitor = getOrCreateTemporaryVisitor();
+        const guest = getGuestIdentity();
+        await supabasePublicRequest('/rest/v1/rpc/register_temporary_visitor', {
+          method: 'POST',
+          body: JSON.stringify({ p_visitor_id: visitor.id, p_token: visitor.token, p_display_name: guest.name }),
+        });
+      } catch (error) {
+        if (!cancelled) console.warn('Temporary visitor registration failed:', error?.message || error);
+      }
+    };
+    registerVisitor();
+    return () => { cancelled = true; };
+  }, [configured, user?.id]);
   const { pushToCloud, pushBeforeLogout, lastSynced, syncing, conflict, resolveUseRemote, resolveKeepLocal, resolveMerge, toast } = useCloudSync(user, actions, profileName, setActions, setProfileName, watchItem, setWatchItem, profileAvatar, setProfileAvatar);
   useEffect(() => { try { if (profileAvatar) localStorage.setItem('incursion-profile-avatar', profileAvatar); else localStorage.removeItem('incursion-profile-avatar'); } catch {} }, [profileAvatar]);
   useEffect(() => { if (recovery) setAuthOpen(true); }, [recovery]);
