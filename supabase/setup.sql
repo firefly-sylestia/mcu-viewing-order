@@ -269,7 +269,7 @@ begin
     raise exception 'Room not found or expired.';
   end if;
 
-  return jsonb_build_object('media', room_media);
+  return room_media;
 end;
 $preview_watch_room$;
 revoke all on function public.preview_watch_room(text) from public;grant execute on function public.preview_watch_room(text) to anon,authenticated;
