@@ -555,7 +555,7 @@ function WatchTogetherHistory({ user }) {
       const rows = await supabaseDataRequest('/rest/v1/rpc/get_watch_together_history', { method: 'POST', body: '{}' });
       const merged = new Map();
       [...(Array.isArray(rows) ? rows : []), ...local].forEach(entry => {
-        const key = entry.id || entry.room_code || entry.title;
+        const key = entry.room_code || entry.id || entry.title;
         const old = merged.get(key);
         if (!old || Number(entry.duration_seconds || 0) > Number(old.duration_seconds || 0)) merged.set(key, entry);
       });
