@@ -1233,18 +1233,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
 
   if (launchOnly) return <button type="button" className="watch-together-launch" onClick={() => { onBeforeOpenRef.current?.(); onWatchTogether?.(); }}><Users size={16} /><span>Watch together</span></button>;
   return <>
-    {(open || room) && <section className={`wt-page${room ? ' wt-room-active' : ''}${theatreMode ? ' wt-theatre-mode' : ''}${!open ? ' wt-minimized' : ''}`} aria-label="Watch together">
-          {!theatreMode && <button type="button" className="wt-page-back" onClick={minimizeRoom} aria-label="Go back"><ArrowLeft size={18}/><span>Back</span></button>}
-          {!room ? <div className="wt-entry wt-connect-page">
-            <div className="wt-entry-art wt-connect-hero"><div><span>PRIVATE SCREENING ROOM</span><h2>Watch together.</h2><p>Enter a room code to join your friends, or create a new room and invite them with a private link.</p></div></div>
-            <div className="wt-connect-card">
-              <div className="wt-picker-heading"><span>JOIN A SCREENING</span><h2>Have a room code?</h2><p>Enter the 8-character code shared by your host.</p></div>
-              <form className="wt-join-form wt-code-form" onSubmit={e => { e.preventDefault(); beginJoin(joinCode); }}>
-                <input value={joinCode} onChange={e => setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8))} placeholder="ROOM CODE" maxLength={8} autoComplete="off" aria-label="Room code" />
-                <button disabled={busy || joinCode.length !== 8}>{busy ? 'Joining…' : 'Join room'}<ChevronRight size={16}/></button>
-              </form>
-              <div className="wt-or"><span />OR<span /></div>
-              <button type="button" className="wt-create" onClick={() => { setSetupDialog(true); setIsChangingMedia(false); setRoomType('movie'); setSelectedMedia(item || null); setLocalFile(null); setLocalFileFingerprint(''); setError(''); }}><span><strong>Create a new room</strong><small>Choose a movie, series or your own video file</small></span><Link2 size={18}/></button><input ref={joinFileInputRef} type="file" accept={VIDEO_FILE_ACCEPT} hidden onChange={async event => {
+    {<input ref={joinFileInputRef} type="file" accept={VIDEO_FILE_ACCEPT} hidden onChange={async event => {
                  const file = event.target.files?.[0];
                  event.target.value = '';
                  if (!file) return;
@@ -1272,7 +1261,19 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                    setCurrentTime(0);
                    currentTimeRef.current = 0;
                  }
-               }}/>
+               }}/>}
+    {(open || room) && <section className={`wt-page${room ? ' wt-room-active' : ''}${theatreMode ? ' wt-theatre-mode' : ''}${!open ? ' wt-minimized' : ''}`} aria-label="Watch together">
+          {!theatreMode && <button type="button" className="wt-page-back" onClick={minimizeRoom} aria-label="Go back"><ArrowLeft size={18}/><span>Back</span></button>}
+          {!room ? <div className="wt-entry wt-connect-page">
+            <div className="wt-entry-art wt-connect-hero"><div><span>PRIVATE SCREENING ROOM</span><h2>Watch together.</h2><p>Enter a room code to join your friends, or create a new room and invite them with a private link.</p></div></div>
+            <div className="wt-connect-card">
+              <div className="wt-picker-heading"><span>JOIN A SCREENING</span><h2>Have a room code?</h2><p>Enter the 8-character code shared by your host.</p></div>
+              <form className="wt-join-form wt-code-form" onSubmit={e => { e.preventDefault(); beginJoin(joinCode); }}>
+                <input value={joinCode} onChange={e => setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8))} placeholder="ROOM CODE" maxLength={8} autoComplete="off" aria-label="Room code" />
+                <button disabled={busy || joinCode.length !== 8}>{busy ? 'Joining…' : 'Join room'}<ChevronRight size={16}/></button>
+              </form>
+              <div className="wt-or"><span />OR<span /></div>
+              <button type="button" className="wt-create" onClick={() => { setSetupDialog(true); setIsChangingMedia(false); setRoomType('movie'); setSelectedMedia(item || null); setLocalFile(null); setLocalFileFingerprint(''); setError(''); }}><span><strong>Create a new room</strong><small>Choose a movie, series or your own video file</small></span><Link2 size={18}/></button>
               <div className="wt-identity"><img src={guest.avatar} alt="" /><div><small>YOU'RE JOINING AS</small><strong>{guest.name}</strong><span>{guest.isGuest ? 'Guest · no account needed' : 'Signed in · profile identity'}</span></div>{guest.isGuest&&<button type="button" onClick={()=>setEditingGuestName(value=>!value)} title="Change guest name"><Pencil size={16}/></button>}</div>
               {guest.isGuest&&editingGuestName&&<form className="wt-guest-name-form" onSubmit={event=>{event.preventDefault();updateGuestName(guestNameDraft);}}><input value={guestNameDraft} onChange={event=>setGuestNameDraft(event.target.value)} maxLength={32} placeholder="Choose a guest name" aria-label="Guest name"/><button type="submit" disabled={busy||!guestNameDraft.trim()}>Save name</button></form>}
               {error && <p className="wt-error">{error}</p>}
