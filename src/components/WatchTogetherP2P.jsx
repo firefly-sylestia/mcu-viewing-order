@@ -16,7 +16,7 @@ const getIceServers = () => {
   }
 };
 
-export default function WatchTogetherP2P({ room, participant, members = [], localVideoRef, videoEnabled, voiceEnabled, onRemoteMuted, rpc }) {
+export default function WatchTogetherP2P({ room, participant, members = [], localVideoRef, videoEnabled, videoReady = false, videoPlaying = false, voiceEnabled, onRemoteMuted, rpc }) {
   const peers = useRef(new Map());
   const membersRef = useRef(members);
   membersRef.current = members;
@@ -26,7 +26,13 @@ export default function WatchTogetherP2P({ room, participant, members = [], loca
   const [connections, setConnections] = useState({});
   const [remoteStreams, setRemoteStreams] = useState({});
   const [error, setError] = useState('');
-  const active = Boolean(room?.code && participant?.id && (videoEnabled || voiceEnabled));
+  const [streamStarted, setStreamStarted] = useState(false);
+  const hostStreamActive = Boolean(videoEnabled && participant?.is_host && streamStarted);
+  const active = Boolean(room?.code && participant?.id && (voiceEnabled || (videoEnabled && (!participant?.is_host || streamStarted))));
+  useEffect(() => {
+    setStreamStarted(false);
+    setError('');
+  }, [room?.code, videoEnabled]);
 
   useEffect(() => {
     if (!active) return undefined;
@@ -43,7 +49,7 @@ export default function WatchTogetherP2P({ room, participant, members = [], loca
       if (!videoEnabled || !participant.is_host || captureStream.current) return Boolean(captureStream.current);
       const video = localVideoRef?.current;
       const capture = video?.captureStream || video?.mozCaptureStream;
-      if (!video || video.readyState < 2) return false;
+      if (!video || video.readyState < 2 || video.paused || video.ended) return false;
       if (!capture) {
         setError('This browser cannot share a local video stream. Try the latest Chrome or Edge.');
         return false;
@@ -68,7 +74,7 @@ export default function WatchTogetherP2P({ room, participant, members = [], loca
 
     const makePeer = async member => {
       if (cancelled || member.id === participant.id || peers.current.has(member.id)) return;
-      if (videoEnabled && participant.is_host && !ensureCapture()) return;
+      if (hostStreamActive && !ensureCapture()) return;
       const pc = new RTCPeerConnection({ iceServers });
       const entry = { pc, pendingIce: [], stream: new MediaStream() };
       peers.current.set(member.id, entry);
@@ -112,7 +118,7 @@ export default function WatchTogetherP2P({ room, participant, members = [], loca
       // For local video the host must offer first, with the captured media tracks
       // already in the SDP. Streaming rooms never enter this video path.
       const shouldOffer = videoEnabled ? Boolean(participant.is_host) : String(participant.id) < String(member.id);
-      if (videoEnabled && participant.is_host && captureStream.current) {
+      if (hostStreamActive && participant.is_host && captureStream.current) {
         captureStream.current.getTracks().forEach(track => pc.addTrack(track, captureStream.current));
       }
       if (voiceEnabled) {
@@ -136,7 +142,7 @@ export default function WatchTogetherP2P({ room, participant, members = [], loca
     };
 
     const syncPeers = async () => {
-      if (videoEnabled && participant.is_host && !ensureCapture()) return;
+      if (hostStreamActive && !ensureCapture()) return;
       for (const member of membersRef.current) {
         if (member.id !== participant.id && !peers.current.has(member.id)) await makePeer(member);
       }
@@ -194,7 +200,7 @@ export default function WatchTogetherP2P({ room, participant, members = [], loca
     const onPlayerReady = () => {
       if (ensureCapture()) syncPeers().catch(e => setError(e.message || 'Could not start P2P connections.'));
     };
-    if (videoEnabled && participant.is_host && player) {
+    if (hostStreamActive && participant.is_host && player) {
       player.addEventListener('loadeddata', onPlayerReady);
       player.addEventListener('canplay', onPlayerReady);
       player.addEventListener('playing', onPlayerReady);
@@ -222,14 +228,21 @@ export default function WatchTogetherP2P({ room, participant, members = [], loca
       setRemoteStreams({});
       setConnections({});
     };
-  }, [active, room?.code, participant?.id, participant?.token, participant?.is_host, videoEnabled, voiceEnabled, rpc, localVideoRef]);
+  }, [active, room?.code, participant?.id, participant?.token, participant?.is_host, videoEnabled, hostStreamActive, voiceEnabled, rpc, localVideoRef]);
 
   if (!active) return null;
   const connected = Object.values(connections).filter(value => value === 'connected').length;
   const others = members.filter(member => member.id !== participant.id);
   return <div className="wt-p2p-panel" aria-live="polite">
     <div className="wt-p2p-heading"><span className="wt-p2p-dot"/><strong>{videoEnabled ? 'Direct local video' : 'Experimental peer connection'}</strong><small>{connected}/{others.length} connected</small></div>
-    {error && <p className="wt-p2p-error">{error}</p>}
+    {videoEnabled && participant.is_host && <div className="wt-p2p-start-row">
+      <span>{streamStarted ? 'Streaming is active. Keep this tab open.' : videoReady ? (videoPlaying ? 'Video ready. Start sharing when you’re ready.' : 'Press Play on your video before starting the stream.') : 'Load the local video first. The stream cannot start without a playable file.'}</span>
+      {streamStarted
+        ? <button type="button" onClick={()=>setStreamStarted(false)}>Stop streaming</button>
+        : <button type="button" disabled={!videoReady || !videoPlaying} onClick={()=>{setError('');setStreamStarted(true);}}>Start streaming</button>}
+    </div>}
+    {videoEnabled && !participant.is_host && <p className="wt-p2p-waiting">{Object.keys(remoteStreams).length ? 'Receiving the host’s video.' : 'Waiting for the host to start streaming…'}</p>}
+    {error && <p className="wt-p2p-error">{error}</p>
     <div className="wt-p2p-peers">{others.map(member => <span key={member.id}>{member.display_name}: {connections[member.id] || 'connecting'}</span>)}</div>
     {!videoEnabled && <div className="wt-p2p-remote">{Object.entries(remoteStreams).map(([id, remote]) => <div key={id}><audio autoPlay playsInline ref={node => { if (node && node.srcObject !== remote.stream) node.srcObject = remote.stream; }}/><small>{remote.name}</small></div>)}</div>}
     {videoEnabled && <p>Video is sent directly from the host’s browser. Keep the host tab open. Some networks require a TURN relay.</p>}

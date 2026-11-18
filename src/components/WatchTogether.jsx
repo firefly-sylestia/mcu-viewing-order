@@ -101,7 +101,8 @@ const makeGuest = () => {
   }
 };
 const timeText = seconds => {
-  const n = Math.max(0, Math.floor(Number(seconds) || 0));
+  const numeric = Number(seconds);
+  const n = Number.isFinite(numeric) ? Math.max(0, Math.floor(numeric)) : 0;
   return `${Math.floor(n / 3600)}:${String(Math.floor((n % 3600) / 60)).padStart(2, '0')}:${String(n % 60).padStart(2, '0')}`;
 };
 const roomCode = () => {
@@ -176,6 +177,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const [savedLocalPosition, setSavedLocalPosition] = useState(null);
   const [savedLocalPaused, setSavedLocalPaused] = useState(true);
   const [canReturnLocal, setCanReturnLocal] = useState(false);
+  const [syncNoticeDismissed, setSyncNoticeDismissed] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState(item || null);
   
   const [localVideoError,setLocalVideoError]=useState('');
@@ -625,7 +627,12 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       setLocalFileFingerprint(fingerprint);
       // Keep a local browser copy so a refresh can restore the host's video
       // without uploading it or asking the user to pick it again.
-      await storeLocalVideo(fingerprint, file).catch(() => {});
+      try {
+        await navigator.storage?.persist?.();
+        await storeLocalVideo(fingerprint, file);
+      } catch (storageError) {
+        setError(`Video selected, but this browser could not save a reload backup: ${storageError.message || 'storage unavailable'}. Keep the original file so you can reselect it if needed.`);
+      }
       if (activate) {
         const url = URL.createObjectURL(new Blob([file], { type: videoFileMime(file) }));
         setLocalVideoUrl(previous => { if (previous) URL.revokeObjectURL(previous); return url; });
@@ -767,6 +774,14 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       if (room && room.media?.kind !== 'local_file' && !pendingJoinCode) setJoinPreviewOpen(false);
       return;
     }
+    // P2P viewers receive the host's stream and must never be asked for a local copy.
+    if (room.settings?.p2p_video_enabled === true && !participant.is_host) {
+      setJoinPreviewOpen(false);
+      setPendingJoinCode('');
+      setPendingJoinIdentity(null);
+      setPendingJoinMedia(null);
+      return;
+    }
     if (setupDialog && isChangingMedia) return;
     const fingerprint = room.media.fileFingerprint;
     if (!fingerprint || localFileFingerprint === fingerprint || localVideoRestoreRef.current === fingerprint) return;
@@ -793,6 +808,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
         }
       } catch {}
       if (cancelled) return;
+      localVideoRestoreRef.current = '';
       setPendingJoinCode('');
       setPendingJoinIdentity(null);
       setPendingJoinMedia(room.media);
@@ -1330,8 +1346,9 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                       setLocalCodecDiagnostics(null);
                       
                       setControlsExpanded(true);
-                      setDuration(video.duration||0);
-                      durationRef.current=video.duration||0;
+                      const finiteDuration=Number.isFinite(video.duration)?video.duration:0;
+                       setDuration(finiteDuration);
+                       durationRef.current=finiteDuration;
                       setPlayerReady(true);
                       playerReadyRef.current=true;
                       const playback=roomRef.current?.playback;
@@ -1347,7 +1364,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                         window.setTimeout(()=>{applyingRemoteRef.current=false;},420);
                       }
                     }}
-                    onDurationChange={event=>{setDuration(event.currentTarget.duration||0);durationRef.current=event.currentTarget.duration||0;}}
+                    onDurationChange={event=>{const value=Number.isFinite(event.currentTarget.duration)?event.currentTarget.duration:0;setDuration(value);durationRef.current=value;}}
                     onTimeUpdate={event=>{
                       const video=event.currentTarget;
                       setCurrentTime(video.currentTime);
@@ -1447,11 +1464,12 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                   </div>
                   {localVideoError&&<div className="wt-local-playback-error"><strong>Can’t play this video here</strong><span>{localVideoError}</span>{localCodecDiagnostics&&<small className="wt-codec-diagnostics"><b>{localCodecDiagnostics.fileName}</b><br/>Container MIME: {localCodecDiagnostics.mime}<br/>H.264 MP4: {localCodecDiagnostics.h264} · H.265/HEVC MP4: {localCodecDiagnostics.hevc} · VP9 WebM: {localCodecDiagnostics.vp9}<br/>Most widely compatible target: MP4 · H.264 video · AAC audio</small>}</div>}
                 </> : <iframe ref={iframeRef} src={sharedPlayerUrl} title={"Watch together: " + (room.media?.title || itemMedia.title)} allow="autoplay; fullscreen; encrypted-media" allowFullScreen disablePictureInPicture/>}
-                <WatchTogetherP2P room={room} participant={participant} members={members} localVideoRef={localVideoRef} videoEnabled={room.settings?.p2p_video_enabled===true && room.media?.kind==='local_file'} voiceEnabled={room.settings?.p2p_voice_enabled===true} onRemoteMuted={()=>setMuted(true)} rpc={rpc}/>
-                {(localPlaybackOverride || canReturnLocal) && <div className="wt-sync-floating" role="status">
+                <WatchTogetherP2P room={room} participant={participant} members={members} localVideoRef={localVideoRef} videoEnabled={room.settings?.p2p_video_enabled===true && room.media?.kind==='local_file'} videoReady={Boolean(localVideoUrl)&&playerReady} videoPlaying={!paused} voiceEnabled={room.settings?.p2p_voice_enabled===true} onRemoteMuted={()=>setMuted(true)} rpc={rpc}/>
+                {(localPlaybackOverride || canReturnLocal) && !syncNoticeDismissed && <div className="wt-sync-floating" role="status">
                   <span className="wt-sync-indicator"><i/>{localPlaybackOverride?'Playing independently':'Room playback'}</span>
                   {localPlaybackOverride&&<button type="button" onClick={syncToRoom} disabled={!playerReady} title="Jump back to the room’s current position"><Radio size={14}/> Sync with room</button>}
                   {canReturnLocal&&<button type="button" onClick={returnToLocalPosition} disabled={!playerReady} title="Return to your saved playback position">Return to my spot</button>}
+                  <button type="button" className="wt-sync-dismiss" onClick={()=>setSyncNoticeDismissed(true)} aria-label="Dismiss playback sync notice" title="Dismiss"><X size={15}/></button>
                 </div>}
               </div>
               {theatreMode && theatreToast && <button type="button" className="wt-theatre-message-toast" onClick={()=>{setChatCollapsed(false);setTheatreChatOpen(true);setTheatreToast(null);}}><img src={theatreToast.avatar_url || blobatar(theatreToast.display_name)} alt=""/><span><strong>{theatreToast.display_name}</strong><small>{theatreToast.body}</small></span><X size={14} onClick={event=>{event.stopPropagation();setTheatreToast(null);}}/></button>}
