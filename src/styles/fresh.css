@@ -16446,3 +16446,20 @@
   :root .home-watch-party-copy h2 {font-size:21px}
   :root .home-watch-party-cta>button {width:100%;min-height:41px}
 }
+
+
+/* Local-file subtitle and audio track controls. */
+:root .wt-local-control-row .wt-local-track-button,
+:root .wt-local-control-row .wt-local-track-select {
+  display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;
+  min-width:34px;height:32px;padding:0 8px;border:1px solid rgba(255,255,255,.2);
+  border-radius:9px;background:rgba(255,255,255,.09);color:#fff;
+  font-size:10px;font-weight:750;cursor:pointer;
+}
+:root .wt-local-control-row .wt-local-track-select {max-width:118px;min-width:78px;padding:0 6px;color:#fff;background:#171a20}
+:root .wt-local-control-row .wt-local-track-select option {color:#111;background:#fff}
+@media(max-width:760px) {
+  :root .wt-local-control-row .wt-local-track-button,
+  :root .wt-local-control-row .wt-local-track-select {height:29px;min-width:30px;padding:0 6px;font-size:9px}
+  :root .wt-local-control-row .wt-local-track-select {max-width:94px;min-width:66px}
+}
