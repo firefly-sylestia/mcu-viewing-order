@@ -16356,3 +16356,23 @@
     height:15px!important;
   }
 }
+
+
+/* Let vertical swipes escape the chat at its scroll boundaries so the
+   Watch Together page can continue scrolling above/below the chat panel. */
+@media(max-width:760px) {
+  :root .movie-site.page-watch-together .wt-chat {
+    overscroll-behavior-y:auto!important;
+    touch-action:pan-y!important;
+  }
+  :root .movie-site.page-watch-together .wt-chat-messages {
+    overscroll-behavior-y:auto!important;
+    overscroll-behavior: auto!important;
+    touch-action:pan-y!important;
+    -webkit-overflow-scrolling:touch!important;
+  }
+  :root .movie-site.page-watch-together .wt-page {
+    overscroll-behavior-y:auto!important;
+    touch-action:pan-y!important;
+  }
+}
