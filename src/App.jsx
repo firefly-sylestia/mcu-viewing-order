@@ -2222,7 +2222,109 @@ function RatingChips({ item }) {
 }
 
 function AnalyticsPanel({ stats, large = false }) {
-  return <section className={`analytics-panel ${large ? 'large' : ''}`}><div className="stat-grid"><div><b>{stats.total}</b><span>Total</span></div><div><b>{stats.watching}</b><span>Watching</span></div><div><b>{stats.watched}</b><span>Watched</span></div><div><b>{stats.dropped}</b><span>Dropped</span></div><div><b>{stats.bookmarked}</b><span>Saved</span></div><div><b>{stats.watchedTime}</b><span>Watch Time</span></div></div></section>;
+  const total = Math.max(0, Number(stats.total) || 0);
+  const watched = Math.max(0, Number(stats.watched) || 0);
+  const watching = Math.max(0, Number(stats.watching) || 0);
+  const dropped = Math.max(0, Number(stats.dropped) || 0);
+  const saved = Math.max(0, Number(stats.bookmarked) || 0);
+  const unwatched = Math.max(0, Number(stats.unwatched) || 0);
+  const percent = Math.max(0, Math.min(100, Number(stats.percent) || 0));
+  const format = value => value.toLocaleString();
+  const breakdown = [
+    { label: 'Watched', value: watched, tone: 'watched' },
+    { label: 'Watching', value: watching, tone: 'watching' },
+    { label: 'Unwatched', value: unwatched, tone: 'unwatched' },
+    { label: 'Dropped', value: dropped, tone: 'dropped' },
+  ];
+  const summary = total === 0
+    ? 'Your watchlist is ready for its first chapter.'
+    : watched === total
+      ? 'Every title in this collection is marked watched.'
+      : percent >= 75
+        ? 'You have made serious progress through this collection.'
+        : percent >= 35
+          ? 'Your collection is taking shape. Keep the momentum going.'
+          : 'A whole universe of stories is still waiting for you.';
+  return (
+    <section className={`analytics-panel stats-dashboard ${large ? 'large' : ''}`}>
+      <div className="stats-dashboard-hero">
+        <div className="stats-dashboard-copy">
+          <span className="stats-dashboard-eyebrow"><BarChart3 size={14}/> YOUR COLLECTION AT A GLANCE</span>
+          <h1>Every story.<br/><span>Your progress.</span></h1>
+          <p>{summary}</p>
+          <div className="stats-dashboard-progress">
+            <div className="stats-dashboard-progress-label"><span>Overall completion</span><strong>{percent}%</strong></div>
+            <div className="stats-dashboard-track" role="progressbar" aria-label="Overall completion" aria-valuenow={percent} aria-valuemin="0" aria-valuemax="100"><span style={{ width: `${percent}%` }}/></div>
+            <small>{format(watched)} watched out of {format(total)} tracked titles</small>
+          </div>
+        </div>
+        <div className="stats-dashboard-ring-wrap">
+          <div className="stats-dashboard-ring" style={{ '--stats-progress': `${percent * 3.6}deg` }}>
+            <div className="stats-dashboard-ring-inner"><strong>{percent}<small>%</small></strong><span>COMPLETE</span></div>
+          </div>
+          <span className="stats-dashboard-ring-caption">YOUR JOURNEY SO FAR</span>
+        </div>
+      </div>
+
+      <div className="stats-dashboard-cards">
+        <article className="stats-dashboard-card stats-card-total">
+          <span className="stats-card-icon"><Clapperboard size={18}/></span>
+          <span className="stats-card-label">Total tracked</span>
+          <strong>{format(total)}</strong>
+          <small>Titles in this universe</small>
+        </article>
+        <article className="stats-dashboard-card">
+          <span className="stats-card-icon"><Check size={18}/></span>
+          <span className="stats-card-label">Watched</span>
+          <strong>{format(watched)}</strong>
+          <small>Marked as complete</small>
+        </article>
+        <article className="stats-dashboard-card">
+          <span className="stats-card-icon"><Play size={18}/></span>
+          <span className="stats-card-label">In progress</span>
+          <strong>{format(watching)}</strong>
+          <small>Currently watching</small>
+        </article>
+        <article className="stats-dashboard-card">
+          <span className="stats-card-icon"><Bookmark size={18}/></span>
+          <span className="stats-card-label">Saved</span>
+          <strong>{format(saved)}</strong>
+          <small>Titles on your watchlist</small>
+        </article>
+        <article className="stats-dashboard-card">
+          <span className="stats-card-icon"><Clock size={18}/></span>
+          <span className="stats-card-label">Watch time</span>
+          <strong className="stats-card-time">{stats.watchedTime || '0m'}</strong>
+          <small>Runtime of watched titles</small>
+        </article>
+        <article className="stats-dashboard-card">
+          <span className="stats-card-icon"><Star size={18}/></span>
+          <span className="stats-card-label">Longest sequence</span>
+          <strong>{format(Number(stats.streak) || 0)}</strong>
+          <small>Consecutive titles in timeline</small>
+        </article>
+      </div>
+
+      <div className="stats-dashboard-breakdown">
+        <div className="stats-breakdown-heading">
+          <div><span>THE DETAILS</span><h2>Collection breakdown</h2></div>
+          <strong>{format(total)} <small>titles</small></strong>
+        </div>
+        <div className="stats-breakdown-bar" role="img" aria-label={breakdown.map(item => `${item.label}: ${item.value}`).join(', ')}>
+          {breakdown.map(item => <span key={item.tone} className={`stats-segment-${item.tone}`} style={{ width: total ? `${item.value / total * 100}%` : '0%' }}/>)}
+        </div>
+        <div className="stats-breakdown-legend">
+          {breakdown.map(item => (
+            <div className="stats-breakdown-item" key={item.tone}>
+              <span className={`stats-breakdown-dot stats-segment-${item.tone}`}/>
+              <span>{item.label}</span>
+              <strong>{format(item.value)}</strong>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
 }
 
 function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, onOpenItem, activeItems }) {
