@@ -30,11 +30,35 @@ const videoFileMime = file => {
     m2v:'video/mpeg', m1v:'video/mpeg', nut:'video/x-nut', y4m:'video/x-raw'
   })[videoFileExtension(file)] || 'video/unknown';
 };
+const readLocalFileChunk = blob => new Promise((resolve, reject) => {
+  // FileReader is more reliable than Blob.arrayBuffer() with some iOS Files/iCloud providers.
+  if (typeof FileReader === 'undefined') {
+    if (typeof blob.arrayBuffer === 'function') {
+      blob.arrayBuffer().then(resolve, reject);
+      return;
+    }
+    reject(new Error('This browser cannot read the selected video file.'));
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => resolve(reader.result);
+  reader.onerror = () => reject(reader.error || new Error('The selected video could not be read. Try saving it to Files on this iPad first.'));
+  reader.onabort = () => reject(new Error('Reading the selected video was cancelled.'));
+  reader.readAsArrayBuffer(blob);
+});
+
 const fingerprintLocalVideo = async file => {
   if (!file || !file.size) throw new Error('Choose a non-empty video file.');
   const size = 1024 * 1024;
   const starts = [...new Set([0, Math.max(0, Math.floor(file.size / 2) - size / 2), Math.max(0, file.size - size)])];
-  const chunks = await Promise.all(starts.map(start => file.slice(start, Math.min(file.size, start + size)).arrayBuffer()));
+  // Read sequentially: parallel reads from iCloud/Files document providers can fail on iPad.
+  const chunks = [];
+  for (const start of starts) {
+    chunks.push(await readLocalFileChunk(file.slice(start, Math.min(file.size, start + size))));
+  }
+  if (!globalThis.crypto?.subtle?.digest) {
+    throw new Error('Secure video verification is unavailable in this browser context. Open Incursion over HTTPS and try again.');
+  }
   // Do not include browser MIME metadata: Android and desktop can report different MIME types for the same file.
   const header = new TextEncoder().encode(String(file.size));
   const bytes = new Uint8Array(header.byteLength + chunks.reduce((n, chunk) => n + chunk.byteLength, 0));
