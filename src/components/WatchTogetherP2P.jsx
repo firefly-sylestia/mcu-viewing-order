@@ -28,7 +28,7 @@ export default function WatchTogetherP2P({ room, participant, members = [], loca
   const [error, setError] = useState('');
   const [streamStarted, setStreamStarted] = useState(false);
   const hostStreamActive = Boolean(videoEnabled && participant?.is_host && streamStarted);
-  const active = Boolean(room?.code && participant?.id && (voiceEnabled || (videoEnabled && (!participant?.is_host || streamStarted))));
+  const active = Boolean(room?.code && participant?.id && (videoEnabled || voiceEnabled));
   useEffect(() => {
     setStreamStarted(false);
     setError('');
@@ -36,6 +36,7 @@ export default function WatchTogetherP2P({ room, participant, members = [], loca
 
   useEffect(() => {
     if (!active) return undefined;
+    if (videoEnabled && participant.is_host && !streamStarted && !voiceEnabled) return undefined;
     let cancelled = false;
     let polling = false;
     const pendingIce = new Map();
