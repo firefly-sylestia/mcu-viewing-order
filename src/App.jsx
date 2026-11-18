@@ -520,71 +520,7 @@ export default function App() {
     if (target) navigateSection(target);
   };
 
-  const [navHidden, setNavHidden] = useState(false);
-  const navIdleTimer = useRef(null);
-  const navScrollStopTimer = useRef(null);
-  useEffect(() => {
-    const isWatchSurface = section === 'watch';
-    let lastScrollY = window.scrollY || document.documentElement.scrollTop || 0;
-    let frame = 0;
-    const clearTimer = (ref) => {
-      if (ref.current) {
-        window.clearTimeout(ref.current);
-        ref.current = null;
-      }
-    };
-    const scheduleWatchIdleHide = () => {
-      if (!isWatchSurface) return;
-      clearTimer(navIdleTimer);
-      navIdleTimer.current = window.setTimeout(() => setNavHidden(true), 3600);
-    };
-    const onScroll = () => {
-      if (frame) return;
-      frame = window.requestAnimationFrame(() => {
-        frame = 0;
-        const currentY = Math.max(0, window.scrollY || document.documentElement.scrollTop || 0);
-        const movingDown = currentY > lastScrollY + 2;
-        const movingUp = currentY < lastScrollY - 2;
-        if (currentY <= 12 || movingUp) {
-          setNavHidden(false);
-        } else if (movingDown) {
-          setNavHidden(true);
-        }
-        lastScrollY = currentY;
-
-        // Scrolling down tucks the bar away; once scrolling actually stops,
-        // bring it back so it never stays lost below the fold.
-        clearTimer(navScrollStopTimer);
-        navScrollStopTimer.current = window.setTimeout(() => {
-          setNavHidden(false);
-          scheduleWatchIdleHide();
-        }, 650);
-      });
-    };
-    const onActivity = () => {
-      setNavHidden(false);
-      scheduleWatchIdleHide();
-    };
-    setNavHidden(false);
-    clearTimer(navIdleTimer);
-    clearTimer(navScrollStopTimer);
-    if (isWatchSurface) scheduleWatchIdleHide();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('pointerdown', onActivity, { passive: true });
-    window.addEventListener('touchstart', onActivity, { passive: true });
-    window.addEventListener('keydown', onActivity);
-    window.addEventListener('wheel', onActivity, { passive: true });
-    return () => {
-      window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('pointerdown', onActivity);
-      window.removeEventListener('touchstart', onActivity);
-      window.removeEventListener('keydown', onActivity);
-      window.removeEventListener('wheel', onActivity);
-      if (frame) window.cancelAnimationFrame(frame);
-      clearTimer(navIdleTimer);
-      clearTimer(navScrollStopTimer);
-    };
-  }, [section]);
+  const navHidden = false;
   useLayoutEffect(() => {
     const scroller = document.scrollingElement;
     if (scroller) scroller.scrollTop = 0;
