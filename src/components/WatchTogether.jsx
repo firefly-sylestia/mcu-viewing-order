@@ -5,6 +5,11 @@ import { supabasePublicRequest, supabaseDataRequest } from '../supabase';
 
 
 const RPC = '/rest/v1/rpc/';
+const SOLO_PROGRESS_KEY = 'mcu-watch-together-solo-progress-v1';
+const soloProgressId = media => media?.kind === 'local_file' ? 'file:' + String(media.fileFingerprint || '') : 'title:' + [media?.tmdbId || '', media?.mediaType || 'movie', media?.season || 1, media?.episode || 1].join(':');
+const readSoloProgress = media => { try { const rows=JSON.parse(localStorage.getItem(SOLO_PROGRESS_KEY)||'{}'); return rows[soloProgressId(media)] || null; } catch { return null; } };
+const saveSoloProgress = (media, position, duration) => { const id=soloProgressId(media); if(!id || id.endsWith(':')) return; try { const rows=JSON.parse(localStorage.getItem(SOLO_PROGRESS_KEY)||'{}'); rows[id]={title:media?.title||'Untitled',position:Math.max(0,Number(position)||0),duration:Math.max(0,Number(duration)||0),updatedAt:new Date().toISOString()}; localStorage.setItem(SOLO_PROGRESS_KEY,JSON.stringify(rows)); } catch {} };
+
 const SUBTITLE_FILE_ACCEPT = '.srt,.vtt,text/vtt,application/x-subrip';
 const subtitleToVtt = text => {
   const normalized = String(text || '').replace(/^\uFEFF/, '').replace(/\r/g, '').trim();
@@ -208,6 +213,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const [localPlaybackOverride, setLocalPlaybackOverride] = useState(false);
   const [soloMode, setSoloMode] = useState(false);
   const [roomDeleted, setRoomDeleted] = useState(false);
+  const [standaloneLocal, setStandaloneLocal] = useState(false);
   const [savedLocalPosition, setSavedLocalPosition] = useState(null);
   const [savedLocalPaused, setSavedLocalPaused] = useState(true);
   const [canReturnLocal, setCanReturnLocal] = useState(false);
@@ -245,7 +251,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const [localCodecDiagnostics,setLocalCodecDiagnostics]=useState(null);
   const localControlsLockedRef=useRef(false);
   const localControlsHideTimerRef=useRef(null);
-  const [roomType,setRoomType]=useState('movie');const [localFile,setLocalFile]=useState(null);const [localFileFingerprint,setLocalFileFingerprint]=useState('');const [localFileBusy,setLocalFileBusy]=useState(false);const [pendingJoinCode,setPendingJoinCode]=useState('');const [pendingJoinIdentity,setPendingJoinIdentity]=useState(null);const [pendingJoinMedia,setPendingJoinMedia]=useState(null);const [joinPreviewOpen,setJoinPreviewOpen]=useState(false);const [isChangingMedia,setIsChangingMedia]=useState(false);const [localVideoUrl,setLocalVideoUrl]=useState('');const localSelectionBeforeChangeRef=useRef(null);const localFileInputRef=useRef(null);const joinFileInputRef=useRef(null);const localVideoRef=useRef(null);
+  const [roomType,setRoomType]=useState('movie');const [localFile,setLocalFile]=useState(null);const [localFileFingerprint,setLocalFileFingerprint]=useState('');const [localFileBusy,setLocalFileBusy]=useState(false);const [pendingJoinCode,setPendingJoinCode]=useState('');const [pendingJoinIdentity,setPendingJoinIdentity]=useState(null);const [pendingJoinMedia,setPendingJoinMedia]=useState(null);const [joinPreviewOpen,setJoinPreviewOpen]=useState(false);const [isChangingMedia,setIsChangingMedia]=useState(false);const [localVideoUrl,setLocalVideoUrl]=useState('');const localSelectionBeforeChangeRef=useRef(null);const localFileInputRef=useRef(null);const joinFileInputRef=useRef(null);const soloFileInputRef=useRef(null);const localVideoRef=useRef(null);
   const [mediaQuery, setMediaQuery] = useState('');
   const [tmdbMediaItems, setTmdbMediaItems] = useState([]);
   const [tmdbSearchLoading, setTmdbSearchLoading] = useState(false);
@@ -255,7 +261,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const [episodeLoading, setEpisodeLoading] = useState(false);
   const [setupDialog, setSetupDialog] = useState(false);
   const [room, setRoom] = useState(null);
-  useEffect(() => { onRoomStateChange?.(Boolean(room)); }, [room?.id, onRoomStateChange]);
+  useEffect(() => { onRoomStateChange?.(Boolean(room && !soloMode)); }, [room?.id, soloMode, onRoomStateChange]);
   const [participant, setParticipant] = useState(null);
   const [members, setMembers] = useState([]);
   const [messages, setMessages] = useState([]);
@@ -855,7 +861,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     }
   }, [rpc]);
   useEffect(() => {
-    if (!room || !participant) return undefined;
+    if (!room || !participant || soloMode) return undefined;
     refreshRoom();
     refreshPlayback();
     pollRef.current = window.setInterval(refreshRoom, 4200);
@@ -865,7 +871,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       if (r && p) rpc('watch_room_heartbeat', { p_code: r.code, p_token: p.token, p_position: currentTimeRef.current, p_duration: durationRef.current, p_paused: pausedRef.current }).catch(() => {});
     }, 4000);
     return () => { window.clearInterval(pollRef.current); window.clearInterval(playbackPollRef.current); window.clearInterval(heartbeatRef.current); };
-  }, [room?.id, room?.media?.kind, participant?.id, refreshRoom, refreshPlayback, rpc]);
+  }, [room?.id, room?.media?.kind, participant?.id, soloMode, refreshRoom, refreshPlayback, rpc]);
 
   const publishPlayback = useCallback(async (next, force = false) => {
     const r = roomRef.current, p = participantRef.current;
@@ -1060,6 +1066,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
 
 
   const flushWatchHistory = useCallback(async () => {
+    if (soloMode) return;
     const activeRoom=roomRef.current, activeParticipant=participantRef.current;
     if(!activeRoom||!activeParticipant)return;
     const total=watchSecondsRef.current, localDelta=total-localHistoryFlushRef.current;
@@ -1081,15 +1088,15 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
         remoteHistoryFlushRef.current=total;
       }catch{}
     }
-  },[user?.id]);
+  },[user?.id,soloMode]);
   useEffect(()=>{
-    if(!room||!participant)return undefined;
+    if(!room||!participant||soloMode)return undefined;
     const timer=window.setInterval(()=>{
       if(!pausedRef.current&&playerReadyRef.current)watchSecondsRef.current+=15;
       if(watchSecondsRef.current-localHistoryFlushRef.current>=30||watchSecondsRef.current-remoteHistoryFlushRef.current>=30)flushWatchHistory();
     },15000);
     return()=>window.clearInterval(timer);
-  },[room?.id,participant?.id,flushWatchHistory]);
+  },[room?.id,participant?.id,soloMode,flushWatchHistory]);
 
   const minimizeRoom = async () => {
     await flushWatchHistory();
@@ -1116,7 +1123,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   };
 
   useEffect(() => {
-    if (!open || !room || !participant) return undefined;
+    if (!open || !room || !participant || soloMode) return undefined;
     const onMessage = event => {
       if (event.origin !== 'https://cinesrc.st' || event.source !== iframeRef.current?.contentWindow) return;
       const data = event.data;
@@ -1133,6 +1140,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
         const time = Math.max(0, Number(data.currentTime));
         setCurrentTime(time);
         currentTimeRef.current = time;
+        saveSoloProgress(roomRef.current?.media,time,durationRef.current);
         if (canControl && Date.now() - lastHostTimePushRef.current > 4500) {
           lastHostTimePushRef.current = Date.now();
           publishPlayback({ position: time, paused: pausedRef.current });
@@ -1165,7 +1173,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     };
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
-  }, [open, room?.id, participant?.id, canControl, publishPlayback, sendPlayerCommand, onEpisodeChange, season]);
+  }, [open, room?.id, participant?.id, canControl, publishPlayback, sendPlayerCommand, onEpisodeChange, season, soloMode]);
 
   useEffect(() => {
     if (!room || !participant || !room.media) return;
@@ -1210,7 +1218,8 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
 
   if (launchOnly) return <button type="button" className="watch-together-launch" onClick={() => { onBeforeOpenRef.current?.(); onWatchTogether?.(); }}><Users size={16} /><span>Watch Party</span></button>;
   return <>
-    {<input ref={joinFileInputRef} type="file" accept={VIDEO_FILE_ACCEPT} hidden onChange={async event => {
+    {<input <input ref={soloFileInputRef} type="file" accept={VIDEO_FILE_ACCEPT} hidden onChange={async event=>{ const file=event.target.files?.[0]; event.target.value=''; if(!file)return; const fingerprint=await handleLocalFile(file,'',true); if(!fingerprint)return; const media={kind:'local_file',title:file.name.replace(/\\.[^.]+$/,'')||'Local video',fileName:file.name,fileSize:file.size,mimeType:videoFileMime(file),fileExtension:videoFileExtension(file),fileFingerprint:fingerprint,mediaType:'local',season:1,episode:1}; const saved=readSoloProgress(media); const now=new Date().toISOString(); setRoom({id:'solo-local-'+fingerprint,code:'LOCAL',media,playback:{position:Number(saved?.position)||0,paused:true,updated_at:now},settings:{chat_enabled:false,reactions_enabled:false},updated_at:now}); setParticipant({id:'solo-local',token:'',is_host:true,role:'host'}); setMembers([]);setMessages([]);setRequests([]);setSoloMode(true);setRoomDeleted(true);setStandaloneLocal(true);setLocalPlaybackOverride(true);localPlaybackOverrideRef.current=true;setOpen(true);setSetupDialog(false);setPlayerReady(false);playerReadyRef.current=false;setCurrentTime(Number(saved?.position)||0);currentTimeRef.current=Number(saved?.position)||0;setDuration(Number(saved?.duration)||0);durationRef.current=Number(saved?.duration)||0;setPaused(true);pausedRef.current=true;setControlsExpanded(true);setError('');setLocalVideoError('');setSyncNoticeDismissed(true); }}/>
+     ref={joinFileInputRef} type="file" accept={VIDEO_FILE_ACCEPT} hidden onChange={async event => {
                  const file = event.target.files?.[0];
                  event.target.value = '';
                  if (!file) return;
@@ -1251,6 +1260,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
               </form>
               <div className="wt-or"><span />OR<span /></div>
               <button type="button" className="wt-create" onClick={() => { setPublicRoomEnabled(false); setSetupDialog(true); setIsChangingMedia(false); setRoomType('movie'); setSelectedMedia(item || null); setLocalFile(null); setLocalFileFingerprint(''); setMediaQuery(''); setMediaSelectorExpanded(true); setError(''); }}><span><strong>Create a new room</strong><small>Choose a movie, series or your own video file</small></span><Link2 size={18}/></button>
+               <button type="button" className="wt-create wt-play-local-entry" onClick={()=>soloFileInputRef.current?.click()}><span><strong>Play a local video</strong><small>Open a file on this device without creating a room</small></span><Play size={18}/></button>
               <div className="wt-identity"><img src={guest.avatar} alt="" /><div><small>YOU'RE JOINING AS</small><strong>{guest.name}</strong><span>{guest.isGuest ? 'Guest · no account needed' : 'Signed in · profile identity'}</span></div>{guest.isGuest&&<button type="button" onClick={()=>setEditingGuestName(value=>!value)} title="Change guest name"><Pencil size={16}/></button>}</div>
               {guest.isGuest&&editingGuestName&&<form className="wt-guest-name-form" onSubmit={event=>{event.preventDefault();updateGuestName(guestNameDraft);}}><input value={guestNameDraft} onChange={event=>setGuestNameDraft(event.target.value)} maxLength={32} placeholder="Choose a guest name" aria-label="Guest name"/><button type="submit" disabled={busy||!guestNameDraft.trim()}>Save name</button></form>}
               {error && <p className="wt-error">{error}</p>}
@@ -1361,6 +1371,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                       const video=event.currentTarget;
                       setCurrentTime(video.currentTime);
                       currentTimeRef.current=video.currentTime;
+                      saveSoloProgress(roomRef.current?.media,video.currentTime,video.duration);
                       if(!applyingRemoteRef.current&&canControl&&!video.paused&&Date.now()-lastHostTimePushRef.current>1500){
                         lastHostTimePushRef.current=Date.now();
                         publishPlayback({position:video.currentTime,paused:false});
