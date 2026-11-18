@@ -560,7 +560,11 @@ function WatchTogetherHistory({ user }) {
         [...(Array.isArray(rows) ? rows : []), ...local].forEach(entry => {
           const key = entry.room_code || entry.id || entry.title;
           const old = merged.get(key);
-          if (!old || Number(entry.duration_seconds || 0) > Number(old.duration_seconds || 0)) merged.set(key, entry);
+          if (!old) merged.set(key, entry);
+          else {
+            const winner = Number(entry.duration_seconds || 0) > Number(old.duration_seconds || 0) ? entry : old;
+            merged.set(key, { ...winner, id: old.id || entry.id || winner.id });
+          }
         });
         setEntries(sortEntries([...merged.values()]));
       } catch { if (alive) setEntries(sortEntries(local)); }
