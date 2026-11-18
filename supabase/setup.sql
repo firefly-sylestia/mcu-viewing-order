@@ -542,6 +542,28 @@ begin
   return to_jsonb(h);
 end $$;
 
+
+create or replace function public.delete_watch_together_history(p_id uuid default null)
+returns integer
+language plpgsql
+security definer
+set search_path = pg_catalog, public, pg_temp
+as $$
+declare removed integer;
+begin
+  if auth.uid() is null then raise exception 'Sign in to manage synced screening history.'; end if;
+  if p_id is null then
+    delete from public.watch_together_history where user_id = auth.uid();
+  else
+    delete from public.watch_together_history where user_id = auth.uid() and id = p_id;
+  end if;
+  get diagnostics removed = row_count;
+  return removed;
+end;
+$$;
+revoke all on function public.delete_watch_together_history(uuid) from public, anon;
+grant execute on function public.delete_watch_together_history(uuid) to authenticated;
+
 create or replace function public.get_watch_together_history()
 returns jsonb language sql stable security definer set search_path = pg_catalog, public, pg_temp as $$
   select coalesce(jsonb_agg(to_jsonb(h) order by h.last_watched_at desc),'[]'::jsonb)
