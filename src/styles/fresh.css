@@ -16279,3 +16279,80 @@
   }
   :root .movie-site.page-watch-together .wt-room-actions::-webkit-scrollbar{display:none!important}
 }
+
+
+/* Compact room-type choices and a properly sized mobile chat composer. */
+:root .movie-site.page-watch-together .wt-room-type-pills {
+  display:flex!important;
+  flex:0 1 auto!important;
+  flex-wrap:wrap!important;
+  justify-content:flex-start!important;
+  width:fit-content!important;
+  max-width:100%!important;
+  box-sizing:border-box!important;
+  gap:6px!important;
+}
+:root .movie-site.page-watch-together .wt-room-type-pills button {
+  flex:0 1 auto!important;
+  width:auto!important;
+  min-width:0!important;
+  min-height:36px!important;
+  padding:7px 12px!important;
+  white-space:nowrap!important;
+}
+@media(max-width:760px) {
+  :root .movie-site.page-watch-together .wt-room-type-pills {
+    width:100%!important;
+    justify-content:flex-start!important;
+    padding:4px!important;
+    gap:4px!important;
+    border-radius:16px!important;
+  }
+  :root .movie-site.page-watch-together .wt-room-type-pills button {
+    flex:0 1 auto!important;
+    min-height:34px!important;
+    padding:6px 10px!important;
+    font-size:11px!important;
+  }
+  :root .movie-site.page-watch-together .wt-chat-form {
+    display:flex!important;
+    align-items:center!important;
+    flex-wrap:nowrap!important;
+    gap:5px!important;
+    padding:7px 8px!important;
+  }
+  :root .movie-site.page-watch-together .wt-chat-form input {
+    flex:1 1 0!important;
+    width:0!important;
+    min-width:0!important;
+    height:36px!important;
+    box-sizing:border-box!important;
+    padding:7px 10px!important;
+    font-size:11px!important;
+    border-radius:10px!important;
+  }
+  :root .movie-site.page-watch-together .wt-chat-form .wt-chat-toggle,
+  :root .movie-site.page-watch-together .wt-chat-form button[type="submit"] {
+    display:grid!important;
+    visibility:visible!important;
+    opacity:1!important;
+    position:relative!important;
+    flex:0 0 34px!important;
+    width:34px!important;
+    min-width:34px!important;
+    height:34px!important;
+    padding:0!important;
+    place-items:center!important;
+    border-radius:10px!important;
+  }
+  :root .movie-site.page-watch-together .wt-chat-form .wt-chat-toggle {
+    background:var(--fx-surface-2)!important;
+    color:var(--fx-text)!important;
+    border:1px solid color-mix(in srgb,var(--fx-muted) 24%,transparent)!important;
+  }
+  :root .movie-site.page-watch-together .wt-chat-form button[type="submit"] svg,
+  :root .movie-site.page-watch-together .wt-chat-form .wt-chat-toggle svg {
+    width:15px!important;
+    height:15px!important;
+  }
+}
