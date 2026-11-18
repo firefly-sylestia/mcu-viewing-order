@@ -891,8 +891,8 @@
   box-shadow: 0 2px 6px rgba(16, 24, 40, .05), 0 30px 60px -34px rgba(16, 24, 40, .34);
 }
 :root[data-theme="light"] .carousel-backdrop {
-  filter: blur(34px) saturate(.9) brightness(1.22);
-  opacity: .3;
+  filter: blur(34px) saturate(1.38) brightness(1.12);
+  opacity: .34;
 }
 :root[data-theme="light"] .carousel-backdrop-shade {
   background: rgba(255, 255, 255, .66);
@@ -16512,12 +16512,17 @@
 :root .movie-site.page-home .top-carousel .carousel-backdrop-shade {
   display: none !important;
 }
+:root .movie-site.page-home .top-carousel .smooth-stack,
 :root .movie-site.page-home .top-carousel .smooth-stack .stack-poster.poster-0 {
   overflow: visible !important;
+  contain: none !important;
+}
+:root .movie-site.page-home .top-carousel .smooth-stack .stack-poster.poster-0 {
+  isolation: auto !important;
 }
 :root .movie-site.page-home .top-carousel .hero-poster-reflection {
   position: absolute !important;
-  z-index: 0 !important;
+  z-index: 2 !important;
   top: calc(100% - 1px) !important;
   left: 0 !important;
   width: 100% !important;
@@ -16527,10 +16532,10 @@
   object-position: center top !important;
   transform: scaleY(-1) !important;
   transform-origin: center !important;
-  opacity: .34 !important;
-  filter: blur(9px) saturate(.82) !important;
-  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,.62), transparent 92%) !important;
-  mask-image: linear-gradient(to bottom, rgba(0,0,0,.62), transparent 92%) !important;
+  opacity: .48 !important;
+  filter: blur(7px) saturate(1.08) !important;
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,.72), transparent 96%) !important;
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,.72), transparent 96%) !important;
   pointer-events: none !important;
   user-select: none !important;
 }
@@ -16541,11 +16546,11 @@
 @media (max-width: 600px) {
   :root .movie-site.page-home .top-carousel .hero-poster-reflection {
     height: 34% !important;
-    filter: blur(8px) saturate(.8) !important;
-    opacity: .28 !important;
+    filter: blur(6px) saturate(1.02) !important;
+    opacity: .4 !important;
   }
 }
 :root.performance-mode .movie-site.page-home .top-carousel .hero-poster-reflection {
-  filter: blur(5px) !important;
-  opacity: .2 !important;
+  filter: blur(5px) saturate(1.05) !important;
+  opacity: .32 !important;
 }
