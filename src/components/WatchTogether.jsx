@@ -668,7 +668,11 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       applyRoomSnapshot(result);
     } catch (e) {
       if (/expired|closed|not found|not a member/i.test(e.message || '')) {
-        setError('This room has ended or expired.');
+        const enoughProgress = durationRef.current > 0 && currentTimeRef.current / durationRef.current >= 0.10;
+        if (enoughProgress || activeRoom.media?.kind === 'local_file') {
+          setSoloMode(true); setRoomDeleted(true); setLocalPlaybackOverride(true); localPlaybackOverrideRef.current = true;
+          setError('The room ended. Your player is still open, so you can continue watching on your own.');
+        } else setError('This room has ended or expired.');
         window.clearInterval(pollRef.current);
         window.clearInterval(heartbeatRef.current);
       }
@@ -851,7 +855,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     }
   }, [rpc]);
   useEffect(() => {
-    if (!room || !participant || soloMode) return undefined;
+    if (!room || !participant) return undefined;
     refreshRoom();
     refreshPlayback();
     pollRef.current = window.setInterval(refreshRoom, 4200);
@@ -861,7 +865,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       if (r && p) rpc('watch_room_heartbeat', { p_code: r.code, p_token: p.token, p_position: currentTimeRef.current, p_duration: durationRef.current, p_paused: pausedRef.current }).catch(() => {});
     }, 4000);
     return () => { window.clearInterval(pollRef.current); window.clearInterval(playbackPollRef.current); window.clearInterval(heartbeatRef.current); };
-  }, [room?.id, room?.media?.kind, participant?.id, soloMode, refreshRoom, refreshPlayback, rpc]);
+  }, [room?.id, room?.media?.kind, participant?.id, refreshRoom, refreshPlayback, rpc]);
 
   const publishPlayback = useCallback(async (next, force = false) => {
     const r = roomRef.current, p = participantRef.current;
