@@ -17544,3 +17544,19 @@
     box-shadow:0 14px 36px -28px rgba(0,0,0,.32) !important;
   }
 }
+
+
+/* Public screening discovery and compact title selection. */
+:root .page-watch-together .wt-public-count{display:inline-grid;place-items:center;min-width:19px;height:19px;margin-left:6px;padding:0 5px;border-radius:99px;background:color-mix(in srgb,var(--fx-accent) 13%,transparent);color:var(--fx-accent);font-size:10px}
+:root .page-watch-together .wt-public-toggle{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:12px 0 2px;padding:12px 13px;border-radius:14px;background:var(--fx-surface-2)}
+:root .page-watch-together .wt-public-toggle>span{display:grid;gap:3px;min-width:0}
+:root .page-watch-together .wt-public-toggle strong{font-size:12px;color:var(--fx-text)}
+:root .page-watch-together .wt-public-toggle small{font-size:10px;color:var(--fx-muted)}
+:root .page-watch-together .wt-public-toggle button{position:relative;width:42px;height:24px;flex:0 0 42px;padding:3px;border:0;border-radius:99px;background:color-mix(in srgb,var(--fx-muted) 30%,transparent);transition:background .18s ease}
+:root .page-watch-together .wt-public-toggle button i{display:block;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 4px #0003;transition:transform .18s ease}
+:root .page-watch-together .wt-public-toggle button.is-on{background:var(--fx-accent)}
+:root .page-watch-together .wt-public-toggle button.is-on i{transform:translateX(18px)}
+:root .page-watch-together .wt-dialog-selected{align-items:center}
+:root .page-watch-together .wt-change-title{margin-left:auto;flex:0 0 auto;padding:8px 11px;border:0;border-radius:999px;background:var(--fx-surface-3);color:var(--fx-text);font:inherit;font-size:10px;font-weight:700}
+:root .page-watch-together .wt-picker-hint{display:block;margin:10px 2px;color:var(--fx-muted);font-size:11px}
+:root .page-watch-together .wt-public-rooms .wt-owned-room{border-color:color-mix(in srgb,var(--fx-accent) 18%,transparent)}
