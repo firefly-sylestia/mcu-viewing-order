@@ -80,7 +80,18 @@ export default function WatchTogetherP2P({ room, participant, members = [], loca
       const entry = { pc, pendingIce: [], stream: new MediaStream() };
       peers.current.set(member.id, entry);
       pc.onicecandidate = event => {
-        if (event.candidate) send(member.id, { type: 'ice', candidate: event.candidate.toJSON() }).catch(() => {});
+        if (event.candidate) {
+          send(member.id, { type: 'ice', candidate: event.candidate.toJSON() }).catch(error => {
+            if (!cancelled) setError(error?.message || 'Could not exchange network connection candidates with the other device.');
+          });
+        }
+      };
+      pc.oniceconnectionstatechange = () => {
+        if (pc.iceConnectionState === 'failed') {
+          setError('P2P network path failed. These devices need a TURN relay; STUN alone cannot connect through this network.');
+        }
+        if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') setError('');
+        update(member.id, pc.connectionState === 'connected' ? 'connected' : pc.iceConnectionState);
       };
       pc.onconnectionstatechange = () => {
         update(member.id, pc.connectionState);
@@ -106,13 +117,16 @@ export default function WatchTogetherP2P({ room, participant, members = [], loca
             onRemoteMuted?.();
           }
           const startRemotePlayback = () => {
-            player.play?.().catch(error => {
-              setError(error?.message || 'Tap the video to start the shared stream.');
+            if (player.srcObject !== stream) return;
+            player.play?.().catch(() => {
+              setError('The stream arrived. Tap the video once to allow playback on this phone.');
             });
           };
-          event.track.addEventListener?.('unmute', startRemotePlayback, { once: true });
-          if (player.readyState >= 1) startRemotePlayback();
-          else player.addEventListener('loadedmetadata', startRemotePlayback, { once: true });
+          // Try immediately as well as on metadata/unmute: mobile browsers can
+          // deliver the first unmute event before the listener is attached.
+          event.track.addEventListener?.('unmute', startRemotePlayback);
+          player.addEventListener('loadedmetadata', startRemotePlayback);
+          startRemotePlayback();
         }
       };
 
