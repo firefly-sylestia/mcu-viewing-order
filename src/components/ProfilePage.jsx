@@ -421,7 +421,7 @@ function SettingsPanel({ installApp, installAvailable, appInstalled, query = '',
         </div>
       </div>
 
-      <div className="settings-group" hidden={!showGroup('watch together voice chat microphone audio room default')}>
+      <div className="settings-group" hidden={!showGroup('watch together voice chat microphone audio room default p2p streaming peer direct video')}>
         <h3 className="settings-group-title">Watch Together</h3>
         <div className="settings-row">
           <div className="settings-row-label">
