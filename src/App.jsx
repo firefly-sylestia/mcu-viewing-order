@@ -1239,7 +1239,7 @@ export default function App() {
   }, [analyticsItems]);
   const profileStats = useMemo(() => {
     const items = profileItems;
-    const total = items.length || 1;
+    const total = items.length;
     const watched = items.filter(item => item.userStatus === 'watched').length;
     const watching = items.filter(item => item.userStatus === 'watching').length;
     const dropped = items.filter(item => item.userStatus === 'dropped').length;
