@@ -16463,3 +16463,29 @@
   :root .wt-local-control-row .wt-local-track-select {height:29px;min-width:30px;padding:0 6px;font-size:9px}
   :root .wt-local-control-row .wt-local-track-select {max-width:94px;min-width:66px}
 }
+
+
+/* Floating local-file audio/subtitle picker in fullscreen. */
+:root .wt-local-track-menu {display:none!important}
+:root .wt-local-video-player:fullscreen .wt-local-track-menu {
+  position:absolute!important;z-index:18!important;top:max(64px,calc(54px + env(safe-area-inset-top)))!important;
+  right:16px!important;display:grid!important;gap:15px!important;width:min(310px,calc(100vw - 32px))!important;
+  max-height:min(72dvh,560px)!important;overflow-y:auto!important;padding:15px!important;
+  border:1px solid rgba(255,255,255,.16)!important;border-radius:18px!important;color:#fff!important;
+  background:rgba(10,13,20,.82)!important;box-shadow:0 18px 55px rgba(0,0,0,.4)!important;
+  -webkit-backdrop-filter:blur(28px) saturate(1.3)!important;backdrop-filter:blur(28px) saturate(1.3)!important;
+}
+:root .wt-local-track-menu header {display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important}
+:root .wt-local-track-menu header strong {font-size:12px!important;font-weight:800!important}
+:root .wt-local-track-menu header button {display:grid!important;place-items:center!important;width:30px!important;height:30px!important;border:1px solid rgba(255,255,255,.14)!important;border-radius:9px!important;background:rgba(255,255,255,.08)!important;color:#fff!important}
+:root .wt-local-track-menu section {display:grid!important;gap:8px!important}
+:root .wt-local-track-menu section>span {font-size:10px!important;font-weight:800!important;letter-spacing:.08em!important;text-transform:uppercase!important;color:rgba(255,255,255,.62)!important}
+:root .wt-local-track-options {display:grid!important;gap:5px!important;max-height:190px!important;overflow:auto!important}
+:root .wt-local-track-options button {display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;min-height:38px!important;padding:8px 10px!important;border:1px solid rgba(255,255,255,.09)!important;border-radius:10px!important;background:rgba(255,255,255,.055)!important;color:rgba(255,255,255,.88)!important;text-align:left!important;font-size:11px!important;cursor:pointer!important}
+:root .wt-local-track-options button.active {border-color:rgba(255,255,255,.38)!important;background:rgba(255,255,255,.16)!important;color:#fff!important}
+:root .wt-local-track-options button small {color:rgba(255,255,255,.55)!important;font-size:9px!important}
+:root .wt-local-track-menu section p,:root .wt-local-track-footnote {margin:0!important;color:rgba(255,255,255,.52)!important;font-size:10px!important;line-height:1.5!important}
+:root .wt-local-video-player:fullscreen.is-controls-hidden .wt-local-track-menu {display:none!important}
+@media(max-width:760px) {
+  :root .wt-local-video-player:fullscreen .wt-local-track-menu {top:max(58px,calc(48px + env(safe-area-inset-top)))!important;right:10px!important;width:min(290px,calc(100vw - 20px))!important;padding:13px!important}
+}
