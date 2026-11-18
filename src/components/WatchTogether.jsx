@@ -516,7 +516,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
         setError(`Video selected, but this browser could not save a reload backup: ${storageError.message || 'storage unavailable'}. Keep the original file so you can reselect it if needed.`);
       }
       if (activate) {
-        const url = URL.createObjectURL(new Blob([file], { type: videoFileMime(file) }));
+        const url = URL.createObjectURL(file);
         setLocalVideoUrl(previous => { if (previous) URL.revokeObjectURL(previous); return url; });
         setLocalVideoError('');
       }
@@ -637,7 +637,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
         p_media: nextMedia,
       });
       if (localRoom) {
-        const nextUrl = URL.createObjectURL(new Blob([localFile], { type: videoFileMime(localFile) }));
+        const nextUrl = URL.createObjectURL(localFile);
         setLocalVideoUrl(previous => { if (previous) URL.revokeObjectURL(previous); return nextUrl; });
         setLocalVideoError('');
       }
