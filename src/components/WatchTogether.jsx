@@ -848,7 +848,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     finally { setBusy(false); }
   };
   const postPlayerCommand = useCallback((command, args = []) => {
-    if(roomRef.current?.media?.kind==='local_file'){const video=localVideoRef.current;if(!video)return false;if(command==='seek')video.currentTime=Math.max(0,Number(args[0])||0);if(command==='play')video.play().catch(()=>{});if(command==='pause')video.pause();if(command==='setMuted')video.muted=Boolean(args[0]);return true;}
+    if(roomRef.current?.media?.kind==='local_file'){const video=localVideoRef.current;if(!video)return false;if(command==='seek'&&video.srcObject)return true;if(command==='seek')video.currentTime=Math.max(0,Number(args[0])||0);if(command==='play')video.play().catch(()=>{});if(command==='pause')video.pause();if(command==='setMuted')video.muted=Boolean(args[0]);return true;}
     const message = { type: 'cinesrc:command', command, args };
     if (!playerReadyRef.current || !iframeRef.current?.contentWindow) {
       pendingPlayerCommandsRef.current = [...pendingPlayerCommandsRef.current, message].slice(-12);
