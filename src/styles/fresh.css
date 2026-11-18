@@ -17300,3 +17300,86 @@
 .auth-confirmation .auth-submit { width:100%; }
 .auth-switch-link { padding:6px 10px; border:0; background:transparent; color:var(--fx-accent); font-size:12px; font-weight:700; cursor:pointer; }
 @media(max-width:520px) { :root .detail-overlay .auth-modal { padding:22px 18px; } }
+
+
+/* Profile Insights v2: a calmer editorial summary, not a second Stats dashboard. */
+:root .movie-site.page-profile .profile-insights-v2 {
+  width:100%; min-width:0; box-sizing:border-box; padding:clamp(17px,2vw,25px) !important;
+  margin:0 0 14px !important; overflow:hidden;
+  border:1px solid color-mix(in srgb,var(--fx-muted) 14%,transparent) !important;
+  border-radius:22px !important;
+  background:color-mix(in srgb,var(--fx-surface) 54%,transparent) !important;
+  -webkit-backdrop-filter:blur(25px) saturate(140%); backdrop-filter:blur(25px) saturate(140%);
+  box-shadow:0 16px 48px -40px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.16) !important;
+}
+.profile-insights-v2-head { display:flex; align-items:flex-end; justify-content:space-between; gap:18px; min-width:0; }
+.profile-insights-v2-head>div:first-child { min-width:0; }
+.profile-insights-v2-kicker { color:var(--fx-muted); font-size:9px; font-weight:800; letter-spacing:.15em; }
+.profile-insights-v2-head h2 { margin:5px 0 3px; color:var(--fx-text); font-size:clamp(19px,2vw,24px); letter-spacing:-.045em; }
+.profile-insights-v2-head p { margin:0; color:var(--fx-muted); font-size:11px; line-height:1.45; }
+.profile-insights-v2-total { display:flex; align-items:baseline; justify-content:flex-end; flex-wrap:wrap; gap:6px; min-width:0; text-align:right; }
+.profile-insights-v2-total strong { color:var(--fx-text); font-size:clamp(27px,3vw,38px); line-height:1; letter-spacing:-.06em; font-variant-numeric:tabular-nums; }
+.profile-insights-v2-total span { color:var(--fx-muted); font-size:11px; }
+.profile-insights-v2-progress { height:7px; margin-top:20px; overflow:hidden; border-radius:99px; background:color-mix(in srgb,var(--fx-muted) 15%,transparent); }
+.profile-insights-v2-progress span { display:block; height:100%; border-radius:inherit; background:var(--fx-accent); transition:width .35s ease; }
+.profile-insights-v2-progress-label { display:flex; justify-content:space-between; gap:12px; margin-top:7px; color:var(--fx-muted); font-size:10px; }
+.profile-insights-v2-metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:9px; margin-top:19px; }
+.profile-insights-v2-metric { display:grid; grid-template-columns:28px minmax(0,1fr); grid-template-rows:auto auto; align-items:center; gap:3px 9px; min-width:0; padding:12px; border-radius:14px; background:color-mix(in srgb,var(--fx-surface-2) 54%,transparent); }
+.profile-insights-v2-icon { grid-row:1 / span 2; display:grid; place-items:center; width:28px; height:28px; color:var(--fx-muted); border-radius:9px; background:color-mix(in srgb,var(--fx-muted) 9%,transparent); }
+.profile-insights-v2-icon svg { width:16px; height:16px; max-width:100%; }
+.profile-insights-v2-label { color:var(--fx-muted); font-size:10px; line-height:1.25; overflow-wrap:anywhere; }
+.profile-insights-v2-metric strong { min-width:0; color:var(--fx-text); font-size:clamp(16px,1.8vw,21px); line-height:1.1; overflow-wrap:anywhere; font-variant-numeric:tabular-nums; }
+.profile-insights-v2-foot { display:flex; align-items:center; flex-wrap:wrap; gap:8px 11px; margin-top:14px; padding-top:12px; border-top:1px solid color-mix(in srgb,var(--fx-muted) 12%,transparent); color:var(--fx-muted); font-size:10px; }
+.profile-insights-v2-foot i { width:3px; height:3px; border-radius:50%; background:var(--fx-muted); }
+.profile-insights-v2-genres { min-width:0; margin-left:auto; overflow-wrap:anywhere; text-align:right; }
+@media(max-width:760px) {
+  .profile-insights-v2-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; }
+  .profile-insights-v2-metric { padding:10px; }
+  .profile-insights-v2-genres { width:100%; margin-left:0; text-align:left; }
+}
+@media(max-width:420px) {
+  .profile-insights-v2-head { align-items:flex-start; flex-direction:column; gap:9px; }
+  .profile-insights-v2-total { justify-content:flex-start; text-align:left; }
+}
+
+/* Shared watch activity now lives inside the main Stats dashboard. */
+:root .movie-site.page-analytics .stats-dashboard { container-type:inline-size; }
+:root .movie-site.page-analytics .stats-dashboard-cards { grid-template-columns:repeat(auto-fit,minmax(min(100%,205px),1fr)) !important; }
+:root .movie-site.page-analytics .stats-dashboard-card { min-width:0; max-width:100%; box-sizing:border-box; }
+:root .movie-site.page-analytics .stats-dashboard-card > * { min-width:0; }
+:root .movie-site.page-analytics .stats-card-label,
+:root .movie-site.page-analytics .stats-dashboard-card > small { overflow-wrap:anywhere; white-space:normal; line-height:1.35; }
+:root .movie-site.page-analytics .stats-card-icon { flex-shrink:0; }
+:root .movie-site.page-analytics .stats-dashboard-shared-activity { min-width:0; width:100%; max-width:100%; box-sizing:border-box; }
+:root .movie-site.page-analytics .stats-dashboard-shared-activity .wt-stats-panel {
+  width:100%; max-width:100%; min-width:0; margin:0; padding:17px 0 2px;
+  border:0 !important; border-top:1px solid color-mix(in srgb,var(--fx-muted) 15%,transparent) !important;
+  border-radius:0 !important; background:transparent !important; box-shadow:none !important;
+  -webkit-backdrop-filter:none; backdrop-filter:none; overflow:hidden;
+}
+:root .movie-site.page-analytics .wt-stats-heading { min-width:0; flex-wrap:wrap; }
+:root .movie-site.page-analytics .wt-stats-heading>div { min-width:0; }
+:root .movie-site.page-analytics .wt-stats-heading h2 { overflow-wrap:anywhere; }
+:root .movie-site.page-analytics .wt-stats-heading>small { flex:0 1 auto; white-space:normal; text-align:right; }
+:root .movie-site.page-analytics .wt-stats-grid { grid-template-columns:repeat(auto-fit,minmax(min(100%,155px),1fr)); min-width:0; }
+:root .movie-site.page-analytics .wt-stats-metric { min-width:0; max-width:100%; box-sizing:border-box; }
+:root .movie-site.page-analytics .wt-stats-metric small,
+:root .movie-site.page-analytics .wt-stats-metric strong { min-width:0; overflow-wrap:anywhere; white-space:normal; }
+:root .movie-site.page-analytics .wt-stats-recent { min-width:0; }
+:root .movie-site.page-analytics .wt-stats-recent>span { min-width:0; max-width:100%; overflow-wrap:anywhere; }
+@container (max-width:620px) {
+  :root .movie-site.page-analytics .stats-dashboard-cards { grid-template-columns:repeat(2,minmax(0,1fr)) !important; }
+  :root .movie-site.page-analytics .stats-dashboard-card { grid-template-columns:28px minmax(0,1fr); padding:10px; gap:4px 7px; }
+  :root .movie-site.page-analytics .stats-card-icon { width:28px; height:28px; }
+}
+@container (max-width:390px) {
+  :root .movie-site.page-analytics .stats-dashboard-cards,
+  :root .movie-site.page-analytics .wt-stats-grid { grid-template-columns:minmax(0,1fr) !important; }
+  :root .movie-site.page-analytics .stats-dashboard-card { grid-template-columns:30px minmax(0,1fr); }
+}
+@media(max-width:640px) {
+  :root .movie-site.page-analytics .stats-dashboard { padding:13px; border-radius:20px !important; }
+  :root .movie-site.page-analytics .stats-dashboard-hero { padding:15px; }
+  :root .movie-site.page-analytics .stats-dashboard-cards { grid-template-columns:repeat(2,minmax(0,1fr)) !important; }
+  :root .movie-site.page-analytics .wt-stats-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
