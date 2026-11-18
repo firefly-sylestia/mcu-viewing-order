@@ -16489,3 +16489,13 @@
 @media(max-width:760px) {
   :root .wt-local-video-player:fullscreen .wt-local-track-menu {top:max(58px,calc(48px + env(safe-area-inset-top)))!important;right:10px!important;width:min(290px,calc(100vw - 20px))!important;padding:13px!important}
 }
+
+/* Hide the desktop pointer together with the local player's idle controls. */
+@media (hover:hover) and (pointer:fine) {
+  :root .movie-site.page-watch-together .wt-local-video-player.is-controls-hidden,
+  :root .movie-site.page-watch-together .wt-local-video-player.is-controls-hidden *,
+  :root .wt-local-video-player:fullscreen.is-controls-hidden,
+  :root .wt-local-video-player:fullscreen.is-controls-hidden * {
+    cursor: none !important;
+  }
+}
