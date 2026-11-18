@@ -16554,3 +16554,16 @@
     clip-path: inset(0 round 15px) !important;
   }
 }
+
+
+/* Keep all three home carousel posters fully opaque; depth comes from scale/position. */
+:root .movie-site.page-home .top-carousel .smooth-stack .stack-poster.poster-1,
+:root .movie-site.page-home .top-carousel .smooth-stack .stack-poster.poster-2 {
+  opacity: 1 !important;
+}
+:root .movie-site.page-home .top-carousel .smooth-stack .stack-poster.poster-1 > img,
+:root .movie-site.page-home .top-carousel .smooth-stack .stack-poster.poster-2 > img,
+:root .movie-site.page-home .top-carousel .smooth-stack .stack-poster.poster-1 > .fallback-poster,
+:root .movie-site.page-home .top-carousel .smooth-stack .stack-poster.poster-2 > .fallback-poster {
+  opacity: 1 !important;
+}
