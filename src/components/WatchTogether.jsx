@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronDown, ChevronUp, Copy, Check, Users, Captions, MessageCircle, Play, Pause, SkipBack, SkipForward, X, Link2, Radio, Crown, Send, LogOut, RefreshCw, Volume2, VolumeX, Clock3, ShieldCheck, Search, ChevronRight, Pencil, PanelRightClose, PanelRightOpen, ArrowLeft, Settings2, UserMinus, Eye, EyeOff, Lock, Unlock, QrCode, Theater, Wifi, WifiOff, ArrowRightLeft, Timer, Smile, Maximize2, Minimize2, SlidersHorizontal } from 'lucide-react';
+import { ChevronDown, ChevronUp, Copy, Check, Users, Captions, MessageCircle, Play, Pause, SkipBack, SkipForward, X, Link2, Radio, Crown, Send, LogOut, RefreshCw, Volume2, VolumeX, Clock3, ShieldCheck, Search, ChevronRight, Pencil, PanelRightClose, PanelRightOpen, ArrowLeft, Settings2, UserMinus, Eye, EyeOff, Lock, Unlock, QrCode, Theater, Wifi, WifiOff, ArrowRightLeft, Timer, Smile, MonitorPlay, Maximize2, Minimize2, SlidersHorizontal } from 'lucide-react';
 import { supabasePublicRequest, supabaseDataRequest } from '../supabase';
 
 
