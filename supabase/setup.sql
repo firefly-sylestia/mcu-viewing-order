@@ -234,7 +234,7 @@ begin
   returning * into p;
   update public.watch_rooms set host_participant_id=p.id where id=r.id returning * into r;
   return jsonb_build_object(
-    'room', to_jsonb(r),
+    'room', (to_jsonb(r) - 'owner_token_hash' - 'owner_user_id'),
     'participant', jsonb_build_object('id',p.id,'token',p_token,'display_name',p.display_name,'avatar_url',p.avatar_url,'is_host',p.is_host,'role',p.role),
     'participants', jsonb_build_array(jsonb_build_object('id',p.id,'display_name',p.display_name,'avatar_url',p.avatar_url,'is_host',p.is_host,'role',p.role)),
     'messages', '[]'::jsonb
@@ -325,7 +325,7 @@ begin
   from (select id,participant_id,display_name,avatar_url,body,created_at from public.watch_room_messages where room_id=r.id order by id desc limit 60) m;
   select coalesce(jsonb_agg(jsonb_build_object('id',q.id,'participant_id',q.participant_id,'display_name',q.display_name,'request_type',q.request_type,'payload',q.payload,'created_at',q.created_at) order by q.id desc),'[]'::jsonb) into reqs
   from (select wrq.*,wp.display_name from public.watch_room_requests wrq join public.watch_room_participants wp on wp.id=wrq.participant_id where wrq.room_id=r.id and wrq.status='pending' order by wrq.id desc limit 20) q;
-  return jsonb_build_object('room',to_jsonb(r),'participant',jsonb_build_object('id',p.id,'token',p_token,'display_name',p.display_name,'avatar_url',p.avatar_url,'is_host',p.is_host,'role',p.role),'participants',parts,'messages',msgs,'requests',reqs);
+  return jsonb_build_object('room',(to_jsonb(r) - 'owner_token_hash' - 'owner_user_id'),'participant',jsonb_build_object('id',p.id,'token',p_token,'display_name',p.display_name,'avatar_url',p.avatar_url,'is_host',p.is_host,'role',p.role),'participants',parts,'messages',msgs,'requests',reqs);
 end $$;
 
 create or replace function public.watch_room_snapshot(p_code text, p_token text)
@@ -343,7 +343,7 @@ begin
   from (select id,participant_id,display_name,avatar_url,body,created_at from public.watch_room_messages where room_id=r.id order by id desc limit 60) m;
   select coalesce(jsonb_agg(jsonb_build_object('id',q.id,'participant_id',q.participant_id,'display_name',q.display_name,'request_type',q.request_type,'payload',q.payload,'created_at',q.created_at) order by q.id desc),'[]'::jsonb) into reqs
   from (select wrq.*,wp.display_name from public.watch_room_requests wrq join public.watch_room_participants wp on wp.id=wrq.participant_id where wrq.room_id=r.id and wrq.status='pending' order by wrq.id desc limit 20) q;
-  return jsonb_build_object('room',to_jsonb(r),'participant',jsonb_build_object('id',p.id,'display_name',p.display_name,'avatar_url',p.avatar_url,'is_host',p.is_host,'role',p.role),'participants',parts,'messages',msgs,'requests',reqs);
+  return jsonb_build_object('room',(to_jsonb(r) - 'owner_token_hash' - 'owner_user_id'),'participant',jsonb_build_object('id',p.id,'display_name',p.display_name,'avatar_url',p.avatar_url,'is_host',p.is_host,'role',p.role),'participants',parts,'messages',msgs,'requests',reqs);
 end $$;
 
 drop function if exists public.watch_room_heartbeat(text,text);
@@ -608,7 +608,7 @@ begin
   returning * into r;
 
   update public.watch_room_participants set last_seen_at = now() where id = p.id;
-  return to_jsonb(r);
+  return to_jsonb(r) - 'owner_token_hash' - 'owner_user_id';
 end;
 $change_watch_room_media$;
 
@@ -869,3 +869,12 @@ revoke all on function public.watch_room_p2p_send(text,text,uuid,jsonb) from pub
 revoke all on function public.watch_room_p2p_poll(text,text,bigint) from public;
 grant execute on function public.watch_room_p2p_send(text,text,uuid,jsonb) to anon,authenticated;
 grant execute on function public.watch_room_p2p_poll(text,text,bigint) to anon,authenticated;
+
+
+-- Security hardening: voice/P2P features were removed from the client.
+-- Keep legacy objects for migration compatibility, but disable client access.
+revoke all on function public.send_watch_room_voice_signal(text,text,uuid,jsonb) from public, anon, authenticated;
+revoke all on function public.poll_watch_room_voice_signals(text,text,bigint) from public, anon, authenticated;
+revoke all on function public.watch_room_voice_access(text,text) from public, anon, authenticated;
+revoke all on function public.watch_room_p2p_send(text,text,uuid,jsonb) from public, anon, authenticated;
+revoke all on function public.watch_room_p2p_poll(text,text,bigint) from public, anon, authenticated;
