@@ -17560,3 +17560,66 @@
 :root .page-watch-together .wt-change-title{margin-left:auto;flex:0 0 auto;padding:8px 11px;border:0;border-radius:999px;background:var(--fx-surface-3);color:var(--fx-text);font:inherit;font-size:10px;font-weight:700}
 :root .page-watch-together .wt-picker-hint{display:block;margin:10px 2px;color:var(--fx-muted);font-size:11px}
 :root .page-watch-together .wt-public-rooms .wt-owned-room{border-color:color-mix(in srgb,var(--fx-accent) 18%,transparent)}
+
+
+/* Remove the pale top wash while preserving the blurred poster artwork. */
+:root[data-top-atmosphere="on"] .movie-site::before {
+  background-color: transparent !important;
+  background-image: var(--top-atmosphere-art, none) !important;
+  opacity: .58 !important;
+  filter: blur(28px) saturate(112%) !important;
+}
+:root[data-top-atmosphere="on"][data-theme="light"] .movie-site {
+  --top-atmosphere-edge: transparent !important;
+}
+
+/* Keep the desktop chat aligned at its original top edge, but shorten its bottom. */
+@media (min-width: 761px) {
+  :root .movie-site.page-watch-together .wt-player-layout > .wt-chat {
+    align-self: start !important;
+    height: calc(100% - 26px) !important;
+    min-height: 394px !important;
+  }
+  :root .movie-site.page-watch-together .wt-player-layout > .wt-chat.is-collapsed {
+    height: auto !important;
+    min-height: 0 !important;
+  }
+}
+
+/* The collapsed rail should show only its chat control, never reaction emojis. */
+:root .movie-site.page-watch-together .wt-player-layout > .wt-chat.is-collapsed .wt-reactions,
+:root .movie-site.page-watch-together .wt-player-layout > .wt-chat.is-collapsed .wt-chat-messages,
+:root .movie-site.page-watch-together .wt-player-layout > .wt-chat.is-collapsed .wt-chat-head,
+:root .movie-site.page-watch-together .wt-player-layout > .wt-chat.is-collapsed .wt-chat-foot {
+  display: none !important;
+}
+:root .movie-site.page-watch-together .wt-player-layout > .wt-chat.is-collapsed .wt-chat-form {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0 !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 10px 4px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+:root .movie-site.page-watch-together .wt-player-layout > .wt-chat.is-collapsed .wt-chat-form input,
+:root .movie-site.page-watch-together .wt-player-layout > .wt-chat.is-collapsed .wt-chat-form button[type="submit"] {
+  display: none !important;
+}
+:root .movie-site.page-watch-together .wt-player-layout > .wt-chat.is-collapsed .wt-chat-toggle {
+  display: grid !important;
+  place-items: center !important;
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 1px solid color-mix(in srgb,var(--fx-muted) 18%,transparent) !important;
+  border-radius: 12px !important;
+  background: color-mix(in srgb,var(--fx-surface-2) 82%,transparent) !important;
+  color: var(--fx-text) !important;
+}
