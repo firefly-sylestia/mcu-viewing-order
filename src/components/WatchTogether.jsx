@@ -625,7 +625,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       setLocalFileFingerprint(fingerprint);
       // Keep a local browser copy so a refresh can restore the host's video
       // without uploading it or asking the user to pick it again.
-      storeLocalVideo(fingerprint, file).catch(() => {});
+      await storeLocalVideo(fingerprint, file).catch(() => {});
       if (activate) {
         const url = URL.createObjectURL(new Blob([file], { type: videoFileMime(file) }));
         setLocalVideoUrl(previous => { if (previous) URL.revokeObjectURL(previous); return url; });
