@@ -146,7 +146,7 @@ const makeAccountIdentity = (user, profileName, profileAvatar) => {
 };
 
 
-export default function WatchTogether({ item, tmdbId, mediaType, season = 1, episode = 1, playerUrl, onEpisodeChange, onBeforeOpen, onWatchTogether, onRoomStateChange, onClose, startOpen = false, launchOnly = false, user, profileName, profileAvatar, selectableItems = [], requireMediaSelection = false }) {
+export default function WatchTogether({ item, tmdbId, mediaType, season = 1, episode = 1, playerUrl, onEpisodeChange, onBeforeOpen, onWatchTogether, onRoomStateChange, onClose, startOpen = false, launchOnly = false, user, profileName, profileAvatar, selectableItems = [], requireMediaSelection = false, p2pStreamingEnabled = false }) {
   const [guestNameOverride, setGuestNameOverride] = useState('');
   const guest = useMemo(() => { const identity=user?.id?makeAccountIdentity(user,profileName,profileAvatar):{...makeGuest(),isGuest:true}; if(!user?.id&&guestNameOverride){identity.name=guestNameOverride;identity.avatar=blobatar(guestNameOverride);} return identity; }, [user?.id,user?.displayName,user?.email,user?.user_metadata?.display_name,user?.user_metadata?.full_name,user?.user_metadata?.avatar_url,user?.user_metadata?.picture,profileName,profileAvatar,guestNameOverride]);
   const [open, setOpen] = useState(startOpen);
@@ -649,23 +649,43 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
 
 
   const createRoom = useCallback(async () => {
-    if(roomType==='local'&&(!localFile||!localFileFingerprint)){setError('Choose a video file first.');return false;}
-    if(roomType!=='local'&&!itemMedia.tmdbId){setError('This title does not have a TMDB ID, so a shared player cannot be created.');return false;}
-    setBusy(true); setError(''); lastVersionRef.current = 0; watchSecondsRef.current=0; localHistoryFlushRef.current=0; remoteHistoryFlushRef.current=0;
+    const localRoom = roomType === 'local' || roomType === 'p2p';
+    const p2pRoom = roomType === 'p2p';
+    if (localRoom && (!localFile || !localFileFingerprint)) { setError('Choose a video file first.'); return false; }
+    if (!localRoom && !itemMedia.tmdbId) { setError('This title does not have a TMDB ID, so a shared player cannot be created.'); return false; }
+    setBusy(true); setError(''); lastVersionRef.current = 0; watchSecondsRef.current = 0; localHistoryFlushRef.current = 0; remoteHistoryFlushRef.current = 0;
     try {
       const code = roomCode();
+      const media = localRoom ? {
+        kind: 'local_file',
+        title: localFile.name.replace(/\\.[^.]+$/, '') || 'Local video',
+        fileName: localFile.name,
+        fileSize: localFile.size,
+        mimeType: videoFileMime(localFile),
+        fileExtension: videoFileExtension(localFile),
+        fileFingerprint: localFileFingerprint,
+        mediaType: 'local',
+        season: 1,
+        episode: 1,
+      } : itemMedia;
       const result = await rpc('create_watch_room', {
         p_code: code,
         p_token: guest.token,
         p_name: guest.name,
         p_avatar: guest.avatar,
-        p_media: roomType==='local'?{kind:'local_file',title:localFile.name.replace(/\.[^.]+$/,'')||'Local video',fileName:localFile.name,fileSize:localFile.size,mimeType:videoFileMime(localFile),fileExtension:videoFileExtension(localFile),fileFingerprint:localFileFingerprint,mediaType:'local',season:1,episode:1}:itemMedia,
+        p_media: media,
       });
-      setParticipant(result.participant);
-      applyRoomSnapshot(result);
-      const roomMedia=roomType==='local'?{kind:'local_file',title:localFile.name.replace(/\.[^.]+$/,'')||'Local video',fileName:localFile.name,fileSize:localFile.size,mimeType:videoFileMime(localFile),fileExtension:videoFileExtension(localFile),fileFingerprint:localFileFingerprint,mediaType:'local'}:itemMedia;saveActiveRoom(code,guest,roomMedia);
-      // Room creation is already complete; refresh the room list in the background
-      // so a slow history/list request cannot leave the create button spinning.
+      if (p2pRoom) {
+        await rpc('update_watch_room_settings', {
+          p_code: code, p_token: guest.token, p_settings: { p2p_video_enabled: true },
+        });
+      }
+      const snapshot = p2pRoom
+        ? await rpc('watch_room_snapshot', { p_code: code, p_token: guest.token })
+        : result;
+      setParticipant(snapshot.participant || result.participant);
+      applyRoomSnapshot(snapshot);
+      saveActiveRoom(code, guest, media);
       loadOwnedRooms().catch(() => {});
       const link = window.location.origin + '/watch-room/' + code;
       setRoomLink(link);
@@ -711,18 +731,19 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
 
   const changeRoomMedia = useCallback(async () => {
     if (!room || !participant?.is_host || busy) return false;
-    if (roomType === 'local' && (!localFile || !localFileFingerprint)) {
+    const localRoom = roomType === 'local' || roomType === 'p2p';
+    if (localRoom && (!localFile || !localFileFingerprint)) {
       setError('Choose the new video file first.');
       return false;
     }
-    if (roomType !== 'local' && !Number(selectedMedia?.tmdbId)) {
+    if (!localRoom && !Number(selectedMedia?.tmdbId)) {
       setError('Choose a movie or series with a valid TMDB ID.');
       return false;
     }
     setBusy(true);
     setError('');
     try {
-      const nextMedia = roomType === 'local'
+      const nextMedia = localRoom
         ? {
             kind: 'local_file',
             title: localFile.name.replace(/\.[^.]+$/, '') || 'Local video',
@@ -741,7 +762,11 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
         p_token: participant.token,
         p_media: nextMedia,
       });
-      if (roomType === 'local') {
+      await rpc('update_watch_room_settings', {
+        p_code: room.code, p_token: participant.token,
+        p_settings: { p2p_video_enabled: roomType === 'p2p' },
+      });
+      if (localRoom) {
         const nextUrl = URL.createObjectURL(new Blob([localFile], { type: videoFileMime(localFile) }));
         setLocalVideoUrl(previous => { if (previous) URL.revokeObjectURL(previous); return nextUrl; });
         setLocalVideoError('');
@@ -1520,7 +1545,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
               </section>
             </div>,document.body
           )}
-          {hostPanelOpen && typeof document !== 'undefined' && createPortal(<div className="wt-create-backdrop" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)setHostPanelOpen(false);}}><section className="wt-create-dialog wt-host-panel" role="dialog" aria-modal="true" aria-label="Host control panel"><header><div><span>ROOM MANAGEMENT</span><h2>Host control panel</h2><p>Manage access, permissions and your screening.</p></div><button type="button" onClick={()=>setHostPanelOpen(false)} aria-label="Close"><X size={18}/></button></header><div className="wt-host-settings"><label><span><b>Voice chat</b><small>Allow participants to join OpenVidu voice chat. Off by default.</small></span><input type="checkbox" checked={room.settings?.voice_enabled===true} onChange={e=>{if(!e.target.checked&&voiceEnabled)leaveVoice();updateRoomSettings({voice_enabled:e.target.checked});}}/></label><label><span><b>Local video sharing (P2P)</b><small>For Local File rooms only. Viewers receive the host’s video directly and do not need their own copy. Host upload bandwidth is shared.</small></span><input type="checkbox" checked={room.settings?.p2p_video_enabled===true} disabled={room.media?.kind!=='local_file'} onChange={e=>updateRoomSettings({p2p_video_enabled:e.target.checked})}/></label><label><span><b>Experimental P2P voice</b><small>Direct microphone connections between participants. Testing only; allow microphone access.</small></span><input type="checkbox" checked={room.settings?.p2p_voice_enabled===true} onChange={e=>updateRoomSettings({p2p_voice_enabled:e.target.checked})}/></label><label><span><b>Lock room</b><small>Only current participants can stay. New joins are blocked.</small></span><input type="checkbox" checked={Boolean(room.settings?.locked)} onChange={e=>updateRoomSettings({locked:e.target.checked})}/></label><label><span><b>Reactions</b><small>Allow quick emoji reactions in chat.</small></span><input type="checkbox" checked={room.settings?.reactions_enabled!==false} onChange={e=>updateRoomSettings({reactions_enabled:e.target.checked})}/></label><label><span><b>Room chat</b><small>Allow participants to send messages.</small></span><input type="checkbox" checked={room.settings?.chat_enabled!==false} onChange={e=>updateRoomSettings({chat_enabled:e.target.checked})}/></label><label><span><b>Guest episode changes</b><small>Let viewers change the shared episode.</small></span><input type="checkbox" checked={Boolean(room.settings?.guests_can_change_episode)} onChange={e=>updateRoomSettings({guests_can_change_episode:e.target.checked})}/></label><label><span><b>Room expiry</b><small>Choose how long the room can remain active.</small></span><select value={room.settings?.expiry_minutes||30} onChange={e=>updateRoomSettings({expiry_minutes:Number(e.target.value)})}><option value="30">30 minutes inactive</option><option value="60">1 hour inactive</option><option value="180">3 hours inactive</option><option value="480">8 hours inactive</option><option value="1440">24 hours inactive</option></select></label></div><div className="wt-host-people"><strong>Participants</strong>{members.filter(m=>!m.is_host).map(member=><div key={member.id}><span><b>{member.display_name}</b><small>{member.role==='operator'?'Operator':'Viewer'}</small></span><button type="button" disabled={busy||member.role==='operator'} onClick={()=>grantOperator(member)}>Make operator</button><button type="button" disabled={busy} onClick={()=>setConfirmAction({type:'remove',member})}><UserMinus size={14}/></button><button type="button" disabled={busy} onClick={()=>setConfirmAction({type:'transfer',member})}><ArrowRightLeft size={14}/></button></div>)}</div><div className="wt-host-danger"><div className="wt-host-danger-copy"><span className="wt-host-danger-icon"><LogOut size={16}/></span><span><b>End room</b><small>Disconnect everyone and permanently close this screening.</small></span></div><button type="button" onClick={()=>setConfirmAction({type:'close'})}><LogOut size={14}/>End room</button></div></section></div>,document.body)}
+          {hostPanelOpen && typeof document !== 'undefined' && createPortal(<div className="wt-create-backdrop" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)setHostPanelOpen(false);}}><section className="wt-create-dialog wt-host-panel" role="dialog" aria-modal="true" aria-label="Host control panel"><header><div><span>ROOM MANAGEMENT</span><h2>Host control panel</h2><p>Manage access, permissions and your screening.</p></div><button type="button" onClick={()=>setHostPanelOpen(false)} aria-label="Close"><X size={18}/></button></header><div className="wt-host-settings"><label><span><b>Voice chat</b><small>Allow participants to join OpenVidu voice chat. Off by default.</small></span><input type="checkbox" checked={room.settings?.voice_enabled===true} onChange={e=>{if(!e.target.checked&&voiceEnabled)leaveVoice();updateRoomSettings({voice_enabled:e.target.checked});}}/></label><label><span><b>Experimental P2P voice</b><small>Direct microphone connections between participants. Testing only; allow microphone access.</small></span><input type="checkbox" checked={room.settings?.p2p_voice_enabled===true} onChange={e=>updateRoomSettings({p2p_voice_enabled:e.target.checked})}/></label><label><span><b>Lock room</b><small>Only current participants can stay. New joins are blocked.</small></span><input type="checkbox" checked={Boolean(room.settings?.locked)} onChange={e=>updateRoomSettings({locked:e.target.checked})}/></label><label><span><b>Reactions</b><small>Allow quick emoji reactions in chat.</small></span><input type="checkbox" checked={room.settings?.reactions_enabled!==false} onChange={e=>updateRoomSettings({reactions_enabled:e.target.checked})}/></label><label><span><b>Room chat</b><small>Allow participants to send messages.</small></span><input type="checkbox" checked={room.settings?.chat_enabled!==false} onChange={e=>updateRoomSettings({chat_enabled:e.target.checked})}/></label><label><span><b>Guest episode changes</b><small>Let viewers change the shared episode.</small></span><input type="checkbox" checked={Boolean(room.settings?.guests_can_change_episode)} onChange={e=>updateRoomSettings({guests_can_change_episode:e.target.checked})}/></label><label><span><b>Room expiry</b><small>Choose how long the room can remain active.</small></span><select value={room.settings?.expiry_minutes||30} onChange={e=>updateRoomSettings({expiry_minutes:Number(e.target.value)})}><option value="30">30 minutes inactive</option><option value="60">1 hour inactive</option><option value="180">3 hours inactive</option><option value="480">8 hours inactive</option><option value="1440">24 hours inactive</option></select></label></div><div className="wt-host-people"><strong>Participants</strong>{members.filter(m=>!m.is_host).map(member=><div key={member.id}><span><b>{member.display_name}</b><small>{member.role==='operator'?'Operator':'Viewer'}</small></span><button type="button" disabled={busy||member.role==='operator'} onClick={()=>grantOperator(member)}>Make operator</button><button type="button" disabled={busy} onClick={()=>setConfirmAction({type:'remove',member})}><UserMinus size={14}/></button><button type="button" disabled={busy} onClick={()=>setConfirmAction({type:'transfer',member})}><ArrowRightLeft size={14}/></button></div>)}</div><div className="wt-host-danger"><div className="wt-host-danger-copy"><span className="wt-host-danger-icon"><LogOut size={16}/></span><span><b>End room</b><small>Disconnect everyone and permanently close this screening.</small></span></div><button type="button" onClick={()=>setConfirmAction({type:'close'})}><LogOut size={14}/>End room</button></div></section></div>,document.body)}
           {confirmAction && typeof document !== 'undefined' && createPortal(<div className="wt-create-backdrop wt-confirm-backdrop" role="presentation"><section className={"wt-create-dialog wt-confirm-dialog " + (confirmAction.type==='close'||confirmAction.type==='remove'?'is-danger':'')} role="alertdialog" aria-modal="true"><div className={"wt-confirm-icon " + (confirmAction.type==='transfer'?'is-transfer':'')}>{confirmAction.type==='transfer'?<ArrowRightLeft size={21}/>:confirmAction.type==='remove'?<UserMinus size={21}/>:<LogOut size={21}/>}</div><header><div><span>{confirmAction.type==='transfer'?'HOST TRANSFER':confirmAction.type==='remove'?'PARTICIPANT ACCESS':'END SCREENING'}</span><h2>{confirmAction.type==='transfer'?'Transfer host privileges?':confirmAction.type==='remove'?'Remove participant?':'End this room?'}</h2><p>{confirmAction.type==='transfer'?confirmAction.member.display_name+' will become the host. You will become a viewer.':confirmAction.type==='remove'?confirmAction.member.display_name+' will be removed from this screening.':'Everyone will be disconnected and this room will be permanently closed.'}</p></div></header><div className="wt-confirm-actions"><button type="button" className="wt-confirm-cancel" onClick={()=>setConfirmAction(null)}>Cancel</button><button type="button" className={"wt-confirm-primary " + (confirmAction.type==='transfer'?'is-transfer':'')} disabled={busy} onClick={async()=>{const action=confirmAction; if(action.type==='transfer')await transferHost(action.member);else if(action.type==='remove')await removeMember(action.member);else{setConfirmAction(null);await leaveRoom();}}}>{busy?'Working…':confirmAction.type==='close'?'End room':confirmAction.type==='remove'?'Remove participant':'Transfer host'}</button></div></section></div>,document.body)}
           {joinPreviewOpen && typeof document !== 'undefined' && createPortal(
             <div className="wt-create-backdrop wt-join-file-backdrop" role="presentation" onMouseDown={event => {
@@ -1579,13 +1604,17 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
           {setupDialog && typeof document !== 'undefined' && createPortal(<div className="wt-create-backdrop" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget){setSetupDialog(false);if(isChangingMedia){setLocalFile(localSelectionBeforeChangeRef.current?.file||null);setLocalFileFingerprint(localSelectionBeforeChangeRef.current?.fingerprint||'');}setIsChangingMedia(false);localSelectionBeforeChangeRef.current=null;}}}>
             <section className="wt-create-dialog" role="dialog" aria-modal="true" aria-label="Create a screening room">
               <header><div><span>{isChangingMedia ? 'ROOM UPDATE' : 'NEW SCREENING'}</span><h2>{isChangingMedia ? 'Change what everyone is watching' : 'Choose your title'}</h2><p>{isChangingMedia ? 'The new movie or file will be switched for everyone in this room.' : 'Everyone joining this room will open this movie or series.'}</p></div><button type="button" onClick={()=>{setSetupDialog(false);if(isChangingMedia){setLocalFile(localSelectionBeforeChangeRef.current?.file||null);setLocalFileFingerprint(localSelectionBeforeChangeRef.current?.fingerprint||'');}setIsChangingMedia(false);localSelectionBeforeChangeRef.current=null;}} aria-label="Close"><X size={18}/></button></header>
-              <div className="wt-room-type-pills" role="group" aria-label="Room type"><button type="button" className={roomType==='movie'?'active':''} onClick={()=>{setRoomType('movie');setError('');}}><Play size={14}/> Movie / Series</button><button type="button" className={roomType==='local'?'active':''} onClick={()=>{setRoomType('local');setError('');}}><Users size={14}/> Local File</button></div>
-              {roomType==='local'?<div className="wt-local-file-picker"><input ref={localFileInputRef} type="file" accept={VIDEO_FILE_ACCEPT} hidden onChange={event=>{const file=event.target.files?.[0];event.target.value='';handleLocalFile(file, '', !isChangingMedia);}}/><button type="button" className="wt-local-file-drop" onClick={()=>localFileInputRef.current?.click()} disabled={localFileBusy}><span className="wt-local-file-icon"><Radio size={22}/></span><strong>{localFileBusy?'Checking video…':localFile?'Change video file':'Choose a video file'}</strong><small>{localFile?localFile.name:'Select a video stored on this device'}</small><em>{localFile?((localFile.size/1024/1024).toFixed(1)+' MB · Never uploaded'): 'Everyone joining must select their own copy of the same file.'}</em></button>{localFile&&<div className="wt-local-file-match"><Check size={15}/><span><strong>File fingerprint ready</strong><small>Participants are checked against this video before joining.</small></span><badge>Verified locally</badge></div>}</div>:<><label className="wt-picker-search"><Search size={16}/><input value={mediaQuery} onChange={event=>setMediaQuery(event.target.value)} placeholder="Search any movie or series…"/></label>
+              <div className="wt-room-type-pills" role="group" aria-label="Room type">
+                <button type="button" className={roomType==='movie'?'active':''} onClick={()=>{setRoomType('movie');setError('');}}><Play size={14}/> Movie / Series</button>
+                <button type="button" className={roomType==='local'?'active':''} onClick={()=>{setRoomType('local');setError('');}}><Users size={14}/> Local</button>
+                {p2pStreamingEnabled && <button type="button" className={roomType==='p2p'?'active':''} onClick={()=>{setRoomType('p2p');setError('');}}><Radio size={14}/> P2P Streaming</button>}
+              </div>
+              {(roomType==='local'||roomType==='p2p')?<div className="wt-local-file-picker"><input ref={localFileInputRef} type="file" accept={VIDEO_FILE_ACCEPT} hidden onChange={event=>{const file=event.target.files?.[0];event.target.value='';handleLocalFile(file, '', !isChangingMedia);}}/><button type="button" className="wt-local-file-drop" onClick={()=>localFileInputRef.current?.click()} disabled={localFileBusy}><span className="wt-local-file-icon"><Radio size={22}/></span><strong>{localFileBusy?'Checking video…':localFile?'Change video file':'Choose a video file'}</strong><small>{localFile?localFile.name:'Select a video stored on this device'}</small><em>{localFile?((localFile.size/1024/1024).toFixed(1)+' MB · Never uploaded'): roomType==='p2p'?'Your video is streamed directly from this device to viewers.':'Everyone joining must select their own copy of the same file.'}</em></button>{localFile&&<div className="wt-local-file-match"><Check size={15}/><span><strong>File fingerprint ready</strong><small>Participants are checked against this video before joining.</small></span><badge>Verified locally</badge></div>}</div>:<><label className="wt-picker-search"><Search size={16}/><input value={mediaQuery} onChange={event=>setMediaQuery(event.target.value)} placeholder="Search any movie or series…"/></label>
               {roomType==='movie'&&<div className="wt-picker-grid">{tmdbSearchLoading && <p className="wt-picker-empty">Searching your library and TMDB…</p>}{filteredMediaItems.length?filteredMediaItems.map((candidate,index)=><button type="button" key={`${candidate.tmdbId || candidate.id}-${index}`} onClick={()=>{setSelectedMedia(candidate);setError('');}} className={selectedMedia?.tmdbId===candidate.tmdbId?'selected':''}>{candidate.poster ? <img src={candidate.poster} alt="" loading={index<9?'eager':'lazy'} decoding="async" onError={event=>{event.currentTarget.style.visibility='hidden';event.currentTarget.parentElement.classList.add('poster-unavailable');}}/> : <span className="wt-poster-placeholder" aria-hidden="true">No poster</span>}<span className="wt-picker-copy"><strong title={candidate.title}>{candidate.title}</strong><small className="wt-picker-rating-row"><span>{candidate.year || '—'} · {candidate.type==='series'||candidate.mediaType==='tv'?'Series':'Movie'}</span><b>{(candidate.rating || candidate.imdbRating || candidate.voteAverage) ? `★ ${Number(candidate.rating || candidate.imdbRating || candidate.voteAverage).toFixed(1)}` : 'Rating unavailable'}</b></small></span><i>{selectedMedia?.tmdbId===candidate.tmdbId?<Check size={15}/>:null}</i></button>):<p className="wt-picker-empty">No titles found. Try another title or spelling.</p>}</div>}
               {roomType==='movie'&&selectedMedia && <div className="wt-dialog-selected"><img src={selectedMedia.poster || guest.avatar} alt=""/><span className="wt-dialog-selected-meta"><strong title={selectedMedia.title}>{selectedMedia.title}</strong><small>{selectedMedia.year || '—'} · {selectedMedia.type==='series'||selectedMedia.mediaType==='tv'?'Series':'Movie'}</small><small className="wt-dialog-rating">{(selectedMedia.rating || selectedMedia.imdbRating || selectedMedia.voteAverage) ? `★ ${Number(selectedMedia.rating || selectedMedia.imdbRating || selectedMedia.voteAverage).toFixed(1)} rating` : 'Rating unavailable'}</small></span></div>}
               </>}
               {error && <p className="wt-error">{error}</p>}
-              <button className="wt-create" disabled={busy||localFileBusy||(roomType==='local'?!localFile:(!selectedMedia||!Number(selectedMedia.tmdbId)))} onClick={async()=>{const saved=isChangingMedia?await changeRoomMedia():await createRoom();if(saved){setSetupDialog(false);setIsChangingMedia(false);}}}>{busy?(isChangingMedia?'Updating room…':'Creating room…'):isChangingMedia?'Change for everyone':roomType==='local'?'Create local file room':'Create screening room'}<Link2 size={17}/></button>
+              <button className="wt-create" disabled={busy||localFileBusy||((roomType==='local'||roomType==='p2p')?!localFile:(!selectedMedia||!Number(selectedMedia.tmdbId)))} onClick={async()=>{const saved=isChangingMedia?await changeRoomMedia():await createRoom();if(saved){setSetupDialog(false);setIsChangingMedia(false);}}}>{busy?(isChangingMedia?'Updating room…':'Creating room…'):isChangingMedia?'Change for everyone':roomType==='p2p'?'Create P2P streaming room':roomType==='local'?'Create local file room':'Create screening room'}<Link2 size={17}/></button>
             </section>
           </div>, document.body)}
 
