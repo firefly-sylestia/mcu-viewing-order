@@ -240,10 +240,10 @@ export default function WatchTogetherP2P({ room, participant, members = [], loca
       <span>{streamStarted ? 'Streaming is active. Keep this tab open.' : videoReady ? (videoPlaying ? 'Video ready. Start sharing when you’re ready.' : 'Press Play on your video before starting the stream.') : 'Load the local video first. The stream cannot start without a playable file.'}</span>
       {streamStarted
         ? <button type="button" onClick={()=>setStreamStarted(false)}>Stop streaming</button>
-        : <button type="button" disabled={!videoReady || !videoPlaying} onClick={()=>{setError('');setStreamStarted(true);}}>Start streaming</button>}
+        : <button type="button" disabled={!videoReady} onClick={async()=>{setError('');try{await localVideoRef?.current?.play();setStreamStarted(true);}catch{setError('Tap Play on the local video once, then try Start streaming again.');}}}>Start streaming</button>}
     </div>}
     {videoEnabled && !participant.is_host && <p className="wt-p2p-waiting">{Object.keys(remoteStreams).length ? 'Receiving the host’s video.' : 'Waiting for the host to start streaming…'}</p>}
-    {error && <p className="wt-p2p-error">{error}</p>}}
+    {error && <p className="wt-p2p-error">{error}</p>}
     <div className="wt-p2p-peers">{others.map(member => <span key={member.id}>{member.display_name}: {connections[member.id] || 'connecting'}</span>)}</div>
     {!videoEnabled && <div className="wt-p2p-remote">{Object.entries(remoteStreams).map(([id, remote]) => <div key={id}><audio autoPlay playsInline ref={node => { if (node && node.srcObject !== remote.stream) node.srcObject = remote.stream; }}/><small>{remote.name}</small></div>)}</div>}
     {videoEnabled && <p>Video is sent directly from the host’s browser. Keep the host tab open. Some networks require a TURN relay.</p>}

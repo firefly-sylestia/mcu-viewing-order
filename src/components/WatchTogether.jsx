@@ -771,6 +771,9 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const localVideoRestoreRef = useRef('');
   useEffect(() => {
     if (!room || !participant || room.media?.kind !== 'local_file') {
+      // Clear the restore lock when leaving a room so rejoining the same file
+      // can retry IndexedDB restoration or reopen the file picker.
+      localVideoRestoreRef.current = '';
       if (room && room.media?.kind !== 'local_file' && !pendingJoinCode) setJoinPreviewOpen(false);
       return;
     }
@@ -814,7 +817,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       setPendingJoinMedia(room.media);
       setJoinPreviewOpen(true);
     })();
-    return () => { cancelled = true; };
+    return () => { cancelled = true; if (localVideoRestoreRef.current === fingerprint) localVideoRestoreRef.current = ''; };
   }, [room?.id, room?.media?.kind, room?.media?.fileFingerprint, room?.media?.fileSize, room?.media?.fileName, room?.media?.mimeType, participant?.id, localFileFingerprint, setupDialog, isChangingMedia, pendingJoinCode, handleLocalFile]);
 
   const refreshPlayback = useCallback(async () => {
