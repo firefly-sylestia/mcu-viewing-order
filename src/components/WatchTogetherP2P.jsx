@@ -20,7 +20,6 @@ export default function WatchTogetherP2P({ room, participant, members = [], loca
   const peers = useRef(new Map());
   const membersRef = useRef(members);
   membersRef.current = members;
-  const memberKey = members.map(member => member.id).sort().join('|');
   const localMic = useRef(null);
   const captureStream = useRef(null);
   const seenSignal = useRef(0);
@@ -44,7 +43,11 @@ export default function WatchTogetherP2P({ room, participant, members = [], loca
       if (!videoEnabled || !participant.is_host || captureStream.current) return Boolean(captureStream.current);
       const video = localVideoRef?.current;
       const capture = video?.captureStream || video?.mozCaptureStream;
-      if (!video || !capture || video.readyState < 2) return false;
+      if (!video || video.readyState < 2) return false;
+      if (!capture) {
+        setError('This browser cannot share a local video stream. Try the latest Chrome or Edge.');
+        return false;
+      }
       try {
         const stream = capture.call(video);
         if (!stream.getVideoTracks().length) return false;
@@ -205,7 +208,7 @@ export default function WatchTogetherP2P({ room, participant, members = [], loca
       setRemoteStreams({});
       setConnections({});
     };
-  }, [active, room?.code, participant?.id, participant?.token, participant?.is_host, memberKey, videoEnabled, voiceEnabled, rpc, localVideoRef]);
+  }, [active, room?.code, participant?.id, participant?.token, participant?.is_host, videoEnabled, voiceEnabled, rpc, localVideoRef]);
 
   if (!active) return null;
   const connected = Object.values(connections).filter(value => value === 'connected').length;
