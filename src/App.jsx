@@ -3166,23 +3166,37 @@ const saveServerPref = (tmdbId, server) => {
   const watchedEpisodes = currentItem.watchedEpisodes || [];
   const loadTimeoutRef = useRef(null);
   const [iframeTimedOut, setIframeTimedOut] = useState(false);
+  const [streamError, setStreamError] = useState('');
+  const [playerInView, setPlayerInView] = useState(false);
+  const playerWrapRef = useRef(null);
   const [restartCounter, setRestartCounter] = useState(0);
   const iframeRef = useRef(null);
   const iframeKey = `cinesrc-${isSeries ? `ep-${currentItem.tmdbId}-${selectedSeason}-${playerEpisode}` : currentItem.tmdbId || item.id}-r${restartCounter}`;
 
-  // Detect iframe load failures: start 10s timer on iframe key change, cancel on load
+  // Mount the third-party player only shortly before it enters the viewport.
   useEffect(() => {
-    if (nativePlayer) return;
+    const target = playerWrapRef.current;
+    if (!target || playerInView || typeof IntersectionObserver === 'undefined') {
+      if (!target || typeof IntersectionObserver === 'undefined') setPlayerInView(true);
+      return undefined;
+    }
+    const observer = new IntersectionObserver(entries => {
+      if (entries.some(entry => entry.isIntersecting)) { setPlayerInView(true); observer.disconnect(); }
+    }, { rootMargin: '320px 0px' });
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [playerInView]);
+
+  // Start the load watchdog only once the iframe is actually mounted.
+  useEffect(() => {
+    if (nativePlayer || !playerInView) return undefined;
     clearTimeout(loadTimeoutRef.current);
-    setToast('');
-    setIframeTimedOut(false);
+    setToast(''); setStreamError(''); setIframeTimedOut(false);
     loadTimeoutRef.current = setTimeout(() => {
-      const alt = selectedServer === 'videasy' ? 'MoviePire' : 'Videasy';
-      setToast(`Player taking longer than expected. Try restarting or switch servers.`);
-      setIframeTimedOut(true);
-    }, 10000);
+      setToast(''); setStreamError('The player is taking too long to respond.'); setIframeTimedOut(true);
+    }, 18000);
     return () => clearTimeout(loadTimeoutRef.current);
-  }, [iframeKey, nativePlayer]);
+  }, [iframeKey, nativePlayer, playerInView]);
 
   const toggleEpisode = (epNum) => {
     const next = watchedEpisodes.includes(epNum)
@@ -3336,7 +3350,11 @@ const saveServerPref = (tmdbId, server) => {
           updateActionRef.current(itemRef.current, { watchedEpisodes: next });
         } else setStatusRef.current(itemRef.current, 'watched');
       }
-      if (data.type === 'cinesrc:error') setToast('The stream could not be loaded. Try refreshing the player.');
+      if (data.type === 'cinesrc:error') {
+        const detail = typeof data.error === 'string' ? data.error : data.error?.message;
+        setToast(''); setStreamError(detail ? `CineSrc: ${String(detail).slice(0, 180)}` : 'CineSrc could not load this stream. Try again or open the player separately.');
+        setIframeTimedOut(false); clearTimeout(loadTimeoutRef.current);
+      }
       if (data.type === 'cinesrc:close') handleBackRef.current?.();
     };
     window.addEventListener('message', onPlayerMessage);
@@ -3398,7 +3416,7 @@ const saveServerPref = (tmdbId, server) => {
         </div>
       )}
 
-      <div className="watch-v2-player-wrap">
+      <div className="watch-v2-player-wrap" ref={playerWrapRef}>
         <div className="watch-v2-player">
           {nativePlayer ? (
             <div className="watch-native-launch">
@@ -3409,7 +3427,11 @@ const saveServerPref = (tmdbId, server) => {
               <button className="watch-native-embed-link" onClick={() => { setNativePlayer(false); localStorage.setItem('native-player', '0'); }}>Use embedded player</button>
             </div>
           ) : playerUrl ? (
-            <iframe ref={iframeRef} key={iframeKey} src={playerUrl} title={`Watch ${currentItem.title}`} frameBorder="0" allowFullScreen allow="autoplay; fullscreen; picture-in-picture; encrypted-media" loading="eager" onLoad={() => { clearTimeout(loadTimeoutRef.current); setToast(''); }} />
+            {streamError ? (
+              <div className="watch-stream-fallback" role="alert"><div className="watch-stream-fallback-icon"><ShieldAlert size={25} /></div><h2>Stream unavailable</h2><p>{streamError}</p><div className="watch-stream-fallback-actions"><button type="button" onClick={() => { clearTimeout(loadTimeoutRef.current); setStreamError(''); setToast(''); setIframeTimedOut(false); setRestartCounter(value => value + 1); }}><RotateCcw size={15} /> Try again</button><a href={playerUrl} target="_blank" rel="noopener noreferrer"><ExternalLink size={15} /> Open separately</a></div></div>
+            ) : playerInView ? (
+              <iframe ref={iframeRef} key={iframeKey} src={playerUrl} title={`Watch ${currentItem.title}`} frameBorder="0" allowFullScreen allow="autoplay; fullscreen; picture-in-picture; encrypted-media" loading="lazy" onLoad={() => { clearTimeout(loadTimeoutRef.current); setToast(''); setStreamError(''); setIframeTimedOut(false); }} />
+            ) : <div className="watch-stream-placeholder" aria-live="polite"><Play size={24} /><span>Player will load when you scroll here</span></div>
           ) : <div className="watch-native-launch"><h2>Player unavailable</h2><p>This title has no TMDB ID yet.</p></div>}
         </div>
       </div>
