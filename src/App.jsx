@@ -3171,7 +3171,7 @@ const saveServerPref = (tmdbId, server) => {
   const [selectedSeason, setSelectedSeason] = useState(currentItem.season || 1);
   const [selectedEpisode, setSelectedEpisode] = useState(currentItem.epStart || 1);
   const downloadUrl = buildDownloadUrl({ mediaType, tmdbId: currentItem.tmdbId || tmdbId, season: selectedSeason, episode: selectedEpisode });
-  const providerOptions = useMemo(() => [getProvider('cinesrc'), ...getProviderFallbacks(mediaType).map(getProvider)], [mediaType]);
+  const providerOptions = useMemo(() => [getProvider('cinesrc'), ...getProviderFallbacks(isSeries ? 'tv' : mediaType).map(getProvider)], [isSeries, mediaType]);
   useEffect(() => { try { localStorage.setItem('incursion-stream-provider', selectedServer); } catch {} }, [selectedServer]);
   useEffect(() => { autoFallbackAttemptedRef.current = false; setProviderNotice(''); setSelectedServer('cinesrc'); setStreamError(''); setRestartCounter(value => value + 1); }, [currentItem.id]);
   // Keep the iframe's URL episode separate: CineSrc can navigate episodes internally.
@@ -3210,7 +3210,7 @@ const saveServerPref = (tmdbId, server) => {
     setToast(''); setStreamError(''); setIframeTimedOut(false);
     loadTimeoutRef.current = setTimeout(() => {
       if (selectedServer === 'cinesrc' && !autoFallbackAttemptedRef.current) {
-        const fallbackId = getProviderFallbacks(mediaType)[0];
+        const fallbackId = getProviderFallbacks(isSeries ? 'tv' : mediaType)[0];
         if (fallbackId) {
           autoFallbackAttemptedRef.current = true;
           setProviderNotice(`CineSrc did not respond. Trying ${getProvider(fallbackId).name} instead.`);
@@ -3222,7 +3222,7 @@ const saveServerPref = (tmdbId, server) => {
       setToast(''); setStreamError('The player is taking too long to respond. Try another source.'); setIframeTimedOut(true);
     }, 18000);
     return () => clearTimeout(loadTimeoutRef.current);
-  }, [iframeKey, nativePlayer, playerInView, selectedServer, mediaType]);
+  }, [iframeKey, nativePlayer, playerInView, selectedServer, mediaType, isSeries]);
 
   const toggleEpisode = (epNum) => {
     const next = watchedEpisodes.includes(epNum)
