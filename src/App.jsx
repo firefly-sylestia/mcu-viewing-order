@@ -1885,151 +1885,7 @@ function PosterArt({ item, loading: loadingProp = 'lazy', fetchPriority: fetchPr
     fetchPriority={fetchPriorityProp}
     decoding="async"
     referrerPolicy="no-referrer"
-    onError={() => {
-      if (retryAttempt < 1) setRetryAttempt(1);
-      else setFailed(true);
-    }}
-  />;
-}
-function FallbackPoster({ item, hidden = false }) { return <div className="fallback-poster" hidden={hidden}><strong>{item.title}</strong><span>{item.year}</span></div>; }
-
-function MovieRail({ title, items, setSelected, setStatus, toggleBookmark, empty, scrollable, paginated, gridControls = false, variant = 'default' }) {
-  const pageSize = 12;
-  const [page, setPage] = useState(1);
-  const [gridDensity, setGridDensity] = useState(2);
-  const pageCount = Math.max(1, Math.ceil(items.length / pageSize));
-  const currentPage = Math.min(page, pageCount);
-  const visibleItems = paginated ? items.slice((currentPage - 1) * pageSize, currentPage * pageSize) : items;
-  useEffect(() => { setPage(1); }, [items.length]);
-
-  return <section className={`rail-card web-rail ${variant === 'upnext' ? 'upnext-rail-card' : ''}`}>
-    <div className="section-title"><h2>{title}</h2><div className="section-title-actions"><span>{items.length} titles</span>{gridControls && <div className="rail-density-toggle" role="group" aria-label={`${title} grid columns`}>{[2, 3].map(count => <button key={count} className={gridDensity === count ? 'active' : ''} onClick={() => setGridDensity(count)}>{count}</button>)}</div>}</div></div>
-    {items.length
-      ? <>
-          <div className={`${scrollable ? 'movie-grid web-grid rail-scroll' : 'movie-grid web-grid'} grid-${gridDensity}${variant === 'upnext' ? ' upnext-grid' : ''}`}>
-            {visibleItems.map(item => <MemoMovieCard key={item.id} item={item} setSelected={setSelected} setStatus={setStatus} toggleBookmark={toggleBookmark} />)}
-          </div>
-          {paginated && pageCount > 1 && <nav className="pagination" aria-label={`${title} pages`}>
-            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} aria-label="Previous page"><ChevronLeft size={18} /></button>
-            {Array.from({ length: pageCount }, (_, i) => i + 1).map(n => <button key={n} className={currentPage === n ? 'active' : ''} aria-current={currentPage === n ? 'page' : undefined} onClick={() => setPage(n)}>{n}</button>)}
-            <button onClick={() => setPage(p => Math.min(pageCount, p + 1))} disabled={currentPage === pageCount} aria-label="Next page"><ChevronRight size={18} /></button>
-          </nav>}
-        </>
-      : <p className="empty-state">{empty || 'No titles match these filters.'}</p>}
-  </section>;
-}
-
-function MovieCard({ item, setSelected, setStatus, toggleBookmark, onWarning, style }) {
-  const guidance = getTitleGuidance(item);
-  return <article className="movie-card" style={{ '--accent': item.accent, ...style }}>
-    <button className="poster-button" onClick={() => setSelected(item)}>
-      <PosterArt item={item} />
-    </button>
-    <div className="card-body">
-      <div className="card-title-row">
-        <button className="title-button" onClick={() => setSelected(item)} title={item.title}>{item.title}</button>
-        {guidance && <button className="warning-info-button" onClick={() => onWarning(item)} aria-label={`Show viewing guidance for ${item.title}`} title="Viewing guidance"><Info size={12} /></button>}
-      </div>
-      <div className="card-meta-row"><span className="card-meta-phase">Phase {item.phase || '—'}</span><span className="card-meta-text">{item.year} · {runtimeLabel(item.runtime, item.type)}{item.userStatus === 'watching' && item.watchedDuration > 30000 ? ` · ${watchTimeLabel(item)}` : ''}{item.releaseStatus === 'upcoming' && item.releaseDate ? <span className="card-release-badge">{new Date(item.releaseDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span> : ''}{item.releaseStatus === 'upcoming' && !item.releaseDate ? <span className="card-release-badge">Upcoming</span> : ''}{item.releaseStatus === 'announced' ? <span className="card-release-badge announced">Announced</span> : ''}</span></div>
-        <div className="card-ratings-line">{item.rating && <span className="list-rating"><Star size={9} fill="currentColor" />{Number(item.rating).toFixed(1)}</span>}{item.imdbRating && <span className="list-rating list-rating-imdb">★{item.imdbRating}</span>}{item.tomatoRating && <span className={`list-rating list-rating-tomato ${getTomatoTier(item.tomatoRating).cls}`}>{getTomatoTier(item.tomatoRating).emoji}{item.tomatoRating}</span>}{item.metaRating && <span className="list-rating list-rating-meta">M{parseInt(item.metaRating)}</span>}{!(item.rating || item.imdbRating || item.tomatoRating || item.metaRating) && (item.tmdbId ? <span className="list-rating list-rating-loading" aria-label="Ratings loading"><span className="rating-skeleton" /></span> : <span className="list-rating list-rating-na">N/A</span>)}</div>
-    </div>
-    <div className="card-actions"><button onClick={() => setStatus(item, item.userStatus === 'watched' ? 'unwatched' : 'watched')} className={`watch-chip ${item.userStatus === 'watched' ? 'watched' : ''}`} aria-label={item.userStatus === 'watched' ? `Mark ${item.title} as unwatched` : `Mark ${item.title} as watched`} aria-pressed={item.userStatus === 'watched'}>{item.userStatus === 'watched' ? <><Check size={16} /><span>Watched</span></> : <><Play size={16} /><span>Watch</span></>}</button><button onClick={() => toggleBookmark(item)} className={`bookmark-chip ${item.bookmarked ? 'saved' : ''}`} aria-label={item.bookmarked ? 'Remove bookmark' : 'Save title'}><Bookmark size={18} fill={item.bookmarked ? 'currentColor' : 'none'} /></button></div>
-  </article>;
-}
-
-const CARD_RENDER_FIELDS = [
-  'id', 'title', 'poster', 'accent', 'phase', 'order', 'year', 'runtime', 'type', 'userStatus',
-  'watchedDuration', 'releaseStatus', 'releaseDate', 'rating', 'imdbRating',
-  'tomatoRating', 'metaRating', 'tmdbId', 'bookmarked', 'essential', 'universe',
-];
-const MemoMovieCard = React.memo(MovieCard, (previous, next) => (
-  CARD_RENDER_FIELDS.every((field) => previous.item?.[field] === next.item?.[field]) &&
-  previous.setSelected === next.setSelected &&
-  previous.setStatus === next.setStatus &&
-  previous.toggleBookmark === next.toggleBookmark &&
-  previous.onWarning === next.onWarning &&
-  previous.style?.['--accent'] === next.style?.['--accent'] &&
-  previous.style?.animationDelay === next.style?.animationDelay
-));
-
-function ListSection({ items, sortBy = 'order', sortDirection = 'asc', sortKey, externalResults = [], externalLoading = false, query = '', setSelected, setStatus, toggleBookmark, onPlayExternal, onWarning }) {
-  const pageSize = 12;
-  const [page, setPage] = useState(1);
-  const [viewMode, setViewMode] = useState('list');
-  const pageCount = Math.max(1, Math.ceil(items.length / pageSize));
-  const currentPage = Math.min(page, pageCount);
-  const firstItem = (currentPage - 1) * pageSize;
-  const visibleItems = items.slice(firstItem, firstItem + pageSize);
-  const sortDescription = sortBy === 'order' ? 'Original story order'
-    : sortBy === 'phase' ? 'Grouped by phase'
-    : sortBy === 'year' ? (sortDirection === 'asc' ? 'Oldest releases first' : 'Newest releases first')
-    : sortBy === 'title' ? (sortDirection === 'asc' ? 'A to Z' : 'Z to A')
-    : sortBy === 'popularity' ? (sortDirection === 'asc' ? 'Least popular first' : 'Most popular first')
-    : sortBy === 'essential' ? 'Essential titles first'
-    : (sortDirection === 'asc' ? 'Lowest rated first' : 'Highest rated first');
-  useEffect(() => { setPage(1); }, [items.length]);
-
-  // Swipe a row right to mark it watched, left to save it (touch only).
-  const swipeRef = useRef(null);
-  const suppressClickRef = useRef(false);
-  const handleRowTouchStart = (event, item) => {
-    const touch = event.touches[0];
-    if (!touch) return;
-    suppressClickRef.current = false;
-    swipeRef.current = { x: touch.clientX, y: touch.clientY, dx: 0, vertical: false, item, el: event.currentTarget };
-  };
-  const handleRowTouchMove = (event) => {
-    const state = swipeRef.current;
-    const touch = event.touches[0];
-    if (!state || !touch) return;
-    const dx = touch.clientX - state.x;
-    const dy = touch.clientY - state.y;
-    if (!state.vertical && Math.abs(dy) > Math.abs(dx) + 6) {
-      state.vertical = true;
-      state.el.style.transform = '';
-      return;
-    }
-    if (state.vertical) return;
-    state.dx = Math.max(-120, Math.min(120, dx));
-    state.el.style.transition = 'none';
-    state.el.style.transform = `translateX(${state.dx}px)`;
-  };
-  const handleRowTouchEnd = () => {
-    const state = swipeRef.current;
-    swipeRef.current = null;
-    if (!state) return;
-    state.el.style.transition = '';
-    state.el.style.transform = '';
-    if (Math.abs(state.dx) < 64) return;
-    suppressClickRef.current = true;
-    const wasWatched = state.item.userStatus === 'watched';
-    if (state.dx > 0) {
-      setStatus(state.item, wasWatched ? 'unwatched' : 'watched');
-      if (wasWatched) hapticTap(); else hapticSuccess();
-    } else {
-      toggleBookmark(state.item);
-      hapticSelect();
-    }
-    window.setTimeout(() => { suppressClickRef.current = false; }, 420);
-  };
-
-  const goToPage = (nextPage) => {
-    setPage(nextPage);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  return <section className={`list-section ${viewMode === 'grid' ? 'is-grid-view' : 'is-list-view'}`}>
-    <div className="list-results-bar">
-      <div className="list-results-meta"><span className="list-results-count">{items.length ? `${String(firstItem + 1).padStart(2, '0')}–${String(Math.min(firstItem + pageSize, items.length)).padStart(2, '0')}` : '00'} <i>of</i> {String(items.length).padStart(2, '0')} <small>titles</small></span><span className="list-sort-description">{sortDescription}</span></div>
-      <div className="list-results-actions">
-        <div className="list-page-control" role="group" aria-label="Change list page"><button className="list-page-step" onClick={() => { hapticTap(); goToPage(currentPage - 1); }} disabled={currentPage === 1} aria-label="Previous page"><ChevronLeft size={15} /></button><span className="list-page-indicator" aria-label={`Page ${currentPage} of ${pageCount}`}><strong>{String(currentPage).padStart(2, '0')}</strong><i>/</i>{String(pageCount).padStart(2, '0')}</span><button className="list-page-step" onClick={() => { hapticTap(); goToPage(currentPage + 1); }} disabled={currentPage === pageCount} aria-label="Next page"><ChevronRight size={15} /></button></div>
-        <div className={`list-view-toggle ${viewMode}`} role="group" aria-label="List view mode">
-          <button className={viewMode === 'list' ? 'active' : ''} onClick={() => { hapticTap(); setViewMode('list'); }}>List</button>
-          <button className={viewMode === 'grid' ? 'active' : ''} onClick={() => { hapticTap(); setViewMode('grid'); }}>Grid</button>
-        </div>
-      </div>
-    </div>
-    {viewMode === 'grid' ? <div key={`grid-${sortKey}`} className="movie-grid web-grid list-card-grid">{visibleItems.map((item, i) => <MemoMovieCard key={item.id} item={item} setSelected={setSelected} setStatus={setStatus} toggleBookmark={toggleBookmark} onWarning={onWarning} style={{ animationDelay: `${i * 30}ms` }} />)}</div> : <div key={`list-${sortKey}`} className="list-grid">{visibleItems.map((item, index) => <article className="list-row" key={item.id} data-state={item.userStatus} data-saved={item.bookmarked ? 'true' : 'false'} style={{ '--accent': item.accent, animationDelay: `${index * 30}ms` }} onClick={() => { if (suppressClickRef.current) return; hapticTap(); setSelected(item); }} onTouchStart={(event) => handleRowTouchStart(event, item)} onTouchMove={handleRowTouchMove} onTouchEnd={handleRowTouchEnd} onTouchCancel={handleRowTouchEnd} role="button" tabIndex={0} aria-label={`View ${item.title} details`} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(item); } }}>
+    onError={() => { if (selectedServer === 'cinesrc') { setProviderNotice('CineSrc is taking longer than usual. Waiting before switching sources…'); return; } clearTimeout(loadTimeoutRef.current); setStreamError(`The ${getProvider(selectedServer).name} player failed to load. Try another source.`); }} />)}</div> : <div key={`list-${sortKey}`} className="list-grid">{visibleItems.map((item, index) => <article className="list-row" key={item.id} data-state={item.userStatus} data-saved={item.bookmarked ? 'true' : 'false'} style={{ '--accent': item.accent, animationDelay: `${index * 30}ms` }} onClick={() => { if (suppressClickRef.current) return; hapticTap(); setSelected(item); }} onTouchStart={(event) => handleRowTouchStart(event, item)} onTouchMove={handleRowTouchMove} onTouchEnd={handleRowTouchEnd} onTouchCancel={handleRowTouchEnd} role="button" tabIndex={0} aria-label={`View ${item.title} details`} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(item); } }}>
       <span className="list-index">{String(firstItem + index + 1).padStart(2, '0')}</span>
       <div className="list-poster"><PosterArt item={item} /></div>
       <div className="list-copy"><div className="list-title-line"><strong>{item.title}</strong><span className="phase-badge">Phase {item.phase || '—'}</span>{getTitleGuidance(item) && <button className="warning-info-button" onClick={(event) => { event.stopPropagation(); onWarning(item); }} aria-label={`Show viewing guidance for ${item.title}`}><Info size={13} /></button>}{item.essential && <span>Essential</span>}{item.userStatus !== 'unwatched' && <span className={`list-state ${item.userStatus}`}>{STATUS_LABELS[item.userStatus]}</span>}</div><div className="list-ratings-line">{item.rating && <span className="list-rating"><Star size={9} fill="currentColor" />{Number(item.rating).toFixed(1)}</span>}{item.imdbRating && <span className="list-rating list-rating-imdb">★{item.imdbRating}</span>}{item.tomatoRating && <span className={`list-rating list-rating-tomato ${getTomatoTier(item.tomatoRating).cls}`}>{getTomatoTier(item.tomatoRating).emoji}{item.tomatoRating}</span>}{item.metaRating && <span className="list-rating list-rating-meta">M{parseInt(item.metaRating)}</span>}{!(item.rating || item.imdbRating || item.tomatoRating || item.metaRating) && (item.tmdbId ? <span className="list-rating list-rating-loading" aria-label="Ratings loading"><span className="rating-skeleton" /></span> : <span className="list-rating list-rating-na">N/A</span>)}</div><div className="list-meta-line"><span>{item.year}</span><span>{item.type === 'film' ? 'Film' : 'Series'}</span><span>{runtimeLabel(item.runtime, item.type)}</span>{item.season ? <span>Season {item.season}</span> : null}{item.phase ? <span>Phase {item.phase}</span> : null}</div><p className="list-desc">{item.desc || `${item.title} in the complete ${item.universe === 'marvel' ? 'MCU' : 'DC'} story timeline.`}</p><div className="list-tags">{(item.genres || []).slice(0,3).map(g => <span key={g}>{g}</span>)}</div></div>
@@ -3375,20 +3231,9 @@ const saveServerPref = (tmdbId, server) => {
         } else setStatusRef.current(itemRef.current, 'watched');
       }
       if (data.type === 'cinesrc:error') {
-        clearTimeout(loadTimeoutRef.current);
-        if (!autoFallbackAttemptedRef.current) {
-          const fallbackId = getProviderFallbacks(isSeries ? 'tv' : mediaType)[0];
-          if (fallbackId) {
-            autoFallbackAttemptedRef.current = true;
-            setProviderNotice(`CineSrc could not load this title. Trying ${getProvider(fallbackId).name} instead.`);
-            setSelectedServer(fallbackId);
-            setStreamError(''); setIframeTimedOut(false);
-            return;
-          }
-        }
-        const detail = typeof data.error === 'string' ? data.error : data.error?.message;
-        setToast(''); setStreamError(detail ? `CineSrc: ${String(detail).slice(0, 180)}` : 'CineSrc could not load this stream. Try another source.');
-        setIframeTimedOut(false);
+        // Some CineSrc streams report an early error while the source is still resolving.
+        // Keep the player mounted and let the 45-second watchdog decide whether to fall back.
+        setProviderNotice('CineSrc is still checking this stream. Waiting a little longer…');
       }
       if (data.type === 'cinesrc:close') handleBackRef.current?.();
     };
@@ -3466,7 +3311,7 @@ const saveServerPref = (tmdbId, server) => {
             streamError ? (
               <div className="watch-stream-fallback" role="alert"><div className="watch-stream-fallback-icon"><ShieldAlert size={25} /></div><h2>Stream unavailable</h2><p>{streamError}</p><div className="watch-stream-fallback-actions"><button type="button" onClick={() => { clearTimeout(loadTimeoutRef.current); setStreamError(''); setToast(''); setIframeTimedOut(false); setRestartCounter(value => value + 1); }}><RotateCcw size={15} /> Try again</button><a href={playerUrl} target="_blank" rel="noopener noreferrer"><ExternalLink size={15} /> Open separately</a></div><div className="watch-stream-fallback-sources"><span>Try another source</span>{providerOptions.filter(provider=>provider.id!==selectedServer).map(provider=><button key={provider.id} type="button" onClick={()=>{if(provider.id==='cinesrc')autoFallbackAttemptedRef.current=false;setProviderNotice('');setSelectedServer(provider.id);setStreamError('');setIframeTimedOut(false);setRestartCounter(value=>value+1);}}>{provider.name}{provider.qualityLabel?` · ${provider.qualityLabel}`:''}</button>)}</div></div>
             ) : playerInView ? (
-              <iframe ref={iframeRef} key={iframeKey} src={playerUrl} title={`Watch ${currentItem.title}`} frameBorder="0" allowFullScreen allow="autoplay; fullscreen; picture-in-picture; encrypted-media" loading="lazy" onLoad={() => { clearTimeout(loadTimeoutRef.current); setToast(''); setStreamError(''); setIframeTimedOut(false); }} onError={() => {
+              <iframe ref={iframeRef} key={iframeKey} src={playerUrl} title={`Watch ${currentItem.title}`} frameBorder="0" allowFullScreen allow="autoplay; fullscreen; picture-in-picture; encrypted-media" loading="lazy" onLoad={() => { if (selectedServer !== 'cinesrc') clearTimeout(loadTimeoutRef.current); setToast(''); setStreamError(''); setIframeTimedOut(false); }} onError={() => {
                 clearTimeout(loadTimeoutRef.current);
                 if (selectedServer === 'cinesrc' && !autoFallbackAttemptedRef.current) {
                   const fallbackId = getProviderFallbacks(isSeries ? 'tv' : mediaType)[0];
