@@ -607,7 +607,8 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
 
   const createPersonalRoom = useCallback(async () => {
     const sourceRoom = roomRef.current;
-    if (!sourceRoom?.media || !participantRef.current?.token || busy) return false;
+    const sourceParticipant = participantRef.current;
+    if (!sourceRoom?.media || !sourceParticipant?.token || busy) return false;
     setBusy(true);
     setError('');
     const position = Math.max(0, Number(currentTimeRef.current) || 0);
@@ -623,6 +624,9 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
         p_media: media,
       });
       if (!snapshot?.room || !snapshot?.participant) throw new Error('The private room could not be created. Please try again.');
+      if (!sourceParticipant.is_host && sourceRoom.code !== code) {
+        await rpc('leave_watch_room', { p_code: sourceRoom.code, p_token: sourceParticipant.token }).catch(() => {});
+      }
       const playback = {
         position,
         paused: isPaused,
