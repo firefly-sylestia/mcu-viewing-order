@@ -11,7 +11,7 @@ export const getProviderFallbacks = mediaType => mediaType === 'tv'
   ? ['vidsrc', 'vidfast', 'vidrock', '2embed']
   : ['vidfast', 'vidsrc', 'vidrock', '2embed'];
 
-export const buildPlayerUrl = ({ provider = 'cinesrc', mediaType = 'movie', tmdbId, title, season = 1, episode = 1, progressSeconds = 0, accent = '#e50914', poster = '' }) => {
+export const buildPlayerUrl = ({ provider = 'cinesrc', mediaType = 'movie', tmdbId, title, season = 1, episode = 1, progressSeconds = 0, accent = '#e50914', poster = '', preferredServer = '' }) => {
   if (!tmdbId) return '';
   const type = mediaType === 'tv' ? 'tv' : 'movie';
   const id = encodeURIComponent(String(tmdbId));
@@ -65,6 +65,8 @@ export const buildPlayerUrl = ({ provider = 'cinesrc', mediaType = 'movie', tmdb
   url.searchParams.set('controls', 'true');
   url.searchParams.set('back', 'close');
   url.searchParams.set('autonext', 'true');
+  url.searchParams.set('prioritize', 'true');
+  if (preferredServer) url.searchParams.set('lastserver', String(preferredServer));
   url.searchParams.set('color', String(accent || '#e50914').replace(/^#/, ''));
   if (startAt > 5) url.searchParams.set('seek', String(startAt));
   return url.toString();
