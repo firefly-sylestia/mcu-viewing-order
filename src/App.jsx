@@ -706,7 +706,10 @@ export default function App() {
   useEffect(() => {
     const syncLocation = () => {
       const { section: s, slug } = parseHash();
-      if (s) setSection(s);
+      // An empty hash is the canonical Home route. This matters when the
+      // browser Back button returns to the URL that existed before the app
+      // first wrote a section hash (for example, opening Watch Together from Home).
+      setSection(s || 'home');
       if (s === 'list') setQuery('');
       if (s === 'watch' && slug && allItems.length) {
         const found = allItems.find(i => slugifyPosterName(i.title) === slug);
