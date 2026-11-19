@@ -18188,3 +18188,5 @@
   :root .wt-page .wt-player-layout > .wt-chat.is-collapsed .wt-chat-foot,
   :root .wt-page .wt-player-layout > .wt-chat.is-collapsed .wt-chat-error { display:none!important; }
 }
+
+:root .watch-provider-notice{flex:1 1 100%;margin:0;padding:7px 10px;border-radius:10px;background:color-mix(in srgb,var(--fx-accent) 10%,var(--fx-surface));color:var(--fx-muted-strong);font-size:10px;line-height:1.45}
