@@ -3023,7 +3023,7 @@ function WatchBrowse({ activeItems, externalResults = [], externalLoading = fals
           <p>Your films and series, ready when you are.</p>
         </div>
         <div className="wh3-top-actions">
-          <button type="button" className="wh3-discover-button" onClick={onOnlineStreaming}><Clapperboard size={15}/> Explore all titles</button>
+          <button type="button" className="wh3-discover-button" onClick={event=>{event.preventDefault();event.stopPropagation();onOnlineStreaming?.();}}><Clapperboard size={15}/> Explore all titles</button>
           <WatchTogether launchOnly onWatchTogether={onWatchTogether} item={null} user={user} profileName={profileName} profileAvatar={profileAvatar} />
           <div className="wh3-total"><Clapperboard size={17} /><span>{activeItems.length} titles</span></div>
         </div>
