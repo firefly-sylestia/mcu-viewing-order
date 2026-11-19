@@ -11,7 +11,7 @@ const CATEGORIES = [
   { id: 'on-air', label: 'On the air' },
   { id: 'airing-today', label: 'Airing today' },
   { id: 'top-rated', label: 'Top rated' },
-  { id: 'marvel', label: 'Marvel' },
+  { id: 'marvel', label: 'MCU' },
   { id: 'dc', label: 'DC' },
 ];
 
