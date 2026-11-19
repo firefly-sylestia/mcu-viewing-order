@@ -30,7 +30,7 @@ export default function OnlineStreaming({ onBack, onPlay }) {
     if (pendingScrollTopRef.current == null) return;
     const top = pendingScrollTopRef.current;
     pendingScrollTopRef.current = null;
-    window.scrollTo({ top, behavior: 'instant' });
+    window.scrollTo(0, top);
   }, [items]);
 
   useEffect(() => {
