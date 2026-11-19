@@ -12,6 +12,7 @@ const CATEGORIES = [
 
 export default function OnlineStreaming({ onBack, onPlay }) {
   const [category, setCategory] = useState('trending');
+  const [page, setPage] = useState(1);
   const [items, setItems] = useState([]);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
@@ -21,13 +22,13 @@ export default function OnlineStreaming({ onBack, onPlay }) {
     let cancelled = false;
     setLoading(true);
     setError('');
-    fetch(apiUrl(`/api/tmdb/catalogue?category=${encodeURIComponent(category)}`), { cache: 'force-cache' })
+    fetch(apiUrl(`/api/tmdb/catalogue?category=${encodeURIComponent(category)}&page=${page}`), { cache: 'force-cache' })
       .then(response => response.ok ? response.json() : Promise.reject(new Error('Catalogue is temporarily unavailable.')))
-      .then(data => { if (!cancelled) setItems(Array.isArray(data.results) ? data.results : []); })
+      .then(data => { if (!cancelled) setItems(previous => page===1 ? (Array.isArray(data.results)?data.results:[]) : [...previous,...(data.results||[]).filter(item=>!previous.some(old=>old.type===item.type&&old.id===item.id))]); })
       .catch(reason => { if (!cancelled) { setItems([]); setError(reason.message || 'Could not load titles.'); } })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [category]);
+  }, [category, page]);
 
   const visible = useMemo(() => {
     const term = query.trim().toLowerCase();
@@ -43,7 +44,7 @@ export default function OnlineStreaming({ onBack, onPlay }) {
     <div className="online-catalogue-tools">
       <label className="online-search"><Search size={17}/><input value={query} onChange={event=>setQuery(event.target.value)} placeholder="Find a title in this collection"/></label>
       <div className="online-categories" role="tablist" aria-label="Catalogue categories">
-        {CATEGORIES.map(entry=><button type="button" key={entry.id} role="tab" aria-selected={category===entry.id} className={category===entry.id?'active':''} onClick={()=>setCategory(entry.id)}>{entry.label}</button>)}
+        {CATEGORIES.map(entry=><button type="button" key={entry.id} role="tab" aria-selected={category===entry.id} className={category===entry.id?'active':''} onClick={()=>{setCategory(entry.id);setPage(1);setItems([]);}}>{entry.label}</button>)}
       </div>
     </div>
     <section className="online-catalogue-section">
@@ -57,6 +58,7 @@ export default function OnlineStreaming({ onBack, onPlay }) {
           <div className="online-title-copy"><strong>{item.title}</strong><span>{item.year || 'Date TBA'} · {item.type==='tv'?'Series':'Movie'}</span><small>{item.rating?<><Star size={11} fill="currentColor"/> {item.rating}</>:'Rating unavailable'}</small></div>
         </article>)}
       </div> : <div className="online-empty"><Tv size={24}/><p>No titles match that search.</p></div>}
+      {!query.trim() && visible.length>0 && <button type="button" className="online-load-more" disabled={loading||page>=20} onClick={()=>setPage(value=>Math.min(20,value+1))}>{loading?'Loading…':page>=20?'End of catalogue':'Load more titles'}</button>}
     </section>
     <p className="online-attribution">Catalogue metadata and artwork provided by TMDB. Incursion is not endorsed or certified by TMDB.</p>
   </main>;
