@@ -13,12 +13,13 @@ import AuthModal from './components/AuthModal';
 import SeoHead from './components/SeoHead';
 import NotFoundPage from './components/NotFoundPage';
 import WatchTogether from './components/WatchTogether';
+import OnlineStreaming from './components/OnlineStreaming';
 import { useAuth } from './hooks/useAuth';
 import { supabasePublicRequest } from './supabase';
 import { getOrCreateTemporaryVisitor } from './utils/visitorIdentity';
 import { useCloudSync } from './hooks/useCloudSync';
 import { getFromCache, setCache, clearExpiredCache } from './utils/mediaCache';
-import { buildDownloadUrl, buildPlayerUrl } from './utils/mediaProviders';
+import { buildDownloadUrl, buildPlayerUrl, getProvider, getProviderFallbacks } from './utils/mediaProviders';
 import { apiUrl, assetUrl, isOffline } from './utils/apiBase';
 import { hapticTap, hapticSelect, hapticSuccess, hapticWarning, hapticScrollEdge } from './utils/haptics';
 import { UNIVERSE_LOGOS } from './constants/logos';
@@ -26,7 +27,7 @@ import './styles/fresh.css';
 import './styles/dark-header-fix.css';
 
 const STORAGE_KEY = 'cinematic-viewing-ui-state-v2';
-const VALID_HASHES = ['home', 'list', 'analytics', 'watch', 'watch-together', 'profile', 'detail'];
+const VALID_HASHES = ['home', 'list', 'analytics', 'watch', 'watch-together', 'online-streaming', 'profile', 'detail'];
 const parseHash = () => {
   const raw = window.location.hash.replace('#', '');
   const slash = raw.indexOf('/');
@@ -1601,6 +1602,7 @@ export default function App() {
         </section>
       </>}
 
+      {section === 'online-streaming' && <OnlineStreaming onBack={() => navigateSection('watch')} onPlay={result => onPlayExternal(result)} />}
       {section === 'list' && <ListSection items={activeItems} sortBy={sortBy} sortDirection={sortDirection} sortKey={`${sortBy}-${sortDirection}`} externalResults={externalSearchResults} externalLoading={externalSearchLoading} query="" setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} onPlayExternal={onPlayExternal} onWarning={showWarningToast} />}
       {section === 'analytics' && <><AnalyticsPanel stats={stats} large><WatchTogetherStats user={user} /></AnalyticsPanel>{[['Watching','watching'],['Watched','watched'],['Dropped','dropped']].map(([label,status]) => { const items = analyticsItems.filter(item => item.userStatus === status); return items.length ? <MovieRail key={status} title={label} items={items} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} /> : null; })}</>}
             {section === 'profile' && <ProfilePage pageHeader={<ProfileHeader universe={universe} stats={stats} profileName={profileName} profileAvatar={profileAvatar} setProfileAvatar={setProfileAvatar} watchingItem={profileWatchingItem} nextUp={profileNextUpItem} onSelectItem={selectItem} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} />} activeTab={profileTab} setActiveTab={(tab) => { hapticTap(); setProfileTab(tab); setQuery(''); }} installApp={installApp} installAvailable={!!installPromptEvent} appInstalled={appInstalled} stats={profileStats} activeItems={profileItems} universe="all" query={query} setSelected={selectItem} setStatus={setStatus} toggleBookmark={toggleBookmark} profileName={profileName} setProfileName={setProfileName} user={user} configured={configured} onLogin={() => setAuthOpen(true)} onLogout={async () => { await pushBeforeLogout(); authLogout(); setWatchItem(null); }} lastSynced={lastSynced} syncing={syncing} onSync={pushToCloud} conflict={conflict} onResolveRemote={resolveUseRemote} onResolveLocal={resolveKeepLocal} onResolveMerge={resolveMerge} syncToast={toast} quietBrowsingOn={quietBrowsingOn} setQuietBrowsingOn={setQuietBrowsingOn} />}
@@ -3152,7 +3154,8 @@ const saveServerPref = (tmdbId, server) => {
   const [switching, setSwitching] = useState(false);
   const [toast, setToast] = useState('');
   const [contextExpanded, setContextExpanded] = useState(false);
-  const selectedServer = 'CineSrc';
+  const [selectedServer, setSelectedServer] = useState(() => { try { return localStorage.getItem('incursion-stream-provider') || 'cinesrc'; } catch { return 'cinesrc'; } });
+  const [downloadWarningOpen, setDownloadWarningOpen] = useState(false);
   const currentItem = activeItems.find(i => i.id === item.id) || item;
   const isSeries = currentItem.type === 'series' && currentItem.tmdbId;
   const [episodes, setEpisodes] = useState([]);
@@ -3160,6 +3163,10 @@ const saveServerPref = (tmdbId, server) => {
   const [seasonsLoading, setSeasonsLoading] = useState(false);
   const [selectedSeason, setSelectedSeason] = useState(currentItem.season || 1);
   const [selectedEpisode, setSelectedEpisode] = useState(currentItem.epStart || 1);
+  const downloadUrl = buildDownloadUrl({ mediaType, tmdbId: currentItem.tmdbId || tmdbId, season: selectedSeason, episode: selectedEpisode });
+  const providerOptions = useMemo(() => [getProvider('cinesrc'), ...getProviderFallbacks(mediaType).map(getProvider)], [mediaType]);
+  useEffect(() => { try { localStorage.setItem('incursion-stream-provider', selectedServer); } catch {} }, [selectedServer]);
+  useEffect(() => { setSelectedServer('cinesrc'); setStreamError(''); setRestartCounter(value => value + 1); }, [currentItem.id]);
   // Keep the iframe's URL episode separate: CineSrc can navigate episodes internally.
   const [playerEpisode, setPlayerEpisode] = useState(currentItem.epStart || 1);
   const [episodeLoading, setEpisodeLoading] = useState(false);
@@ -3171,7 +3178,7 @@ const saveServerPref = (tmdbId, server) => {
   const playerWrapRef = useRef(null);
   const [restartCounter, setRestartCounter] = useState(0);
   const iframeRef = useRef(null);
-  const iframeKey = `cinesrc-${isSeries ? `ep-${currentItem.tmdbId}-${selectedSeason}-${playerEpisode}` : currentItem.tmdbId || item.id}-r${restartCounter}`;
+  const iframeKey = `${selectedServer}-${isSeries ? `ep-${currentItem.tmdbId}-${selectedSeason}-${playerEpisode}` : currentItem.tmdbId || item.id}-r${restartCounter}`;
 
   // Mount the third-party player only shortly before it enters the viewport.
   useEffect(() => {
@@ -3247,14 +3254,12 @@ const saveServerPref = (tmdbId, server) => {
   }, [currentItem.tmdbId, selectedSeason, currentItem.season, currentItem.epStart, currentItem.epEnd, isSeries]);
 
   const initProgressRef = useRef(Math.floor((currentItem.watchedDuration || 0) / 1000));
-  const playerUrl = useMemo(() => {
-    const id = currentItem.tmdbId || tmdbId;
-    if (!id) return '';
-    const params = new URLSearchParams({ autoplay: 'true', controls: 'true', back: 'close', autonext: 'true', color: (currentItem.accent || '#e50914') });
-    return currentItem.type === 'series'
-      ? `https://cinesrc.st/embed/tv/${id}?s=${selectedSeason}&e=${selectedEpisode}&${params.toString()}`
-      : `https://cinesrc.st/embed/movie/${id}?${params.toString()}`;
-  }, [currentItem.tmdbId, currentItem.type, selectedSeason, selectedEpisode, currentItem.accent, tmdbId]);
+  const playerUrl = useMemo(() => buildPlayerUrl({
+    provider: selectedServer, mediaType: isSeries ? 'tv' : mediaType,
+    tmdbId: currentItem.tmdbId || tmdbId, title: currentItem.title,
+    season: selectedSeason, episode: playerEpisode,
+    progressSeconds: Math.floor((currentItem.watchedDuration || 0) / 1000),
+  }), [selectedServer, currentItem.tmdbId, currentItem.title, currentItem.type, currentItem.watchedDuration, selectedSeason, playerEpisode, mediaType, tmdbId, isSeries]);
   const roadmapInfo = useMemo(() => getRoadmap(currentItem, activeItems), [activeItems, currentItem]);
 
   const currentOrder = currentItem.order || currentItem.id;
@@ -3328,7 +3333,7 @@ const saveServerPref = (tmdbId, server) => {
 
   useEffect(() => {
     const onPlayerMessage = (event) => {
-      if (event.origin !== 'https://cinesrc.st' || event.source !== iframeRef.current?.contentWindow) return;
+      if (selectedServer !== 'cinesrc' || event.origin !== 'https://cinesrc.st' || event.source !== iframeRef.current?.contentWindow) return;
       const data = event.data;
       if (!data || typeof data !== 'object' || typeof data.type !== 'string') return;
       if (data.type === 'cinesrc:timeupdate' && Number.isFinite(Number(data.currentTime))) {
@@ -3359,7 +3364,7 @@ const saveServerPref = (tmdbId, server) => {
     };
     window.addEventListener('message', onPlayerMessage);
     return () => window.removeEventListener('message', onPlayerMessage);
-  }, [isSeries, selectedEpisode, watchedEpisodes]);
+  }, [isSeries, selectedEpisode, watchedEpisodes, selectedServer]);
 
   useEffect(() => {
     if (isSeries && allEpisodesWatched && currentItem.userStatus === 'watching') {
@@ -3394,7 +3399,7 @@ const saveServerPref = (tmdbId, server) => {
           <span>{universeShortName(currentItem.universe)} · #{String(currentItem.order || currentItem.id).padStart(2, '0')}</span>
           <h1>{currentItem.title}</h1>
         </div>
-        <div className="watch-v2-header-actions"><WatchTogether item={{ ...currentItem, season: selectedSeason }} tmdbId={currentItem.tmdbId || tmdbId} mediaType={mediaType} season={selectedSeason} episode={selectedEpisode} playerUrl={playerUrl} onEpisodeChange={next => { setSelectedEpisode(next); setPlayerEpisode(next); }} onBeforeOpen={() => iframeRef.current?.contentWindow?.postMessage({ type: 'cinesrc:command', command: 'pause', args: [] }, 'https://cinesrc.st')} launchOnly onWatchTogether={onWatchTogether} user={user} profileName={profileName} profileAvatar={profileAvatar} /><span className="watch-v2-provider">CineSrc</span></div>
+        <div className="watch-v2-header-actions"><WatchTogether item={{ ...currentItem, season: selectedSeason }} tmdbId={currentItem.tmdbId || tmdbId} mediaType={mediaType} season={selectedSeason} episode={selectedEpisode} playerUrl={playerUrl} onEpisodeChange={next => { setSelectedEpisode(next); setPlayerEpisode(next); }} onBeforeOpen={() => iframeRef.current?.contentWindow?.postMessage({ type: 'cinesrc:command', command: 'pause', args: [] }, 'https://cinesrc.st')} launchOnly onWatchTogether={onWatchTogether} user={user} profileName={profileName} profileAvatar={profileAvatar} /><span className="watch-v2-provider">{getProvider(selectedServer).name}</span></div>
       </header>
 
       {toast && <div className="watch-v2-toast" role="status"><span>{toast}</span><button onClick={() => { setToast(''); setIframeTimedOut(false); }} aria-label="Dismiss"><X size={15} /></button></div>}
@@ -3416,6 +3421,7 @@ const saveServerPref = (tmdbId, server) => {
         </div>
       )}
 
+      <div className="watch-provider-bar" aria-label="Streaming source"><span>STREAM SOURCE</span><div>{providerOptions.map(provider => <button key={provider.id} type="button" className={selectedServer===provider.id?'active':''} onClick={()=>{setSelectedServer(provider.id);setStreamError('');setIframeTimedOut(false);setRestartCounter(value=>value+1);}}>{provider.name}{provider.qualityFocus?<small>QUALITY</small>:null}</button>)}</div></div>
       <div className="watch-v2-player-wrap" ref={playerWrapRef}>
         <div className="watch-v2-player">
           {nativePlayer ? (
@@ -3428,7 +3434,7 @@ const saveServerPref = (tmdbId, server) => {
             </div>
           ) : playerUrl ? (
             streamError ? (
-              <div className="watch-stream-fallback" role="alert"><div className="watch-stream-fallback-icon"><ShieldAlert size={25} /></div><h2>Stream unavailable</h2><p>{streamError}</p><div className="watch-stream-fallback-actions"><button type="button" onClick={() => { clearTimeout(loadTimeoutRef.current); setStreamError(''); setToast(''); setIframeTimedOut(false); setRestartCounter(value => value + 1); }}><RotateCcw size={15} /> Try again</button><a href={playerUrl} target="_blank" rel="noopener noreferrer"><ExternalLink size={15} /> Open separately</a></div></div>
+              <div className="watch-stream-fallback" role="alert"><div className="watch-stream-fallback-icon"><ShieldAlert size={25} /></div><h2>Stream unavailable</h2><p>{streamError}</p><div className="watch-stream-fallback-actions"><button type="button" onClick={() => { clearTimeout(loadTimeoutRef.current); setStreamError(''); setToast(''); setIframeTimedOut(false); setRestartCounter(value => value + 1); }}><RotateCcw size={15} /> Try again</button><a href={playerUrl} target="_blank" rel="noopener noreferrer"><ExternalLink size={15} /> Open separately</a></div><div className="watch-stream-fallback-sources"><span>Try another source</span>{providerOptions.filter(provider=>provider.id!==selectedServer).map(provider=><button key={provider.id} type="button" onClick={()=>{setSelectedServer(provider.id);setStreamError('');setIframeTimedOut(false);setRestartCounter(value=>value+1);}}>{provider.name}{provider.qualityFocus?' · quality':''}</button>)}</div></div>
             ) : playerInView ? (
               <iframe ref={iframeRef} key={iframeKey} src={playerUrl} title={`Watch ${currentItem.title}`} frameBorder="0" allowFullScreen allow="autoplay; fullscreen; picture-in-picture; encrypted-media" loading="lazy" onLoad={() => { clearTimeout(loadTimeoutRef.current); setToast(''); setStreamError(''); setIframeTimedOut(false); }} onError={() => { clearTimeout(loadTimeoutRef.current); setStreamError('The embedded player failed to load.'); }} />
             ) : <div className="watch-stream-placeholder" aria-live="polite"><Play size={24} /><span>Player will load when you scroll here</span></div>
@@ -3459,6 +3465,8 @@ const saveServerPref = (tmdbId, server) => {
           {currentItem.userStatus !== 'watched' && <button className="watch-v2-done" onClick={() => { setStatus(currentItem, 'watched'); setToast('Marked as watched'); setTimeout(() => setToast(''), 2000); }}><Check size={16} /> Watched</button>}
         </div>
       </section>
+      {downloadUrl && <section className="watch-download-section"><div><span>EXTERNAL DOWNLOAD</span><strong>Download options open outside Incursion</strong><small>Legacy MoviePire destination. It is separate from the selected streaming source; availability is not guaranteed.</small></div><button type="button" onClick={()=>setDownloadWarningOpen(true)}><Download size={16}/> Download page <ExternalLink size={14}/></button></section>}
+      {downloadWarningOpen && <div className="watch-download-warning" role="presentation"><section role="dialog" aria-modal="true" aria-label="External download warning"><div className="watch-download-warning-icon"><ShieldAlert size={22}/></div><h2>You're leaving Incursion</h2><p>This page is operated by an external third party. It is not affiliated with or endorsed by MCU Viewing Order / Incursion and may contain advertisements, pop-ups or misleading buttons. Continue only if you trust the destination.</p><div><button type="button" onClick={()=>setDownloadWarningOpen(false)}>Stay here</button><a href={downloadUrl} target="_blank" rel="noopener noreferrer" onClick={()=>setDownloadWarningOpen(false)}>Continue externally <ExternalLink size={14}/></a></div></section></div>}
 
       {isSeries && (
         <section className="watch-v2-episodes">
