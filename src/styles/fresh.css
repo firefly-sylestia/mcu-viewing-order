@@ -18169,3 +18169,65 @@
 :root .movie-site .site-header .header-status-pill {
   border-radius: 17px !important;
 }
+
+
+/* Compact the mobile New Screening controls so the catalogue gets more
+   vertical space without changing the desktop dialog. */
+@media (max-width: 620px) {
+  :root .wt-create-dialog:not(.is-catalogue-expanded) {
+    padding: 14px !important;
+  }
+  :root .wt-create-dialog > header {
+    gap: 8px !important;
+    margin-bottom: 9px !important;
+  }
+  :root .wt-create-dialog > header span {
+    font-size: 8px !important;
+  }
+  :root .wt-create-dialog > header h2 {
+    margin: 3px 0 !important;
+    font-size: 21px !important;
+    line-height: 1.12 !important;
+  }
+  :root .wt-create-dialog > header p {
+    font-size: 11px !important;
+    line-height: 1.35 !important;
+  }
+  :root .wt-create-dialog > header button {
+    width: 32px !important;
+    height: 32px !important;
+  }
+  :root .wt-create-dialog .wt-room-type-pills {
+    gap: 4px !important;
+    margin-bottom: 10px !important;
+    padding: 4px !important;
+  }
+  :root .wt-create-dialog .wt-room-type-pills button {
+    min-width: 0 !important;
+    min-height: 38px !important;
+    gap: 5px !important;
+    padding: 5px 6px !important;
+    font-size: 11px !important;
+    white-space: nowrap !important;
+  }
+  :root .wt-create-dialog .wt-room-type-pills button svg {
+    width: 13px !important;
+    height: 13px !important;
+    flex: 0 0 auto !important;
+  }
+  :root .wt-create-dialog .wt-picker-search {
+    margin: 10px 0 8px !important;
+  }
+  :root .wt-create-dialog .wt-picker-search input {
+    padding: 10px 0 !important;
+  }
+  :root .wt-create-dialog .wt-catalogue-tabs {
+    gap: 5px !important;
+    padding-bottom: 6px !important;
+  }
+  :root .wt-create-dialog .wt-catalogue-tabs button {
+    min-height: 29px !important;
+    padding: 0 9px !important;
+    font-size: 10px !important;
+  }
+}
