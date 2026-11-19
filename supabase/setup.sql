@@ -1064,10 +1064,6 @@ begin
       or (auth.uid() is not null and owner_user_id=auth.uid()))
   for update;
   if not found then raise exception 'Room not found or you are not its creator.'; end if;
-  if exists(select 1 from public.watch_room_participants p
-    where p.room_id=r.id and p.last_seen_at>now()-interval '45 seconds' and p.playback_paused=false) then
-    raise exception 'Someone is still watching. Ask everyone to pause before deleting this room.';
-  end if;
   delete from public.watch_rooms where id=r.id;
   return true;
 end $$;
@@ -1081,10 +1077,6 @@ begin
   select * into host from public.watch_room_participants
   where id=r.host_participant_id and token_hash=encode(sha256(convert_to(p_token,'UTF8')),'hex');
   if not found then raise exception 'Only the host can close this room.'; end if;
-  if exists(select 1 from public.watch_room_participants p
-    where p.room_id=r.id and p.last_seen_at>now()-interval '45 seconds' and p.playback_paused=false) then
-    raise exception 'Someone is still watching. Ask everyone to pause before ending this room.';
-  end if;
   delete from public.watch_rooms where id=r.id;
   return true;
 end $$;
