@@ -324,6 +324,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const playerReadyRef = useRef(false);
   const localPlaybackOverrideRef = useRef(false);
   useEffect(() => { localPlaybackOverrideRef.current = localPlaybackOverride; }, [localPlaybackOverride]);
+  useEffect(() => { const openLocalPlayer = () => soloFileInputRef.current?.click(); window.addEventListener('incursion:open-local-player', openLocalPlayer); return () => window.removeEventListener('incursion:open-local-player', openLocalPlayer); }, []);
   useEffect(() => { if (item) setSelectedMedia(item); }, [item]);
   useEffect(() => { setGuestNameDraft(guest.name); }, [guest.name]);
   const itemMedia = useMemo(() => ({
@@ -1277,7 +1278,6 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
               </form>
               <div className="wt-or"><span />OR<span /></div>
               <button type="button" className="wt-create" onClick={() => { setPublicRoomEnabled(false); setSetupDialog(true); setIsChangingMedia(false); setRoomType('movie'); setSelectedMedia(item || null); setLocalFile(null); setLocalFileFingerprint(''); setMediaQuery(''); setMediaSelectorExpanded(true); setError(''); }}><span><strong>Create a new room</strong><small>Choose a movie, series or your own video file</small></span><Link2 size={18}/></button>
-               <button type="button" className="wt-create wt-play-local-entry" onClick={()=>soloFileInputRef.current?.click()}><span><strong>Play a local video</strong><small>Open a file on this device without creating a room</small></span><Play size={18}/></button>
               <div className="wt-identity"><img src={guest.avatar} alt="" /><div><small>YOU'RE JOINING AS</small><strong>{guest.name}</strong><span>{guest.isGuest ? 'Guest · no account needed' : 'Signed in · profile identity'}</span></div>{guest.isGuest&&<button type="button" onClick={()=>setEditingGuestName(value=>!value)} title="Change guest name"><Pencil size={16}/></button>}</div>
               {guest.isGuest&&editingGuestName&&<form className="wt-guest-name-form" onSubmit={event=>{event.preventDefault();updateGuestName(guestNameDraft);}}><input value={guestNameDraft} onChange={event=>setGuestNameDraft(event.target.value)} maxLength={32} placeholder="Choose a guest name" aria-label="Guest name"/><button type="submit" disabled={busy||!guestNameDraft.trim()}>Save name</button></form>}
               {error && <p className="wt-error">{error}</p>}
