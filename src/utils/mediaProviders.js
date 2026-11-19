@@ -1,6 +1,6 @@
 export const STREAM_PROVIDERS = [
   { id: 'cinesrc', name: 'CineSrc', movie: true, tv: true, sync: true },
-  { id: 'vidfast', name: 'VidFast', movie: true, tv: true, sync: false, qualityFocus: true },
+  { id: 'vidfast', name: 'VidFast', movie: true, tv: true, sync: false, qualityFocus: true, qualityLabel: '4K' },
   { id: 'vidsrc', name: 'VidSrc', movie: true, tv: true, sync: false },
   { id: 'vidrock', name: 'VidRock', movie: true, tv: true, sync: false },
   { id: '2embed', name: '2Embed', movie: true, tv: true, sync: false },
