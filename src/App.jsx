@@ -3264,9 +3264,9 @@ const saveServerPref = (tmdbId, server) => {
   const playerUrl = useMemo(() => buildPlayerUrl({
     provider: selectedServer, mediaType: isSeries ? 'tv' : mediaType,
     tmdbId: currentItem.tmdbId || tmdbId, title: currentItem.title,
-    season: selectedSeason, episode: playerEpisode, accent: currentItem.accent,
+    season: selectedSeason, episode: playerEpisode, accent: currentItem.accent, poster: currentItem.poster,
     progressSeconds: Math.floor((currentItem.watchedDuration || 0) / 1000),
-  }), [selectedServer, currentItem.tmdbId, currentItem.title, currentItem.type, currentItem.accent, currentItem.watchedDuration, selectedSeason, playerEpisode, mediaType, tmdbId, isSeries]);
+  }), [selectedServer, currentItem.tmdbId, currentItem.title, currentItem.type, currentItem.accent, currentItem.poster, currentItem.watchedDuration, selectedSeason, playerEpisode, mediaType, tmdbId, isSeries]);
   const roadmapInfo = useMemo(() => getRoadmap(currentItem, activeItems), [activeItems, currentItem]);
 
   const currentOrder = currentItem.order || currentItem.id;
