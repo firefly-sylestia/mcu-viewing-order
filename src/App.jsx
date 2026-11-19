@@ -1612,27 +1612,29 @@ export default function App() {
       </div>
 
       {warningToast && <div className="app-warning-toast" role="status"><ShieldAlert size={16} /><span>{warningToast}</span><button onClick={() => setWarningToast('')} aria-label="Dismiss warning"><X size={14} /></button></div>}
-      <nav
-        ref={navRef}
-        className={`bottom-nav${navHidden ? ' nav-auto-hidden' : ''}`}
-        data-liquid-glass="false"
-        aria-label="Primary"
-        data-holding={navHolding ? 'true' : 'false'}
-        style={{ '--nav-index': navHoldIndex ?? Math.max(0, NAV_VISIBLE.indexOf(section === 'watch-together' ? 'watch' : section)), '--nav-count': NAV_VISIBLE.length, '--nav-dur': navHolding ? '150ms' : '.58s' }}
-        onPointerDown={handleNavPointerDown}
-        onPointerMove={handleNavPointerMove}
-        onPointerUp={handleNavPointerUp}
-        onPointerCancel={resetNavHold}
-        onContextMenu={(event) => { if (navHolding) event.preventDefault(); }}
-      >
-        <span className="nav-blob" aria-hidden="true" />
-        {NAV_VISIBLE.map((id) => {
-          const { label, Icon } = NAV_TAB_META[id];
-          return <button key={id} className={section === id ? 'active' : ''} aria-label={label} title={label} aria-current={section === id ? 'page' : undefined} onClick={() => handleNavClick(id)}>
-            <Icon size={28} strokeWidth={2.1} /><span aria-hidden="true">{label}</span>
-          </button>;
-        })}
-      </nav>
+      {section !== 'watch-together' && (
+        <nav
+          ref={navRef}
+          className={`bottom-nav${navHidden ? ' nav-auto-hidden' : ''}`}
+          data-liquid-glass="false"
+          aria-label="Primary"
+          data-holding={navHolding ? 'true' : 'false'}
+          style={{ '--nav-index': navHoldIndex ?? Math.max(0, NAV_VISIBLE.indexOf(section === 'watch-together' ? 'watch' : section)), '--nav-count': NAV_VISIBLE.length, '--nav-dur': navHolding ? '150ms' : '.58s' }}
+          onPointerDown={handleNavPointerDown}
+          onPointerMove={handleNavPointerMove}
+          onPointerUp={handleNavPointerUp}
+          onPointerCancel={resetNavHold}
+          onContextMenu={(event) => { if (navHolding) event.preventDefault(); }}
+        >
+          <span className="nav-blob" aria-hidden="true" />
+          {NAV_VISIBLE.map((id) => {
+            const { label, Icon } = NAV_TAB_META[id];
+            return <button key={id} className={section === id ? 'active' : ''} aria-label={label} title={label} aria-current={section === id ? 'page' : undefined} onClick={() => handleNavClick(id)}>
+              <Icon size={28} strokeWidth={2.1} /><span aria-hidden="true">{label}</span>
+            </button>;
+          })}
+        </nav>
+      )}
 
       {selectedItem && <DetailView item={selectedItem} onClose={() => selectItem(null)} setStatus={setStatus} toggleBookmark={toggleBookmark} onStartWatch={startWatchWithConfirm} onOpenItem={selectItem} activeItems={roadmapItems} />}
       {trailer && <TrailerModal trailer={trailer} onClose={() => setTrailer(null)} />}
