@@ -3377,7 +3377,7 @@ const saveServerPref = (tmdbId, server) => {
       if (data.type === 'cinesrc:error') {
         clearTimeout(loadTimeoutRef.current);
         if (!autoFallbackAttemptedRef.current) {
-          const fallbackId = getProviderFallbacks(mediaType)[0];
+          const fallbackId = getProviderFallbacks(isSeries ? 'tv' : mediaType)[0];
           if (fallbackId) {
             autoFallbackAttemptedRef.current = true;
             setProviderNotice(`CineSrc could not load this title. Trying ${getProvider(fallbackId).name} instead.`);
@@ -3469,7 +3469,7 @@ const saveServerPref = (tmdbId, server) => {
               <iframe ref={iframeRef} key={iframeKey} src={playerUrl} title={`Watch ${currentItem.title}`} frameBorder="0" allowFullScreen allow="autoplay; fullscreen; picture-in-picture; encrypted-media" loading="lazy" onLoad={() => { clearTimeout(loadTimeoutRef.current); setToast(''); setStreamError(''); setIframeTimedOut(false); }} onError={() => {
                 clearTimeout(loadTimeoutRef.current);
                 if (selectedServer === 'cinesrc' && !autoFallbackAttemptedRef.current) {
-                  const fallbackId = getProviderFallbacks(mediaType)[0];
+                  const fallbackId = getProviderFallbacks(isSeries ? 'tv' : mediaType)[0];
                   if (fallbackId) {
                     autoFallbackAttemptedRef.current = true;
                     setProviderNotice(`CineSrc failed to load. Trying ${getProvider(fallbackId).name} instead.`);
