@@ -690,11 +690,15 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
           });
           if (!snapshot?.room || !snapshot?.participant) throw new Error('Could not create your personal room.');
           const playback = { position, paused: isPaused, season: Number(activeRoom.media.season || season), episode: Number(activeRoom.media.episode || episode), updated_at: new Date().toISOString() };
+          lastVersionRef.current = 0;
+          localPlaybackOverrideRef.current = true;
           applyRoomSnapshot(snapshot);
           setRoom(previous => previous ? { ...previous, playback } : previous);
           setCurrentTime(position); currentTimeRef.current = position;
           setPaused(isPaused); pausedRef.current = isPaused;
-          await rpc('set_watch_room_playback', { p_code: code, p_token: activeParticipant.token, p_playback: playback });
+          const playbackResult = await rpc('set_watch_room_playback', { p_code: code, p_token: activeParticipant.token, p_playback: playback });
+          lastVersionRef.current = Number(playbackResult?.state_version || snapshot.room.state_version || 0);
+          localPlaybackOverrideRef.current = false;
           saveActiveRoom(code, guest, activeRoom.media);
           setRoomLink(window.location.origin + '/watch-room/' + code);
           setRoomDeleted(false); setSoloMode(false);
