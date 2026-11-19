@@ -70,13 +70,13 @@ export const buildPlayerUrl = ({ provider = 'cinesrc', mediaType = 'movie', tmdb
   return url.toString();
 };
 
-// Legacy MoviePire download route retained as a separate external destination.
-// None of CineSrc, VidFast, VidSrc, VidRock or 2Embed documents a download API.
+// VidVault is an external destination; keep its URL format separate from stream providers.
 export const buildDownloadUrl = ({ mediaType, tmdbId, season = 1, episode }) => {
   if (!tmdbId) return '';
+  const id = encodeURIComponent(String(tmdbId));
   if (mediaType === 'tv') {
     if (!episode) return '';
-    return `https://moviepire.sc/download/tv/${encodeURIComponent(tmdbId)}/${season}/${episode}`;
+    return `https://vidvault.to/tv/${id}/${Math.max(1, Number(season) || 1)}/${Math.max(1, Number(episode) || 1)}`;
   }
-  return `https://moviepire.sc/download/movie/${encodeURIComponent(tmdbId)}`;
+  return `https://vidvault.to/movie/${id}`;
 };
