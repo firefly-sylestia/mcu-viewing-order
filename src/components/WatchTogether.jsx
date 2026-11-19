@@ -542,6 +542,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       setParticipant(result.participant);
       applyRoomSnapshot(result);
       if (identity?.token) saveActiveRoom(normalizedCode, identity, result.room?.media || null);
+      const currentUrl = new URL(window.location.href); currentUrl.searchParams.set('room', normalizedCode); window.history.replaceState({}, '', currentUrl.toString());
       setOpen(true);
       setRoomLink(window.location.origin + '/watch-room/' + normalizedCode);
       return true;
@@ -641,6 +642,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       setParticipant(snapshot.participant || result.participant);
       applyRoomSnapshot(snapshot);
       saveActiveRoom(code, guest, media);
+      const currentUrl = new URL(window.location.href); currentUrl.searchParams.set('room', code); window.history.replaceState({}, '', currentUrl.toString());
       loadOwnedRooms().catch(() => {});
       loadPublicRooms().catch(() => {});
       const link = window.location.origin + '/watch-room/' + code;
@@ -659,7 +661,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     const sharePathCode = pathCode[0] === 'watch-room' ? pathCode[1] : null;
     let saved = null;
     try { saved = JSON.parse(localStorage.getItem(ACTIVE_ROOM_KEY) || 'null'); } catch {}
-    const code = new URLSearchParams(window.location.search).get('room') || sharePathCode;
+    const code = new URLSearchParams(window.location.search).get('room') || sharePathCode || saved?.code;
     if (!code) return;
     restoreAttemptedRef.current = true;
     onBeforeOpenRef.current?.();
@@ -700,6 +702,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
           lastVersionRef.current = Number(playbackResult?.state_version || snapshot.room.state_version || 0);
           localPlaybackOverrideRef.current = false;
           saveActiveRoom(code, guest, activeRoom.media);
+          const currentUrl = new URL(window.location.href); currentUrl.searchParams.set('room', code); window.history.replaceState({}, '', currentUrl.toString());
           setRoomLink(window.location.origin + '/watch-room/' + code);
           setRoomDeleted(false); setSoloMode(false);
           setLocalPlaybackOverride(false); localPlaybackOverrideRef.current = false;
