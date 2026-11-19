@@ -52,7 +52,7 @@ export default async function handler(req, res) {
         popularity: item.popularity || 0,
       }; });
     }));
-    const results = batches.flat().filter(item => item.poster).sort((a, b) => Number(b.popularity || 0) - Number(a.popularity || 0));
+    const results = batches.flat().filter(item => item.poster).sort((a, b) => category === 'top-rated' ? Number(b.rating || 0) - Number(a.rating || 0) : Number(b.popularity || 0) - Number(a.popularity || 0));
     res.setHeader('Cache-Control', 's-maxage=1800, stale-while-revalidate=43200');
     return res.status(200).json({ results, category, page });
   } catch (error) {
