@@ -18135,3 +18135,13 @@
 :root .wt-create-dialog.is-catalogue-expanded .wt-dialog-selected{flex-shrink:0!important}
 :root .wt-create-dialog.is-catalogue-expanded .wt-catalogue-tabs{position:sticky;top:0;z-index:2;padding:8px 0;background:var(--fx-surface)}
 @media(max-width:760px){:root .wt-create-dialog.is-catalogue-expanded{padding:max(12px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom))!important}:root .wt-create-dialog.is-catalogue-expanded .wt-picker-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;min-height:0!important}}
+
+
+/* Keep embedded stream states inside the 16:9 player instead of forcing a tall black overflow area. */
+:root .watch-v2-player { min-height: 0; overflow: hidden; }
+:root .watch-v2-player iframe { min-height: 0; }
+:root .watch-v2-player .watch-stream-fallback,
+:root .watch-v2-player .watch-stream-placeholder { min-height: 0; height: 100%; box-sizing: border-box; }
+:root .wt-room-server-picker { display:flex; align-items:center; gap:10px; margin:0 0 10px; color:var(--fx-muted,#9da8bb); font-size:11px; }
+:root .wt-room-server-picker select { min-height:34px; max-width:220px; padding:0 10px; border:1px solid var(--line,rgba(128,138,155,.2)); border-radius:9px; background:var(--fx-surface-2,#151820); color:var(--fx-text,#f4f5f7); font:inherit; }
+:root .wt-room-server-picker small { opacity:.75; }
