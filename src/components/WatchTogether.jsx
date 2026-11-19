@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { ChevronDown, ChevronUp, Copy, Check, Users, Captions, MessageCircle, Play, Pause, SkipBack, SkipForward, X, Link2, Radio, Crown, Send, LogOut, RefreshCw, Volume2, VolumeX, Clock3, ShieldCheck, Search, ChevronRight, Pencil, PanelRightClose, PanelRightOpen, ArrowLeft, Settings2, UserMinus, Eye, EyeOff, Lock, Unlock, QrCode, Theater, Wifi, WifiOff, ArrowRightLeft, Timer, Smile, Maximize2, Minimize2, SlidersHorizontal } from 'lucide-react';
 import { supabasePublicRequest, supabaseDataRequest } from '../supabase';
 import { apiUrl } from '../utils/apiBase';
+import { buildPlayerUrl, STREAM_PROVIDERS } from '../utils/mediaProviders';
 
 
 const RPC = '/rest/v1/rpc/';
@@ -279,6 +280,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
   const [playerReady, setPlayerReady] = useState(false);
+  const roomProvider = room?.media?.provider || 'cinesrc';
   const [paused, setPaused] = useState(true);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -972,6 +974,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   };
   const postPlayerCommand = useCallback((command, args = []) => {
     if(roomRef.current?.media?.kind==='local_file'){const video=localVideoRef.current;if(!video)return false;if(command==='seek'&&video.srcObject)return true;if(command==='seek')video.currentTime=Math.max(0,Number(args[0])||0);if(command==='play')video.play().catch(()=>{});if(command==='pause')video.pause();if(command==='setMuted')video.muted=Boolean(args[0]);return true;}
+    if (roomRef.current?.media?.provider && roomRef.current.media.provider !== 'cinesrc') return false;
     const message = { type: 'cinesrc:command', command, args };
     if (!playerReadyRef.current || !iframeRef.current?.contentWindow) {
       pendingPlayerCommandsRef.current = [...pendingPlayerCommandsRef.current, message].slice(-12);
@@ -1002,7 +1005,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       setError('Request Operator access from the host to control shared playback.'); return;
     }
     // Apply locally first; the RPC is only the shared state announcement.
-    if(roomRef.current?.media?.kind==='local_file')postPlayerCommand(command,args);else iframeRef.current?.contentWindow?.postMessage({ type: 'cinesrc:command', command, args }, 'https://cinesrc.st');
+    if(roomRef.current?.media?.kind==='local_file')postPlayerCommand(command,args);else if(roomRef.current?.media?.provider==='cinesrc'||!roomRef.current?.media?.provider)iframeRef.current?.contentWindow?.postMessage({ type: 'cinesrc:command', command, args }, 'https://cinesrc.st');
     if (command === 'play') { setPaused(false); pausedRef.current = false; publishPlayback({ position: currentTimeRef.current, paused: false }); }
     if (command === 'pause') { setPaused(true); pausedRef.current = true; publishPlayback({ position: currentTimeRef.current, paused: true }); }
     if (command === 'seek') { const position = Math.max(0, Number(args[0]) || 0); setCurrentTime(position); currentTimeRef.current = position; publishPlayback({ position, paused: pausedRef.current }, true); }
@@ -1185,7 +1188,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   useEffect(() => {
     if (!open || !room || !participant || soloMode) return undefined;
     const onMessage = event => {
-      if (event.origin !== 'https://cinesrc.st' || event.source !== iframeRef.current?.contentWindow) return;
+      if (roomProvider !== 'cinesrc' || event.origin !== 'https://cinesrc.st' || event.source !== iframeRef.current?.contentWindow) return;
       const data = event.data;
       if (!data || typeof data !== 'object') return;
       if (data.type === 'cinesrc:ready') {
@@ -1233,7 +1236,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     };
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
-  }, [open, room?.id, participant?.id, canControl, publishPlayback, sendPlayerCommand, onEpisodeChange, season, soloMode]);
+  }, [open, room?.id, participant?.id, canControl, publishPlayback, sendPlayerCommand, onEpisodeChange, season, soloMode, roomProvider]);
 
   useEffect(() => {
     if (!room || !participant || !room.media) return;
@@ -1244,11 +1247,24 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const sharedPlayerUrl = useMemo(() => {
     if (!room?.media || room.media.kind==='local_file') return playerUrl;
     const media = room.media;
-    const params = new URLSearchParams({ autoplay: 'false', controls: 'true', back: 'close', autonext: 'false', color: media.accent || '#da1e14' });
-    return media.mediaType === 'tv'
-      ? `https://cinesrc.st/embed/tv/${media.tmdbId}?s=${room.playback?.season || media.season || 1}&e=${room.playback?.episode || media.episode || 1}&${params.toString()}`
-      : `https://cinesrc.st/embed/movie/${media.tmdbId}?${params.toString()}`;
-  }, [room?.media, room?.playback?.season, room?.playback?.episode, playerUrl]);
+    return buildPlayerUrl({ provider: roomProvider, mediaType: media.mediaType, tmdbId: media.tmdbId, title: media.title, season: room.playback?.season || media.season || 1, episode: room.playback?.episode || media.episode || 1, accent: media.accent, poster: media.poster });
+  }, [room?.media, room?.playback?.season, room?.playback?.episode, roomProvider, playerUrl]);
+
+  const changeRoomProvider = async provider => {
+    if (!room || !participant?.is_host || busy || !STREAM_PROVIDERS.some(entry => entry.id === provider && entry[room.media?.mediaType === 'tv' ? 'tv' : 'movie'])) return;
+    if (room.media?.kind === 'local_file') return;
+    setBusy(true); setError('');
+    try {
+      await rpc('change_watch_room_media', { p_code: room.code, p_token: participant.token, p_media: { ...room.media, provider } });
+      const snapshot = await rpc('watch_room_snapshot', { p_code: room.code, p_token: participant.token });
+      applyRoomSnapshot(snapshot);
+      setPlayerReady(false); playerReadyRef.current = false;
+      setCurrentTime(0); currentTimeRef.current = 0;
+      setPaused(true); pausedRef.current = true;
+      setError(provider === 'cinesrc' ? '' : 'This source does not expose the CineSrc sync API. Playback controls may not synchronize until you switch back to CineSrc.');
+    } catch (e) { setError(e.message || 'Could not change the room streaming server.'); }
+    finally { setBusy(false); }
+  };
 
   const activeSeason=Number(room?.playback?.season||room?.media?.season||1), activeEpisode=Number(room?.playback?.episode||room?.media?.episode||1);
   useEffect(()=>{if(!room?.media||room.media.mediaType!=='tv'){setAvailableSeasons([]);setAvailableEpisodes([]);return;}let active=true;setSeasonLoading(true);
@@ -1359,6 +1375,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
               {pendingEpisode && <div className="wt-episode-transition"><div><strong>Next episode is ready</strong><span>Everyone can move to S{pendingEpisode.season} · E{pendingEpisode.episode}. Viewers who are behind can finish first.</span></div><button type="button" onClick={()=>setPendingEpisode(null)}>Finish current</button><button type="button" onClick={()=>{const next=pendingEpisode;setPendingEpisode(null);onEpisodeChangeRef.current?.(next.episode);setRoom(old=>old?{...old,playback:{...(old.playback||{}),position:0,paused:false,season:next.season,episode:next.episode}}:old);publishPlayback({position:0,paused:false,season:next.season,episode:next.episode},true);}}>Go now</button></div>}
               <div className="wt-player-layout">
               <div className="wt-player-column">
+              {room.media?.kind !== 'local_file' && <div className="wt-room-server-picker"><label htmlFor="wt-room-server">Streaming server</label><select id="wt-room-server" value={roomProvider} disabled={!participant?.is_host || busy} onChange={event=>changeRoomProvider(event.target.value)}>{STREAM_PROVIDERS.filter(provider=>provider[room.media?.mediaType === 'tv' ? 'tv' : 'movie']).map(provider=><option key={provider.id} value={provider.id}>{provider.name}{provider.sync?' · Sync':''}</option>)}</select>{!participant?.is_host&&<small>The host controls the room server.</small>}</div>}
               <div
                 className={"wt-player"+(room.media?.kind==='local_file'?" wt-local-video-player"+(isLocalFullscreen?" is-fullscreen":"")+(localControlsVisible?"":" is-controls-hidden")+(localControlsLocked?" is-controls-locked":"")+(localTabletRatio?" is-tablet-ratio":""):"")}
                 style={room.media?.kind==='local_file'?{
