@@ -17917,3 +17917,39 @@
 :root .page-watch-together .wt-play-local-entry small {color:var(--fx-muted)!important}
 :root .page-watch-together .wt-solo-local .wt-control-dock {display:none!important}
 :root .page-watch-together .wt-solo-local .wt-local-overlay-tools button[aria-label="Open room chat"] {display:none!important}
+
+
+/* Keep the chat expand/collapse control reachable on phones. */
+@media (max-width:760px) {
+  :root .movie-site.page-watch-together .wt-player-layout > .wt-chat .wt-chat-head {
+    display:flex!important;align-items:center!important;justify-content:space-between!important;
+    width:100%!important;min-height:48px!important;height:auto!important;padding:6px 10px!important;
+    gap:8px!important;box-sizing:border-box!important;
+  }
+  :root .movie-site.page-watch-together .wt-player-layout > .wt-chat .wt-chat-head > div {
+    display:flex!important;align-items:center!important;gap:7px!important;min-width:0!important;
+  }
+  :root .movie-site.page-watch-together .wt-player-layout > .wt-chat .wt-chat-head .wt-chat-toggle {
+    display:grid!important;place-items:center!important;flex:0 0 36px!important;
+    width:36px!important;height:36px!important;min-width:36px!important;
+    border:1px solid color-mix(in srgb,var(--fx-muted) 25%,transparent)!important;
+    border-radius:11px!important;background:var(--fx-surface-2)!important;color:var(--fx-text)!important;
+  }
+  :root .movie-site.page-watch-together .wt-player-layout > .wt-chat.is-collapsed {
+    display:flex!important;width:100%!important;min-height:52px!important;height:52px!important;
+    max-height:52px!important;flex:0 0 52px!important;padding:0 8px!important;
+  }
+  :root .movie-site.page-watch-together .wt-player-layout > .wt-chat.is-collapsed .wt-chat-head {
+    min-height:50px!important;height:50px!important;
+  }
+  :root .movie-site.page-watch-together .wt-player-layout > .wt-chat.is-collapsed .wt-chat-head > div {
+    display:none!important;
+  }
+  :root .movie-site.page-watch-together .wt-player-layout > .wt-chat:not(.is-collapsed) {
+    display:flex!important;width:100%!important;min-height:280px!important;max-height:48dvh!important;
+    height: min(420px,48dvh)!important;overflow:hidden!important;flex-direction:column!important;
+  }
+  :root .movie-site.page-watch-together .wt-player-layout > .wt-chat:not(.is-collapsed) .wt-chat-messages {
+    display:flex!important;flex:1 1 auto!important;min-height:90px!important;max-height:none!important;overflow-y:auto!important;
+  }
+}
