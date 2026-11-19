@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, Clapperboard, Film, Search, Tv, Play, Star } from 'lucide-react';
 import { apiUrl } from '../utils/apiBase';
 
@@ -25,6 +25,13 @@ export default function OnlineStreaming({ onBack, onPlay }) {
   const [refreshToken, setRefreshToken] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const pendingScrollTopRef = useRef(null);
+  useLayoutEffect(() => {
+    if (pendingScrollTopRef.current == null) return;
+    const top = pendingScrollTopRef.current;
+    pendingScrollTopRef.current = null;
+    window.scrollTo({ top, behavior: 'instant' });
+  }, [items]);
 
   useEffect(() => {
     let cancelled = false;
@@ -65,7 +72,7 @@ export default function OnlineStreaming({ onBack, onPlay }) {
           <div className="online-title-copy"><strong>{item.title}</strong><span>{item.year || 'Date TBA'} · {item.type==='tv'?'Series':'Movie'}</span><small>{item.rating?<><Star size={11} fill="currentColor"/> {item.rating}</>:'Rating unavailable'}</small></div>
         </article>)}
       </div> : <div className="online-empty"><Tv size={24}/><p>No titles match that search.</p></div>}
-      {query.trim().length<2 && visible.length>0 && <button type="button" className="online-load-more" disabled={loading||page>=20} onClick={()=>setPage(value=>Math.min(20,value+1))}>{loading?'Loading…':page>=20?'End of catalogue':'Load more titles'}</button>}
+      {query.trim().length<2 && visible.length>0 && <button type="button" className="online-load-more" disabled={loading||page>=20} onClick={()=>{pendingScrollTopRef.current=window.scrollY;setPage(value=>Math.min(20,value+1));}}>{loading?'Loading…':page>=20?'End of catalogue':'Load more titles'}</button>}
     </section>
     <p className="online-attribution">Catalogue metadata and artwork provided by TMDB. Incursion is not endorsed or certified by TMDB.</p>
   </main>;
