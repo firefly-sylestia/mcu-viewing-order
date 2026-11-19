@@ -280,6 +280,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
   const [playerReady, setPlayerReady] = useState(false);
+  const [manualSyncNonce, setManualSyncNonce] = useState(0);
   const roomProvider = room?.media?.provider || 'cinesrc';
   const [paused, setPaused] = useState(true);
   const [currentTime, setCurrentTime] = useState(0);
@@ -1245,10 +1246,23 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   }, [room?.state_version, room?.media?.episode, room?.playback?.episode, episode]);
 
   const sharedPlayerUrl = useMemo(() => {
-    if (!room?.media || room.media.kind==='local_file') return playerUrl;
+    if (!room?.media || room.media.kind === 'local_file') return playerUrl;
     const media = room.media;
-    return buildPlayerUrl({ provider: roomProvider, mediaType: media.mediaType, tmdbId: media.tmdbId, title: media.title, season: room.playback?.season || media.season || 1, episode: room.playback?.episode || media.episode || 1, accent: media.accent, poster: media.poster });
-  }, [room?.media, room?.playback?.season, room?.playback?.episode, roomProvider, playerUrl]);
+    const syncPosition = Math.max(0, Number(room.playback?.position) || 0);
+    const url = new URL(buildPlayerUrl({
+      provider: roomProvider,
+      mediaType: media.mediaType,
+      tmdbId: media.tmdbId,
+      title: media.title,
+      season: room.playback?.season || media.season || 1,
+      episode: room.playback?.episode || media.episode || 1,
+      progressSeconds: manualSyncNonce ? syncPosition : 0,
+      accent: media.accent,
+      poster: media.poster,
+    }));
+    if (manualSyncNonce) url.searchParams.set('incursionSync', String(manualSyncNonce));
+    return url.toString();
+  }, [room?.media, room?.playback?.season, room?.playback?.episode, roomProvider, playerUrl, manualSyncNonce]);
 
   const changeRoomProvider = async provider => {
     if (!room || !participant?.is_host || busy || !STREAM_PROVIDERS.some(entry => entry.id === provider && entry[room.media?.mediaType === 'tv' ? 'tv' : 'movie'])) return;
@@ -1261,7 +1275,8 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       setPlayerReady(false); playerReadyRef.current = false;
       setCurrentTime(0); currentTimeRef.current = 0;
       setPaused(true); pausedRef.current = true;
-      setError(provider === 'cinesrc' ? '' : 'This source does not expose the CineSrc sync API. Playback controls may not synchronize until you switch back to CineSrc.');
+      setError('');
+      setRoomToast(provider === 'cinesrc' ? '' : 'Provider changed. Use Sync to Host to reload at the shared timestamp.');
     } catch (e) { setError(e.message || 'Could not change the room streaming server.'); }
     finally { setBusy(false); }
   };
@@ -1556,7 +1571,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                     </div>
                   </div>
                   {localVideoError&&<div className="wt-local-playback-error"><strong>Can’t play this video here</strong><span>{localVideoError}</span>{localCodecDiagnostics&&<small className="wt-codec-diagnostics"><b>{localCodecDiagnostics.fileName}</b><br/>Container MIME: {localCodecDiagnostics.mime}<br/>H.264 MP4: {localCodecDiagnostics.h264} · H.265/HEVC MP4: {localCodecDiagnostics.hevc} · VP9 WebM: {localCodecDiagnostics.vp9}<br/>Most widely compatible target: MP4 · H.264 video · AAC audio</small>}</div>}
-                </> : <iframe ref={iframeRef} src={sharedPlayerUrl} title={"Watch Party: " + (room.media?.title || itemMedia.title)} allow="autoplay; fullscreen; encrypted-media" allowFullScreen disablePictureInPicture/>}
+                </> : <iframe ref={iframeRef} src={sharedPlayerUrl} title={"Watch Party: " + (room.media?.title || itemMedia.title)} allow="autoplay; fullscreen; encrypted-media" allowFullScreen disablePictureInPicture onLoad={() => { if (roomProvider !== "cinesrc") { setPlayerReady(true); playerReadyRef.current = true; } }}/>}
                 {(localPlaybackOverride || canReturnLocal) && !syncNoticeDismissed && <div className="wt-sync-floating" role="status">
                   <span className="wt-sync-indicator"><i/>{localPlaybackOverride?'Playing independently':'Room playback'}</span>
                   <button type="button" className="wt-sync-dismiss" onClick={()=>setSyncNoticeDismissed(true)} aria-label="Dismiss playback sync notice" title="Dismiss"><X size={15}/></button>
@@ -1565,6 +1580,21 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
               {theatreMode && theatreToast && <button type="button" className="wt-theatre-message-toast" onClick={()=>{setChatCollapsed(false);setTheatreChatOpen(true);setTheatreToast(null);}}><img src={theatreToast.avatar_url || blobatar(theatreToast.display_name)} alt=""/><span><strong>{theatreToast.display_name}</strong><small>{theatreToast.body}</small></span><X size={14} onClick={event=>{event.stopPropagation();setTheatreToast(null);}}/></button>}
               {!canControl && <div className="wt-role-banner"><ShieldCheck size={16}/><span>You’re a Viewer. Request Operator access to control playback, or ask for individual skips.</span><button type="button" onClick={() => requestAccess('operator')} disabled={busy}>Request Operator</button></div>}
               <div className="wt-control-dock">
+                {room?.media?.kind !== 'local_file' && roomProvider !== 'cinesrc' && <button type="button" className="wt-control-toggle wt-sync-to-host" onClick={() => {
+                  const playback = roomRef.current?.playback || {};
+                  const target = Math.max(0, Number(playback.position ?? currentTimeRef.current) || 0);
+                  setCurrentTime(target);
+                  currentTimeRef.current = target;
+                  setPaused(Boolean(playback.paused));
+                  pausedRef.current = Boolean(playback.paused);
+                  setPlayerReady(false);
+                  playerReadyRef.current = false;
+                  setManualSyncNonce(value => value + 1);
+                  setRoomToast('Reloading this player at the shared timestamp…');
+                }}>
+                  <span><RefreshCw size={15}/><b>Sync to Host</b><small>{timeText(currentTime)} · timestamp sync</small></span>
+                  <ChevronRight size={17}/>
+                </button>}
                 <button type="button" className="wt-control-toggle" onClick={()=>setControlsExpanded(value=>!value)} aria-expanded={controlsExpanded}>
                   <span><Settings2 size={15}/><b>Playback controls</b><small>{timeText(currentTime)} / {timeText(duration)}</small></span>
                   {controlsExpanded?<ChevronUp size={17}/>:<ChevronDown size={17}/>}
