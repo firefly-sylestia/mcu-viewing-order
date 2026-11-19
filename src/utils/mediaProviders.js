@@ -11,7 +11,7 @@ export const getProviderFallbacks = mediaType => mediaType === 'tv'
   ? ['vidsrc', 'vidfast', 'vidrock', '2embed']
   : ['vidfast', 'vidsrc', 'vidrock', '2embed'];
 
-export const buildPlayerUrl = ({ provider = 'cinesrc', mediaType = 'movie', tmdbId, title, season = 1, episode = 1, progressSeconds = 0, accent = '#e50914' }) => {
+export const buildPlayerUrl = ({ provider = 'cinesrc', mediaType = 'movie', tmdbId, title, season = 1, episode = 1, progressSeconds = 0, accent = '#e50914', poster = '' }) => {
   if (!tmdbId) return '';
   const type = mediaType === 'tv' ? 'tv' : 'movie';
   const id = encodeURIComponent(String(tmdbId));
@@ -25,6 +25,7 @@ export const buildPlayerUrl = ({ provider = 'cinesrc', mediaType = 'movie', tmdb
       : new URL(`https://vidfast.vc/movie/${id}`);
     url.searchParams.set('autoPlay', 'true');
     if (title) url.searchParams.set('title', String(title));
+    if (poster) url.searchParams.set('poster', String(poster));
     if (startAt > 5) url.searchParams.set('startAt', String(startAt));
     if (type === 'tv') {
       url.searchParams.set('autoNext', 'true');
