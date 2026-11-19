@@ -3193,7 +3193,7 @@ const saveServerPref = (tmdbId, server) => {
     if (!nextProvider) return false;
     fallbackProviderIndexRef.current += 1;
     autoFallbackAttemptedRef.current = true;
-    setProviderNotice(`CineSrc did not become ready. ${reason} Trying ${getProvider(nextProvider).name} (${fallbackProviderIndexRef.current} of ${fallbacks.length}).`);
+    setProviderNotice(`${reason} Trying ${getProvider(nextProvider).name} (${fallbackProviderIndexRef.current} of ${fallbacks.length}).`);
     setSelectedServer(nextProvider);
     setStreamError('');
     setIframeTimedOut(false);
@@ -3486,7 +3486,19 @@ const saveServerPref = (tmdbId, server) => {
             ) : playerInView ? (
               <iframe ref={iframeRef} key={iframeKey} src={playerUrl} title={`Watch ${currentItem.title}`} frameBorder="0" allowFullScreen allow="autoplay; fullscreen; picture-in-picture; encrypted-media" loading="lazy" onLoad={() => { if (selectedServer !== 'cinesrc') clearTimeout(loadTimeoutRef.current); setToast(''); setStreamError(''); setIframeTimedOut(false); }} onError={() => {
                 clearTimeout(loadTimeoutRef.current);
-                if (selectedServer === 'cinesrc' && tryNextFallbackProvider('The player document failed to load.')) return;
+                if (selectedServer === 'cinesrc' && tryNextFallbackProvider('The CineSrc player document failed to load.')) return;
+                if (selectedServer !== 'cinesrc' && autoFallbackAttemptedRef.current) {
+                  const fallbacks = getProviderFallbacks(isSeries ? 'tv' : mediaType);
+                  const nextProvider = fallbacks[fallbackProviderIndexRef.current];
+                  if (nextProvider) {
+                    fallbackProviderIndexRef.current += 1;
+                    setProviderNotice(`That source failed to load. Trying ${getProvider(nextProvider).name} (${fallbackProviderIndexRef.current} of ${fallbacks.length})…`);
+                    setSelectedServer(nextProvider);
+                    setStreamError('');
+                    setIframeTimedOut(false);
+                    return;
+                  }
+                }
                 setStreamError(`The ${getProvider(selectedServer).name} player failed to load. Try another source.`);
               }} />
             ) : <div className="watch-stream-placeholder" aria-live="polite"><Play size={24} /><span>Player will load when you scroll here</span></div>
