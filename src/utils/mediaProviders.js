@@ -26,6 +26,8 @@ export const buildPlayerUrl = ({ provider = 'cinesrc', mediaType = 'movie', tmdb
     url.searchParams.set('autoPlay', 'true');
     if (title) url.searchParams.set('title', String(title));
     if (poster) url.searchParams.set('poster', String(poster));
+    url.searchParams.set('chromecast', 'true');
+    url.searchParams.set('fullscreenButton', 'true');
     if (startAt > 5) url.searchParams.set('startAt', String(startAt));
     if (type === 'tv') {
       url.searchParams.set('autoNext', 'true');
