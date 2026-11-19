@@ -3173,7 +3173,7 @@ const saveServerPref = (tmdbId, server) => {
   const downloadUrl = buildDownloadUrl({ mediaType, tmdbId: currentItem.tmdbId || tmdbId, season: selectedSeason, episode: selectedEpisode });
   const providerOptions = useMemo(() => [getProvider('cinesrc'), ...getProviderFallbacks(mediaType).map(getProvider)], [mediaType]);
   useEffect(() => { try { localStorage.setItem('incursion-stream-provider', selectedServer); } catch {} }, [selectedServer]);
-  useEffect(() => { setSelectedServer('cinesrc'); setStreamError(''); setRestartCounter(value => value + 1); }, [currentItem.id]);
+  useEffect(() => { autoFallbackAttemptedRef.current = false; setProviderNotice(''); setSelectedServer('cinesrc'); setStreamError(''); setRestartCounter(value => value + 1); }, [currentItem.id]);
   // Keep the iframe's URL episode separate: CineSrc can navigate episodes internally.
   const [playerEpisode, setPlayerEpisode] = useState(currentItem.epStart || 1);
   const [episodeLoading, setEpisodeLoading] = useState(false);
@@ -3184,6 +3184,8 @@ const saveServerPref = (tmdbId, server) => {
   const [playerInView, setPlayerInView] = useState(false);
   const playerWrapRef = useRef(null);
   const [restartCounter, setRestartCounter] = useState(0);
+  const [providerNotice, setProviderNotice] = useState('');
+  const autoFallbackAttemptedRef = useRef(false);
   const iframeRef = useRef(null);
   const iframeKey = `${selectedServer}-${isSeries ? `ep-${currentItem.tmdbId}-${selectedSeason}-${playerEpisode}` : currentItem.tmdbId || item.id}-r${restartCounter}`;
 
@@ -3207,10 +3209,20 @@ const saveServerPref = (tmdbId, server) => {
     clearTimeout(loadTimeoutRef.current);
     setToast(''); setStreamError(''); setIframeTimedOut(false);
     loadTimeoutRef.current = setTimeout(() => {
-      setToast(''); setStreamError('The player is taking too long to respond.'); setIframeTimedOut(true);
+      if (selectedServer === 'cinesrc' && !autoFallbackAttemptedRef.current) {
+        const fallbackId = getProviderFallbacks(mediaType)[0];
+        if (fallbackId) {
+          autoFallbackAttemptedRef.current = true;
+          setProviderNotice(`CineSrc did not respond. Trying ${getProvider(fallbackId).name} instead.`);
+          setSelectedServer(fallbackId);
+          setIframeTimedOut(false);
+          return;
+        }
+      }
+      setToast(''); setStreamError('The player is taking too long to respond. Try another source.'); setIframeTimedOut(true);
     }, 18000);
     return () => clearTimeout(loadTimeoutRef.current);
-  }, [iframeKey, nativePlayer, playerInView]);
+  }, [iframeKey, nativePlayer, playerInView, selectedServer, mediaType]);
 
   const toggleEpisode = (epNum) => {
     const next = watchedEpisodes.includes(epNum)
@@ -3363,15 +3375,26 @@ const saveServerPref = (tmdbId, server) => {
         } else setStatusRef.current(itemRef.current, 'watched');
       }
       if (data.type === 'cinesrc:error') {
+        clearTimeout(loadTimeoutRef.current);
+        if (!autoFallbackAttemptedRef.current) {
+          const fallbackId = getProviderFallbacks(mediaType)[0];
+          if (fallbackId) {
+            autoFallbackAttemptedRef.current = true;
+            setProviderNotice(`CineSrc could not load this title. Trying ${getProvider(fallbackId).name} instead.`);
+            setSelectedServer(fallbackId);
+            setStreamError(''); setIframeTimedOut(false);
+            return;
+          }
+        }
         const detail = typeof data.error === 'string' ? data.error : data.error?.message;
-        setToast(''); setStreamError(detail ? `CineSrc: ${String(detail).slice(0, 180)}` : 'CineSrc could not load this stream. Try again or open the player separately.');
-        setIframeTimedOut(false); clearTimeout(loadTimeoutRef.current);
+        setToast(''); setStreamError(detail ? `CineSrc: ${String(detail).slice(0, 180)}` : 'CineSrc could not load this stream. Try another source.');
+        setIframeTimedOut(false);
       }
       if (data.type === 'cinesrc:close') handleBackRef.current?.();
     };
     window.addEventListener('message', onPlayerMessage);
     return () => window.removeEventListener('message', onPlayerMessage);
-  }, [isSeries, selectedEpisode, watchedEpisodes, selectedServer]);
+  }, [isSeries, selectedEpisode, watchedEpisodes, selectedServer, mediaType]);
 
   useEffect(() => {
     if (isSeries && allEpisodesWatched && currentItem.userStatus === 'watching') {
@@ -3428,7 +3451,7 @@ const saveServerPref = (tmdbId, server) => {
         </div>
       )}
 
-      <div className="watch-provider-bar" aria-label="Streaming source"><span>STREAM SOURCE</span><div>{providerOptions.map(provider => <button key={provider.id} type="button" className={selectedServer===provider.id?'active':''} onClick={()=>{setSelectedServer(provider.id);setStreamError('');setIframeTimedOut(false);setRestartCounter(value=>value+1);}}>{provider.name}{provider.qualityFocus?<small>QUALITY</small>:null}</button>)}</div></div>
+      <div className="watch-provider-bar" aria-label="Streaming source"><span>STREAM SOURCE</span><div>{providerOptions.map(provider => <button key={provider.id} type="button" className={selectedServer===provider.id?'active':''} onClick={()=>{if(provider.id==='cinesrc')autoFallbackAttemptedRef.current=false;setProviderNotice('');setSelectedServer(provider.id);setStreamError('');setIframeTimedOut(false);setRestartCounter(value=>value+1);}}>{provider.name}{provider.qualityFocus?<small>QUALITY</small>:null}</button>)}</div>{providerNotice&&<p className="watch-provider-notice" role="status">{providerNotice}</p>}</div>
       <div className="watch-v2-player-wrap" ref={playerWrapRef}>
         <div className="watch-v2-player">
           {nativePlayer ? (
@@ -3441,7 +3464,7 @@ const saveServerPref = (tmdbId, server) => {
             </div>
           ) : playerUrl ? (
             streamError ? (
-              <div className="watch-stream-fallback" role="alert"><div className="watch-stream-fallback-icon"><ShieldAlert size={25} /></div><h2>Stream unavailable</h2><p>{streamError}</p><div className="watch-stream-fallback-actions"><button type="button" onClick={() => { clearTimeout(loadTimeoutRef.current); setStreamError(''); setToast(''); setIframeTimedOut(false); setRestartCounter(value => value + 1); }}><RotateCcw size={15} /> Try again</button><a href={playerUrl} target="_blank" rel="noopener noreferrer"><ExternalLink size={15} /> Open separately</a></div><div className="watch-stream-fallback-sources"><span>Try another source</span>{providerOptions.filter(provider=>provider.id!==selectedServer).map(provider=><button key={provider.id} type="button" onClick={()=>{setSelectedServer(provider.id);setStreamError('');setIframeTimedOut(false);setRestartCounter(value=>value+1);}}>{provider.name}{provider.qualityFocus?' · quality':''}</button>)}</div></div>
+              <div className="watch-stream-fallback" role="alert"><div className="watch-stream-fallback-icon"><ShieldAlert size={25} /></div><h2>Stream unavailable</h2><p>{streamError}</p><div className="watch-stream-fallback-actions"><button type="button" onClick={() => { clearTimeout(loadTimeoutRef.current); setStreamError(''); setToast(''); setIframeTimedOut(false); setRestartCounter(value => value + 1); }}><RotateCcw size={15} /> Try again</button><a href={playerUrl} target="_blank" rel="noopener noreferrer"><ExternalLink size={15} /> Open separately</a></div><div className="watch-stream-fallback-sources"><span>Try another source</span>{providerOptions.filter(provider=>provider.id!==selectedServer).map(provider=><button key={provider.id} type="button" onClick={()=>{if(provider.id==='cinesrc')autoFallbackAttemptedRef.current=false;setProviderNotice('');setSelectedServer(provider.id);setStreamError('');setIframeTimedOut(false);setRestartCounter(value=>value+1);}}>{provider.name}{provider.qualityFocus?' · quality':''}</button>)}</div></div>
             ) : playerInView ? (
               <iframe ref={iframeRef} key={iframeKey} src={playerUrl} title={`Watch ${currentItem.title}`} frameBorder="0" allowFullScreen allow="autoplay; fullscreen; picture-in-picture; encrypted-media" loading="lazy" onLoad={() => { clearTimeout(loadTimeoutRef.current); setToast(''); setStreamError(''); setIframeTimedOut(false); }} onError={() => { clearTimeout(loadTimeoutRef.current); setStreamError('The embedded player failed to load.'); }} />
             ) : <div className="watch-stream-placeholder" aria-live="polite"><Play size={24} /><span>Player will load when you scroll here</span></div>
