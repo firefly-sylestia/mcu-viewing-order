@@ -2351,6 +2351,8 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, on
   const [searchSheet, setSearchSheet] = useState(false);
   const [detailEpisodes, setDetailEpisodes] = useState([]);
   const [episodesLoading, setEpisodesLoading] = useState(false);
+  const [downloadWarningOpen, setDownloadWarningOpen] = useState(false);
+  const detailDownloadUrl = buildDownloadUrl({ mediaType: item.type === 'series' ? 'tv' : 'movie', tmdbId: item.tmdbId, season: item.season || 1, episode: item.epStart || 1 });
   const grabStartRef = useRef(null);
   useEffect(() => {
     if (item.type !== 'series' || !item.tmdbId) {
@@ -2699,6 +2701,7 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, on
             <div className="detail-actions-row">
               <button className="detail-watch-now" onClick={() => setSearchSheet(true)} aria-label={`Find where to watch ${item.title}`}><Play size={18} /> Watch Now</button>
               <button className="detail-trailer" onClick={showTrailer}><Clapperboard size={18} /> Watch trailer</button>
+              {detailDownloadUrl && <button className="detail-download" onClick={()=>setDownloadWarningOpen(true)}><Download size={17}/> Download</button>}
             </div>
           )}
           <div className="detail-kicker"><span>{universeFullName(item.universe)}</span><span>#{String(item.order || item.id).padStart(2, '0')}</span></div>
@@ -2745,6 +2748,7 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, on
           </div>
       </div>
       </div>
+      {downloadWarningOpen && <div className="watch-download-warning" role="presentation"><section role="dialog" aria-modal="true" aria-label="External download warning"><div className="watch-download-warning-icon"><ShieldAlert size={22}/></div><h2>You're leaving Incursion</h2><p>This download page is operated by an external third party. It is not affiliated with or endorsed by MCU Viewing Order / Incursion and may contain advertisements, pop-ups or misleading buttons. The listed download destination is a legacy external link and availability is not guaranteed.</p><div><button type="button" onClick={()=>setDownloadWarningOpen(false)}>Stay here</button><a href={detailDownloadUrl} target="_blank" rel="noopener noreferrer" onClick={()=>setDownloadWarningOpen(false)}>Continue externally <ExternalLink size={14}/></a></div></section></div>}
       {searchSheet && <SearchLinksDialog
         item={item}
         onClose={() => setSearchSheet(false)}
