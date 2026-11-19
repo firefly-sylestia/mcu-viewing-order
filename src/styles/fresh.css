@@ -18125,3 +18125,13 @@
 }
 
 :root .watch-provider-notice{flex:1 1 100%;margin:0;padding:7px 10px;border-radius:10px;background:color-mix(in srgb,var(--fx-accent) 10%,var(--fx-surface));color:var(--fx-muted-strong);font-size:10px;line-height:1.45}
+
+
+/* Full-screen catalogue mode inside the room creation flow. */
+:root .wt-catalogue-expand{display:grid;place-items:center;flex:0 0 36px;width:36px;height:36px;margin-left:auto;border:1px solid color-mix(in srgb,var(--fx-muted) 18%,transparent);border-radius:11px;background:var(--fx-surface-2);color:var(--fx-text);cursor:pointer}
+:root .wt-create-dialog.is-catalogue-expanded{position:fixed!important;inset:0!important;width:100vw!important;max-width:none!important;height:100dvh!important;min-height:0!important;max-height:none!important;margin:0!important;padding:clamp(16px,2.5vw,32px)!important;border:0!important;border-radius:0!important;overflow-y:auto!important;display:flex!important;flex-direction:column!important}
+:root .wt-create-backdrop:has(.wt-create-dialog.is-catalogue-expanded){position:fixed!important;inset:0!important;padding:0!important;overflow:hidden!important;display:grid!important;place-items:stretch!important}
+:root .wt-create-dialog.is-catalogue-expanded .wt-picker-grid{flex:1 1 auto!important;width:100%!important;max-height:none!important;min-height:260px!important;grid-template-columns:repeat(auto-fill,minmax(142px,1fr))!important;grid-auto-rows:max-content!important;align-content:start!important;overflow-y:auto!important;padding:4px 2px 20px!important}
+:root .wt-create-dialog.is-catalogue-expanded .wt-dialog-selected{flex-shrink:0!important}
+:root .wt-create-dialog.is-catalogue-expanded .wt-catalogue-tabs{position:sticky;top:0;z-index:2;padding:8px 0;background:var(--fx-surface)}
+@media(max-width:760px){:root .wt-create-dialog.is-catalogue-expanded{padding:max(12px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom))!important}:root .wt-create-dialog.is-catalogue-expanded .wt-picker-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;min-height:0!important}}
