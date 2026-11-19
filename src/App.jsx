@@ -3161,7 +3161,7 @@ const saveServerPref = (tmdbId, server) => {
   const [switching, setSwitching] = useState(false);
   const [toast, setToast] = useState('');
   const [contextExpanded, setContextExpanded] = useState(false);
-  const [selectedServer, setSelectedServer] = useState(() => { try { return localStorage.getItem('incursion-stream-provider') || 'cinesrc'; } catch { return 'cinesrc'; } });
+  const [selectedServer, setSelectedServer] = useState(() => { try { return localStorage.getItem('incursion-stream-provider') || (mediaType === 'tv' ? 'vidfast' : 'cinesrc'); } catch { return mediaType === 'tv' ? 'vidfast' : 'cinesrc'; } });
   const [downloadWarningOpen, setDownloadWarningOpen] = useState(false);
   const currentItem = activeItems.find(i => i.id === item.id) || item;
   const isSeries = currentItem.type === 'series' && currentItem.tmdbId;
@@ -3173,7 +3173,7 @@ const saveServerPref = (tmdbId, server) => {
   const downloadUrl = buildDownloadUrl({ mediaType, tmdbId: currentItem.tmdbId || tmdbId, season: selectedSeason, episode: selectedEpisode });
   const providerOptions = useMemo(() => [getProvider('cinesrc'), ...getProviderFallbacks(isSeries ? 'tv' : mediaType).map(getProvider)], [isSeries, mediaType]);
   useEffect(() => { try { localStorage.setItem('incursion-stream-provider', selectedServer); } catch {} }, [selectedServer]);
-  useEffect(() => { autoFallbackAttemptedRef.current = false; setProviderNotice(''); setSelectedServer('cinesrc'); setStreamError(''); setRestartCounter(value => value + 1); }, [currentItem.id]);
+  useEffect(() => { autoFallbackAttemptedRef.current = false; setProviderNotice(''); setSelectedServer(isSeries ? 'vidfast' : 'cinesrc'); setStreamError(''); setIframeTimedOut(false); setRestartCounter(value => value + 1); }, [currentItem.id, isSeries]);
   // Keep the iframe's URL episode separate: CineSrc can navigate episodes internally.
   const [playerEpisode, setPlayerEpisode] = useState(currentItem.epStart || 1);
   const [episodeLoading, setEpisodeLoading] = useState(false);
@@ -3220,7 +3220,7 @@ const saveServerPref = (tmdbId, server) => {
         }
       }
       setToast(''); setStreamError('The player is taking too long to respond. Try another source.'); setIframeTimedOut(true);
-    }, 18000);
+    }, 45000);
     return () => clearTimeout(loadTimeoutRef.current);
   }, [iframeKey, nativePlayer, playerInView, selectedServer, mediaType, isSeries]);
 
@@ -3509,7 +3509,7 @@ const saveServerPref = (tmdbId, server) => {
           {currentItem.userStatus !== 'watched' && <button className="watch-v2-done" onClick={() => { setStatus(currentItem, 'watched'); setToast('Marked as watched'); setTimeout(() => setToast(''), 2000); }}><Check size={16} /> Watched</button>}
         </div>
       </section>
-      {downloadUrl && <section className="watch-download-section"><div><span>EXTERNAL DOWNLOAD</span><strong>Download options open outside Incursion</strong><small>Legacy MoviePire destination. It is separate from the selected streaming source; availability is not guaranteed.</small></div><button type="button" onClick={()=>setDownloadWarningOpen(true)}><Download size={16}/> Download page <ExternalLink size={14}/></button></section>}
+      {downloadUrl && <section className="watch-download-section"><div><span>EXTERNAL DOWNLOAD</span><strong>Download options open outside Incursion</strong><small>Opens VidVault in a separate page. Availability depends on the external provider.</small></div><button type="button" onClick={()=>setDownloadWarningOpen(true)}><Download size={16}/> VidVault download <ExternalLink size={14}/></button></section>}
       {downloadWarningOpen && <div className="watch-download-warning" role="presentation"><section role="dialog" aria-modal="true" aria-label="External download warning"><div className="watch-download-warning-icon"><ShieldAlert size={22}/></div><h2>You're leaving Incursion</h2><p>This page is operated by an external third party. It is not affiliated with or endorsed by MCU Viewing Order / Incursion and may contain advertisements, pop-ups or misleading buttons. Continue only if you trust the destination.</p><div><button type="button" onClick={()=>setDownloadWarningOpen(false)}>Stay here</button><a href={downloadUrl} target="_blank" rel="noopener noreferrer" onClick={()=>setDownloadWarningOpen(false)}>Continue externally <ExternalLink size={14}/></a></div></section></div>}
 
       {isSeries && (
