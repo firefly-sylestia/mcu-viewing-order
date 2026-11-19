@@ -19,6 +19,12 @@ export default async function handler(req, res) {
     requests.push(['mixed', `${base}/trending/all/week`]);
   } else if (category === 'movies' || category === 'tv') {
     requests.push([category === 'tv' ? 'tv' : 'movie', `${base}/${category === 'tv' ? 'tv' : 'movie'}/popular`]);
+  } else if (category === 'now-playing' || category === 'upcoming') {
+    requests.push(['movie', `${base}/movie/${category === 'now-playing' ? 'now_playing' : 'upcoming'}`]);
+  } else if (category === 'on-air' || category === 'airing-today') {
+    requests.push(['tv', `${base}/tv/${category === 'on-air' ? 'on_the_air' : 'airing_today'}`]);
+  } else if (category === 'top-rated') {
+    requests.push(['movie', `${base}/movie/top_rated`], ['tv', `${base}/tv/top_rated`]);
   } else if (category === 'marvel' || category === 'dc') {
     const company = COMPANY_FILTERS[category];
     requests.push(['movie', `${base}/discover/movie`, { ...common, with_companies: company.with_companies, sort_by: 'popularity.desc' }]);
