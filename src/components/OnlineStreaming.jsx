@@ -6,6 +6,11 @@ const CATEGORIES = [
   { id: 'trending', label: 'Trending' },
   { id: 'movies', label: 'Movies' },
   { id: 'tv', label: 'TV shows' },
+  { id: 'now-playing', label: 'Now playing' },
+  { id: 'upcoming', label: 'Upcoming' },
+  { id: 'on-air', label: 'On the air' },
+  { id: 'airing-today', label: 'Airing today' },
+  { id: 'top-rated', label: 'Top rated' },
   { id: 'marvel', label: 'Marvel' },
   { id: 'dc', label: 'DC' },
 ];
