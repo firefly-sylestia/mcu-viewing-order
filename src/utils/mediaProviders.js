@@ -24,7 +24,12 @@ export const buildPlayerUrl = ({ provider = 'cinesrc', mediaType = 'movie', tmdb
       ? new URL(`https://vidfast.vc/tv/${id}/${sn}/${ep}`)
       : new URL(`https://vidfast.vc/movie/${id}`);
     url.searchParams.set('autoPlay', 'true');
+    if (title) url.searchParams.set('title', String(title));
     if (startAt > 5) url.searchParams.set('startAt', String(startAt));
+    if (type === 'tv') {
+      url.searchParams.set('autoNext', 'true');
+      url.searchParams.set('nextButton', 'true');
+    }
     return url.toString();
   }
   if (provider === 'vidsrc') {
