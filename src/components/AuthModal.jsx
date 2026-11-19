@@ -38,7 +38,7 @@ export default function AuthModal({ onClose, onLogin, onSignup, onResetPassword,
         } else onClose();
       }
     } catch (err) {
-      setError((err?.message || 'Something went wrong. Please try again.').replace(/^AuthApiError:\s*/i, '').replace(/^Error:\s*/i, ''));
+      setError((err?.message || 'Something went wrong. Please try again.').replace(/^AuthApiError:\\s*/i, '').replace(/^Error:\\s*/i, ''));
     } finally { setBusy(false); }
   };
 
@@ -53,7 +53,7 @@ export default function AuthModal({ onClose, onLogin, onSignup, onResetPassword,
           <div className="auth-icon">{mode === 'signup' ? <UserPlus size={32} /> : mode === 'update' || mode === 'forgot' ? <KeyRound size={32} /> : <LogIn size={32} />}</div>
           <h2>{title}</h2><p>{description}</p>
         </div>
-        {(mode === 'login' || mode === 'signup') && <details className="auth-email-note"><summary>Using an alternate email?</summary><p>You can use one, but make sure you can access it for account confirmation and password resets.</p></details>}
+        {(mode === 'login' || mode === 'signup') && <details className="auth-email-note"><summary>Using a fake email?</summary><p>A fake email won’t receive confirmation or password-reset messages. Make sure you remember your password, because you may not be able to recover your account if you forget it.</p></details>}
         {confirmationSent ? <div className="auth-confirmation" role="status"><div className="auth-confirmation-mark">✓</div><h3>Check your inbox</h3><p>We sent a confirmation link to <strong>{email}</strong>.</p><button type="button" className="auth-submit" onClick={() => { setConfirmationSent(false); setMode('login'); setSuccess('Email confirmed? Sign in to continue.'); }}>Back to sign in</button></div> : <form onSubmit={submit} className="auth-form">
           {mode === 'signup' && <label><span>Display name</span><input type="text" value={displayName} onChange={(event) => setDisplayName(event.target.value)} placeholder="How should people see you?" required maxLength={32} autoComplete="nickname" /></label>}
           {mode !== 'update' && <label><span>Email</span><input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" required autoComplete="email" autoFocus /></label>}
