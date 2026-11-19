@@ -14,7 +14,10 @@ export default function OnlineStreaming({ onBack, onPlay }) {
   const [category, setCategory] = useState('trending');
   const [page, setPage] = useState(1);
   const [items, setItems] = useState([]);
+  const [searchResults, setSearchResults] = useState([]);
   const [query, setQuery] = useState('');
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [refreshToken, setRefreshToken] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -28,12 +31,11 @@ export default function OnlineStreaming({ onBack, onPlay }) {
       .catch(reason => { if (!cancelled) { setItems([]); setError(reason.message || 'Could not load titles.'); } })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [category, page]);
+  }, [category, page, refreshToken]);
 
-  const visible = useMemo(() => {
-    const term = query.trim().toLowerCase();
-    return term ? items.filter(item => item.title?.toLowerCase().includes(term) || item.year?.includes(term)) : items;
-  }, [items, query]);
+  useEffect(() => { const term=query.trim(); if(term.length<2){setSearchResults([]);setSearchLoading(false);return undefined;} let active=true; const timer=window.setTimeout(()=>{setSearchLoading(true);fetch(apiUrl('/api/tmdb/search?q='+encodeURIComponent(term))).then(response=>response.ok?response.json():Promise.reject(new Error('Search unavailable'))).then(data=>{if(active)setSearchResults(data.results||[]);}).catch(()=>{if(active)setSearchResults([]);}).finally(()=>{if(active)setSearchLoading(false);});},280); return()=>{active=false;window.clearTimeout(timer);}; },[query]);
+
+  const visible = useMemo(() => query.trim().length>=2 ? searchResults : items, [items, query, searchResults]);
 
   const heading = CATEGORIES.find(entry => entry.id === category)?.label || 'Trending';
   return <main className="online-catalogue">
@@ -48,8 +50,8 @@ export default function OnlineStreaming({ onBack, onPlay }) {
       </div>
     </div>
     <section className="online-catalogue-section">
-      <div className="online-section-title"><div><span>THE COLLECTION</span><h2>{heading}</h2></div><small>{loading?'Loading…':`${visible.length} titles`}</small></div>
-      {loading ? <div className="online-loading"><span/>Curating your catalogue…</div> : error ? <div className="online-empty"><Clapperboard size={24}/><p>{error}</p><button onClick={()=>setCategory(value=>value)}>Try again</button></div> : visible.length ? <div className="online-grid">
+      <div className="online-section-title"><div><span>THE COLLECTION</span><h2>{heading}</h2></div><small>{loading||searchLoading?'Loading…':`${visible.length} titles`}</small></div>
+      {loading||searchLoading ? <div className="online-loading"><span/>Curating your catalogue…</div> : error ? <div className="online-empty"><Clapperboard size={24}/><p>{error}</p><button onClick={()=>{setItems([]);setPage(1);setRefreshToken(value=>value+1);}}>Try again</button></div> : visible.length ? <div className="online-grid">
         {visible.map(item=><article className="online-title" key={`${item.type}-${item.id}`}>
           <button type="button" className="online-poster" onClick={()=>onPlay(item)} aria-label={`Watch ${item.title}`}>
             {item.poster?<img src={item.poster} alt="" loading="lazy"/>:<span><Film size={24}/></span>}
@@ -58,7 +60,7 @@ export default function OnlineStreaming({ onBack, onPlay }) {
           <div className="online-title-copy"><strong>{item.title}</strong><span>{item.year || 'Date TBA'} · {item.type==='tv'?'Series':'Movie'}</span><small>{item.rating?<><Star size={11} fill="currentColor"/> {item.rating}</>:'Rating unavailable'}</small></div>
         </article>)}
       </div> : <div className="online-empty"><Tv size={24}/><p>No titles match that search.</p></div>}
-      {!query.trim() && visible.length>0 && <button type="button" className="online-load-more" disabled={loading||page>=20} onClick={()=>setPage(value=>Math.min(20,value+1))}>{loading?'Loading…':page>=20?'End of catalogue':'Load more titles'}</button>}
+      {query.trim().length<2 && visible.length>0 && <button type="button" className="online-load-more" disabled={loading||page>=20} onClick={()=>setPage(value=>Math.min(20,value+1))}>{loading?'Loading…':page>=20?'End of catalogue':'Load more titles'}</button>}
     </section>
     <p className="online-attribution">Catalogue metadata and artwork provided by TMDB. Incursion is not endorsed or certified by TMDB.</p>
   </main>;
