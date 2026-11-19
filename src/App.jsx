@@ -3213,7 +3213,7 @@ const saveServerPref = (tmdbId, server) => {
   const downloadUrl = buildDownloadUrl({ mediaType, tmdbId: currentItem.tmdbId || tmdbId, season: selectedSeason, episode: selectedEpisode });
   const providerOptions = useMemo(() => [getProvider('cinesrc'), ...getProviderFallbacks(isSeries ? 'tv' : mediaType).map(getProvider)], [isSeries, mediaType]);
   useEffect(() => { try { localStorage.setItem('incursion-stream-provider', selectedServer); } catch {} }, [selectedServer]);
-  useEffect(() => { autoFallbackAttemptedRef.current = false; fallbackProviderIndexRef.current = 0; setProviderNotice(''); setSelectedServer(isSeries ? 'vidfast' : 'cinesrc'); setStreamError(''); setIframeTimedOut(false); setRestartCounter(value => value + 1); }, [currentItem.id, isSeries]);
+  useEffect(() => { autoFallbackAttemptedRef.current = false; fallbackProviderIndexRef.current = 0; setProviderNotice(''); setSelectedServer(isSeries ? 'vidfast' : 'cinesrc'); setStreamError(''); setIframeTimedOut(false); setRestartCounter(value => value + 1); initProgressRef.current = Math.floor((currentItem.watchedDuration || 0) / 1000); }, [currentItem.id, isSeries]);
   // Keep the iframe's URL episode separate: CineSrc can navigate episodes internally.
   const [playerEpisode, setPlayerEpisode] = useState(currentItem.epStart || 1);
   const [episodeLoading, setEpisodeLoading] = useState(false);
@@ -3333,8 +3333,10 @@ const saveServerPref = (tmdbId, server) => {
     provider: selectedServer, mediaType: isSeries ? 'tv' : mediaType,
     tmdbId: currentItem.tmdbId || tmdbId, title: currentItem.title,
     season: selectedSeason, episode: playerEpisode, accent: currentItem.accent, poster: currentItem.poster,
-    progressSeconds: Math.floor((currentItem.watchedDuration || 0) / 1000),
-  }), [selectedServer, currentItem.tmdbId, currentItem.title, currentItem.type, currentItem.accent, currentItem.poster, currentItem.watchedDuration, selectedSeason, playerEpisode, mediaType, tmdbId, isSeries]);
+    // Resume position is a mount-time snapshot. Live progress updates must never
+    // mutate the iframe URL, or the browser reloads the player every few seconds.
+    progressSeconds: initProgressRef.current,
+  }), [selectedServer, currentItem.tmdbId, currentItem.title, currentItem.type, currentItem.accent, currentItem.poster, selectedSeason, playerEpisode, mediaType, tmdbId, isSeries]);
   const roadmapInfo = useMemo(() => getRoadmap(currentItem, activeItems), [activeItems, currentItem]);
 
   const currentOrder = currentItem.order || currentItem.id;
