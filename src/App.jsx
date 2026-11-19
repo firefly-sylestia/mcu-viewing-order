@@ -3466,7 +3466,21 @@ const saveServerPref = (tmdbId, server) => {
             streamError ? (
               <div className="watch-stream-fallback" role="alert"><div className="watch-stream-fallback-icon"><ShieldAlert size={25} /></div><h2>Stream unavailable</h2><p>{streamError}</p><div className="watch-stream-fallback-actions"><button type="button" onClick={() => { clearTimeout(loadTimeoutRef.current); setStreamError(''); setToast(''); setIframeTimedOut(false); setRestartCounter(value => value + 1); }}><RotateCcw size={15} /> Try again</button><a href={playerUrl} target="_blank" rel="noopener noreferrer"><ExternalLink size={15} /> Open separately</a></div><div className="watch-stream-fallback-sources"><span>Try another source</span>{providerOptions.filter(provider=>provider.id!==selectedServer).map(provider=><button key={provider.id} type="button" onClick={()=>{if(provider.id==='cinesrc')autoFallbackAttemptedRef.current=false;setProviderNotice('');setSelectedServer(provider.id);setStreamError('');setIframeTimedOut(false);setRestartCounter(value=>value+1);}}>{provider.name}{provider.qualityLabel?` · ${provider.qualityLabel}`:''}</button>)}</div></div>
             ) : playerInView ? (
-              <iframe ref={iframeRef} key={iframeKey} src={playerUrl} title={`Watch ${currentItem.title}`} frameBorder="0" allowFullScreen allow="autoplay; fullscreen; picture-in-picture; encrypted-media" loading="lazy" onLoad={() => { clearTimeout(loadTimeoutRef.current); setToast(''); setStreamError(''); setIframeTimedOut(false); }} onError={() => { clearTimeout(loadTimeoutRef.current); setStreamError('The embedded player failed to load.'); }} />
+              <iframe ref={iframeRef} key={iframeKey} src={playerUrl} title={`Watch ${currentItem.title}`} frameBorder="0" allowFullScreen allow="autoplay; fullscreen; picture-in-picture; encrypted-media" loading="lazy" onLoad={() => { clearTimeout(loadTimeoutRef.current); setToast(''); setStreamError(''); setIframeTimedOut(false); }} onError={() => {
+                clearTimeout(loadTimeoutRef.current);
+                if (selectedServer === 'cinesrc' && !autoFallbackAttemptedRef.current) {
+                  const fallbackId = getProviderFallbacks(mediaType)[0];
+                  if (fallbackId) {
+                    autoFallbackAttemptedRef.current = true;
+                    setProviderNotice(`CineSrc failed to load. Trying ${getProvider(fallbackId).name} instead.`);
+                    setSelectedServer(fallbackId);
+                    setStreamError('');
+                    setIframeTimedOut(false);
+                    return;
+                  }
+                }
+                setStreamError(`The ${getProvider(selectedServer).name} player failed to load. Try another source.`);
+              }} />
             ) : <div className="watch-stream-placeholder" aria-live="polite"><Play size={24} /><span>Player will load when you scroll here</span></div>
           ) : <div className="watch-native-launch"><h2>Player unavailable</h2><p>This title has no TMDB ID yet.</p></div>}
         </div>
