@@ -199,6 +199,8 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const [theatreChatOpen, setTheatreChatOpen] = useState(false);
   const [theatrePreviewsEnabled, setTheatrePreviewsEnabled] = useState(true);
   const [theatreToast, setTheatreToast] = useState(null);
+  const [roomToast, setRoomToast] = useState('');
+  const roomHandoffRef = useRef(false);
   const [networkState, setNetworkState] = useState(typeof navigator !== 'undefined' && navigator.onLine ? 'online' : 'offline');
   const [networkLatency, setNetworkLatency] = useState(null);
   const [pendingEpisode, setPendingEpisode] = useState(null);
@@ -278,6 +280,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   const [chatCollapsed, setChatCollapsed] = useState(false);
   const theatreSeenMessageIdRef = useRef(0);
   useEffect(() => { if (!theatreToast) return undefined; const timer=window.setTimeout(()=>setTheatreToast(null),5200); return ()=>window.clearTimeout(timer); }, [theatreToast]);
+  useEffect(() => { if (!roomToast) return undefined; const timer=window.setTimeout(()=>setRoomToast(''),5200); return ()=>window.clearTimeout(timer); }, [roomToast]);
   useEffect(() => {
     if (!theatreMode && !isLocalFullscreen) { setTheatreChatOpen(false); setTheatreToast(null); return; }
     if (!theatreMode || !messages.length) return;
@@ -605,67 +608,6 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
   }, []);
 
 
-  const createPersonalRoom = useCallback(async () => {
-    const sourceRoom = roomRef.current;
-    const sourceParticipant = participantRef.current;
-    if (!sourceRoom?.media || !sourceParticipant?.token || busy) return false;
-    setBusy(true);
-    setError('');
-    const position = Math.max(0, Number(currentTimeRef.current) || 0);
-    const isPaused = Boolean(pausedRef.current);
-    try {
-      const code = roomCode();
-      const media = { ...sourceRoom.media };
-      const snapshot = await rpc('create_watch_room', {
-        p_code: code,
-        p_token: guest.token,
-        p_name: guest.name,
-        p_avatar: guest.avatar,
-        p_media: media,
-      });
-      if (!snapshot?.room || !snapshot?.participant) throw new Error('The private room could not be created. Please try again.');
-      if (!sourceParticipant.is_host && sourceRoom.code !== code) {
-        await rpc('leave_watch_room', { p_code: sourceRoom.code, p_token: sourceParticipant.token }).catch(() => {});
-      }
-      const playback = {
-        position,
-        paused: isPaused,
-        season: Number(media.season || season),
-        episode: Number(media.episode || episode),
-        updated_at: new Date().toISOString(),
-      };
-      setSoloMode(false);
-      setRoomDeleted(false);
-      setStandaloneLocal(false);
-      setLocalPlaybackOverride(true);
-      localPlaybackOverrideRef.current = true;
-      setParticipant(snapshot.participant);
-      applyRoomSnapshot(snapshot);
-      setRoom(previous => previous ? { ...previous, playback } : previous);
-      setCurrentTime(position); currentTimeRef.current = position;
-      setPaused(isPaused); pausedRef.current = isPaused;
-      lastVersionRef.current = Number(snapshot.room.state_version || 0);
-      try {
-        const result = await rpc('set_watch_room_playback', { p_code: code, p_token: guest.token, p_playback: playback });
-        if (result?.state_version) lastVersionRef.current = Math.max(lastVersionRef.current, Number(result.state_version));
-      } catch (playbackError) {
-        setError('Your private room is ready, but its starting position could not be synced. You can continue watching here.');
-      }
-      setLocalPlaybackOverride(false);
-      localPlaybackOverrideRef.current = false;
-      saveActiveRoom(code, guest, media);
-      setRoomLink(window.location.origin + '/watch-room/' + code);
-      setCopied(false);
-      loadOwnedRooms().catch(() => {});
-      setShowPlaybackNotice(false);
-      return true;
-    } catch (e) {
-      setError(e.message || 'Could not create your private room.');
-      return false;
-    } finally {
-      setBusy(false);
-    }
-  }, [room, participant, busy, rpc, guest, season, episode, applyRoomSnapshot, loadOwnedRooms]);
   const createRoom = useCallback(async () => {
     const localRoom = roomType === 'local';
     if (localRoom && (!localFile || !localFileFingerprint)) { setError('Choose a video file first.'); return false; }
@@ -736,16 +678,39 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
       applyRoomSnapshot(result);
     } catch (e) {
       if (/expired|closed|not found|not a member/i.test(e.message || '')) {
-        const enoughProgress = durationRef.current > 0 && currentTimeRef.current / durationRef.current >= 0.10;
-        if (enoughProgress || activeRoom.media?.kind === 'local_file') {
-          setSoloMode(true); setRoomDeleted(true); setLocalPlaybackOverride(true); localPlaybackOverrideRef.current = true;
-          setError('The room ended. Your player is still open, so you can continue watching on your own.');
-        } else setError('This room has ended or expired.');
-        window.clearInterval(pollRef.current);
-        window.clearInterval(heartbeatRef.current);
+        if (roomHandoffRef.current || !activeRoom.media) return;
+        roomHandoffRef.current = true;
+        const position = Math.max(0, Number(currentTimeRef.current) || 0);
+        const isPaused = Boolean(pausedRef.current);
+        try {
+          const code = roomCode();
+          const snapshot = await rpc('create_watch_room', {
+            p_code: code, p_token: activeParticipant.token,
+            p_name: guest.name, p_avatar: guest.avatar, p_media: { ...activeRoom.media },
+          });
+          if (!snapshot?.room || !snapshot?.participant) throw new Error('Could not create your personal room.');
+          const playback = { position, paused: isPaused, season: Number(activeRoom.media.season || season), episode: Number(activeRoom.media.episode || episode), updated_at: new Date().toISOString() };
+          applyRoomSnapshot(snapshot);
+          setRoom(previous => previous ? { ...previous, playback } : previous);
+          setCurrentTime(position); currentTimeRef.current = position;
+          setPaused(isPaused); pausedRef.current = isPaused;
+          await rpc('set_watch_room_playback', { p_code: code, p_token: activeParticipant.token, p_playback: playback });
+          saveActiveRoom(code, guest, activeRoom.media);
+          setRoomLink(window.location.origin + '/watch-room/' + code);
+          setRoomDeleted(false); setSoloMode(false);
+          setLocalPlaybackOverride(false); localPlaybackOverrideRef.current = false;
+          setRoomToast('The host has left. You’re now watching in your own room.');
+          loadOwnedRooms().catch(() => {});
+        } catch (handoffError) {
+          setSoloMode(true); setRoomDeleted(true);
+          setLocalPlaybackOverride(true); localPlaybackOverrideRef.current = true;
+          setRoomToast('The host has left. Your player will continue independently.');
+          setError(handoffError.message || 'Could not create your personal room. You can keep watching independently.');
+          window.clearInterval(pollRef.current); window.clearInterval(heartbeatRef.current);
+        }
       }
     } finally { pollInFlightRef.current = false; }
-  }, [rpc, applyRoomSnapshot]);
+  }, [rpc, applyRoomSnapshot, guest, season, episode, loadOwnedRooms]);
 
   const changeRoomMedia = useCallback(async () => {
     if (!room || !participant?.is_host || busy) return false;
@@ -1196,6 +1161,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     }
     try { const saved = JSON.parse(localStorage.getItem(ACTIVE_ROOM_KEY) || 'null'); if (saved?.code === r?.code) localStorage.removeItem(ACTIVE_ROOM_KEY); } catch {}
     window.clearInterval(pollRef.current); window.clearInterval(playbackPollRef.current); window.clearInterval(heartbeatRef.current);
+    roomHandoffRef.current = false;
     setRoom(null); setParticipant(null); setMembers([]); setMessages([]); setRequests([]); setPlayerReady(false); lastVersionRef.current = 0; setLocalPlaybackOverride(false);localPlaybackOverrideRef.current=false;setCanReturnLocal(false);setSoloMode(false);setRoomDeleted(false);setOpen(false);setSetupDialog(false);
     const url = new URL(window.location.href); url.searchParams.delete('room'); window.history.replaceState({}, '', url.toString());
     onClose?.();
@@ -1327,7 +1293,8 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                    currentTimeRef.current = 0;
                  }
                }}/>}
-    {(open || room) && <section className={`wt-page${room ? ' wt-room-active' : ''}${theatreMode ? ' wt-theatre-mode' : ''}${!open ? ' wt-minimized' : ''}${soloMode ? ' wt-solo-mode' : ''}${standaloneLocal ? ' wt-solo-local' : ''}`} aria-label="Watch Party">
+    {roomToast && <div className="wt-room-toast" role="status">{roomToast}</div>}
+     {(open || room) && <section className={`wt-page${room ? ' wt-room-active' : ''}${theatreMode ? ' wt-theatre-mode' : ''}${!open ? ' wt-minimized' : ''}${soloMode ? ' wt-solo-mode' : ''}${standaloneLocal ? ' wt-solo-local' : ''}`} aria-label="Watch Party">
           {room && !theatreMode && <button type="button" className="wt-page-back" onClick={()=>setConfirmAction({type:'leave'})} aria-label="Leave room"><ArrowLeft size={17}/><span>Leave</span></button>}
           {!room ? <div className={`wt-entry wt-connect-page${publicRoomsView ? " wt-public-directory-open" : ""}`}>
             <div className="wt-entry-art wt-connect-hero"><div><span>PRIVATE SCREENING ROOM</span><h2>Host a Watch Party.</h2><p>Join your friends with a room code, or create a party and invite everyone with a private link.</p></div></div>
@@ -1362,7 +1329,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
             </section>}
           </div> : <div className="wt-content">
             <div className="wt-main">
-              <div className="wt-room-title"><div><span>{soloMode ? 'PERSONAL PLAYBACK' : 'NOW SCREENING'}</span><h2>{room.media?.title || itemMedia.title}</h2><small>{soloMode ? (standaloneLocal ? 'Local player · No room or account needed' : roomDeleted ? 'Room ended · Continue watching on your own' : 'Independent playback · Chat and sync are off') : `${members.length} / 29 online · ${participant.is_host ? 'Host' : (participant.role || 'viewer').replace(/^./, c => c.toUpperCase())}`}</small>{duration>0&&currentTime/duration>=0.10&&<div className="wt-title-progress"><span>YOUR SAVED PROGRESS</span><strong>Continue from {timeText(currentTime)} · {Math.round(currentTime/duration*100)}% watched</strong><i><b style={{width:progressPercent+'%'}}/></i></div>}</div><div className="wt-room-actions">{!soloMode ? <><button type="button" className="wt-copy" onClick={createPersonalRoom} disabled={busy}><MonitorPlay size={14}/> {busy ? 'Creating…' : 'Watch on my own · Private room'}</button>{localPlaybackOverride && <button type="button" className="wt-copy wt-solo-return" onClick={syncToRoom} disabled={!playerReady}><Users size={14}/> Watch with room</button>}</> : standaloneLocal||roomDeleted ? <button type="button" className="wt-copy wt-solo-return" onClick={()=>{localVideoRef.current?.pause();setRoom(null);setParticipant(null);setSoloMode(false);setRoomDeleted(false);setStandaloneLocal(false);setLocalPlaybackOverride(false);localPlaybackOverrideRef.current=false;setPlayerReady(false);playerReadyRef.current=false;setCurrentTime(0);currentTimeRef.current=0;setDuration(0);durationRef.current=0;setLocalVideoUrl(previous=>{if(previous)URL.revokeObjectURL(previous);return '';});setOpen(true);}}><X size={14}/> Close player</button> : <button type="button" className="wt-copy wt-solo-return" onClick={()=>{localVideoRef.current?.pause();setRoom(null);setParticipant(null);setSoloMode(false);setRoomDeleted(false);setStandaloneLocal(false);setLocalPlaybackOverride(false);localPlaybackOverrideRef.current=false;setOpen(false);}}><X size={14}/> Close private room</button>}{guest.isGuest&&<button type="button" className="wt-copy" onClick={()=>setEditingGuestName(value=>!value)}><Pencil size={14}/> Name</button>}{participant.is_host&&<button type="button" className="wt-copy" onClick={()=>{localSelectionBeforeChangeRef.current={file:localFile,fingerprint:localFileFingerprint};setIsChangingMedia(true);setRoomType(room.media?.kind==='local_file'?'local':'movie');if(room.media?.kind!=='local_file')setSelectedMedia({title:room.media?.title||'',tmdbId:room.media?.tmdbId,mediaType:room.media?.mediaType||'movie',type:room.media?.mediaType==='tv'?'series':'film',poster:room.media?.poster||'',year:room.media?.year||''});setError('');setMediaQuery('');setMediaSelectorExpanded(true);setSetupDialog(true);}}><ArrowRightLeft size={14}/> Change media</button>}{participant.is_host&&<button type="button" className="wt-copy" onClick={()=>setHostPanelOpen(true)}><Settings2 size={14}/> Host controls</button>}<button type="button" className="wt-copy wt-end-room" onClick={()=>setConfirmAction({type:participant.is_host?'close':'leave'})}><LogOut size={14}/>{participant.is_host?'End room':'Leave room'}</button><button className="wt-copy" onClick={copyLink}>{copied ? <Check size={15}/> : <Copy size={15}/ >}{copied ? 'Copied' : 'Invite'}</button></div></div>
+              <div className="wt-room-title"><div><span>{soloMode ? 'PERSONAL PLAYBACK' : 'NOW SCREENING'}</span><h2>{room.media?.title || itemMedia.title}</h2><small>{soloMode ? (standaloneLocal ? 'Local player · No room or account needed' : roomDeleted ? 'Room ended · Continue watching on your own' : 'Independent playback · Chat and sync are off') : `${members.length} / 29 online · ${participant.is_host ? 'Host' : (participant.role || 'viewer').replace(/^./, c => c.toUpperCase())}`}</small>{duration>0&&currentTime/duration>=0.10&&<div className="wt-title-progress"><span>YOUR SAVED PROGRESS</span><strong>Continue from {timeText(currentTime)} · {Math.round(currentTime/duration*100)}% watched</strong><i><b style={{width:progressPercent+'%'}}/></i></div>}</div><div className="wt-room-actions">{soloMode ? <button type="button" className="wt-copy wt-solo-return" onClick={()=>{localVideoRef.current?.pause();setRoom(null);setParticipant(null);setSoloMode(false);setRoomDeleted(false);setStandaloneLocal(false);setLocalPlaybackOverride(false);localPlaybackOverrideRef.current=false;setPlayerReady(false);playerReadyRef.current=false;setCurrentTime(0);currentTimeRef.current=0;setDuration(0);durationRef.current=0;setLocalVideoUrl(previous=>{if(previous)URL.revokeObjectURL(previous);return '';});setOpen(true);}}><X size={14}/> Close player</button> : null}}{guest.isGuest&&<button type="button" className="wt-copy" onClick={()=>setEditingGuestName(value=>!value)}><Pencil size={14}/> Name</button>}{participant.is_host&&<button type="button" className="wt-copy" onClick={()=>{localSelectionBeforeChangeRef.current={file:localFile,fingerprint:localFileFingerprint};setIsChangingMedia(true);setRoomType(room.media?.kind==='local_file'?'local':'movie');if(room.media?.kind!=='local_file')setSelectedMedia({title:room.media?.title||'',tmdbId:room.media?.tmdbId,mediaType:room.media?.mediaType||'movie',type:room.media?.mediaType==='tv'?'series':'film',poster:room.media?.poster||'',year:room.media?.year||''});setError('');setMediaQuery('');setMediaSelectorExpanded(true);setSetupDialog(true);}}><ArrowRightLeft size={14}/> Change media</button>}{participant.is_host&&<button type="button" className="wt-copy" onClick={()=>setHostPanelOpen(true)}><Settings2 size={14}/> Host controls</button>}<button type="button" className="wt-copy wt-end-room" onClick={()=>setConfirmAction({type:participant.is_host?'close':'leave'})}><LogOut size={14}/>{participant.is_host?'End room':'Leave room'}</button><button className="wt-copy" onClick={copyLink}>{copied ? <Check size={15}/> : <Copy size={15}/ >}{copied ? 'Copied' : 'Invite'}</button></div></div>
               {guest.isGuest&&editingGuestName&&<form className="wt-guest-name-form wt-room-rename" onSubmit={event=>{event.preventDefault();updateGuestName(guestNameDraft);}}><input value={guestNameDraft} onChange={event=>setGuestNameDraft(event.target.value)} maxLength={32} aria-label="Guest name"/><button type="submit" disabled={busy||!guestNameDraft.trim()}>Save name</button></form>}
               {showPlaybackNotice && <div className="wt-playback-tip" role="status"><span><strong>Playback tip</strong> If autoplay is blocked, tap Play once. A reputable ad blocker can help reduce pop-ups and redirects.</span><button type="button" onClick={() => setShowPlaybackNotice(false)} aria-label="Dismiss playback tip"><X size={15}/></button></div>}
               <div className="wt-room-tools" aria-label="Room tools"><span className={`wt-network ${networkState}`} title={networkState==='online'?'Room connection is active':networkState==='offline'?'You are offline':'Trying to reconnect'}><i/><span>{networkState==='online'?'Connected':networkState==='offline'?'Offline':'Reconnecting'}</span>{networkLatency!=null&&networkState==='online'&&<small>{networkLatency} ms</small>}</span><div className="wt-room-tool-actions"><button type="button" onClick={()=>refreshRoom()} title="Reconnect to room" aria-label="Reconnect to room"><RefreshCw size={16}/></button><button type="button" onClick={copyTimestamp} title="Copy current timestamp" aria-label="Copy current timestamp"><Clock3 size={16}/></button><button type="button" onClick={()=>setTheatreMode(v=>!v)} title={theatreMode?'Exit theatre mode':'Theatre mode'} aria-label={theatreMode?'Exit theatre mode':'Theatre mode'}><Theater size={16}/></button><button type="button" className="wt-theatre-chat-launch" onClick={()=>{setChatCollapsed(false);setTheatreChatOpen(value=>!value);}} title="Open room chat" aria-label="Open room chat"><MessageCircle size={16}/></button><button type="button" onClick={()=>setQrDialogOpen(true)} title="Show room QR code" aria-label="Show room QR code"><QrCode size={16}/></button></div></div>
@@ -1560,8 +1527,6 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
                 </> : <iframe ref={iframeRef} src={sharedPlayerUrl} title={"Watch Party: " + (room.media?.title || itemMedia.title)} allow="autoplay; fullscreen; encrypted-media" allowFullScreen disablePictureInPicture/>}
                 {(localPlaybackOverride || canReturnLocal) && !syncNoticeDismissed && <div className="wt-sync-floating" role="status">
                   <span className="wt-sync-indicator"><i/>{localPlaybackOverride?'Playing independently':'Room playback'}</span>
-                  {localPlaybackOverride&&<button type="button" onClick={syncToRoom} disabled={!playerReady} title="Jump back to the room’s current position"><Radio size={14}/> Sync with room</button>}
-                  {canReturnLocal&&<button type="button" onClick={returnToLocalPosition} disabled={!playerReady} title="Return to your saved playback position">Return to my spot</button>}
                   <button type="button" className="wt-sync-dismiss" onClick={()=>setSyncNoticeDismissed(true)} aria-label="Dismiss playback sync notice" title="Dismiss"><X size={15}/></button>
                 </div>}
               </div>
@@ -1612,7 +1577,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
             </div>,document.body
           )}
                     {participantsOpen && room && typeof document !== 'undefined' && createPortal(<div className="wt-create-backdrop wt-participants-backdrop" role="presentation" onMouseDown={event=>{if(event.target===event.currentTarget)setParticipantsOpen(false);}}><section className="wt-create-dialog wt-participants-dialog" role="dialog" aria-modal="true" aria-label="Watch Party participants"><header><div><span>IN THIS PARTY</span><h2>Participants <small>{members.length} / 29</small></h2><p>People currently active in this room.</p></div><button type="button" onClick={()=>setParticipantsOpen(false)} aria-label="Close participants"><X size={18}/></button></header><div className="wt-participant-list">{members.map(member=><article key={member.id}><img src={member.avatar_url||blobatar(member.display_name)} alt=""/><span><b>{member.display_name}{member.id===participant?.id?' (You)':''}</b><small>{member.is_host||member.role==='host'?'Host':member.role==='operator'?'Operator':'Viewer'}</small></span>{member.is_host||member.role==='host'?<Crown size={15}/>:member.role==='operator'?<ShieldCheck size={15}/>:participant?.is_host?<div className="wt-participant-actions"><button type="button" disabled={busy} onClick={()=>grantOperator(member)} title="Make operator"><ShieldCheck size={15}/></button><button type="button" disabled={busy} onClick={()=>setConfirmAction({type:'remove',member})} title="Remove participant"><UserMinus size={15}/></button><button type="button" disabled={busy} onClick={()=>setConfirmAction({type:'transfer',member})} title="Transfer host"><ArrowRightLeft size={15}/></button></div>:null}</article>)}</div><footer><span>{Math.max(0,29-members.length)} spots available</span><button type="button" onClick={()=>setParticipantsOpen(false)}>Done</button></footer></section></div>,document.body)}
-{hostPanelOpen && typeof document !== 'undefined' && createPortal(<div className="wt-create-backdrop" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)setHostPanelOpen(false);}}><section className="wt-create-dialog wt-host-panel" role="dialog" aria-modal="true" aria-label="Host control panel"><header><div><span>ROOM MANAGEMENT</span><h2>Host control panel</h2><p>Manage access, permissions and your screening.</p></div><button type="button" onClick={()=>setHostPanelOpen(false)} aria-label="Close"><X size={18}/></button></header><div className="wt-host-settings"><label><span><b>Lock room</b><small>Only current participants can stay. New joins are blocked.</small></span><input type="checkbox" checked={Boolean(room.settings?.locked)} onChange={e=>updateRoomSettings({locked:e.target.checked})}/></label><label><span><b>Reactions</b><small>Allow quick emoji reactions in chat.</small></span><input type="checkbox" checked={room.settings?.reactions_enabled!==false} onChange={e=>updateRoomSettings({reactions_enabled:e.target.checked})}/></label><label><span><b>Room chat</b><small>Allow participants to send messages.</small></span><input type="checkbox" checked={room.settings?.chat_enabled!==false} onChange={e=>updateRoomSettings({chat_enabled:e.target.checked})}/></label><label><span><b>Guest episode changes</b><small>Let viewers change the shared episode.</small></span><input type="checkbox" checked={Boolean(room.settings?.guests_can_change_episode)} onChange={e=>updateRoomSettings({guests_can_change_episode:e.target.checked})}/></label><label><span><b>Room expiry</b><small>Choose how long the room can remain active.</small></span><select value={room.settings?.expiry_minutes||30} onChange={e=>updateRoomSettings({expiry_minutes:Number(e.target.value)})}><option value="30">30 minutes inactive</option><option value="60">1 hour inactive</option><option value="180">3 hours inactive</option><option value="480">8 hours inactive</option><option value="1440">24 hours inactive</option></select></label></div><div className="wt-host-people wt-host-people-compact"><div><span><b>Participants</b><small>{members.length} of 29 active · manage roles and access</small></span><button type="button" onClick={()=>{setHostPanelOpen(false);setParticipantsOpen(true);}}>Manage list <ChevronRight size={14}/></button></div></div><div className="wt-host-danger"><div className="wt-host-danger-copy"><span className="wt-host-danger-icon"><LogOut size={16}/></span><span><b>End room</b><small>Disconnect everyone and permanently close this screening.</small></span></div><button type="button" onClick={()=>setConfirmAction({type:'close'})}><LogOut size={14}/>End room</button></div></section></div>,document.body)}
+{hostPanelOpen && typeof document !== 'undefined' && createPortal(<div className="wt-create-backdrop" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)setHostPanelOpen(false);}}><section className="wt-create-dialog wt-host-panel" role="dialog" aria-modal="true" aria-label="Host control panel"><header><div><span>ROOM MANAGEMENT</span><h2>Host control panel</h2><p>Manage access, permissions and your screening.</p></div><button type="button" onClick={()=>setHostPanelOpen(false)} aria-label="Close"><X size={18}/></button></header><div className="wt-host-settings"><label><span><b>Public room</b><small>Show this screening in the public directory so anyone can discover and join.</small></span><input type="checkbox" checked={Boolean(room.is_public)} disabled={room.media?.kind==='local_file'||busy} onChange={async e=>{try{setBusy(true);setError('');await rpc('set_watch_room_public',{p_code:room.code,p_token:participant.token,p_public:e.target.checked});await refreshRoom();loadPublicRooms().catch(()=>{});}catch(error){setError(error.message||'Could not change room visibility.');}finally{setBusy(false);}}}/></label><label><span><b>Lock room</b><small>Only current participants can stay. New joins are blocked.</small></span><input type="checkbox" checked={Boolean(room.settings?.locked)} onChange={e=>updateRoomSettings({locked:e.target.checked})}/></label><label><span><b>Reactions</b><small>Allow quick emoji reactions in chat.</small></span><input type="checkbox" checked={room.settings?.reactions_enabled!==false} onChange={e=>updateRoomSettings({reactions_enabled:e.target.checked})}/></label><label><span><b>Room chat</b><small>Allow participants to send messages.</small></span><input type="checkbox" checked={room.settings?.chat_enabled!==false} onChange={e=>updateRoomSettings({chat_enabled:e.target.checked})}/></label><label><span><b>Guest episode changes</b><small>Let viewers change the shared episode.</small></span><input type="checkbox" checked={Boolean(room.settings?.guests_can_change_episode)} onChange={e=>updateRoomSettings({guests_can_change_episode:e.target.checked})}/></label><label><span><b>Room expiry</b><small>Choose how long the room can remain active.</small></span><select value={room.settings?.expiry_minutes||30} onChange={e=>updateRoomSettings({expiry_minutes:Number(e.target.value)})}><option value="30">30 minutes inactive</option><option value="60">1 hour inactive</option><option value="180">3 hours inactive</option><option value="480">8 hours inactive</option><option value="1440">24 hours inactive</option></select></label></div><div className="wt-host-people wt-host-people-compact"><div><span><b>Participants</b><small>{members.length} of 29 active · manage roles and access</small></span><button type="button" onClick={()=>{setHostPanelOpen(false);setParticipantsOpen(true);}}>Manage list <ChevronRight size={14}/></button></div></div><div className="wt-host-danger"><div className="wt-host-danger-copy"><span className="wt-host-danger-icon"><LogOut size={16}/></span><span><b>End room</b><small>Close this screening. Everyone still watching will automatically continue in their own private room.</small></span></div><button type="button" onClick={()=>setConfirmAction({type:'close'})}><LogOut size={14}/>End room</button></div></section></div>,document.body)}
           {confirmAction && typeof document !== 'undefined' && createPortal(<div className="wt-create-backdrop wt-confirm-backdrop" role="presentation"><section className={"wt-create-dialog wt-confirm-dialog " + (confirmAction.type==='close'||confirmAction.type==='leave'||confirmAction.type==='remove'?'is-danger':'')} role="alertdialog" aria-modal="true"><div className={"wt-confirm-icon " + (confirmAction.type==='transfer'?'is-transfer':'')}>{confirmAction.type==='transfer'?<ArrowRightLeft size={21}/>:confirmAction.type==='remove'?<UserMinus size={21}/>:<LogOut size={21}/>}</div><header><div><span>{confirmAction.type==='transfer'?'HOST TRANSFER':confirmAction.type==='remove'?'PARTICIPANT ACCESS':confirmAction.type==='leave'?'LEAVE SCREENING':'END SCREENING'}</span><h2>{confirmAction.type==='transfer'?'Transfer host privileges?':confirmAction.type==='remove'?'Remove participant?':confirmAction.type==='leave'&&!participant?.is_host?'Leave this room?':'End this room?'}</h2><p>{confirmAction.type==='transfer'?confirmAction.member.display_name+' will become the host. You will become a viewer.':confirmAction.type==='remove'?confirmAction.member.display_name+' will be removed from this screening.':confirmAction.type==='leave'&&!participant?.is_host?'You will leave the screening. The room will remain open for everyone else.':'Everyone will be disconnected and this room will be permanently closed.'}</p></div></header><div className="wt-confirm-actions"><button type="button" className="wt-confirm-cancel" onClick={()=>setConfirmAction(null)}>Cancel</button><button type="button" className={"wt-confirm-primary " + (confirmAction.type==='transfer'?'is-transfer':'')} disabled={busy} onClick={async()=>{const action=confirmAction; if(action.type==='transfer')await transferHost(action.member);else if(action.type==='remove')await removeMember(action.member);else{setConfirmAction(null);await leaveRoom();}}}>{busy?'Working…':confirmAction.type==='close'?'End room':confirmAction.type==='leave'?(participant?.is_host?'End room':'Leave room'):confirmAction.type==='remove'?'Remove participant':'Transfer host'}</button></div></section></div>,document.body)}
           {joinPreviewOpen && typeof document !== 'undefined' && createPortal(
             <div className="wt-create-backdrop wt-join-file-backdrop" role="presentation" onMouseDown={event => {
