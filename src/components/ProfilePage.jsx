@@ -473,6 +473,13 @@ function SettingsPanel({ installApp, installAvailable, appInstalled, query = '',
           </div>
           <a className="settings-btn" href="https://github.com/firefly-sylestia/mcu-viewing-order/releases/download/v10.2/MCU-Viewing-Order-10.2-signed.apk" target="_blank" rel="noreferrer">Download APK</a>
         </div>
+        <div className="settings-row">
+          <div className="settings-row-label">
+            <span className="settings-row-icon"><Play size={18} /></span>
+            <div><strong>Local video player</strong><small>Play a video file on this device without creating a Watch Together room</small></div>
+          </div>
+          <button type="button" className="settings-btn primary" onClick={() => window.dispatchEvent(new Event('incursion:open-local-player'))}>Choose file</button>
+        </div>
         <div className="settings-release-link"><a href="https://github.com/firefly-sylestia/mcu-viewing-order/releases/latest" target="_blank" rel="noreferrer">View latest release and all versions ↗</a></div>
         <p className="settings-data-desc">Offline mode keeps the app shell and previously loaded images available. Live search, account sync and streaming still require an internet connection.</p>
       </div>
