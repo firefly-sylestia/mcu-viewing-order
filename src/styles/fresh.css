@@ -18145,3 +18145,27 @@
 :root .wt-room-server-picker { display:flex; align-items:center; gap:10px; margin:0 0 10px; color:var(--fx-muted,#9da8bb); font-size:11px; }
 :root .wt-room-server-picker select { min-height:34px; max-width:220px; padding:0 10px; border:1px solid var(--line,rgba(128,138,155,.2)); border-radius:9px; background:var(--fx-surface-2,#151820); color:var(--fx-text,#f4f5f7); font:inherit; }
 :root .wt-room-server-picker small { opacity:.75; }
+
+
+/* Mobile Watch Together catalogue: wrap category filters instead of clipping
+   the last options off the edge of the dialog. */
+@media (max-width: 620px) {
+  :root .wt-create-dialog .wt-catalogue-tabs {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    overflow: visible !important;
+    gap: 7px !important;
+    padding: 0 0 10px !important;
+  }
+  :root .wt-create-dialog .wt-catalogue-tabs button {
+    flex: 0 0 auto !important;
+    max-width: 100% !important;
+  }
+}
+
+/* Keep the header's Up Next control aligned with the app's squared surfaces. */
+:root .movie-site .site-header .header-status-pill {
+  border-radius: 17px !important;
+}
