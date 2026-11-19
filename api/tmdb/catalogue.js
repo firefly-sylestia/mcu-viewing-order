@@ -16,7 +16,7 @@ export default async function handler(req, res) {
   const requests = [];
 
   if (category === 'trending') {
-    requests.push(['movie', `${base}/trending/movie/week`], ['tv', `${base}/trending/tv/week`]);
+    requests.push(['mixed', `${base}/trending/all/week`]);
   } else if (category === 'movies' || category === 'tv') {
     requests.push([category === 'tv' ? 'tv' : 'movie', `${base}/${category === 'tv' ? 'tv' : 'movie'}/popular`]);
   } else if (category === 'marvel' || category === 'dc') {
@@ -31,19 +31,22 @@ export default async function handler(req, res) {
       const response = await fetch(`${endpoint}?${params}`, { headers });
       if (!response.ok) throw new Error(`TMDB ${type} catalogue request failed`);
       const data = await response.json();
-      return (data.results || []).map(item => ({
+      return (data.results || []).filter(item => ['movie','tv'].includes(type === 'mixed' ? item.media_type : type)).map(item => {
+        const mediaType = type === 'mixed' ? item.media_type : type;
+        return {
         id: item.id,
-        type,
-        title: type === 'tv' ? item.name : item.title,
-        year: String(type === 'tv' ? item.first_air_date || '' : item.release_date || '').slice(0, 4),
+        type: mediaType,
+        title: mediaType === 'tv' ? item.name : item.title,
+        year: String(mediaType === 'tv' ? item.first_air_date || '' : item.release_date || '').slice(0, 4),
         poster: image(item.poster_path),
         backdrop: image(item.backdrop_path),
         rating: item.vote_average ? Number(item.vote_average).toFixed(1) : null,
         overview: item.overview || '',
         voteCount: item.vote_count || 0,
-      }));
+        popularity: item.popularity || 0,
+      }; });
     }));
-    const results = batches.flat().filter(item => item.poster).sort((a, b) => Number(b.rating || 0) - Number(a.rating || 0));
+    const results = batches.flat().filter(item => item.poster).sort((a, b) => Number(b.popularity || 0) - Number(a.popularity || 0));
     res.setHeader('Cache-Control', 's-maxage=1800, stale-while-revalidate=43200');
     return res.status(200).json({ results, category, page });
   } catch (error) {
