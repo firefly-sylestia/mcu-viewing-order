@@ -3264,7 +3264,7 @@ const saveServerPref = (tmdbId, server) => {
     tmdbId: currentItem.tmdbId || tmdbId, title: currentItem.title,
     season: selectedSeason, episode: playerEpisode, accent: currentItem.accent,
     progressSeconds: Math.floor((currentItem.watchedDuration || 0) / 1000),
-  }), [selectedServer, currentItem.tmdbId, currentItem.title, currentItem.type, currentItem.watchedDuration, selectedSeason, playerEpisode, mediaType, tmdbId, isSeries]);
+  }), [selectedServer, currentItem.tmdbId, currentItem.title, currentItem.type, currentItem.accent, currentItem.watchedDuration, selectedSeason, playerEpisode, mediaType, tmdbId, isSeries]);
   const roadmapInfo = useMemo(() => getRoadmap(currentItem, activeItems), [activeItems, currentItem]);
 
   const currentOrder = currentItem.order || currentItem.id;
