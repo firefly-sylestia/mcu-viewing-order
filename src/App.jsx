@@ -3143,7 +3143,7 @@ function WatchBrowse({ activeItems, externalResults = [], externalLoading = fals
 
 /* ── Server preference cache (per-title, persisted to localStorage) ──────────── */
 
-function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, onStartWatch, updateAction, nativePlayer, setNativePlayer, user, profileName, profileAvatar, onWatchTogether }) {
+function WatchPage({ watchItem, activeItems, onBack, setStatus, toggleBookmark, onStartWatch, updateAction, nativePlayer, setNativePlayer, user, profileName, profileAvatar, onWatchTogether, onOnlineStreaming }) {
   const { item, tmdbId, mediaType } = watchItem;
 const readServerCache = () => {
   try { return JSON.parse(localStorage.getItem('server-prefs') || '{}'); } catch { return {}; }
