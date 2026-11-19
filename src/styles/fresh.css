@@ -18123,3 +18123,34 @@
     border-radius: 13px !important;
   }
 }
+
+
+/* Watch Together: collapsed chat launcher beside the movie on desktop only. */
+@media (min-width: 761px) {
+  :root .wt-page .wt-content:has(> .wt-chat.is-collapsed) { position:relative; grid-template-columns:minmax(0,1fr)!important; }
+  :root .wt-page .wt-content > .wt-chat.is-collapsed {
+    position:absolute!important; z-index:12; top:18px; right:18px;
+    display:block!important; width:42px!important; min-width:42px!important;
+    height:42px!important; min-height:42px!important; max-height:42px!important;
+    padding:0!important; overflow:visible!important; border:0!important;
+    border-radius:12px!important; background:transparent!important; box-shadow:none!important;
+  }
+  :root .wt-page .wt-content > .wt-chat.is-collapsed .wt-chat-head {
+    display:flex!important; width:42px; height:42px; justify-content:center;
+    padding:0!important; margin:0!important; border:0!important; background:transparent!important;
+  }
+  :root .wt-page .wt-content > .wt-chat.is-collapsed .wt-chat-head>div { display:none!important; }
+  :root .wt-page .wt-content > .wt-chat.is-collapsed .wt-chat-toggle {
+    display:grid!important; width:42px!important; height:42px!important;
+    border:1px solid color-mix(in srgb,var(--fx-muted) 22%,transparent)!important;
+    border-radius:12px!important; background:var(--fx-surface-2)!important;
+    color:var(--fx-text)!important; box-shadow:0 8px 24px rgba(0,0,0,.12);
+  }
+  :root .wt-page .wt-content > .wt-chat.is-collapsed .wt-requests,
+  :root .wt-page .wt-content > .wt-chat.is-collapsed .wt-chat-messages,
+  :root .wt-page .wt-content > .wt-chat.is-collapsed .wt-reactions,
+  :root .wt-page .wt-content > .wt-chat.is-collapsed .wt-chat-form,
+  :root .wt-page .wt-content > .wt-chat.is-collapsed .wt-chat-disabled,
+  :root .wt-page .wt-content > .wt-chat.is-collapsed .wt-chat-foot,
+  :root .wt-page .wt-content > .wt-chat.is-collapsed .wt-chat-error { display:none!important; }
+}
