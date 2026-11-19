@@ -210,7 +210,8 @@ const enhance = (item, universe) => ({
 
 export default function App() {
   const saved = useMemo(readSavedState, []);
-  const [universe, setUniverse] = useState(saved.universe || 'marvel');
+  const initialListParams = useMemo(() => new URLSearchParams(window.location.hash.includes('?') ? window.location.hash.slice(window.location.hash.indexOf('?') + 1) : ''), []);
+  const [universe, setUniverse] = useState(() => initialListParams.get('universe') || saved.universe || 'marvel');
   const [query, setQuery] = useState('');
   const [focusListSearch, setFocusListSearch] = useState(false);
   const listSearchInputRef = useRef(null);
@@ -395,7 +396,16 @@ export default function App() {
   }, []);
 
   const [selected, setSelected] = useState(null);
-  const [listPreferences, setListPreferences] = useState(saved.listPreferences || {});
+  const [listPreferences, setListPreferences] = useState(() => {
+    const preferences = saved.listPreferences || {};
+    const linkedUniverse = initialListParams.get('universe') || saved.universe || 'marvel';
+    const linked = {};
+    for (const key of ['sort', 'direction', 'genre', 'rating', 'age', 'type', 'phase']) {
+      const value = initialListParams.get(key);
+      if (value !== null) linked[{ sort: 'sortBy', direction: 'sortDirection', age: 'ageRatingFilter', type: 'typeFilter', phase: 'phaseFilter' }[key] || key] = key === 'rating' ? Number(value) || 0 : value;
+    }
+    return Object.keys(linked).length ? { ...preferences, [linkedUniverse]: { ...(preferences[linkedUniverse] || {}), ...linked } } : preferences;
+  });
   const currentListPreferences = listPreferences[universe] || {};
   const genre = currentListPreferences.genre ?? (universe === 'marvel' ? saved.genre : 'All') ?? 'All';
   const rating = currentListPreferences.rating ?? (universe === 'marvel' ? saved.rating : 0) ?? 0;
@@ -414,7 +424,11 @@ export default function App() {
   const setSortBy = value => setListPreference('sortBy', value);
   const setSortDirection = value => setListPreference('sortDirection', value);
   const setTypeFilter = value => setListPreference('typeFilter', value);
-  const [phaseFilters, setPhaseFilters] = useState({ marvel: 'All', sony: 'All', xmen: 'All', dc: 'All' });
+  const [phaseFilters, setPhaseFilters] = useState(() => {
+    const phase = initialListParams.get('phase');
+    const linkedUniverse = initialListParams.get('universe') || saved.universe || 'marvel';
+    return phase ? { marvel: 'All', sony: 'All', xmen: 'All', dc: 'All', [linkedUniverse]: phase } : { marvel: 'All', sony: 'All', xmen: 'All', dc: 'All' };
+  });
   const phaseFilter = phaseFilters[universe] ?? 'All';
   const setPhaseFilter = useCallback((value) => setPhaseFilters(current => ({ ...current, [universe]: value })), [universe]);
   const [phaseMenuOpen, setPhaseMenuOpen] = useState(false);
@@ -651,7 +665,6 @@ export default function App() {
   // Auto-start watching from item-level deep link (e.g. #watch/iron-man) on mount
   useEffect(() => {
     const { section: s, slug } = parseHash();
-    if (window.location.hash.startsWith('#list?')) window.history.replaceState(null, '', '#list');
     setQuery('');
     if (s === 'watch' && slug && allItems.length && !watchItem) {
       const found = allItems.find(i => slugifyPosterName(i.title) === slug);
@@ -668,6 +681,24 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ universe, listPreferences, genre, rating, ageRatingFilter, sortBy, sortDirection, typeFilter, actions, section, watchItem, profileName }));
   }, [universe, listPreferences, genre, rating, ageRatingFilter, sortBy, sortDirection, typeFilter, actions, section, watchItem, profileName]);
+
+  // Keep list sorting and filters in the shareable hash URL. replaceState avoids
+  // adding a browser-history entry for every chip or sort change.
+  useEffect(() => {
+    if (section !== 'list') return;
+    const params = new URLSearchParams();
+    params.set('universe', universe);
+    if (sortBy !== 'order') params.set('sort', sortBy);
+    if (sortDirection !== 'asc') params.set('direction', sortDirection);
+    if (genre !== 'All') params.set('genre', genre);
+    if (rating > 0) params.set('rating', String(rating));
+    if (ageRatingFilter !== 'All') params.set('age', ageRatingFilter);
+    if (typeFilter !== 'All') params.set('type', typeFilter);
+    if (phaseFilter !== 'All') params.set('phase', phaseFilter);
+    const query = params.toString();
+    const nextHash = query ? `#list?${query}` : '#list';
+    if (window.location.hash !== nextHash) window.history.replaceState(window.history.state, '', nextHash);
+  }, [section, universe, sortBy, sortDirection, genre, rating, ageRatingFilter, typeFilter, phaseFilter]);
 
   const initialRender = useRef(true);
   useEffect(() => {
