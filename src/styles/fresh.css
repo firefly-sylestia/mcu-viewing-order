@@ -17953,3 +17953,18 @@
     display:flex!important;flex:1 1 auto!important;min-height:90px!important;max-height:none!important;overflow-y:auto!important;
   }
 }
+
+
+/* Host-end handoff notification. */
+:root .wt-room-toast {
+  position:fixed!important;z-index:10050!important;top:calc(env(safe-area-inset-top,0px) + 18px)!important;
+  left:50%!important;transform:translateX(-50%)!important;width:max-content!important;
+  max-width:min(92vw,520px)!important;padding:12px 16px!important;border-radius:999px!important;
+  background:color-mix(in srgb,var(--fx-surface) 88%,#111 12%)!important;
+  color:var(--fx-text)!important;border:1px solid color-mix(in srgb,var(--fx-muted) 24%,transparent)!important;
+  box-shadow:0 12px 36px rgba(0,0,0,.22)!important;backdrop-filter:blur(18px)!important;
+  font-size:12px!important;font-weight:750!important;text-align:center!important;pointer-events:none!important;
+}
+@media(max-width:620px) {
+  :root .wt-room-toast {top:calc(env(safe-area-inset-top,0px) + 10px)!important;width:max-content!important;max-width:calc(100vw - 28px)!important;font-size:11px!important}
+}
