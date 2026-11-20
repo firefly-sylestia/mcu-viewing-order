@@ -1373,9 +1373,15 @@ export default function App() {
     };
   }, [selectedItem]);
   const nextUp = roadmapItems.find(item => item.userStatus !== 'watched' && item.userStatus !== 'dropped') || roadmapItems[0];
+  const [homeHeroArtwork, setHomeHeroArtwork] = useState(() => {
+    let index = saved.heroIndex || 0;
+    try { index = Number(localStorage.getItem('mcu-home-hero-index')) || index; } catch {}
+    const featured = heroItems[index % Math.max(heroItems.length, 1)] || heroItems[0];
+    return featured?.poster || '';
+  });
   const headerWatchingItem = useMemo(() => activeItems.find(item => item.userStatus === 'watching') || null, [activeItems]);
   const headerQuickItem = headerWatchingItem || nextUp;
-  const headerArtwork = nextUp?.backdrop || nextUp?.poster || '';
+  const headerArtwork = section === 'home' ? (homeHeroArtwork || heroItems[0]?.poster || '') : (nextUp?.backdrop || nextUp?.poster || '');
   const playTrailer = useCallback((item) => {
     hapticTap();
     const match = getTrailerByTitle(item.title);
@@ -1567,7 +1573,7 @@ export default function App() {
       {section === 'home' && !adBlockerDismissed && <AdBlockerDialog onDismiss={() => { setAdBlockerDismissed(true); localStorage.setItem('adblocker-dismissed', '1'); }} />}
       {section === 'home' && <>
         <section className="hero-layout" key={universe}>
-          <TopCarousel items={heroItems} initialIndex={(() => { try { return Number(localStorage.getItem('mcu-home-hero-index')) || saved.heroIndex || 0; } catch { return saved.heroIndex || 0; } })()} setSelected={selectItem} />
+          <TopCarousel items={heroItems} initialIndex={(() => { try { return Number(localStorage.getItem('mcu-home-hero-index')) || saved.heroIndex || 0; } catch { return saved.heroIndex || 0; } })()} setSelected={selectItem} onFeaturedChange={setHomeHeroArtwork} />
         </section>
         <section className="home-browse-hint" aria-label="Browse the full viewing list">
           <div className="home-browse-hint-copy"><span>STILL EXPLORING?</span><p>Browse the full list to discover more movies and series.</p></div>
@@ -1751,9 +1757,10 @@ function ControlOverview({ stats, items, nextUp, universeLabel, onOpen, onStart,
   </section>;
 }
 
-function TopCarousel({ items, initialIndex = 0, setSelected }) {
+function TopCarousel({ items, initialIndex = 0, setSelected, onFeaturedChange }) {
   const [heroIndex, setHeroIndex] = useState(() => Math.max(0, Number(initialIndex) || 0));
   const featured = items[heroIndex % Math.max(items.length, 1)] || items[0];
+  useEffect(() => { onFeaturedChange?.(featured?.poster || ''); }, [featured?.id, featured?.poster, onFeaturedChange]);
   useEffect(() => {
     try { localStorage.setItem('mcu-home-hero-index', String(heroIndex)); } catch {}
   }, [heroIndex]);
