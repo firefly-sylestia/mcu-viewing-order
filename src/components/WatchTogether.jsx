@@ -576,10 +576,11 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
         setPendingJoinMedia(preview.media);
         setJoinPreviewOpen(true);
       } else {
-        await joinExisting(normalizedCode, identity);
+        return await joinExisting(normalizedCode, identity);
       }
     } catch (e) {
       setError(roomRequestError('Loading this room', e));
+      return false;
     } finally {
       setBusy(false);
     }
@@ -671,13 +672,26 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
     const sharePathCode = pathCode[0] === 'watch-room' ? pathCode[1] : null;
     let saved = null;
     try { saved = JSON.parse(localStorage.getItem(ACTIVE_ROOM_KEY) || 'null'); } catch {}
-    const code = new URLSearchParams(window.location.search).get('room') || sharePathCode || saved?.code;
+    const code = new URLSearchParams(window.location.search).get('room') || sharePathCode;
+    // A saved room is only a credential cache for an explicit invite. Never
+    // auto-open an old room just because a previous session left one in storage.
     if (!code) return;
     restoreAttemptedRef.current = true;
     onBeforeOpenRef.current?.();
     setOpen(true);
     const identity = saved?.code === code.trim().toUpperCase() && saved.identity?.token ? saved.identity : guest;
-    beginJoin(code, identity);
+    beginJoin(code, identity).then(joined => {
+      if (joined) return;
+      try { localStorage.removeItem(ACTIVE_ROOM_KEY); } catch {}
+      const url = new URL(window.location.href);
+      url.searchParams.delete('room');
+      if (url.pathname.startsWith('/watch-room/')) url.pathname = '/';
+      url.hash = '#home';
+      window.history.replaceState({ ...(window.history.state || {}), invalidRoomCleared: true }, '', url.toString());
+      try { sessionStorage.setItem('mcu-watch-together-return', '#home'); } catch {}
+      setOpen(false);
+      onClose?.();
+    });
   }, [beginJoin, guest]);
 
   const refreshRoom = useCallback(async () => {
