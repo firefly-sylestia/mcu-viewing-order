@@ -575,6 +575,7 @@ export default function WatchTogether({ item, tmdbId, mediaType, season = 1, epi
         setPendingJoinIdentity(identity);
         setPendingJoinMedia(preview.media);
         setJoinPreviewOpen(true);
+        return true;
       } else {
         return await joinExisting(normalizedCode, identity);
       }
