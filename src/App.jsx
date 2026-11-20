@@ -550,7 +550,7 @@ export default function App() {
   }, [section]);
 
   const navigateSection = (requestedId) => {
-    const id = requestedId === 'watch' && watchRoomActive ? 'watch-together' : requestedId;
+    const id = requestedId;
     const from = NAV_VISIBLE.indexOf(section);
     const to = NAV_VISIBLE.indexOf(id);
     if (to !== -1 && from !== -1 && to !== from) setSectionDirection(to > from ? 1 : -1);
