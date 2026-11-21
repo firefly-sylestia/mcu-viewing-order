@@ -3403,3 +3403,15 @@ body { background: var(--app-shell-gradient); }
 /* Room voice chat */
 .wt-voice-toggle.active{background:color-mix(in srgb,var(--theme-accent) 13%,var(--theme-surface));border-color:color-mix(in srgb,var(--theme-accent) 40%,var(--theme-border));}
 .wt-voice-error{font-size:11px;color:#c43d4b;max-width:260px}
+
+
+/* Watch Together: keep the episode hand-off message and actions readable on phones. */
+.wt-episode-transition{display:grid;grid-template-columns:minmax(0,1fr);align-items:stretch;gap:10px}
+.wt-episode-transition-copy{display:grid;gap:5px;min-width:0}
+.wt-episode-transition-copy strong{font-size:14px;line-height:1.35}
+.wt-episode-transition-copy span{font-size:12px;line-height:1.5;color:var(--theme-text-secondary)}
+.wt-episode-transition-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.wt-episode-transition-actions button{min-height:38px;padding:8px 14px;white-space:nowrap}
+.wt-episode-transition-actions .wt-episode-finish{background:transparent;border-color:var(--theme-border);color:var(--theme-text-secondary)}
+.wt-episode-transition-actions .wt-episode-go{background:var(--theme-accent);border-color:var(--theme-accent);color:#fff}
+@media(max-width:560px){.wt-episode-transition{padding:12px;gap:11px}.wt-episode-transition-actions{display:grid;grid-template-columns:1fr 1fr;justify-content:stretch}.wt-episode-transition-actions button{justify-content:center;width:100%;min-height:40px}}
