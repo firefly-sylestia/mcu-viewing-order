@@ -41,7 +41,7 @@ export default async function handler(req, res) {
   const tmdbId = String(req.query.tmdbId || '').trim();
   const season = String(req.query.season ?? '1').trim();
   const title = String(req.query.title || '').trim();
-  if ((!/^\\d+$/.test(tmdbId) && !title) || !/^\\d+$/.test(season)) return res.status(400).json({ error: 'A TMDB ID or series title and a valid season are required.' });
+  if ((!/^\d+$/.test(tmdbId) && !title) || !/^\d+$/.test(season)) return res.status(400).json({ error: 'A TMDB ID or series title and a valid season are required.' });
   try {
     let episodes = [];
     let source = '';
