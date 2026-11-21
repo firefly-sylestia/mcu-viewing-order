@@ -3211,13 +3211,14 @@ const saveServerPref = (tmdbId, server) => {
   const [selectedServer, setSelectedServer] = useState(() => { try { return localStorage.getItem('incursion-stream-provider') || (mediaType === 'tv' ? 'vidfast' : 'cinesrc'); } catch { return mediaType === 'tv' ? 'vidfast' : 'cinesrc'; } });
   const [downloadWarningOpen, setDownloadWarningOpen] = useState(false);
   const currentItem = activeItems.find(i => i.id === item.id) || item;
-  const isSeries = currentItem.type === 'series' && currentItem.tmdbId;
+  const seriesTmdbId = currentItem.tmdbId || tmdbId || (currentItem.type === 'tv' ? currentItem.id : null);
+  const isSeries = (currentItem.type === 'series' || currentItem.type === 'tv') && Boolean(seriesTmdbId);
   const [episodes, setEpisodes] = useState([]);
   const [availableSeasons, setAvailableSeasons] = useState([]);
   const [seasonsLoading, setSeasonsLoading] = useState(false);
   const [selectedSeason, setSelectedSeason] = useState(currentItem.season || 1);
   const [selectedEpisode, setSelectedEpisode] = useState(currentItem.epStart || 1);
-  const downloadUrl = buildDownloadUrl({ mediaType, tmdbId: currentItem.tmdbId || tmdbId, season: selectedSeason, episode: selectedEpisode });
+  const downloadUrl = buildDownloadUrl({ mediaType, tmdbId: seriesTmdbId || tmdbId, season: selectedSeason, episode: selectedEpisode });
   const providerOptions = useMemo(() => [getProvider('cinesrc'), ...getProviderFallbacks(isSeries ? 'tv' : mediaType).map(getProvider)], [isSeries, mediaType]);
   useEffect(() => { try { localStorage.setItem('incursion-stream-provider', selectedServer); } catch {} }, [selectedServer]);
   useEffect(() => { autoFallbackAttemptedRef.current = false; fallbackProviderIndexRef.current = 0; setProviderNotice(''); setSelectedServer(isSeries ? 'vidfast' : 'cinesrc'); setStreamError(''); setIframeTimedOut(false); setRestartCounter(value => value + 1); initProgressRef.current = Math.floor((currentItem.watchedDuration || 0) / 1000); }, [currentItem.id, isSeries]);
@@ -3247,7 +3248,7 @@ const saveServerPref = (tmdbId, server) => {
     return true;
   };
   const iframeRef = useRef(null);
-  const iframeKey = `${selectedServer}-${isSeries ? `ep-${currentItem.tmdbId}-${selectedSeason}-${playerEpisode}` : currentItem.tmdbId || item.id}-r${restartCounter}`;
+  const iframeKey = `${selectedServer}-${isSeries ? `ep-${seriesTmdbId}-${selectedSeason}-${playerEpisode}` : seriesTmdbId || item.id}-r${restartCounter}`;
 
   // Mount the third-party player only shortly before it enters the viewport.
   useEffect(() => {
@@ -3303,20 +3304,20 @@ const saveServerPref = (tmdbId, server) => {
     if (!isSeries) { setAvailableSeasons([]); setEpisodes([]); return; }
     let cancelled = false;
     setSeasonsLoading(true);
-    fetch(apiUrl(`/api/tmdb/seasons?tmdbId=${currentItem.tmdbId}`), { cache: 'force-cache' })
+    fetch(apiUrl(`/api/tmdb/seasons?tmdbId=${seriesTmdbId}`), { cache: 'force-cache' })
       .then(r => r.ok ? r.json() : null)
       .then(data => { if (!cancelled) setAvailableSeasons(Array.isArray(data?.seasons) ? data.seasons : []); })
       .catch(() => { if (!cancelled) setAvailableSeasons([]); })
       .finally(() => { if (!cancelled) setSeasonsLoading(false); });
     return () => { cancelled = true; };
-  }, [currentItem.tmdbId, isSeries]);
+  }, [seriesTmdbId, isSeries]);
 
   useEffect(() => {
     if (!isSeries) { setEpisodes([]); return; }
     setEpisodeLoading(true);
     let cancelled = false;
     const season = selectedSeason;
-    fetch(apiUrl(`/api/tmdb/episodes?tmdbId=${currentItem.tmdbId}&season=${season}`), { cache: 'force-cache' })
+    fetch(apiUrl(`/api/tmdb/episodes?tmdbId=${seriesTmdbId}&season=${season}`), { cache: 'force-cache' })
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (cancelled) return;
@@ -3332,18 +3333,18 @@ const saveServerPref = (tmdbId, server) => {
       })
       .catch(() => { if (!cancelled) setEpisodeLoading(false); });
     return () => { cancelled = true; };
-  }, [currentItem.tmdbId, selectedSeason, currentItem.season, currentItem.epStart, currentItem.epEnd, isSeries]);
+  }, [seriesTmdbId, selectedSeason, currentItem.season, currentItem.epStart, currentItem.epEnd, isSeries]);
 
   const initProgressRef = useRef(Math.floor((currentItem.watchedDuration || 0) / 1000));
   const playerUrl = useMemo(() => buildPlayerUrl({
-    preferredServer: (() => { try { return localStorage.getItem(`cinesrc-last-server-${currentItem.tmdbId}`) || ''; } catch { return ''; } })(),
+    preferredServer: (() => { try { return localStorage.getItem(`cinesrc-last-server-${seriesTmdbId}`) || ''; } catch { return ''; } })(),
     provider: selectedServer, mediaType: isSeries ? 'tv' : mediaType,
-    tmdbId: currentItem.tmdbId || tmdbId, title: currentItem.title,
+    tmdbId: seriesTmdbId || tmdbId, title: currentItem.title,
     season: selectedSeason, episode: playerEpisode, accent: currentItem.accent, poster: currentItem.poster,
     // Resume position is a mount-time snapshot. Live progress updates must never
     // mutate the iframe URL, or the browser reloads the player every few seconds.
     progressSeconds: initProgressRef.current,
-  }), [selectedServer, currentItem.tmdbId, currentItem.title, currentItem.type, currentItem.accent, currentItem.poster, selectedSeason, playerEpisode, mediaType, tmdbId, isSeries]);
+  }), [selectedServer, seriesTmdbId, currentItem.title, currentItem.type, currentItem.accent, currentItem.poster, selectedSeason, playerEpisode, mediaType, tmdbId, isSeries]);
   const roadmapInfo = useMemo(() => getRoadmap(currentItem, activeItems), [activeItems, currentItem]);
 
   const currentOrder = currentItem.order || currentItem.id;
@@ -3430,7 +3431,7 @@ const saveServerPref = (tmdbId, server) => {
         setProviderNotice('');
       }
       if (data.type === 'cinesrc:sourceused' && data.sourceId != null) {
-        try { localStorage.setItem(`cinesrc-last-server-${currentItem.tmdbId}`, String(data.sourceId)); } catch {}
+        try { localStorage.setItem(`cinesrc-last-server-${seriesTmdbId}`, String(data.sourceId)); } catch {}
       }
       if (data.type === 'cinesrc:timeupdate' && Number.isFinite(Number(data.currentTime))) {
         clearTimeout(loadTimeoutRef.current);
@@ -3496,7 +3497,7 @@ const saveServerPref = (tmdbId, server) => {
           <span>{universeShortName(currentItem.universe)} · #{String(currentItem.order || currentItem.id).padStart(2, '0')}</span>
           <h1>{currentItem.title}</h1>
         </div>
-        <div className="watch-v2-header-actions"><WatchTogether item={{ ...currentItem, season: selectedSeason }} tmdbId={currentItem.tmdbId || tmdbId} mediaType={mediaType} season={selectedSeason} episode={selectedEpisode} playerUrl={playerUrl} onEpisodeChange={next => { setSelectedEpisode(next); setPlayerEpisode(next); }} onBeforeOpen={() => iframeRef.current?.contentWindow?.postMessage({ type: 'cinesrc:command', command: 'pause', args: [] }, 'https://cinesrc.st')} launchOnly onWatchTogether={onWatchTogether} user={user} profileName={profileName} profileAvatar={profileAvatar} /><span className="watch-v2-provider">{getProvider(selectedServer).name}</span></div>
+        <div className="watch-v2-header-actions"><WatchTogether item={{ ...currentItem, season: selectedSeason }} tmdbId={seriesTmdbId || tmdbId} mediaType={mediaType} season={selectedSeason} episode={selectedEpisode} playerUrl={playerUrl} onEpisodeChange={next => { setSelectedEpisode(next); setPlayerEpisode(next); }} onBeforeOpen={() => iframeRef.current?.contentWindow?.postMessage({ type: 'cinesrc:command', command: 'pause', args: [] }, 'https://cinesrc.st')} launchOnly onWatchTogether={onWatchTogether} user={user} profileName={profileName} profileAvatar={profileAvatar} /><span className="watch-v2-provider">{getProvider(selectedServer).name}</span></div>
       </header>
 
       {toast && <div className="watch-v2-toast" role="status"><span>{toast}</span><button onClick={() => { setToast(''); setIframeTimedOut(false); }} aria-label="Dismiss"><X size={15} /></button></div>}
@@ -3514,6 +3515,9 @@ const saveServerPref = (tmdbId, server) => {
                 setToast('');
               }}>{season.season_number === 0 ? 'Specials' : `S${season.season_number}`}</button>
             ))}
+          </div>
+          <div className="watch-v2-episode-pills" role="group" aria-label={`Episodes in season ${selectedSeason}`}>
+            {episodeLoading ? <span className="watch-v2-episode-pills-status">Loading episodes…</span> : episodes.length ? episodes.map(ep => <button key={ep.episode} type="button" className={selectedEpisode === ep.episode ? 'active' : ''} aria-pressed={selectedEpisode === ep.episode} onClick={() => { setSelectedEpisode(ep.episode); setPlayerEpisode(ep.episode); }} title={ep.title || `Episode ${ep.episode}`}>E{ep.episode}</button>) : <span className="watch-v2-episode-pills-status">Episode list unavailable</span>}
           </div>
         </div>
       )}

@@ -4,7 +4,7 @@ export default async function handler(req, res) {
   if (!token) return res.status(503).json({ error: 'TMDB is not configured' });
   const tmdbId = String(req.query.tmdbId || '').trim();
   const season = String(req.query.season || '').trim();
-  if (!/^\\d+$/.test(tmdbId) || !/^\\d+$/.test(season)) return res.status(400).json({ error: 'Valid TMDB ID and season are required.' });
+  if (!/^\d+$/.test(tmdbId) || !/^\d+$/.test(season)) return res.status(400).json({ error: 'Valid TMDB ID and season are required.' });
   try {
     const response = await fetch(`https://api.themoviedb.org/3/tv/${tmdbId}/season/${season}?language=en-US`, {
       headers: { Authorization: `Bearer ${token}`, accept: 'application/json' }
