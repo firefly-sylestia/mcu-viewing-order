@@ -3317,18 +3317,18 @@ const saveServerPref = (tmdbId, server) => {
     setEpisodeLoading(true);
     let cancelled = false;
     const season = selectedSeason;
+    setEpisodes([]);
     fetch(apiUrl(`/api/tmdb/episodes?tmdbId=${encodeURIComponent(seriesTmdbId || '')}&title=${encodeURIComponent(currentItem.title || '')}&season=${season}`), { cache: 'force-cache' })
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (cancelled) return;
-        if (data?.episodes) {
-          const isOriginalRoadmapSeason = season === Number(currentItem.season || 1);
-          const filtered = isOriginalRoadmapSeason && currentItem.epStart
-            ? data.episodes.filter(ep => ep.episode >= (currentItem.epStart || 1) && ep.episode <= (currentItem.epEnd || 999))
-            : data.episodes;
-          setEpisodes(filtered);
-          if (filtered.length) setSelectedEpisode(prev => filtered.find(e => e.episode === prev) ? prev : filtered[0].episode);
-        }
+        const isOriginalRoadmapSeason = season === Number(currentItem.season || 1);
+        const filtered = (data?.episodes || []).filter(ep =>
+          !(isOriginalRoadmapSeason && currentItem.epStart) ||
+          (ep.episode >= (currentItem.epStart || 1) && ep.episode <= (currentItem.epEnd || 999))
+        );
+        setEpisodes(filtered);
+        if (filtered.length) setSelectedEpisode(prev => filtered.find(e => e.episode === prev) ? prev : filtered[0].episode);
         setEpisodeLoading(false);
       })
       .catch(() => { if (!cancelled) setEpisodeLoading(false); });
