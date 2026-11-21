@@ -2,6 +2,19 @@ const headers = token => token ? { Authorization: `Bearer ${token}`, accept: 'ap
 const clean = value => String(value || '').toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, ' ').trim();
 const image = path => path ? `https://image.tmdb.org/t/p/w300${path}` : null;
 
+async function searchTmdbId(title, token) {
+  if (!title || !token) return '';
+  const response = await fetch(`https://api.themoviedb.org/3/search/tv?query=${encodeURIComponent(title)}&include_adult=false&language=en-US&page=1`, { headers: headers(token) });
+  if (!response.ok) return '';
+  const data = await response.json();
+  const wanted = clean(title);
+  const ranked = (data.results || []).map(show => {
+    const name = clean(show.name);
+    return { id: show.id, score: name === wanted ? 3 : name.includes(wanted) || wanted.includes(name) ? 2 : 0, popularity: Number(show.popularity) || 0 };
+  }).filter(show => show.score > 0).sort((a,b)=>b.score-a.score||b.popularity-a.popularity);
+  return ranked[0]?.id ? String(ranked[0].id) : '';
+}
+
 async function fromTmdb(tmdbId, season, token) {
   if (!tmdbId || !token) return [];
   const response = await fetch(`https://api.themoviedb.org/3/tv/${encodeURIComponent(tmdbId)}/season/${encodeURIComponent(season)}?language=en-US`, { headers: headers(token) });
@@ -45,7 +58,17 @@ export default async function handler(req, res) {
   try {
     let episodes = [];
     let source = '';
-    try { episodes = await fromTmdb(tmdbId, season, process.env.TMDB_READ_ACCESS_TOKEN); if (episodes.length) source = 'tmdb'; } catch {}
+    const token = process.env.TMDB_READ_ACCESS_TOKEN;
+    try { episodes = await fromTmdb(tmdbId, season, token); if (episodes.length) source = 'tmdb'; } catch {}
+    if (!episodes.length && title && token) {
+      try {
+        const searchedId = await searchTmdbId(title, token);
+        if (searchedId && searchedId !== tmdbId) {
+          episodes = await fromTmdb(searchedId, season, token);
+          if (episodes.length) source = 'tmdb-search';
+        }
+      } catch {}
+    }
     if (!episodes.length && title) {
       try { episodes = await fromTvMaze(title, season); if (episodes.length) source = 'tvmaze'; } catch {}
     }
