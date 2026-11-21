@@ -19,11 +19,11 @@ export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
   const tmdbId = String(req.query.tmdbId || '').trim();
   const title = String(req.query.title || '').trim();
-  if (!/^\\d+$/.test(tmdbId) && !title) return res.status(400).json({ error: 'A TMDB ID or series title is required.' });
+  if (!/^\d+$/.test(tmdbId) && !title) return res.status(400).json({ error: 'A TMDB ID or series title is required.' });
   try {
     let seasons = [];
     const token = process.env.TMDB_READ_ACCESS_TOKEN;
-    if (/^\\d+$/.test(tmdbId) && token) {
+    if (/^\d+$/.test(tmdbId) && token) {
       try {
         const response = await fetch(`https://api.themoviedb.org/3/tv/${encodeURIComponent(tmdbId)}?language=en-US`, { headers: { Authorization: `Bearer ${token}`, accept: 'application/json' } });
         if (response.ok) {
