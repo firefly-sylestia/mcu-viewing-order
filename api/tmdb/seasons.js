@@ -1,4 +1,21 @@
 const clean = value => String(value || '').toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, ' ').trim();
+async function fromTmdbSearch(title, token) {
+  if (!title || !token) return [];
+  const response = await fetch(`https://api.themoviedb.org/3/search/tv?query=${encodeURIComponent(title)}&include_adult=false&language=en-US&page=1`, { headers: { Authorization: `Bearer ${token}`, accept: 'application/json' } });
+  if (!response.ok) return [];
+  const data = await response.json();
+  const wanted = clean(title);
+  const ranked = (data.results || []).map(show => {
+    const name = clean(show.name);
+    return { show, score: name === wanted ? 3 : name.includes(wanted) || wanted.includes(name) ? 2 : 0 };
+  }).filter(row => row.score > 0).sort((a,b)=>b.score-a.score);
+  const id = ranked[0]?.show?.id;
+  if (!id) return [];
+  const detail = await fetch(`https://api.themoviedb.org/3/tv/${id}?language=en-US`, { headers: { Authorization: `Bearer ${token}`, accept: 'application/json' } });
+  if (!detail.ok) return [];
+  const dataDetail = await detail.json();
+  return (dataDetail.seasons || []).map(season => ({ season_number: Number(season.season_number), name: season.name || (Number(season.season_number) === 0 ? 'Specials' : `Season ${season.season_number}`), episode_count: Number(season.episode_count) || 0, source: 'tmdb-search' }));
+}
 async function fromTvMaze(title) {
   if (!title) return [];
   const response = await fetch(`https://api.tvmaze.com/search/shows?q=${encodeURIComponent(title)}`);
@@ -31,6 +48,9 @@ export default async function handler(req, res) {
           seasons = (data.seasons || []).map(season => ({ season_number: Number(season.season_number), name: season.name || (Number(season.season_number) === 0 ? 'Specials' : `Season ${season.season_number}`), episode_count: Number(season.episode_count) || 0, source: 'tmdb' }));
         }
       } catch {}
+    }
+    if (!seasons.length && title && token) {
+      try { seasons = await fromTmdbSearch(title, token); } catch {}
     }
     if (!seasons.length && title) seasons = await fromTvMaze(title);
     res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=86400');
