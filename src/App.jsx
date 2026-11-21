@@ -2404,14 +2404,14 @@ function DetailView({ item, onClose, setStatus, toggleBookmark, onStartWatch, on
   const detailDownloadUrl = buildDownloadUrl({ mediaType: item.type === 'series' ? 'tv' : 'movie', tmdbId: item.tmdbId, season: item.season || 1, episode: item.epStart || 1 });
   const grabStartRef = useRef(null);
   useEffect(() => {
-    if (item.type !== 'series' || !item.tmdbId) {
+    if (item.type !== 'series' && item.type !== 'tv') {
       setDetailEpisodes([]);
       return undefined;
     }
     let cancelled = false;
     setEpisodesLoading(true);
     const season = item.season || 1;
-    fetch(apiUrl(`/api/tmdb/episodes?tmdbId=${item.tmdbId}&season=${season}`), { cache: 'force-cache' })
+    fetch(apiUrl(`/api/tmdb/episodes?tmdbId=${encodeURIComponent(item.tmdbId || '')}&title=${encodeURIComponent(item.title || '')}&season=${season}`), { cache: 'force-cache' })
       .then(response => response.ok ? response.json() : null)
       .then(data => {
         if (cancelled) return;
@@ -3212,7 +3212,7 @@ const saveServerPref = (tmdbId, server) => {
   const [downloadWarningOpen, setDownloadWarningOpen] = useState(false);
   const currentItem = activeItems.find(i => i.id === item.id) || item;
   const seriesTmdbId = currentItem.tmdbId || tmdbId || (currentItem.type === 'tv' ? currentItem.id : null);
-  const isSeries = (currentItem.type === 'series' || currentItem.type === 'tv') && Boolean(seriesTmdbId);
+  const isSeries = currentItem.type === 'series' || currentItem.type === 'tv';
   const [episodes, setEpisodes] = useState([]);
   const [availableSeasons, setAvailableSeasons] = useState([]);
   const [seasonsLoading, setSeasonsLoading] = useState(false);
@@ -3304,7 +3304,7 @@ const saveServerPref = (tmdbId, server) => {
     if (!isSeries) { setAvailableSeasons([]); setEpisodes([]); return; }
     let cancelled = false;
     setSeasonsLoading(true);
-    fetch(apiUrl(`/api/tmdb/seasons?tmdbId=${seriesTmdbId}`), { cache: 'force-cache' })
+    fetch(apiUrl(`/api/tmdb/seasons?tmdbId=${encodeURIComponent(seriesTmdbId || '')}&title=${encodeURIComponent(currentItem.title || '')}`), { cache: 'force-cache' })
       .then(r => r.ok ? r.json() : null)
       .then(data => { if (!cancelled) setAvailableSeasons(Array.isArray(data?.seasons) ? data.seasons : []); })
       .catch(() => { if (!cancelled) setAvailableSeasons([]); })
@@ -3317,7 +3317,7 @@ const saveServerPref = (tmdbId, server) => {
     setEpisodeLoading(true);
     let cancelled = false;
     const season = selectedSeason;
-    fetch(apiUrl(`/api/tmdb/episodes?tmdbId=${seriesTmdbId}&season=${season}`), { cache: 'force-cache' })
+    fetch(apiUrl(`/api/tmdb/episodes?tmdbId=${encodeURIComponent(seriesTmdbId || '')}&title=${encodeURIComponent(currentItem.title || '')}&season=${season}`), { cache: 'force-cache' })
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (cancelled) return;
