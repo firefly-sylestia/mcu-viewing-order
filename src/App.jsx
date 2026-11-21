@@ -3516,9 +3516,6 @@ const saveServerPref = (tmdbId, server) => {
               }}>{season.season_number === 0 ? 'Specials' : `S${season.season_number}`}</button>
             ))}
           </div>
-          <div className="watch-v2-episode-pills" role="group" aria-label={`Episodes in season ${selectedSeason}`}>
-            {episodeLoading ? <span className="watch-v2-episode-pills-status">Loading episodes…</span> : episodes.length ? episodes.map(ep => <button key={ep.episode} type="button" className={selectedEpisode === ep.episode ? 'active' : ''} aria-pressed={selectedEpisode === ep.episode} onClick={() => { setSelectedEpisode(ep.episode); setPlayerEpisode(ep.episode); }} title={ep.title || `Episode ${ep.episode}`}>E{ep.episode}</button>) : <span className="watch-v2-episode-pills-status">Episode list unavailable</span>}
-          </div>
         </div>
       )}
 
