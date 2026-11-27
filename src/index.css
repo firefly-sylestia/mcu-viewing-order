@@ -6561,3 +6561,126 @@ button { border: 0; color: inherit; cursor: pointer; }
   :root .movie-site.page-profile .profile-header-compact .profile-next-up { display: none !important; }
   :root .movie-site.page-profile .profile-page-tabs button { padding-inline: 10px !important; }
 }
+
+
+/* Profile identity header: quieter, roomier and less like a toolbar */
+:root .movie-site.page-profile .profile-page {
+  padding-top: clamp(26px, 4vw, 42px) !important;
+}
+:root .movie-site.page-profile .profile-header.profile-header-compact {
+  min-height: 76px !important;
+  margin: 0 0 18px !important;
+  padding: 0 4px 18px !important;
+  gap: 15px !important;
+  border: 0 !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--text, #888) 12%, transparent) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+:root .movie-site.page-profile .profile-header-compact > .profile-avatar {
+  flex: 0 0 58px !important;
+  width: 58px !important;
+  height: 58px !important;
+  min-width: 58px !important;
+  border-radius: 19px !important;
+  padding: 3px !important;
+  border: 1px solid color-mix(in srgb, var(--text, #888) 15%, transparent) !important;
+  background: color-mix(in srgb, var(--surface-2, #888) 70%, transparent) !important;
+  box-shadow: 0 5px 18px rgba(0,0,0,.10) !important;
+}
+:root .movie-site.page-profile .profile-header-compact .profile-info {
+  gap: 4px !important;
+}
+:root .movie-site.page-profile .profile-header-compact .profile-brand-kicker {
+  color: var(--text-muted, #9299a8) !important;
+  font-size: 9px !important;
+  letter-spacing: .19em !important;
+  font-weight: 800 !important;
+}
+:root .movie-site.page-profile .profile-header-compact .profile-title {
+  font-size: clamp(21px, 2.2vw, 27px) !important;
+  line-height: 1.05 !important;
+  letter-spacing: -.045em !important;
+  font-weight: 760 !important;
+}
+:root .movie-site.page-profile .profile-header-compact .profile-next-up {
+  flex-basis: 190px !important;
+  max-width: 190px !important;
+  height: 48px !important;
+  margin-left: auto !important;
+  padding: 5px 10px 5px 6px !important;
+  border: 0 !important;
+  border-radius: 14px !important;
+  background: color-mix(in srgb, var(--surface-2, #888) 55%, transparent) !important;
+}
+:root .movie-site.page-profile .profile-header-compact .profile-next-up-art {
+  flex-basis: 30px !important;
+  width: 30px !important;
+  height: 38px !important;
+  border-radius: 8px !important;
+}
+:root .movie-site.page-profile .profile-header-compact .profile-next-up-copy small {
+  font-size: 8px !important;
+  letter-spacing: .12em !important;
+  font-weight: 750 !important;
+}
+:root .movie-site.page-profile .profile-header-compact .profile-next-up-copy strong {
+  font-size: 11px !important;
+}
+:root .movie-site.page-profile .profile-header-compact .profile-auth {
+  gap: 8px !important;
+}
+:root .movie-site.page-profile .profile-header-compact .profile-auth > button {
+  width: 36px !important;
+  height: 36px !important;
+  flex-basis: 36px !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  background: color-mix(in srgb, var(--surface-2, #888) 60%, transparent) !important;
+}
+@media (max-width: 640px) {
+  :root .movie-site.page-profile .profile-page {
+    padding-top: 24px !important;
+  }
+  :root .movie-site.page-profile .profile-header.profile-header-compact {
+    min-height: 64px !important;
+    margin-bottom: 16px !important;
+    padding: 0 1px 15px !important;
+    gap: 11px !important;
+  }
+  :root .movie-site.page-profile .profile-header-compact > .profile-avatar {
+    flex-basis: 48px !important;
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+    border-radius: 16px !important;
+  }
+  :root .movie-site.page-profile .profile-header-compact .profile-brand-kicker {
+    font-size: 8px !important;
+  }
+  :root .movie-site.page-profile .profile-header-compact .profile-title {
+    font-size: 20px !important;
+  }
+  :root .movie-site.page-profile .profile-header-compact .profile-next-up {
+    flex: 0 0 38px !important;
+    width: 38px !important;
+    min-width: 38px !important;
+    max-width: 38px !important;
+    height: 40px !important;
+    padding: 3px !important;
+  }
+  :root .movie-site.page-profile .profile-header-compact .profile-next-up-art {
+    width: 30px !important;
+    height: 34px !important;
+    flex-basis: 30px !important;
+  }
+  :root .movie-site.page-profile .profile-header-compact .profile-next-up-copy {
+    display: none !important;
+  }
+  :root .movie-site.page-profile .profile-header-compact .profile-auth > button {
+    width: 34px !important;
+    height: 34px !important;
+    flex-basis: 34px !important;
+  }
+}
