@@ -7014,3 +7014,57 @@ button { border: 0; color: inherit; cursor: pointer; }
     font-size: 12px !important;
   }
 }
+
+
+/* Saved page: hide the viewport scrollbar without disabling scrolling */
+html:has(.movie-site.page-profile .saved-panel),
+body:has(.movie-site.page-profile .saved-panel) {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+html:has(.movie-site.page-profile .saved-panel)::-webkit-scrollbar,
+body:has(.movie-site.page-profile .saved-panel)::-webkit-scrollbar,
+.movie-site.page-profile:has(.saved-panel)::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+:root .movie-site.page-profile .saved-panel .web-grid {
+  grid-template-columns: repeat(auto-fill, minmax(116px, 138px)) !important;
+  justify-content: start !important;
+  gap: 18px 14px !important;
+}
+:root .movie-site.page-profile .saved-panel .card-body {
+  padding-top: 7px !important;
+}
+:root .movie-site.page-profile .saved-panel .card-actions {
+  grid-template-columns: minmax(0, 1fr) 32px !important;
+  gap: 5px !important;
+  margin-top: 6px !important;
+}
+:root .movie-site.page-profile .saved-panel .card-actions button {
+  height: 30px !important;
+  min-height: 30px !important;
+  border-radius: 7px !important;
+}
+@media (max-width: 640px) {
+  :root .movie-site.page-profile .saved-panel .web-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 16px 10px !important;
+  }
+  :root .movie-site.page-profile .saved-panel .card-body .title-button {
+    font-size: 10.5px !important;
+  }
+  :root .movie-site.page-profile .saved-panel .card-body > span {
+    font-size: 9px !important;
+  }
+  :root .movie-site.page-profile .saved-panel .card-actions {
+    grid-template-columns: minmax(0, 1fr) 29px !important;
+    gap: 4px !important;
+  }
+  :root .movie-site.page-profile .saved-panel .card-actions button {
+    height: 28px !important;
+    min-height: 28px !important;
+    padding-inline: 5px !important;
+  }
+}
