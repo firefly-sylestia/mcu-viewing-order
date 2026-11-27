@@ -6684,3 +6684,142 @@ button { border: 0; color: inherit; cursor: pointer; }
     flex-basis: 34px !important;
   }
 }
+
+
+/* Saved profile tab: personal collection layout */
+:root .movie-site.page-profile .saved-library-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  margin: 4px 0 28px;
+  padding: 22px 0 24px;
+  border-bottom: 1px solid color-mix(in srgb, var(--text, #888) 11%, transparent);
+}
+:root .movie-site.page-profile .saved-library-copy { min-width: 0; }
+:root .movie-site.page-profile .saved-library-eyebrow {
+  display: block;
+  margin-bottom: 9px;
+  color: var(--text-muted, #9299a8);
+  font-size: 9px;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: .2em;
+}
+:root .movie-site.page-profile .saved-library-copy h2 {
+  margin: 0;
+  color: var(--text-h, var(--text));
+  font-size: clamp(27px, 4vw, 40px);
+  line-height: 1.05;
+  font-weight: 780;
+  letter-spacing: -.055em;
+}
+:root .movie-site.page-profile .saved-library-copy h2 span { color: var(--accent, var(--theme-accent, #8b9bb8)); }
+:root .movie-site.page-profile .saved-library-copy p {
+  margin: 9px 0 0;
+  color: var(--text-muted, #9299a8);
+  font-size: 13px;
+  line-height: 1.5;
+}
+:root .movie-site.page-profile .saved-library-count {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  padding-bottom: 2px;
+}
+:root .movie-site.page-profile .saved-library-count strong {
+  color: var(--text-h, var(--text));
+  font-size: 34px;
+  line-height: 1;
+  font-weight: 750;
+  letter-spacing: -.06em;
+  font-variant-numeric: tabular-nums;
+}
+:root .movie-site.page-profile .saved-library-count span {
+  color: var(--text-muted, #9299a8);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .16em;
+}
+:root .movie-site.page-profile .saved-library-filter-note {
+  margin: -12px 0 18px;
+  color: var(--text-muted, #9299a8);
+  font-size: 12px;
+}
+:root .movie-site.page-profile .saved-panel .profile-rail {
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+:root .movie-site.page-profile .saved-panel .profile-rail > .section-title {
+  margin-bottom: 16px !important;
+  padding: 0 !important;
+}
+:root .movie-site.page-profile .saved-panel .profile-rail > .section-title h2 {
+  font-size: 15px !important;
+  font-weight: 720 !important;
+  letter-spacing: -.02em !important;
+}
+:root .movie-site.page-profile .saved-panel .profile-rail > .section-title button {
+  min-height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-2, #888) 65%, transparent);
+  color: var(--text-muted, #9299a8);
+  font-size: 10px;
+}
+:root .movie-site.page-profile .saved-panel .empty-state {
+  max-width: 520px;
+  margin: 8px 0 0;
+  padding: 34px 24px !important;
+  border: 1px dashed color-mix(in srgb, var(--text, #888) 20%, transparent);
+  border-radius: 18px;
+  color: var(--text-muted, #9299a8) !important;
+  background: color-mix(in srgb, var(--surface-1, #888) 35%, transparent);
+  font-size: 13px !important;
+  line-height: 1.7;
+  text-align: left !important;
+}
+@media (max-width: 640px) {
+  :root .movie-site.page-profile .saved-library-heading {
+    margin: 0 0 22px;
+    padding: 18px 0 20px;
+    gap: 12px;
+  }
+  :root .movie-site.page-profile .saved-library-copy h2 { font-size: 28px; }
+  :root .movie-site.page-profile .saved-library-copy p { max-width: 250px; font-size: 12px; }
+  :root .movie-site.page-profile .saved-library-count strong { font-size: 29px; }
+  :root .movie-site.page-profile .saved-panel .profile-rail > .section-title { margin-bottom: 12px !important; }
+}
+
+/* Final profile identity spacing and truly circular portrait */
+:root .movie-site.page-profile .profile-page { padding-top: clamp(48px, 6vw, 68px) !important; }
+:root .movie-site.page-profile .profile-header.profile-header-compact {
+  min-height: 82px !important;
+  padding-bottom: 20px !important;
+}
+:root .movie-site.page-profile .profile-header-compact > .profile-avatar {
+  flex-basis: 58px !important;
+  width: 58px !important;
+  height: 58px !important;
+  min-width: 58px !important;
+  border-radius: 50% !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+:root .movie-site.page-profile .profile-header-compact > .profile-avatar img {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+}
+@media (max-width: 640px) {
+  :root .movie-site.page-profile .profile-page { padding-top: 38px !important; }
+  :root .movie-site.page-profile .profile-header.profile-header-compact { min-height: 70px !important; padding-bottom: 17px !important; }
+  :root .movie-site.page-profile .profile-header-compact > .profile-avatar {
+    flex-basis: 50px !important; width: 50px !important; height: 50px !important; min-width: 50px !important;
+  }
+}
