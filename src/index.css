@@ -6293,3 +6293,58 @@ button { border: 0; color: inherit; cursor: pointer; }
 @media (prefers-reduced-motion: reduce) {
   .nav-page-transition { animation: none !important; transform: none !important; opacity: 1 !important; }
 }
+
+
+/* ── Richer cinematic atmosphere: balanced light + dark themes ─────────────── */
+:root {
+  --bg: #090d16;
+  --color-bg-base: #090d16;
+  --bg-elevated: rgba(20, 25, 37, .94);
+  --bg-card: rgba(31, 24, 39, .48);
+  --bg-glass: rgba(16, 21, 33, .82);
+  --surface-1: rgba(19, 25, 39, .88);
+  --surface-2: color-mix(in srgb, #20283b 76%, var(--theme-accent, var(--classic-crimson)) 24%);
+  --surface-3: color-mix(in srgb, #293248 72%, var(--theme-accent, var(--classic-crimson)) 28%);
+  --ambient-glow: color-mix(in srgb, var(--theme-accent, var(--classic-crimson)) 16%, transparent);
+}
+.movie-site {
+  background:
+    radial-gradient(ellipse at 12% 4%, color-mix(in srgb, var(--theme-accent, var(--classic-crimson)) 17%, transparent), transparent 38%),
+    radial-gradient(ellipse at 88% 24%, rgba(37, 91, 145, .16), transparent 34%),
+    linear-gradient(135deg, #090d16 0%, #111321 48%, #160d18 100%) !important;
+}
+.movie-site .site-glow {
+  background:
+    radial-gradient(ellipse at 18% 34%, color-mix(in srgb, var(--theme-accent, var(--classic-crimson)) 12%, transparent), transparent 34%),
+    radial-gradient(ellipse at 82% 12%, rgba(35, 105, 168, .10), transparent 30%) !important;
+}
+
+:root[data-theme="light"] {
+  --color-bg-base: #e8edf5;
+  --color-bg-elevated: rgba(244, 247, 252, .96);
+  --bg: #e8edf5;
+  --bg-elevated: rgba(242, 246, 252, .96);
+  --bg-card: rgba(235, 240, 249, .94);
+  --bg-glass: rgba(226, 233, 244, .88);
+  --surface-1: rgba(232, 238, 248, .94);
+  --surface-2: color-mix(in srgb, #dce5f2 82%, var(--theme-accent, var(--classic-crimson)) 18%);
+  --surface-3: color-mix(in srgb, #d3deed 86%, var(--theme-accent, var(--classic-crimson)) 14%);
+  --ambient-glow: color-mix(in srgb, var(--theme-accent, var(--classic-crimson)) 12%, transparent);
+  --border: rgba(39, 57, 83, .13);
+  --border-hover: rgba(39, 57, 83, .22);
+  --border-active: color-mix(in srgb, var(--theme-accent, var(--classic-crimson)) 38%, transparent);
+  --shadow-sm: 0 6px 18px rgba(25, 42, 67, .09);
+  --shadow-md: 0 14px 34px rgba(25, 42, 67, .13);
+  --shadow-lg: 0 26px 64px rgba(25, 42, 67, .17);
+}
+:root[data-theme="light"] .movie-site {
+  background:
+    radial-gradient(ellipse at 12% 3%, color-mix(in srgb, var(--theme-accent, var(--classic-crimson)) 17%, transparent), transparent 38%),
+    radial-gradient(ellipse at 88% 22%, rgba(63, 126, 190, .17), transparent 35%),
+    linear-gradient(135deg, #e6ecf5 0%, #e0e8f3 48%, #eee5eb 100%) !important;
+}
+:root[data-theme="light"] .movie-site .site-glow {
+  background:
+    radial-gradient(ellipse at 18% 34%, color-mix(in srgb, var(--theme-accent, var(--classic-crimson)) 13%, transparent), transparent 35%),
+    radial-gradient(ellipse at 82% 12%, rgba(47, 128, 237, .11), transparent 31%) !important;
+}
