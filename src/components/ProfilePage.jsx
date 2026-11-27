@@ -148,15 +148,27 @@ function ProfilePage({ pageHeader, setActiveTab, installApp, installAvailable, a
 
         {activeTab === 'saved' && (
           <div id="saved-panel" role="tabpanel" className="profile-panel saved-panel">
+            <div className="saved-library-heading">
+              <div className="saved-library-copy">
+                <span className="saved-library-eyebrow">YOUR COLLECTION</span>
+                <h2>Saved for later<span>.</span></h2>
+                <p>A place for the stories you don’t want to lose track of.</p>
+              </div>
+              <div className="saved-library-count">
+                <strong>{savedItems.length}</strong>
+                <span>{savedItems.length === 1 ? 'TITLE' : 'TITLES'}</span>
+              </div>
+            </div>
+            {query && <p className="saved-library-filter-note">Showing matches for “{query}”</p>}
             <MovieRail
-              title="Saved titles"
+              title="Your watchlist"
               items={savedItems.filter(i => !query || i.title.toLowerCase().includes(query.toLowerCase()))}
               setSelected={setSelected}
               cycleStatus={cycleStatus}
               setStatus={setStatus}
               toggleBookmark={toggleBookmark}
               playTrailer={playTrailer}
-              empty="No saved titles yet. Tap bookmarks on any card."
+              empty={query ? 'No saved titles match your search.' : 'Your collection is waiting. Bookmark a title anywhere in Incursion and it’ll appear here.'}
             />
           </div>
         )}
