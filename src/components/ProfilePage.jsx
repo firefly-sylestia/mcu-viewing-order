@@ -103,8 +103,12 @@ function ProfilePage({ pageHeader, setActiveTab, installApp, installAvailable, a
   return (
     <div className="profile-page">
       {pageHeader}
-      <nav className="profile-page-tabs shared-switcher" role="tablist" aria-label="Profile sections">
-        {['insights', 'saved', 'settings'].map(tab => <button key={tab} type="button" role="tab" aria-selected={activeTab === tab} className={activeTab === tab ? 'active' : ''} onClick={() => setActiveTab?.(tab)}>{tab === 'insights' ? 'Insights' : tab === 'saved' ? 'Saved' : 'Settings'}</button>)}
+      <nav className="profile-page-tabs" role="tablist" aria-label="Profile sections">
+        {[
+          { id: 'insights', label: 'Insights', Icon: LayoutGrid },
+          { id: 'saved', label: 'Saved', Icon: Bookmark },
+          { id: 'settings', label: 'Settings', Icon: Settings },
+        ].map(({ id, label, Icon }) => <button key={id} type="button" role="tab" aria-controls={`${id}-panel`} aria-selected={activeTab === id} className={activeTab === id ? 'active' : ''} onClick={() => setActiveTab?.(id)}><Icon size={15} strokeWidth={1.9} /><span>{label}</span></button>)}
       </nav>
       {/* Sync Toast */}
       {syncToast?.type === 'error' && (
